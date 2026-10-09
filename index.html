@@ -1,3 +1,11 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#00348A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <title>Cobranças</title>
 <meta name="robots" content="noindex,nofollow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -32,6 +40,7 @@
   --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 28px rgba(0,0,0,.45);
   color-scheme:dark;
 }
+html,body{margin:0;padding:0}
 [hidden]{display:none!important}
 #fatal{position:fixed;left:0;right:0;top:0;z-index:999;background:#B3261E;color:#fff;padding:10px 16px;font:14px/1.4 sans-serif;display:none}
 *{box-sizing:border-box}
@@ -68,11 +77,20 @@ button{cursor:pointer}
 .tab[aria-current=page]::before{content:'';position:absolute;top:-1px;left:22%;right:22%;height:3px;border-radius:0 0 3px 3px;background:var(--accent)}
 .badge{position:absolute;top:3px;left:calc(50% + 6px);min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--bad-solid);color:#fff;font-size:11px;font-weight:700;font-style:normal;display:grid;place-items:center}
 @media (min-width:900px){
-  .tabs{display:none}
-  .side{padding:12px 40px;gap:18px}
-  .brand .logo{height:44px}
+  .menubtn{display:none}
+  .shell{display:grid;grid-template-columns:248px minmax(0,1fr);min-height:100vh}
+  .side{position:sticky;top:0;height:100vh;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:24px;padding:28px 14px}
+  .side .brand{margin-right:0}
+  .brand .logo{height:auto;width:100%;max-width:196px;margin-inline:6px}
+  .brand-sub{display:block;margin-left:6px}
+  .tabs{position:static;display:flex;flex-direction:column;gap:2px;border:0;background:none;padding:0}
+  .tab{flex-direction:row;gap:12px;padding:11px 12px;border-radius:10px;font-size:14.5px;justify-content:flex-start;text-align:left;color:rgba(255,255,255,.86)}
+  .tab[aria-current=page]{background:rgba(255,255,255,.2);color:#fff}
+  .tab[aria-current=page]::before{display:none}
+  .badge{position:static;margin-left:auto}
+  .side-foot{margin-top:auto;flex-direction:column;align-items:stretch;gap:8px;padding-top:14px;border-top:1px solid rgba(255,255,255,.28)}
   .who{display:block}
-  .content{margin-inline:auto;max-width:1240px;padding:30px 40px 56px}
+  .content{margin-inline:0;max-width:1240px;padding:30px 40px 56px}
 }
 
 /* texto e blocos */
@@ -247,6 +265,8 @@ details[open] summary{margin-bottom:10px}
 .alert.warn{background:var(--warn-bg);border-color:var(--warn);color:var(--warn)}
 </style>
 
+</head>
+<body>
 <div id="app" class="shell" hidden>
   <aside class="side">
     <button class="menubtn" id="menubtn" data-act="mais" aria-label="Menu"></button>
@@ -1157,3 +1177,5 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&ui.sheet)closeSheet
   authChecked=true;render();
 })();
 </script>
+</body>
+</html>
