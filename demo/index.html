@@ -358,6 +358,14 @@ input[type=color]{padding:2px;height:42px;width:100%;cursor:pointer}
 .pop-x{flex:none;width:44px;background:none;border:0;color:var(--muted);font-size:24px;cursor:pointer}
 @media (prefers-reduced-motion:reduce){#popup{transition:none}}
 #confete{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:120}
+/* agenda: indicadores em uma faixa só */
+.kpis.k3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.kpis.k3 .kpi{padding:12px 12px 11px;gap:3px}
+.kpis.k3 .kpi small{font-size:12px}
+.kpis.k3 .kpi b{font-size:17px;white-space:nowrap}
+.kpis.k3 .kpi span{font-size:11.5px}
+.kpi b.c-acc{color:var(--accent)}.kpi b.c-ok{color:var(--ok)}
+@media (min-width:600px){.kpis.k3 .kpi{padding:16px 18px 14px}.kpis.k3 .kpi small{font-size:13px}.kpis.k3 .kpi b{font-size:26px}.kpis.k3 .kpi span{font-size:12.5px}}
 .brand-name{font-family:var(--f-display);font-weight:700;font-size:22px;line-height:1;letter-spacing:.04em;color:#fff;display:flex;flex-direction:column;gap:2px}
 .brand-name small{font-family:'IBM Plex Sans',sans-serif;font-weight:500;font-size:11px;letter-spacing:.22em;text-transform:uppercase;opacity:.8}
 @media (min-width:900px){.brand-name{font-size:32px;margin-left:6px}.brand-name small{font-size:12px}}
@@ -767,7 +775,9 @@ function viewAgenda(){
   const dRec=sumV(dayItems.filter(x=>!x.p.pago)),dPaid=sumV(dayItems.filter(x=>x.p.pago));
   const dtitle=cap(parseYmd(ui.sel).toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'}));
   return pageHead('Agenda','Vencimentos do mês, por data','<button class="btn primary" data-act="novavenda">Nova venda</button>')+
-  '<div class="tiles"><div class="tile t-acc"><small>A receber no mês</small><b>'+brl(aRec)+'</b></div><div class="tile t-ok"><small>Recebido no mês</small><b>'+brl(rec)+'</b></div><div class="tile t-bad"><small>Em atraso (total)</small><b>'+brl(sumV(lateAll))+'</b><span>'+plural(lateAll.length,'parcela','parcelas')+'</span></div></div>'+
+  '<div class="kpis k3"><div class="kpi"><small>A receber no mês</small><b class="c-acc">'+brl(aRec)+'</b><span>'+plural(inM.filter(x=>!x.p.pago).length,'parcela','parcelas')+'</span></div>'+
+  '<div class="kpi"><small>Recebido no mês</small><b class="c-ok">'+brl(rec)+'</b><span>'+plural(inM.filter(x=>x.p.pago).length,'parcela','parcelas')+'</span></div>'+
+  '<button class="kpi'+(lateAll.length?' neg':'')+'" data-act="tab" data-t="cobrar"><small>Em atraso</small><b>'+brl(sumV(lateAll))+'</b><span>'+plural(lateAll.length,'parcela','parcelas')+(lateAll.length?' · cobrar':'')+'</span></button></div>'+
   '<div class="cols agenda" style="margin-top:22px"><div class="panel">'+
   '<div class="calhead"><button class="ib" data-act="mprev" aria-label="Mês anterior">&#8249;</button><h2>'+mname+'</h2><button class="btn sm" data-act="mtoday">Hoje</button><button class="ib" data-act="mnext" aria-label="Próximo mês">&#8250;</button></div>'+
   '<div class="cal">'+dows+cells.join('')+'</div>'+
