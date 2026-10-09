@@ -801,7 +801,9 @@ function viewAjustes(){
   '<div class="sh"><h2>Dados da ótica</h2></div><div class="card" style="gap:12px">'+
   '<div class="field"><span>Nome da ótica</span><input type="text" data-cfg="nome" value="'+esc(c.nome)+'"></div>'+
   '<div class="grid2"><div class="field"><span>WhatsApp da ótica</span><input type="text" inputmode="tel" data-mask="tel" data-cfg="whatsapp" value="'+esc(c.whatsapp)+'"></div><div class="field"><span>Chave Pix</span><input type="text" data-cfg="pix" value="'+esc(c.pix)+'" placeholder="CNPJ, telefone ou e-mail"></div></div>'+
-  '<div class="field"><span>Endereço (aparece no PDF)</span><input type="text" data-cfg="endereco" value="'+esc(c.endereco)+'"></div></div>'+
+  '<div class="field"><span>Endereço (aparece no PDF)</span><input type="text" data-cfg="endereco" value="'+esc(c.endereco)+'"></div>'+
+  '<div><button class="btn primary" data-act="salvardados">Salvar dados da ótica</button></div>'+
+  '<p class="sub" style="margin:0">Os dados também são salvos sozinhos quando você sai de cada campo.</p></div>'+
   '<div class="sh"><h2>Dados e backup</h2></div><div class="card"><p class="sub" style="margin:0">'+(OTICA?'Seus dados ficam salvos na nuvem e aparecem em qualquer aparelho em que você abrir este link com a sua conta.':'A nuvem não está disponível aqui. Os dados ficam só neste navegador.')+'</p>'+
   '<div class="acts" style="justify-content:flex-start"><button class="btn" data-act="backup">Baixar backup</button><button class="btn" data-act="restorepick">Restaurar backup</button>'+(hasDemo?'<button class="btn danger" data-act="cleardemo">Apagar exemplos</button>':'<button class="btn" data-act="demo">Carregar exemplos</button>')+'</div>'+
   '<input type="file" id="restore-file" accept=".json,application/json" hidden><p class="sub" style="margin:0">Restaurar mescla o arquivo com os dados atuais. O acesso (usuário e senha) não entra no backup.</p></div>'+
@@ -1109,6 +1111,11 @@ const A={
     refresh();toast(n?plural(n,'lente importada','lentes importadas'):'Nenhuma linha reconhecida. Use: nome ; valor')
   },
   tplreset(d){const c=Object.assign({id:'otica'},S.config.otica||{});c.tpl=Object.assign({},c.tpl);delete c.tpl[d.k];S.config.otica=c;persist('config','otica');refresh()},
+  salvardados(){
+    const c=Object.assign({id:'otica'},S.config.otica||{});
+    document.querySelectorAll('#view [data-cfg]').forEach(el=>{const k=el.dataset.cfg;if(k==='autolock')return;c[k]=el.value.trim()});
+    S.config.otica=c;persist('config','otica');render();toast('Dados da ótica salvos');
+  },
   async salvaremail(){
     const err=m=>{$('#ac-err-e').textContent=m};
     const user=$('#ac-user').value.trim();
