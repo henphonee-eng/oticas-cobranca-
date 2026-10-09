@@ -26,6 +26,14 @@
     {
       "source": "/adm/",
       "destination": "/index.html"
+    },
+    {
+      "source": "/prospectar",
+      "destination": "/prospectar.html"
+    },
+    {
+      "source": "/prospectar/",
+      "destination": "/prospectar.html"
     }
   ]
 }

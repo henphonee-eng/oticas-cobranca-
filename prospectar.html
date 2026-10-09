@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#00348A">
+<meta name="robots" content="noindex,nofollow">
+<title>Prospecção de Óticas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EDF3FB;--surface:#fff;--surface-2:#E2EBF8;--fg:#0A1D3C;--muted:#53698C;--line:#D0DCEE;
+  --accent:#0B4FB0;--accent-fg:#fff;--accent-soft:#DCEAFC;--brand:#00348A;
+  --ok:#17703F;--ok-bg:#DCF0E3;--warn:#8F5A00;--warn-bg:#F7EACA;--bad:#B3261E;--bad-bg:#F8DDDA;
+  --wa:#1F8A4C;--wa-fg:#fff;--hot:#B4410E;--hot-bg:#FCE4D4;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0C1422;--surface:#131E31;--surface-2:#1A2840;--fg:#E6EEFA;--muted:#93A6C4;--line:#24365A;
+  --accent:#5A9BF0;--accent-fg:#06142B;--accent-soft:#18325A;--brand:#0A1D3C;
+  --ok:#6FD39A;--ok-bg:#123524;--warn:#E8B85A;--warn-bg:#3A2C10;--bad:#F08A80;--bad-bg:#3E1714;
+  --wa:#2FA463;--wa-fg:#fff;--hot:#F4A06B;--hot-bg:#3C2112;}}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.45 'IBM Plex Sans',system-ui,sans-serif;-webkit-text-size-adjust:100%}
+button,input,select,textarea{font:inherit;color:inherit}
+h1,h2{font-family:Newsreader,Georgia,serif;font-weight:600;margin:0;letter-spacing:-.01em}
+.top{background:var(--brand);color:#fff;padding:14px 16px calc(14px);padding-top:max(14px,env(safe-area-inset-top))}
+.top .in{max-width:1100px;margin:0 auto;display:flex;align-items:center;gap:12px}
+.top h1{font-size:22px}
+.top .sp{flex:1}
+.top a,.top button{color:#fff;opacity:.85;background:none;border:0;cursor:pointer;font-size:14px;text-decoration:none}
+.tabs{background:var(--brand);position:sticky;top:0;z-index:5}
+.tabs .in{max-width:1100px;margin:0 auto;display:flex;gap:4px;padding:0 12px;overflow-x:auto}
+.tabs button{background:none;border:0;color:#fff;opacity:.7;padding:10px 12px 12px;cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;font-weight:500}
+.tabs button.on{opacity:1;border-color:#8CC4FF}
+main{max-width:1100px;margin:0 auto;padding:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.grow{flex:1;min-width:0}
+input[type=text],input[type=email],input[type=password],input[type=date],select,textarea{width:100%;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+textarea{resize:vertical;min-height:120px}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:9px 14px;cursor:pointer;font-weight:500;display:inline-flex;align-items:center;gap:6px;text-decoration:none;white-space:nowrap}
+.btn.pri{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.btn.wa{background:var(--wa);color:var(--wa-fg);border-color:var(--wa)}
+.btn.sm{padding:6px 10px;font-size:13px;border-radius:8px}
+.btn:disabled{opacity:.5;cursor:default}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.tag{display:inline-block;font-size:12px;padding:2px 8px;border-radius:99px;background:var(--surface-2);color:var(--muted);font-weight:500}
+.tag.ok{background:var(--ok-bg);color:var(--ok)}.tag.warn{background:var(--warn-bg);color:var(--warn)}.tag.bad{background:var(--bad-bg);color:var(--bad)}.tag.hot{background:var(--hot-bg);color:var(--hot)}.tag.acc{background:var(--accent-soft);color:var(--accent)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.stat b{display:block;font-size:24px;font-family:Newsreader,serif}
+.stat span{font-size:12px;color:var(--muted)}
+.list{display:grid;gap:10px;margin-top:12px}
+@media (min-width:900px){.list.two{grid-template-columns:1fr 1fr}}
+.lead h2{font-size:18px}
+.lead .meta{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px}
+.lead .acts{display:flex;flex-wrap:wrap;gap:6px}
+.lead .more{margin-top:10px;display:grid;gap:8px;grid-template-columns:1fr 1fr}
+.lead .more .full{grid-column:1/-1}
+.lead label,.fld label{font-size:12px;color:var(--muted);display:block;margin-bottom:3px}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-top:10px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:6px 12px;cursor:pointer;white-space:nowrap;font-size:13px}
+.chip.on{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.empty{text-align:center;padding:36px 16px;color:var(--muted)}
+.note{background:var(--accent-soft);border-radius:12px;padding:12px 14px;font-size:14px}
+.note.warn{background:var(--warn-bg);color:var(--warn)}
+.note ol{margin:6px 0 0;padding-left:20px}
+.note a{color:inherit;font-weight:600}
+.gate{max-width:380px;margin:10vh auto;padding:0 16px}
+.gate .card{display:grid;gap:10px}
+.err{color:var(--bad);font-size:14px;min-height:1em}
+.toast{position:fixed;left:50%;bottom:max(18px,env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;z-index:20;opacity:0;transition:opacity .2s;pointer-events:none;max-width:calc(100% - 32px)}
+.toast.on{opacity:1}
+.res{display:flex;gap:10px;align-items:flex-start}
+.res input[type=checkbox]{width:20px;height:20px;margin-top:3px;accent-color:var(--accent);flex:none}
+.prev{white-space:pre-wrap;background:var(--surface-2);border-radius:10px;padding:12px;font-size:14px}
+.sec{margin-top:18px}
+.sec h2{font-size:20px;margin-bottom:8px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="toast" id="toast"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+const SB_URL='https://ovynkeifzhavhjdkjjui.supabase.co',SB_KEY='sb_publishable_7RunIjZPQDCuWNSuPrD10w_Gy_lIUFl';
+const sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const today=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+const addDays=(n)=>{const d=new Date();d.setDate(d.getDate()+n);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+const fmtD=s=>s?s.slice(8,10)+'/'+s.slice(5,7):'';
+const isMobile=/Android|iPhone|iPad|iPod|Mobi/i.test(navigator.userAgent)||(navigator.maxTouchPoints>1&&/Macintosh/.test(navigator.userAgent));
+
+const STATUS={novo:'Novo',enviado:'Mensagem enviada',respondeu:'Respondeu',interessada:'Interessada',fechou:'Fechou',sem_interesse:'Sem interesse'};
+const STAG={novo:'',enviado:'acc',respondeu:'warn',interessada:'hot',fechou:'ok',sem_interesse:'bad'};
+const DEF={
+  seu_nome:'',
+  limite:'25',
+  abordagem:'Olá, equipe da {otica}! Tudo bem?\n\nMeu nome é {seu_nome}. Criei um sistema de cobrança feito para óticas: vendas parceladas no carnê ou Pix, lembrete de parcela pelo WhatsApp e controle de quem está em atraso. Ele já roda na Ótica DK aqui em Recife.\n\nMontei uma demonstração já com o nome de vocês, pode abrir e testar à vontade:\n{link}\n\nPosso te mostrar como funciona em 10 minutos?',
+  followup:'Oi, pessoal da {otica}! Passando só para saber se conseguiram dar uma olhada na demonstração do sistema de cobrança:\n{link}\n\nSe fizer sentido, te mostro rapidinho por aqui mesmo.'
+};
+
+const st={tab:'crm',user:null,admin:false,leads:[],cfg:{},loaded:false,
+  q:'óticas em Recife',res:[],next:null,busy:false,sel:{},serr:'',noKey:false,
+  f:'todos',fq:'',open:null};
+
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove('on'),2600)}
+const cfg=k=>(st.cfg[k]!=null&&String(st.cfg[k]).trim()!=='')?st.cfg[k]:DEF[k];
+
+/* ---------- telefone ---------- */
+function digits(s){return String(s||'').replace(/\D/g,'')}
+function brNumber(s){let d=digits(s);if(!d)return '';if(d.startsWith('0'))d=d.replace(/^0+/,'');if(!d.startsWith('55'))d='55'+d;return d}
+function tipoFone(s){const d=brNumber(s);if(d.length===13&&d[4]==='9')return 'cel';if(d.length===12)return 'fixo';return d?'outro':''}
+function fmtFone(s){const d=brNumber(s).slice(2);if(d.length===11)return '('+d.slice(0,2)+') '+d.slice(2,7)+'-'+d.slice(7);if(d.length===10)return '('+d.slice(0,2)+') '+d.slice(2,6)+'-'+d.slice(6);return s||''}
+const foneDe=l=>l.whatsapp||l.telefone;
+function waUrl(num,text){const n=brNumber(num);return isMobile?'whatsapp://send?phone='+n+'&text='+encodeURIComponent(text):'https://web.whatsapp.com/send?phone='+n+'&text='+encodeURIComponent(text)}
+
+/* ---------- mensagem ---------- */
+const demoLink=l=>location.origin+'/demo/?o='+encodeURIComponent(l.nome)+'&l='+l.id;
+function msg(kind,l){return cfg(kind).replace(/\{otica\}/g,l.nome).replace(/\{link\}/g,demoLink(l)).replace(/\{cidade\}/g,l.cidade||'').replace(/\{seu_nome\}/g,cfg('seu_nome')||'').replace(/\n{3,}/g,'\n\n')}
+
+/* ---------- dados ---------- */
+async function load(){
+  const [lr,cr]=await Promise.all([sb.from('prosp_leads').select('*').order('criado_em',{ascending:false}),sb.from('prosp_config').select('*')]);
+  if(lr.error){toast('Erro ao carregar: '+lr.error.message);return}
+  st.leads=lr.data||[];st.cfg={};(cr.data||[]).forEach(r=>st.cfg[r.chave]=r.valor);
+  st.loaded=true;if(!st.leads.length)st.tab='buscar';render();
+}
+async function upd(id,patch){
+  patch.atualizado_em=new Date().toISOString();
+  const l=st.leads.find(x=>x.id===id);Object.assign(l,patch);render();
+  const r=await sb.from('prosp_leads').update(patch).eq('id',id);
+  if(r.error)toast('Não salvou: '+r.error.message);
+}
+function hist(l,txt){return [...(l.historico||[]),{em:new Date().toISOString(),txt}]}
+
+/* ---------- busca no Google ---------- */
+async function buscar(more){
+  if(st.busy)return;st.busy=true;st.serr='';if(!more){st.res=[];st.next=null;st.sel={}}render();
+  try{
+    const {data,error}=await sb.functions.invoke('places-search',{body:{query:st.q,pageToken:more?st.next:undefined}});
+    if(error){let m=error.message;try{const b=await error.context.json();m=b.error||m}catch(e){}throw new Error(m)}
+    st.noKey=false;st.res=st.res.concat(data.places||[]);st.next=data.nextPageToken;
+    const ids=new Set(st.leads.map(l=>l.place_id));
+    (data.places||[]).forEach(p=>{if(!ids.has(p.place_id)&&tipoFone(p.telefone)==='cel'&&!p.site)st.sel[p.place_id]=true});
+  }catch(e){if(/SEM_CHAVE/.test(e.message))st.noKey=true;else st.serr=e.message}
+  st.busy=false;render();
+}
+async function addSel(){
+  const ids=new Set(st.leads.map(l=>l.place_id));
+  const rows=st.res.filter(p=>st.sel[p.place_id]&&!ids.has(p.place_id)).map(p=>({place_id:p.place_id,nome:p.nome,telefone:p.telefone,whatsapp:tipoFone(p.telefone)==='cel'?p.telefone:null,endereco:p.endereco,cidade:p.cidade,site:p.site||null,maps_url:p.maps_url,nota:p.nota,avaliacoes:p.avaliacoes,historico:[{em:new Date().toISOString(),txt:'Adicionada pela busca "'+st.q+'"'}]}));
+  if(!rows.length)return toast('Marque pelo menos uma ótica nova');
+  const r=await sb.from('prosp_leads').upsert(rows,{onConflict:'place_id',ignoreDuplicates:true}).select();
+  if(r.error)return toast('Erro: '+r.error.message);
+  st.leads=(r.data||[]).concat(st.leads);st.sel={};toast(rows.length+' ótica(s) adicionada(s) ao CRM');render();
+}
+
+/* ---------- ações do CRM ---------- */
+const enviadosHoje=()=>st.leads.filter(l=>l.enviado_em&&l.enviado_em.slice(0,10)===new Date().toISOString().slice(0,10)).length;
+function enviar(id,kind){
+  const l=st.leads.find(x=>x.id===id);const f=foneDe(l);
+  if(!f)return toast('Essa ótica não tem telefone. Adicione o WhatsApp no cartão.');
+  if(!cfg('seu_nome'))return toast('Coloque seu nome na aba Mensagens antes de enviar'),go('msg');
+  const lim=+cfg('limite')||0;
+  if(kind==='abordagem'&&lim&&enviadosHoje()>=lim&&!confirm('Você já enviou '+enviadosHoje()+' abordagens hoje (seu limite é '+lim+'). Mandar muitas para quem não te conhece aumenta o risco de bloqueio do WhatsApp. Enviar mesmo assim?'))return;
+  window.open(waUrl(f,msg(kind,l)),isMobile?'_self':'_blank');
+  const patch=kind==='abordagem'
+    ?{status:l.status==='novo'?'enviado':l.status,enviado_em:new Date().toISOString(),follow_up:l.follow_up||addDays(3),historico:hist(l,'Abordagem enviada')}
+    :{follow_up:addDays(4),historico:hist(l,'Follow-up enviado')};
+  upd(id,patch);
+}
+function go(t){st.tab=t;render();scrollTo(0,0)}
+
+/* ---------- telas ---------- */
+function render(){
+  const a=$('#app');
+  if(st.user===null)return a.innerHTML='<div class="empty">Carregando…</div>';
+  if(!st.user)return a.innerHTML=gate();
+  if(!st.admin)return a.innerHTML='<div class="gate"><div class="card"><h1>Sem acesso</h1><p class="muted">Essa área é só do administrador.</p><button class="btn" data-a="sair">Sair</button></div></div>';
+  if(!st.loaded)return a.innerHTML='<div class="empty">Carregando leads…</div>';
+  const t=(k,n)=>'<button data-tab="'+k+'" class="'+(st.tab===k?'on':'')+'">'+n+'</button>';
+  a.innerHTML='<header class="top"><div class="in"><h1>Prospecção</h1><span class="sp"></span><a href="/adm">Painel adm</a><button data-a="sair">Sair</button></div></header>'+
+   '<nav class="tabs"><div class="in">'+t('crm','CRM ('+st.leads.length+')')+t('buscar','Buscar óticas')+t('msg','Mensagens')+'</div></nav><main>'+
+   (st.tab==='buscar'?vBuscar():st.tab==='msg'?vMsg():vCrm())+'</main>';
+}
+function gate(){return '<div class="gate"><div class="card"><h1>Prospecção</h1><p class="muted small" style="margin:0">Entre com o mesmo e-mail e senha do painel administrativo.</p><input type="email" id="g-e" placeholder="E-mail" autocomplete="username"><input type="password" id="g-p" placeholder="Senha" autocomplete="current-password"><div class="err" id="g-err"></div><button class="btn pri" data-a="entrar">Entrar</button></div></div>'}
+
+function vBuscar(){
+  const ids=new Set(st.leads.map(l=>l.place_id));
+  let h='<div class="card"><div class="row"><input type="text" id="q" class="grow" value="'+esc(st.q)+'" placeholder="ex.: óticas em Olinda, óticas Boa Viagem Recife"><button class="btn pri" data-a="buscar" '+(st.busy?'disabled':'')+'>'+(st.busy?'Buscando…':'Buscar')+'</button></div>'+
+    '<p class="muted small" style="margin:8px 0 0">Dica: busque por bairro ("óticas em Casa Amarela Recife") para achar lojas que a busca da cidade inteira não mostra.</p></div>';
+  if(st.noKey)h+='<div class="note warn sec"><b>Falta a chave do Google.</b> Siga o passo a passo que te mandei no chat e depois busque de novo.</div>';
+  if(st.serr)h+='<div class="note warn sec">'+esc(st.serr)+'</div>';
+  if(st.res.length){
+    const n=Object.values(st.sel).filter(Boolean).length;
+    h+='<div class="row sec"><span class="grow muted small">'+st.res.length+' resultado(s). Marquei as que têm celular e não têm site.</span><button class="btn pri" data-a="add" '+(n?'':'disabled')+'>Adicionar '+n+' ao CRM</button></div><div class="list two">';
+    st.res.forEach(p=>{
+      const ja=ids.has(p.place_id),tf=tipoFone(p.telefone);
+      h+='<div class="card res"><input type="checkbox" data-sel="'+esc(p.place_id)+'" '+(st.sel[p.place_id]?'checked':'')+' '+(ja?'disabled':'')+'><div class="grow"><b>'+esc(p.nome)+'</b><div class="meta" style="display:flex;gap:6px;flex-wrap:wrap;margin:4px 0">'+
+        (ja?'<span class="tag ok">Já no CRM</span>':'')+
+        (tf==='cel'?'<span class="tag ok">Celular</span>':tf==='fixo'?'<span class="tag warn">Fixo</span>':'<span class="tag bad">Sem telefone</span>')+
+        (p.site?'<span class="tag">Tem site</span>':'<span class="tag hot">Sem site</span>')+
+        (p.nota?'<span class="tag">★ '+p.nota+' · '+p.avaliacoes+'</span>':'')+
+        '</div><div class="small muted">'+esc(fmtFone(p.telefone))+(p.telefone?' · ':'')+esc(p.endereco)+'</div></div></div>';
+    });
+    h+='</div>';
+    if(st.next)h+='<div class="row sec" style="justify-content:center"><button class="btn" data-a="mais" '+(st.busy?'disabled':'')+'>Carregar mais resultados</button></div>';
+  }else if(!st.busy&&!st.noKey&&!st.serr)h+='<div class="empty">Busque uma cidade ou bairro para encontrar óticas.</div>';
+  return h;
+}
+
+function vCrm(){
+  const c={};st.leads.forEach(l=>c[l.status]=(c[l.status]||0)+1);
+  const fu=st.leads.filter(l=>l.follow_up&&l.follow_up<=today()&&['enviado','respondeu','interessada'].includes(l.status));
+  const ab=st.leads.filter(l=>l.demo_aberturas>0&&!['fechou','sem_interesse'].includes(l.status));
+  let h='<div class="stats">'+
+    '<div class="stat"><b>'+enviadosHoje()+'<span style="font-size:14px"> / '+(cfg('limite')||'∞')+'</span></b><span>Abordagens hoje</span></div>'+
+    '<div class="stat"><b>'+ab.length+'</b><span>Abriram o demo</span></div>'+
+    '<div class="stat"><b>'+fu.length+'</b><span>Follow-up para hoje</span></div>'+
+    '<div class="stat"><b>'+((c.interessada||0))+'</b><span>Interessadas</span></div>'+
+    '<div class="stat"><b>'+(c.fechou||0)+'</b><span>Fecharam</span></div></div>';
+  if(!st.leads.length)return h+'<div class="empty">Nenhuma ótica no CRM ainda.<br><br><button class="btn pri" data-tab="buscar">Buscar óticas</button></div>';
+  const chip=(k,n,x)=>'<button class="chip '+(st.f===k?'on':'')+'" data-f="'+k+'">'+n+' '+x+'</button>';
+  h+='<input type="text" id="fq" placeholder="Procurar por nome, bairro ou telefone" value="'+esc(st.fq)+'">';
+  h+='<div class="chips">'+chip('todos','Todas',st.leads.length)+chip('hoje','Follow-up hoje',fu.length)+chip('abriu','Abriram o demo',ab.length)+Object.keys(STATUS).map(k=>chip(k,STATUS[k],c[k]||0)).join('')+'</div>';
+  const q=st.fq.trim().toLowerCase();
+  let L=st.f==='todos'?st.leads:st.f==='hoje'?fu:st.f==='abriu'?ab:st.leads.filter(l=>l.status===st.f);
+  if(q)L=L.filter(l=>(l.nome+' '+(l.endereco||'')+' '+digits(foneDe(l))).toLowerCase().includes(q));
+  if(!L.length)return h+'<div class="empty">Nada aqui.</div>';
+  h+='<div class="list two">'+L.map(cardLead).join('')+'</div>';
+  return h;
+}
+function cardLead(l){
+  const op=st.open===l.id,tf=tipoFone(foneDe(l)),late=l.follow_up&&l.follow_up<=today()&&['enviado','respondeu','interessada'].includes(l.status);
+  let h='<div class="card lead"><div class="row"><h2 class="grow">'+esc(l.nome)+'</h2><span class="tag '+STAG[l.status]+'">'+STATUS[l.status]+'</span></div><div class="meta">'+
+    (l.demo_aberturas?'<span class="tag hot">Abriu o demo '+l.demo_aberturas+'x · '+fmtD((l.demo_aberto_em||'').slice(0,10))+'</span>':'')+
+    (late?'<span class="tag warn">Follow-up '+(l.follow_up<today()?'atrasado':'hoje')+'</span>':l.follow_up&&l.status!=='fechou'&&l.status!=='sem_interesse'?'<span class="tag">Follow-up '+fmtD(l.follow_up)+'</span>':'')+
+    (tf==='fixo'?'<span class="tag warn">Fixo</span>':'')+(!foneDe(l)?'<span class="tag bad">Sem telefone</span>':'')+
+    (l.site?'<span class="tag">Tem site</span>':'')+(l.nota?'<span class="tag">★ '+l.nota+' · '+l.avaliacoes+'</span>':'')+
+    '</div><div class="small muted" style="margin:-4px 0 10px">'+esc(fmtFone(foneDe(l)))+(foneDe(l)?' · ':'')+esc(l.endereco||'')+'</div><div class="acts">';
+  h+=l.status==='novo'?'<button class="btn wa sm" data-env="'+l.id+'" data-k="abordagem">Enviar abordagem</button>':
+     ['enviado','respondeu','interessada'].includes(l.status)?'<button class="btn wa sm" data-env="'+l.id+'" data-k="followup">Enviar follow-up</button>':'';
+  if(l.status==='enviado')h+='<button class="btn sm" data-st="'+l.id+'" data-v="respondeu">Respondeu</button>';
+  if(l.status==='respondeu')h+='<button class="btn sm" data-st="'+l.id+'" data-v="interessada">Interessada</button>';
+  if(l.status==='interessada')h+='<button class="btn sm" data-st="'+l.id+'" data-v="fechou">Fechou</button>';
+  h+='<button class="btn sm" data-open="'+l.id+'">'+(op?'Fechar':'Detalhes')+'</button></div>';
+  if(op){
+    h+='<div class="more">'+
+      '<div><label>Status</label><select data-upd="'+l.id+'" data-fld="status">'+Object.keys(STATUS).map(k=>'<option value="'+k+'" '+(l.status===k?'selected':'')+'>'+STATUS[k]+'</option>').join('')+'</select></div>'+
+      '<div><label>Próximo follow-up</label><input type="date" data-upd="'+l.id+'" data-fld="follow_up" value="'+esc(l.follow_up||'')+'"></div>'+
+      '<div class="full"><label>WhatsApp (se for diferente do telefone do Google)</label><input type="text" data-upd="'+l.id+'" data-fld="whatsapp" value="'+esc(l.whatsapp||'')+'" placeholder="(81) 9XXXX-XXXX"></div>'+
+      '<div class="full"><label>Anotações</label><textarea data-upd="'+l.id+'" data-fld="notas" style="min-height:70px" placeholder="Quem atendeu, o que perguntou, quantas lojas…">'+esc(l.notas||'')+'</textarea></div>'+
+      '<div class="full acts"><button class="btn sm" data-copy="'+l.id+'">Copiar link do demo</button><a class="btn sm" href="'+esc(demoLink(l))+'" target="_blank" rel="noopener">Ver demo</a>'+(l.maps_url?'<a class="btn sm" href="'+esc(l.maps_url)+'" target="_blank" rel="noopener">Google Maps</a>':'')+(l.site?'<a class="btn sm" href="'+esc(l.site)+'" target="_blank" rel="noopener">Site</a>':'')+(l.status!=='novo'?'<button class="btn sm" data-env="'+l.id+'" data-k="abordagem">Reenviar abordagem</button>':'')+'<button class="btn sm" data-del="'+l.id+'" style="color:var(--bad)">Remover</button></div>'+
+      '<div class="full small muted">'+(l.historico||[]).slice().reverse().map(x=>fmtD(x.em.slice(0,10))+' '+x.em.slice(11,16)+' — '+esc(x.txt)).join('<br>')+'</div></div>';
+  }
+  return h+'</div>';
+}
+
+function vMsg(){
+  const ex={id:'00000000-0000-0000-0000-000000000000',nome:'Ótica Exemplo',cidade:'Recife'};
+  const f=(k,lbl,area,ph)=>'<div class="fld" style="margin-bottom:10px"><label>'+lbl+'</label>'+(area?'<textarea data-cfg="'+k+'">'+esc(cfg(k))+'</textarea>':'<input type="text" data-cfg="'+k+'" value="'+esc(st.cfg[k]||'')+'" placeholder="'+esc(ph||'')+'">')+'</div>';
+  return '<div class="card">'+f('seu_nome','Seu nome (aparece na mensagem)',0,'ex.: Henrique')+f('limite','Limite de abordagens por dia (aviso)',0,'25')+
+    '<p class="small muted" style="margin:0">Use <b>{otica}</b>, <b>{link}</b> (demo com o nome da ótica), <b>{cidade}</b> e <b>{seu_nome}</b>.</p></div>'+
+    '<div class="sec"><h2>Primeira mensagem</h2><div class="card">'+f('abordagem','Texto',1)+'<label class="small muted">Prévia</label><div class="prev">'+esc(msg('abordagem',ex))+'</div></div></div>'+
+    '<div class="sec"><h2>Follow-up</h2><div class="card">'+f('followup','Texto',1)+'<label class="small muted">Prévia</label><div class="prev">'+esc(msg('followup',ex))+'</div></div></div>'+
+    '<div class="row sec"><button class="btn pri" data-a="salvarcfg">Salvar mensagens</button><button class="btn" data-a="padrao">Voltar ao texto padrão</button></div>';
+}
+
+/* ---------- eventos ---------- */
+document.addEventListener('click',async e=>{
+  const b=e.target.closest('button,[data-tab]');if(!b)return;const d=b.dataset;
+  if(d.tab)return go(d.tab);
+  if(d.f){st.f=d.f;return render()}
+  if(d.open){st.open=st.open===d.open?null:d.open;return render()}
+  if(d.env)return enviar(d.env,d.k);
+  if(d.st){const l=st.leads.find(x=>x.id===d.st);return upd(d.st,{status:d.v,historico:hist(l,'Status: '+STATUS[d.v]),follow_up:d.v==='fechou'?null:l.follow_up})}
+  if(d.copy){const l=st.leads.find(x=>x.id===d.copy);try{await navigator.clipboard.writeText(demoLink(l));toast('Link copiado')}catch(x){prompt('Copie o link:',demoLink(l))}return}
+  if(d.del){if(!confirm('Remover essa ótica do CRM?'))return;const r=await sb.from('prosp_leads').delete().eq('id',d.del);if(r.error)return toast(r.error.message);st.leads=st.leads.filter(l=>l.id!==d.del);return render()}
+  switch(d.a){
+    case 'entrar':{const r=await sb.auth.signInWithPassword({email:$('#g-e').value.trim(),password:$('#g-p').value});if(r.error){$('#g-err').textContent='E-mail ou senha incorretos.';return}return boot()}
+    case 'sair':await sb.auth.signOut();st.user=false;st.loaded=false;return render();
+    case 'buscar':st.q=$('#q').value;return buscar(false);
+    case 'mais':return buscar(true);
+    case 'add':return addSel();
+    case 'salvarcfg':{const rows=[...document.querySelectorAll('[data-cfg]')].map(i=>({chave:i.dataset.cfg,valor:i.value}));const r=await sb.from('prosp_config').upsert(rows);if(r.error)return toast(r.error.message);rows.forEach(x=>st.cfg[x.chave]=x.valor);toast('Mensagens salvas');return render()}
+    case 'padrao':st.cfg.abordagem='';st.cfg.followup='';await sb.from('prosp_config').upsert([{chave:'abordagem',valor:''},{chave:'followup',valor:''}]);toast('Texto padrão restaurado');return render();
+  }
+});
+document.addEventListener('change',e=>{
+  const t=e.target;
+  if(t.dataset.sel){st.sel[t.dataset.sel]=t.checked;return render()}
+  if(t.dataset.upd){const l=st.leads.find(x=>x.id===t.dataset.upd),f=t.dataset.fld,v=t.value||null;const p={[f]:v};if(f==='status')p.historico=hist(l,'Status: '+STATUS[v]);upd(l.id,p)}
+});
+document.addEventListener('input',e=>{
+  const t=e.target;
+  if(t.id==='fq'){st.fq=t.value;const pos=t.selectionStart;render();const n=$('#fq');n.focus();n.setSelectionRange(pos,pos)}
+});
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Enter')return;
+  if(e.target.id==='q'){st.q=e.target.value;buscar(false)}
+  if(e.target.id==='g-p'||e.target.id==='g-e')document.querySelector('[data-a=entrar]').click();
+});
+
+async function boot(){
+  const {data}=await sb.auth.getSession();
+  st.user=data.session?data.session.user:false;
+  if(st.user){const r=await sb.rpc('sou_admin');st.admin=r.data===true;if(st.admin)load()}
+  render();
+}
+boot();
+</script>
+</body>
+</html>

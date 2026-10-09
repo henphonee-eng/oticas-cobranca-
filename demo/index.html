@@ -1457,5 +1457,10 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&ui.sheet)closeSheet
   loadDemo();
 })();
 </script>
+<script>
+/* prospecção: avisa quando a ótica abre o demo (?l=id do lead) */
+(function(){try{var l=new URLSearchParams(location.search).get('l');if(!l||!/^[0-9a-f-]{36}$/i.test(l))return;var k='demo-visto-'+l;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,'1')}catch(e){}
+fetch('https://ovynkeifzhavhjdkjjui.supabase.co/rest/v1/rpc/prosp_demo_aberto',{method:'POST',headers:{'Content-Type':'application/json',apikey:'sb_publishable_7RunIjZPQDCuWNSuPrD10w_Gy_lIUFl'},body:JSON.stringify({p_lead:l}),keepalive:true}).catch(function(){})}catch(e){}})();
+</script>
 </body>
 </html>
