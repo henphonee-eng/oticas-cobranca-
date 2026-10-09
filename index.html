@@ -337,6 +337,26 @@ input[type=color]{padding:2px;height:42px;width:100%;cursor:pointer}
 .brand-adm{font-family:var(--f-display);font-size:28px;font-weight:600;line-height:1;color:#fff;display:flex;flex-direction:column;gap:4px}
 .brand-adm small{font-family:'IBM Plex Sans',sans-serif;font-size:11px;font-weight:500;letter-spacing:.2em;text-transform:uppercase;opacity:.8}
 @media (max-width:899px){.brand-adm{font-size:22px}.brand-adm small{display:none}}
+
+/* sino e lembrete */
+.bellbtn{position:relative;flex:none;display:flex;align-items:center;justify-content:center;gap:10px;height:42px;min-width:42px;padding:0 9px;border-radius:10px;border:1px solid rgba(255,255,255,.42);background:rgba(255,255,255,.14);color:#fff;cursor:pointer;font:inherit;font-weight:500}
+.bellbtn svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transform-origin:50% 10%}
+.bellbtn .bl{display:none}
+.bellbtn .badge{top:-6px;left:auto;right:-6px;background:#fff;color:#B3261E;box-shadow:0 0 0 2px rgba(0,0,0,.18)}
+.bellbtn.bad{background:#C62828;border-color:transparent}
+.bellbtn.warn{background:#B77900;border-color:transparent}
+.bellbtn.ring svg{animation:ring 2.2s ease-in-out infinite}
+@keyframes ring{0%,40%,100%{transform:rotate(0)}4%{transform:rotate(18deg)}8%{transform:rotate(-16deg)}12%{transform:rotate(13deg)}16%{transform:rotate(-11deg)}20%{transform:rotate(8deg)}24%{transform:rotate(-5deg)}28%{transform:rotate(2deg)}}
+@media (prefers-reduced-motion:reduce){.bellbtn.ring svg{animation:none}}
+@media (min-width:900px){.bellbtn{width:100%;justify-content:flex-start;height:46px;padding:0 14px}.bellbtn .bl{display:inline}.bellbtn .badge{top:50%;right:12px;transform:translateY(-50%)}}
+#popup{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 12px);transform:translate(-50%,-160%);z-index:95;width:min(460px,calc(100% - 24px));transition:transform .45s cubic-bezier(.2,.8,.2,1)}
+#popup.on{transform:translate(-50%,0)}
+.pop{display:flex;align-items:stretch;background:var(--surface);color:var(--fg);border:1px solid var(--accent);border-left-width:5px;border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.3)}
+.pop-main{flex:1;min-width:0;display:flex;gap:12px;align-items:center;text-align:left;background:none;border:0;color:inherit;font:inherit;cursor:pointer;padding:12px 6px 12px 14px}
+.pop-main svg{width:28px;height:28px;flex:none;fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.pop-main b{display:block;font-size:15.5px}.pop-main small{display:block;font-size:13px;color:var(--muted);margin-top:2px}
+.pop-x{flex:none;width:44px;background:none;border:0;color:var(--muted);font-size:24px;cursor:pointer}
+@media (prefers-reduced-motion:reduce){#popup{transition:none}}
 </style>
 
 </head>
@@ -345,6 +365,7 @@ input[type=color]{padding:2px;height:42px;width:100%;cursor:pointer}
   <aside class="side">
     <button class="menubtn" id="menubtn" data-act="mais" aria-label="Menu"></button>
     <div class="brand"><img class="logo" id="brand-logo" alt="" hidden><span class="brand-sub">Sistema de cobranças</span></div>
+    <button class="bellbtn" id="bell" data-act="bell" aria-label="Avisos de cobrança"></button>
     <nav class="tabs" id="tabs" aria-label="Seções"></nav>
     <div class="side-foot"><div class="sync" id="sync"><i></i><span>Conectando</span></div><span class="who" id="who"></span><button class="btn sm ghost" data-act="logout">Sair</button></div>
   </aside>
@@ -698,6 +719,37 @@ const demoTag=o=>o&&o.exemplo?'<span class="demo">exemplo</span>':'';
 const pageHead=(t,sub,act)=>'<div class="ph"><div><h1>'+t+'</h1>'+(sub?'<p class="sub">'+sub+'</p>':'')+'</div>'+(act||'')+'</div>';
 const lateCount=()=>allP().filter(x=>!x.p.pago&&x.p.venc<todayStr()).length;
 
+function avisos(){
+  const t=todayStr();let late=0,hoje=0,vl=0,vh=0,adm=ADM_MODE&&typeof ADM!=='undefined';
+  if(adm)ADM.cob.forEach(c=>{if(c.pago)return;if(c.venc<t){late++;vl+=c.valor}else if(c.venc===t){hoje++;vh+=c.valor}});
+  else allP().forEach(x=>{if(x.p.pago)return;if(x.p.venc<t){late++;vl+=x.p.valor}else if(x.p.venc===t){hoje++;vh+=x.p.valor}});
+  const n1=adm?['cobrança vencida','cobranças vencidas']:['parcela em atraso','parcelas em atraso'],n2=adm?['cobrança vence hoje','cobranças vencem hoje']:['parcela vence hoje','parcelas vencem hoje'];
+  const p=[];if(late)p.push(plural(late,n1[0],n1[1])+' ('+brl(vl)+')');if(hoje)p.push(plural(hoje,n2[0],n2[1])+' ('+brl(vh)+')');
+  return {late:late,hoje:hoje,txt:p.join(' · ')};
+}
+/* lembrete que aparece e some, no máximo uma vez por hora */
+const POPKEY='pop-last-'+(ADM_MODE?'adm':'ani');
+let popLast=0,popHide=0;
+try{if(typeof DEMO==='undefined')popLast=+localStorage.getItem(POPKEY)||0}catch(e){}
+function showPop(titulo,texto,go){
+  let p=document.getElementById('popup');
+  if(!p){p=document.createElement('div');p.id='popup';document.body.appendChild(p)}
+  p.innerHTML='<div class="pop"><button class="pop-main" type="button" data-act="popgo" data-t="'+go+'"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+(go==='relacao'?'M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z':'M6 17h12l-1.5-2v-4a4.5 4.5 0 0 0-9 0v4zM10 20h4')+'"/></svg><span><b>'+esc(titulo)+'</b><small>'+esc(texto)+'</small></span></button><button class="pop-x" type="button" data-act="popx" aria-label="Fechar">&#215;</button></div>';
+  p.setAttribute('role','status');
+  requestAnimationFrame(()=>requestAnimationFrame(()=>p.classList.add('on')));
+  clearTimeout(popHide);popHide=setTimeout(()=>p.classList.remove('on'),9000);
+}
+function lembreteHora(){
+  if(auth!=='ok'||!ready||document.hidden)return;
+  const now=Date.now();if(now-popLast<3600000)return;
+  let it=null;
+  if(ADM_MODE&&typeof ADM!=='undefined'){const a=avisos();if(a.late||a.hoje)it=['Cobranças dos clientes',a.txt+' · toque para conferir','admin']}
+  else{const ap=aniPend();if(ap.length)it=[plural(ap.length,'aniversariante hoje','aniversariantes hoje'),ap.slice(0,3).map(x=>firstName(x.c.nome)).join(', ')+' · toque para mandar parabéns','relacao']}
+  if(!it)return;
+  popLast=now;try{if(typeof DEMO==='undefined')localStorage.setItem(POPKEY,String(now))}catch(e){}
+  showPop(it[0],it[1],it[2]);
+}
+setInterval(lembreteHora,30000);setTimeout(lembreteHora,2500);
 function render(){
   computeAuth();renderGate();
   const locked=auth!=='ok';$('#app').hidden=locked;
@@ -706,6 +758,8 @@ function render(){
   const tv=tabsVis();if(tv.length&&!tv.some(x=>x[0]===ui.tab))ui.tab=tv[0][0];
   const btn=t=>'<button class="tab" data-act="tab" data-t="'+t[0]+'"'+(ui.tab===t[0]?' aria-current="page"':'')+'>'+ICON[t[0]]+'<span>'+t[1]+'</span>'+(t[0]==='cobrar'&&late?'<i class="badge">'+late+'</i>':'')+'</button>';
   $('#tabs').innerHTML=wide?tv.map(btn).join(''):tv.slice(0,5).map(btn).join('');
+  const sv=avisos(),bb=$('#bell');
+  if(bb){bb.className='bellbtn'+(sv.late?' bad ring':sv.hoje?' warn ring':'');bb.innerHTML=ICON.cobrar+'<span class="bl">Avisos</span>'+((sv.late+sv.hoje)?'<i class="badge">'+(sv.late+sv.hoje)+'</i>':'');bb.setAttribute('aria-label',sv.txt?'Atenção: '+sv.txt:'Sem avisos de cobrança');bb.title=sv.txt||'Sem avisos de cobrança'}
   const mb=$('#menubtn');if(mb)mb.innerHTML=ICON.menu+(late?'<i class="badge">'+late+'</i>':'');
   const sy=$('#sync');sy.className='sync '+(syncState==='cloud'?'cloud':syncState==='local'?'local':'');
   sy.lastChild.textContent=syncState==='cloud'?'Salvo na nuvem':syncState==='local'?'Só neste aparelho':'Conectando';
@@ -785,7 +839,7 @@ function viewPainel(){
   const ap=aniPend(),rvn=revisoes().filter(x=>!x.c.revEm).length;
   const HEART='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>';
   const rel=(ap.length||rvn)?'<button class="alert info" role="status" data-act="tab" data-t="relacao">'+HEART+'<div><b>Relacionamento: '+[ap.length?plural(ap.length,'aniversariante hoje','aniversariantes hoje'):'',rvn?plural(rvn,'cliente para revisar o grau','clientes para revisar o grau'):''].filter(Boolean).join(' · ')+'</b><span>'+(ap.length?esc(ap.slice(0,3).map(x=>firstName(x.c.nome)).join(', '))+' · ':'')+'toque para mandar a mensagem</span></div></button>':'';
-  return pageHead('Painel',dia,'<button class="btn primary" data-act="novavenda">Nova venda</button>')+alerts+rel+
+  return pageHead('Painel',dia,'<button class="btn primary" data-act="novavenda">Nova venda</button>')+
   (noSales?'<div class="empty" style="margin-bottom:18px">'+GLASSES+'<h3>Nenhuma venda registrada ainda</h3><p>Registre a primeira venda parcelada. Os números do dia e os vencimentos aparecem aqui.</p><div class="acts" style="justify-content:center"><button class="btn primary" data-act="novavenda">Nova venda</button><button class="btn" data-act="demo">Ver com exemplos</button></div></div>':'')+
   '<div class="kpis">'+
   '<div class="kpi lead"><small>Entrou hoje</small><b>'+brl(sumV(recHoje))+'</b><span>'+plural(recHoje.length,'recebimento','recebimentos')+'</span></div>'+
@@ -1397,6 +1451,9 @@ function openNova(cid){ui.draft=newDraft(cid);ui.sheet={kind:'nova'};renderSheet
 function setPath(o,p,v){const k=p.split('.');let t=o;for(let i=0;i<k.length-1;i++)t=t[k[i]];t[k[k.length-1]]=v}
 function addLente(nome,tipo,valor){const id=uid();S.lentes[id]={id:id,nome:nome,tipo:tipo||'',valor:valor};persist('lentes',id)}
 const A={
+  bell(){if(ADM_MODE){ui.tab='admin';render();window.scrollTo(0,0)}else A.tab({t:'cobrar'})},
+  popgo(d){const p=document.getElementById('popup');if(p)p.classList.remove('on');A.tab({t:d.t})},
+  popx(){const p=document.getElementById('popup');if(p)p.classList.remove('on')},
   tab(d){ui.tab=d.t;if(ui.sheet&&ui.sheet.kind==='mais'){ui.sheet=null;renderSheet()}render();window.scrollTo(0,0)},
   mais(){ui.sheet={kind:'mais'};renderSheet()},
   logout(){logout()},
