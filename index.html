@@ -429,6 +429,7 @@ const S={clientes:{},vendas:{},lentes:{},config:{}};
 const ui={tab:'painel',month:todayStr().slice(0,7),sel:todayStr(),vFilter:'todas',vPer:'todas',vQuery:'',cQuery:'',cFilter:'todos',lQuery:'',lTipo:'',cx:'hoje',cxFrom:'',cxTo:'',sheet:null,draft:null,cdraft:null,confirm:''};
 let ready=false,loadFail=false,syncState='load';
 let auth='loading',gateKey='',gateNote='',fails=0,last=Date.now();
+const ADM_MODE=/^\/adm(\/|$)/.test(location.pathname);
 let SESSION=null,OTICA=null,authChecked=false,chan=null,ROLE='dono',IS_ADMIN=false;
 const $=s=>document.querySelector(s);
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
@@ -526,7 +527,7 @@ async function applyBrand(o){
   gateKey='';
   try{await pwaBrand(o,c1,c2)}catch(e){}
 }
-const brandNome=()=>(OTICA&&OTICA.nome)||(PRE&&PRE.nome)||'';
+const brandNome=()=>ADM_MODE?'Adm Óticas':((OTICA&&OTICA.nome)||(PRE&&PRE.nome)||'');
 let PRE=null;
 function tenantSlug(){
   try{const q=new URLSearchParams(location.search).get('o');if(q){localStorage.setItem('otica-slug',q);return q.toLowerCase()}}catch(e){}
@@ -544,7 +545,7 @@ function computeAuth(){
 }
 function gateHtml(){
   const nm=brandNome();
-  const head='<div class="gate-card"><div class="gate-brand">'+(LOGO_B?'<img class="logo lg-b" src="'+LOGO_B+'" alt="'+esc(nm)+'"><img class="logo lg-w" src="'+LOGO_W+'" alt="'+esc(nm)+'">':'<h2>'+esc(nm||'Cobranças')+'</h2>')+'<p class="sub">Sistema de cobranças</p></div>';
+  const head='<div class="gate-card"><div class="gate-brand">'+(LOGO_B?'<img class="logo lg-b" src="'+LOGO_B+'" alt="'+esc(nm)+'"><img class="logo lg-w" src="'+LOGO_W+'" alt="'+esc(nm)+'">':'<h2>'+esc(nm||'Cobranças')+'</h2>')+'<p class="sub">'+(ADM_MODE?'Controle geral das óticas':'Sistema de cobranças')+'</p></div>';
   if(auth==='loading')return head+'<p class="sub" style="text-align:center">Carregando...</p></div>';
   if(auth==='error')return head+'<p class="sub">Não foi possível conectar aos seus dados. Confira a internet e tente de novo.</p><button class="btn primary" data-act="reload">Tentar de novo</button></div>';
   return head+'<form data-gate="login" class="stack" autocomplete="on"><h2>Entrar</h2>'+(gateNote?'<p class="hint">'+esc(gateNote)+'</p>':'')+
@@ -567,7 +568,11 @@ async function entrar(session){
     sb.from('membros').select('papel,ativo,oticas(*)').eq('user_id',session.user.id).eq('ativo',true),
     sb.rpc('sou_admin')
   ]);
-  IS_ADMIN=!!(ar&&ar.data===true);
+  IS_ADMIN=ADM_MODE&&!!(ar&&ar.data===true);
+  if(ADM_MODE){
+    if(!IS_ADMIN){await sb.auth.signOut();SESSION=null;authChecked=true;gateNote='Esta conta não tem acesso à administração.';gateKey='';render();return}
+    OTICA=null;ROLE='admin';ui.tab='admin';last=Date.now();gateNote='';gateKey='';ready=true;syncState='cloud';render();return;
+  }
   const ms=((mr&&mr.data)||[]).filter(m=>m.oticas);
   const ts=tenantSlug();
   const pick=ms.find(m=>m.oticas.ativa&&(m.oticas.slug===ts||(m.oticas.dominios||[]).includes(ts)))||ms.find(m=>m.oticas.ativa)||ms[0];
@@ -1798,7 +1803,12 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&ui.sheet)closeSheet
 (async function init(){
   render();
   if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});
-  try{
+  if(ADM_MODE){
+    PRE={nome:'Adm Óticas',cor1:'#475569',cor2:'#1B222C'};await applyBrand(PRE);
+    const ml=document.querySelector('link[rel=manifest]');if(ml)ml.href='/adm.webmanifest';
+    const al=document.querySelector('link[rel=apple-touch-icon]');if(al)al.href='/icons/adm-apple-touch-icon.png';
+    const at=document.querySelector('meta[name=apple-mobile-web-app-title]');if(at)at.content='Adm Óticas';
+  }else try{
     const slug=tenantSlug();
     if(slug){const m=await sb.rpc('marca',{p:slug});if(m.data&&m.data.length){PRE=m.data[0];await applyBrand(PRE)}}
   }catch(e){}

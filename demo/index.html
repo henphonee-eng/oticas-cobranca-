@@ -444,6 +444,7 @@ const S={clientes:{},vendas:{},lentes:{},config:{}};
 const ui={tab:'painel',month:todayStr().slice(0,7),sel:todayStr(),vFilter:'todas',vPer:'todas',vQuery:'',cQuery:'',cFilter:'todos',lQuery:'',lTipo:'',cx:'hoje',cxFrom:'',cxTo:'',sheet:null,draft:null,cdraft:null,confirm:''};
 let ready=true,loadFail=false,syncState='demo';const DEMO=true;
 let auth='loading',gateKey='',gateNote='',fails=0,last=Date.now();
+const ADM_MODE=/^\/adm(\/|$)/.test(location.pathname);
 let SESSION={user:{email:'demonstração'}},OTICA={id:'demo',nome:'Sua Ótica Aqui',cor2:'#1B222C'},authChecked=true,chan=null,ROLE='dono',IS_ADMIN=false;
 const $=s=>document.querySelector(s);
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
