@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#00348A">
+<meta name="theme-color" content="#5A14B8">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <title>Demonstração · Sistema de cobranças para óticas</title>
@@ -274,6 +274,11 @@ details[open] summary{margin-bottom:10px}
 .side-cta{display:none}
 @media (min-width:900px){.side-cta{display:inline-flex;justify-content:center}}
 .demo-note .btn{align-self:flex-start;margin-top:6px}
+/* Paleta da demonstração: rosa vibrante e violeta profundo */
+:root{--bg:#F9F3FD;--surface:#FFFFFF;--surface-2:#F0E4FA;--fg:#220F38;--muted:#6F5A88;--line:#E5D3F4;--accent:#7A1FD1;--accent-fg:#FFFFFF;--accent-soft:#F0DFFC;--brand-1:#E0309B;--brand-2:#5A14B8;--bar-a:#7A1FD1;--bar-b:#F06BC0;--shadow:0 1px 2px rgba(60,10,110,.08),0 10px 28px rgba(60,10,110,.16)}
+:root[data-theme="light"]{--bg:#F9F3FD;--surface:#FFFFFF;--surface-2:#F0E4FA;--fg:#220F38;--muted:#6F5A88;--line:#E5D3F4;--accent:#7A1FD1;--accent-fg:#FFFFFF;--accent-soft:#F0DFFC;--brand-1:#E0309B;--brand-2:#5A14B8;--bar-a:#7A1FD1;--bar-b:#F06BC0}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#150A22;--surface:#201035;--surface-2:#2E1949;--fg:#F5ECFC;--muted:#BBA6D6;--line:#43296A;--accent:#D69BFF;--accent-fg:#1D0A33;--accent-soft:#35194F;--brand-1:#D6288F;--brand-2:#4A0FA0;--bar-a:#B76BF5;--bar-b:#FF8AD0}}
+:root[data-theme="dark"]{--bg:#150A22;--surface:#201035;--surface-2:#2E1949;--fg:#F5ECFC;--muted:#BBA6D6;--line:#43296A;--accent:#D69BFF;--accent-fg:#1D0A33;--accent-soft:#35194F;--brand-1:#D6288F;--brand-2:#4A0FA0;--bar-a:#B76BF5;--bar-b:#FF8AD0}
 </style>
 
 </head>
