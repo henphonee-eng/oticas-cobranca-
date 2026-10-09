@@ -862,6 +862,7 @@ const ICON={
   prosp:I('<circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/>'),
   crm:I('<rect x="3.5" y="4.5" width="5" height="15" rx="1.5"/><rect x="9.5" y="4.5" width="5" height="10" rx="1.5"/><rect x="15.5" y="4.5" width="5" height="6" rx="1.5"/>'),
   aguard:I('<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>'),
+  os:I('<path d="M7 3h8l4 4v14H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/>'),
   entregas:I('<path d="M4 8l8-4 8 4v8l-8 4-8-4z"/><path d="M4 8l8 4 8-4M12 12v8"/>'),
   financeiro:I('<path d="M4 19V9M10 19V5M16 19v-7M21 19H3"/>'),
   metas:I('<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="0.8"/>'),
@@ -871,7 +872,7 @@ const ICON={
   sair:I('<path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4M15 8l4 4-4 4M19 12H9"/>')
 };
 const GLASSES='<svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11.5" cy="23" r="7"/><circle cx="28.5" cy="23" r="7"/><path d="M18.5 22c1-1.3 2-1.3 3 0M4.5 21 7 12M35.5 21 33 12"/></svg>';
-const TABS=[['painel','Painel'],['agenda','Agenda'],['vendas','Vendas'],['clientes','Clientes'],['cobrar','Cobrar'],['aguard','Aguardando'],['entregas','Follow-up'],['relacao','Relacionamento'],['caixa','Caixa'],['lentes','Lentes'],['ajustes','Ajustes']];
+const TABS=[['painel','Painel'],['agenda','Agenda'],['vendas','Vendas'],['clientes','Clientes'],['cobrar','Cobrar'],['aguard','Aguardando'],['entregas','Follow-up'],['os','Ordens de serviço'],['relacao','Relacionamento'],['caixa','Caixa'],['lentes','Lentes'],['ajustes','Ajustes']];
 const ADMTAB=['admin','Administração'];
 const MENSTAB=['mensal','Mensalidades'];
 const PROSPTABS=[['prosp','Prospecção'],['crm','CRM']];
@@ -882,7 +883,7 @@ function tabsVis(){
   if(IS_ADMIN)t=t.concat([ADMTAB,MENSTAB],PROSPTABS);
   return t;
 }
-function viewTab(){const k=ui.tab;return k==='painel'?viewPainel():k==='agenda'?viewAgenda():k==='vendas'?viewVendas():k==='aguard'?viewAguard():k==='entregas'?viewFollow():k==='clientes'?viewClientes():k==='cobrar'?viewCobrar():k==='relacao'?viewRelacao():k==='caixa'?viewCaixa():k==='lentes'?viewLentes():k==='admin'?viewAdmin():k==='mensal'?viewMensal():(k==='financeiro'||k==='metas'||k==='campanhas'||k==='premium')?premView(k):viewAjustes()}
+function viewTab(){const k=ui.tab;return k==='painel'?viewPainel():k==='agenda'?viewAgenda():k==='vendas'?viewVendas():k==='aguard'?viewAguard():k==='entregas'?viewFollow():k==='os'?viewOS():k==='clientes'?viewClientes():k==='cobrar'?viewCobrar():k==='relacao'?viewRelacao():k==='caixa'?viewCaixa():k==='lentes'?viewLentes():k==='admin'?viewAdmin():k==='mensal'?viewMensal():(k==='financeiro'||k==='metas'||k==='campanhas'||k==='premium')?premView(k):viewAjustes()}
 let deferredInstall=null;
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;if(auth==='ok')render()});
 const demoTag=o=>o&&o.exemplo?'<span class="demo">exemplo</span>':'';
@@ -1351,16 +1352,16 @@ function viewFollow(){
   const an=aniversariantes(7),rv=revisoes(),bv=bvPend(),mp=fupPend(),mf=Object.values(fupDoc().itens).filter(x=>x.feitoEm).sort((a,b)=>b.feitoEm.localeCompare(a.feitoEm)).slice(0,5);
   const bvRow=c=>'<article class="row"><div class="row-main"><button class="link" data-act="editcliente" data-c="'+c.id+'">'+esc(c.nome)+demoTag(c)+'</button><div class="meta">Cadastrado em '+fmtDate(new Date(c.criadoEm).toISOString().slice(0,10))+'</div><div class="chips"><span class="chip warn">Boas-vindas pendente</span></div></div><div class="row-side"><div class="acts"><a class="btn sm wa"'+WAT+' data-contact="bv" data-c="'+c.id+'" href="'+esc(waLink(c.whatsapp,fillTpl(tpl('cadastro'),ctx(null,null,c))))+'">Enviar boas-vindas</a></div></div></article>';
   const S_=[
-   ['manual','Meus follow-ups',mp.length,'<div class="stack">'+(mp.length?mp.map(fupRow).join(''):none('Nenhum follow-up manual pendente. Use o botão Novo follow-up para anotar o que não pode esquecer.'))+(mf.length?'<p class="sub" style="margin:10px 0 4px">Feitos recentemente</p>'+mf.map(fupRow).join(''):'')+'</div>'],
-   ['entregas','Entregas',pend.length,'<p class="sub" style="margin:0 0 8px">Use "Avisar que chegou" quando o óculos chegar e "Entregue e agradecer" depois da retirada. As duas mensagens são opcionais.'+(semData?' Para acompanhar uma venda antiga, abra a venda e informe a data prevista.':'')+'</p><div class="stack">'+(pend.length?pend.map(v=>entRow(v,false)).join(''):none('Nenhuma entrega marcada. Ao cadastrar uma venda, informe a data de entrega.'))+'</div>'+(feitas.length?'<p class="sub" style="margin:10px 0 4px">Entregues</p><div class="stack">'+feitas.map(v=>entRow(v,true)).join('')+'</div>':'')],
    ['boasvindas','Boas-vindas',bv.length,'<p class="sub" style="margin:0 0 8px">Clientes cadastrados nos últimos 30 dias que ainda não receberam a mensagem de boas-vindas.</p><div class="stack">'+(bv.length?bv.map(bvRow).join(''):none('Nenhuma boas-vindas pendente.'))+'</div>'],
+   ['entregas','Entregas',pend.length,'<p class="sub" style="margin:0 0 8px">Use "Avisar que chegou" quando o óculos chegar e "Entregue e agradecer" depois da retirada. As duas mensagens são opcionais.'+(semData?' Para acompanhar uma venda antiga, abra a venda e informe a data prevista.':'')+'</p><div class="stack">'+(pend.length?pend.map(v=>entRow(v,false)).join(''):none('Nenhuma entrega marcada. Ao cadastrar uma venda, informe a data de entrega.'))+'</div>'+(feitas.length?'<p class="sub" style="margin:10px 0 4px">Entregues</p><div class="stack">'+feitas.map(v=>entRow(v,true)).join('')+'</div>':'')],
    ['cobrar','Cobranças',late.length+soon.length,'<div class="stack">'+(late.length?'<p class="sub" style="margin:0">Em atraso</p>'+late.map(x=>pRow(x)).join(''):'')+(soon.length?'<p class="sub" style="margin:8px 0 0">Vencem em até 3 dias</p>'+soon.map(x=>pRow(x)).join(''):'')+(late.length||soon.length?'':none('Tudo em dia por aqui.'))+'</div>'],
    ['aniversarios','Aniversários',an.length,'<div class="stack">'+(an.length?an.map(R.aniRow).join(''):none('Nenhum aniversário nos próximos 7 dias.'))+'</div>'],
-   ['revisao','Revisão do grau',rv.length,'<p class="sub" style="margin:0 0 8px">Clientes com 11 meses ou mais desde a última compra ou receita.</p><div class="stack">'+(rv.length?rv.slice(0,30).map(R.revRow).join(''):none('Nenhum cliente para revisão agora.'))+'</div>']
+   ['revisao','Revisão do grau',rv.length,'<p class="sub" style="margin:0 0 8px">Clientes com 11 meses ou mais desde a última compra ou receita.</p><div class="stack">'+(rv.length?rv.slice(0,30).map(R.revRow).join(''):none('Nenhum cliente para revisão agora.'))+'</div>'],
+   ['manual','Meus follow-ups',mp.length,'<div class="stack">'+(mp.length?mp.map(fupRow).join(''):none('Nenhum follow-up manual pendente. Use o botão Novo follow-up para anotar o que não pode esquecer.'))+(mf.length?'<p class="sub" style="margin:10px 0 4px">Feitos recentemente</p>'+mf.map(fupRow).join(''):'')+'</div>']
   ];
-  const pesq=premFuPesq();if(pesq)S_.push(['pesquisa','Avaliação do cliente',pesq.n,pesq.html]);
+  const pesq=premFuPesq();if(pesq)S_.splice(2,0,['pesquisa','Avaliação do cliente',pesq.n,pesq.html]);
   const chips=[['todos','Todos']].concat(S_.map(x=>[x[0],x[1]+(x[2]?' ('+x[2]+')':'')]));
-  return pageHead('Follow-up','Tudo o que precisa de contato com o cliente, em um lugar só','<button class="btn primary" data-act="fupnovo">Novo follow-up</button>')+
+  return pageHead('Follow-up','Na ordem do atendimento: boas-vindas, entrega, avaliação, cobrança e relacionamento','<button class="btn primary" data-act="fupnovo">Novo follow-up</button>')+
   '<div class="filters">'+chips.map(c=>'<button class="fchip" data-act="fusec" data-f="'+c[0]+'" aria-pressed="'+(sec===c[0])+'">'+esc(c[1])+'</button>').join('')+'</div>'+
   S_.filter(x=>sec==='todos'||sec===x[0]).map(x=>'<div class="panel" style="margin-bottom:16px"><div class="sh" style="margin-top:0"><h2>'+x[1]+'</h2><span class="sub num">'+x[2]+'</span></div>'+x[3]+'</div>').join('');
 }
@@ -1753,7 +1754,9 @@ function baixarPdf(id){
 /* ---------- OS (ordem de serviço) ---------- */
 const osNum=x=>{const n=parseFloat(String(x||'').replace(',','.'));return isNaN(n)?null:n};
 const osFmt=n=>(n>0?'+':'')+n.toFixed(2).replace('.',',');
-function osNumero(v){const ids=Object.values(S.vendas).sort((a,b)=>String(a.data||'').localeCompare(String(b.data||''))||(+a.criadoEm||0)-(+b.criadoEm||0)||a.id.localeCompare(b.id)).map(x=>x.id);return String(ids.indexOf(v.id)+1).padStart(4,'0')}
+function osSubj(id){if(String(id).startsWith('c:')){const c=S.clientes[id.slice(2)];return c?{id:id,clienteId:c.id,itens:[],os:c.os,_c:c}:null}return S.vendas[id]}
+function osNumero(v){if(v._c){let m=0;Object.values(S.vendas).concat(Object.values(S.clientes)).forEach(x=>{const n=parseInt(x.os&&x.os.num,10);if(n>m)m=n});return String(m+1).padStart(4,'0')}
+  const ids=Object.values(S.vendas).sort((a,b)=>String(a.data||'').localeCompare(String(b.data||''))||(+a.criadoEm||0)-(+b.criadoEm||0)||a.id.localeCompare(b.id)).map(x=>x.id);return String(ids.indexOf(v.id)+1).padStart(4,'0')}
 function osBase(v){
   if(v.os)return JSON.parse(JSON.stringify(v.os));
   const c=S.clientes[v.clienteId]||{};const r=(c.receitas||[]).filter(x=>!receitaVazia(x)).sort((a,b)=>(b.data||'').localeCompare(a.data||''))[0];
@@ -1769,7 +1772,7 @@ function osBase(v){
   return o;
 }
 function sheetOS(id){
-  const v=S.vendas[id];if(!v)return null;const c=S.clientes[v.clienteId]||{nome:'Cliente removido'};
+  const v=osSubj(id);if(!v)return null;const c=S.clientes[v.clienteId]||{nome:'Cliente removido'};
   if(!ui.os||ui.os._v!==id){ui.os=osBase(v);ui.os._v=id}
   const D=ui.os;
   const f=(p,lab,ph)=>'<input type="text" data-os="'+p+'" value="'+esc(p.split('.').reduce((o,k)=>o&&o[k],D)||'')+'" aria-label="'+lab+'" placeholder="'+(ph||'')+'">';
@@ -1807,12 +1810,32 @@ function osBlob(v){
   return doc.output('blob');
 }
 function osGerar(id,imprimir){
-  const v=S.vendas[id];if(!v)return;
+  const v=osSubj(id);if(!v)return;
   if(!window.jspdf){toast('O gerador de PDF não carregou. Recarregue a página.');return}
-  if(ui.os&&ui.os._v===id){const o=JSON.parse(JSON.stringify(ui.os));delete o._v;v.os=o;persist('vendas',v.id)}
+  if(ui.os&&ui.os._v===id){const o=JSON.parse(JSON.stringify(ui.os));delete o._v;v.os=o;if(v._c){v._c.os=o;persist('clientes',v._c.id)}else persist('vendas',v.id)}
   const blob=osBlob(v);const cli=S.clientes[v.clienteId]||{};
   if(imprimir){const url=URL.createObjectURL(blob);const w=window.open(url,'_blank');setTimeout(()=>URL.revokeObjectURL(url),60000);if(w){toast('OS aberta para imprimir');return}}
   saveFile('OS_'+slug(cli.nome||'cliente')+'_'+(v.os&&v.os.num||'')+'.pdf',blob,'PDF da OS pronto');
+}
+/* ---------- aba Ordens de serviço ---------- */
+function osClientes(){
+  const q=(ui.osQ||'').trim().toLowerCase();
+  return Object.values(S.clientes).map(c=>{const r=(c.receitas||[]).filter(x=>!receitaVazia(x)).sort((a,b)=>(b.data||'').localeCompare(a.data||''))[0];return r?{c:c,r:r}:null}).filter(x=>x&&(!q||x.c.nome.toLowerCase().includes(q))).sort((a,b)=>a.c.nome.localeCompare(b.c.nome));
+}
+function osLista(){
+  const l=osClientes();
+  if(!l.length)return '<div class="empty">'+GLASSES+'<h3>Nenhum cliente com grau cadastrado</h3><p>Cadastre o grau na ficha do cliente (receita) para poder imprimir a ordem de serviço aqui.</p></div>';
+  const g=(o)=>{o=o||{};return [o.esf,o.cil,o.eixo].filter(Boolean).join(' / ')||'-'};
+  return '<div class="gridlist">'+l.map(x=>'<div class="card"><div class="sale-top"><button class="link" data-act="editcliente" data-c="'+x.c.id+'">'+esc(x.c.nome)+demoTag(x.c)+'</button>'+(x.c.os?'<span class="chip ok">OS '+esc(x.c.os.num||'')+'</span>':'')+'</div>'+
+    '<div class="meta">Receita de '+fmtDate(x.r.data)+(x.r.medico?' · '+esc(x.r.medico):'')+'</div>'+
+    '<div class="meta num">OD '+esc(g(x.r.od))+' · OE '+esc(g(x.r.oe))+(x.r.adicao?' · Adição '+esc(x.r.adicao):'')+'</div>'+
+    '<div class="acts" style="justify-content:flex-start"><button class="btn sm primary" data-act="osabrir" data-v="c:'+x.c.id+'">Imprimir OS</button><button class="btn sm" data-act="osbaixar" data-v="c:'+x.c.id+'">Baixar PDF</button></div></div>').join('')+'</div>';
+}
+function viewOS(){
+  const n=Object.values(S.clientes).filter(c=>(c.receitas||[]).some(r=>!receitaVazia(r))).length;
+  return pageHead('Ordens de serviço',plural(n,'cliente com grau cadastrado','clientes com grau cadastrado'))+
+  '<p class="sub" style="margin-bottom:12px">Aqui aparecem os clientes que têm grau na receita. Toque em Imprimir OS para conferir os dados, ajustar o que precisar e imprimir.</p>'+
+  '<div class="field" style="margin-bottom:14px;max-width:420px"><input id="q-os" type="search" placeholder="Buscar cliente" value="'+esc(ui.osQ||'')+'" aria-label="Buscar cliente"></div><div id="oslist">'+osLista()+'</div>';
 }
 const csvCell=x=>'"'+String(x==null?'':x).replace(/"/g,'""')+'"';
 const csvText=rows=>'﻿'+rows.map(r=>r.map(csvCell).join(';')).join('\r\n');
@@ -2012,6 +2035,7 @@ function markContact(d){
 Object.assign(A,{
   osabrir(d){ui.os=null;ui.sheet={kind:'os',id:d.v};renderSheet()},
   osimprimir(d){osGerar(d.v,true)},
+  osbaixar(d){const v=osSubj(d.v);if(!v)return;ui.os=osBase(v);ui.os._v=d.v;osGerar(d.v,false)},
   ospdf(d){osGerar(d.v,false)}
 });
 Object.assign(A,{
@@ -2050,6 +2074,7 @@ function onField(e){
   if(t.dataset.item!==undefined&&ui.draft){ui.draft.itens[+t.dataset.item][t.dataset.f]=t.value;updateVenda()}
   if(ch&&t.dataset.lente!==undefined&&ui.draft){const it=ui.draft.itens[+t.dataset.lente];const l=S.lentes[t.value];it.lenteId=l?l.id:'';it.nome=l?l.nome:'';it.valor=l?centsToStr(l.valor):'';renderItems();updateVenda()}
   if(t.id==='q-v'){ui.vQuery=t.value;$('#vlist').innerHTML=vendasList()}
+  if(t.id==='q-os'){if(ch)return;ui.osQ=t.value;$('#oslist').innerHTML=osLista();return}
   if(t.id==='q-c'){ui.cQuery=t.value;$('#clist').innerHTML=clientesList()}
   if(t.id==='q-l'){ui.lQuery=t.value;$('#llist').innerHTML=lentesList()}
   if(ch&&t.dataset.rel){ui.rmes=t.value;renderSheet()}
