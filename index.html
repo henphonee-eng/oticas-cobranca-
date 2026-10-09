@@ -304,6 +304,16 @@ button.kpi:hover{background:var(--surface-2)}
   .kpi b{font-size:28px}
   .kpi.lead b{font-size:34px}
 }
+.acc-h{display:flex;align-items:center;gap:10px;width:100%;padding:14px 16px;background:var(--surface);border:1px solid var(--line);border-radius:10px;text-align:left;cursor:pointer;min-height:52px}
+.acc-h:hover{border-color:var(--accent)}
+.acc-t{font-weight:600;flex:1}
+.acc-i{color:var(--muted);font-size:13px;font-variant-numeric:lining-nums tabular-nums}
+.acc-h svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .15s;flex:none;color:var(--muted)}
+.acc-h[aria-expanded=true] svg{transform:rotate(180deg)}
+.acc-b{margin-top:10px;display:flex;flex-direction:column;gap:16px}
+.mes-h{display:flex;justify-content:space-between;align-items:baseline;margin:2px 0 8px}
+.mes-h b{font-family:var(--f-display);font-size:17px;font-weight:500}
+.mes-h span{color:var(--muted);font-variant-numeric:lining-nums tabular-nums}
 </style>
 
 </head>
@@ -563,7 +573,7 @@ function ctx(v,p,cli){
 /* ---------- utilidades de UI ---------- */
 let tt;function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('on'),2800)}
 let raf=0;function scheduleRender(){cancelAnimationFrame(raf);raf=requestAnimationFrame(refresh)}
-function refresh(){render();if(auth==='ok'&&ui.sheet&&ui.sheet.kind==='venda')renderSheet()}
+function refresh(){render();if(auth==='ok'&&ui.sheet&&(ui.sheet.kind==='venda'||ui.sheet.kind==='cliente'))renderSheet()}
 const I=p=>'<svg viewBox="0 0 24 24">'+p+'</svg>';
 const ICON={
   painel:I('<rect x="3.5" y="3.5" width="7" height="8" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="5" rx="1.5"/><rect x="13.5" y="11.5" width="7" height="9" rx="1.5"/><rect x="3.5" y="14.5" width="7" height="6" rx="1.5"/>'),
@@ -989,6 +999,16 @@ function salvarVenda(){
 }
 
 /* cliente */
+function accHead(k,titulo,info,open){return '<button class="acc-h" type="button" data-act="cacc" data-k="'+k+'" aria-expanded="'+(open?'true':'false')+'"><span class="acc-t">'+titulo+'</span><span class="acc-i">'+info+'</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>'}
+function clienteBlocos(id,r,vs){
+  const open=ui.cacc||{};
+  const ab=allP().filter(x=>x.v.clienteId===id&&!x.p.pago).sort((a,b)=>a.p.venc.localeCompare(b.p.venc));
+  const meses=[];ab.forEach(x=>{const k=x.p.venc.slice(0,7);let m=meses.find(y=>y.k===k);if(!m){m={k:k,l:[]};meses.push(m)}m.l.push(x)});
+  const parc=meses.map(m=>'<div class="mes"><div class="mes-h"><b>'+cap(parseYmd(m.k+'-01').toLocaleDateString('pt-BR',{month:'long',year:'numeric'}))+'</b><span>'+brl(sumV(m.l))+'</span></div><div class="stack">'+m.l.map(x=>pRow(x,{sheet:true})).join('')+'</div></div>').join('');
+  return '<div class="sec"><h3>Resumo</h3><div class="tiles"><div class="tile"><small>Total comprado</small><b>'+brl(r.comprado)+'</b></div><div class="tile t-bad"><small>Em aberto</small><b>'+brl(r.aberto)+'</b></div></div></div>'+
+  '<div class="sec">'+accHead('parc','Parcelas em aberto',ab.length?plural(ab.length,'parcela','parcelas')+' · '+brl(sumV(ab)):'Nenhuma em aberto',open.parc)+(open.parc?'<div class="acc-b">'+(ab.length?parc:none('Este cliente não tem parcelas em aberto.'))+'</div>':'')+'</div>'+
+  '<div class="sec">'+accHead('comp','Compras',plural(vs.length,'compra','compras'),open.comp)+(open.comp?'<div class="acc-b"><div class="stack">'+(vs.length?vs.map(saleCard).join(''):none('Ainda não comprou.'))+'</div></div>':'')+'</div>';
+}
 function sheetCliente(id){
   const D=ui.cdraft;if(!D)return null;const editing=id&&S.clientes[id];
   const r=editing?clienteResumo(S.clientes[id]):null;
@@ -998,7 +1018,7 @@ function sheetCliente(id){
   '<div class="field"><span>Endereço</span><input type="text" data-cbind="endereco" value="'+esc(D.endereco)+'" placeholder="Rua, número, bairro, cidade"></div>'+
   '<div class="field"><span>Data de nascimento</span><input type="date" data-cbind="nascimento" value="'+esc(D.nascimento)+'"></div>'+
   '<div class="field"><span>Observações</span><textarea data-cbind="obs" placeholder="Preferências, receita, combinados">'+esc(D.obs)+'</textarea></div></div>'+
-  (editing?'<div class="sec"><h3>Histórico de compras</h3><div class="tiles"><div class="tile"><small>Total comprado</small><b>'+brl(r.comprado)+'</b></div><div class="tile t-bad"><small>Em aberto</small><b>'+brl(r.aberto)+'</b></div></div><div class="stack">'+(vs.length?vs.map(saleCard).join(''):none('Ainda não comprou.'))+'</div></div>':'');
+  (editing?clienteBlocos(id,r,vs):'');
   const foot='<button class="btn primary" data-act="salvarcliente">'+(editing?'Salvar alterações':'Cadastrar cliente')+'</button>'+(editing?'<div class="foot-row"><button class="btn" data-act="novavenda" data-c="'+id+'">Nova venda</button>'+(vs.length?'':'<button class="btn danger'+(ui.confirm===id?' armed':'')+'" data-act="delcliente" data-c="'+id+'">'+(ui.confirm===id?'Toque de novo para excluir':'Excluir cliente')+'</button>')+'</div>'+(vs.length?'<p class="sub">Clientes com vendas não podem ser excluídos.</p>':''):'');
   return sheetShell(editing?'Ficha do cliente':'Novo cliente',body,foot);
 }
@@ -1138,7 +1158,8 @@ const A={
   vfilter(d){ui.vFilter=d.f;render()},vper(d){ui.vPer=d.f;render()},cfilter(d){ui.cFilter=d.f;render()},cxper(d){ui.cx=d.f;render()},ltipo(d){ui.lTipo=d.f;render()},
   exportvendas(){exportVendas()},exportcaixa(){exportCaixa()},
   novocliente(){ui.cdraft={nome:'',cpf:'',whatsapp:'',endereco:'',nascimento:'',obs:''};ui.sheet={kind:'cliente',id:''};renderSheet()},
-  editcliente(d){const c=S.clientes[d.c];if(!c)return;ui.cdraft={nome:c.nome,cpf:c.cpf,whatsapp:c.whatsapp,endereco:c.endereco,nascimento:c.nascimento||'',obs:c.obs||''};ui.confirm='';ui.sheet={kind:'cliente',id:c.id};renderSheet()},
+  editcliente(d){const c=S.clientes[d.c];if(!c)return;ui.cdraft={nome:c.nome,cpf:c.cpf,whatsapp:c.whatsapp,endereco:c.endereco,nascimento:c.nascimento||'',obs:c.obs||''};ui.confirm='';ui.cacc={};ui.sheet={kind:'cliente',id:c.id};renderSheet()},
+  cacc(d){ui.cacc=Object.assign({},ui.cacc);ui.cacc[d.k]=!ui.cacc[d.k];renderSheet()},
   salvarcliente(){
     const D=ui.cdraft;if(!D.nome.trim()){toast('Informe o nome do cliente');return}
     if(digits(D.whatsapp).length<10){toast('Informe o WhatsApp com DDD');return}
