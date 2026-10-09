@@ -638,6 +638,19 @@ html.vh .mbars{filter:blur(6px)}
 .aovivo{color:var(--ok);font-weight:600;font-size:12.5px}
 html.adm .aovivo{color:#2E7D1E}
 @media (max-width:520px){.mv{grid-template-columns:minmax(0,1fr) auto;gap:4px 10px}.mv-t{grid-column:1;grid-row:1;justify-self:start}.mv-q{grid-column:2;grid-row:1;justify-self:end}.mv-d{grid-column:1;grid-row:2}.mv-v{grid-column:2;grid-row:2;justify-self:end}}
+
+.secs{display:flex;flex-direction:column;gap:12px;margin-top:22px}
+.sec-h{display:flex;align-items:center;gap:12px;width:100%;padding:14px 18px;background:var(--surface);border:1px solid var(--line);border-radius:14px;text-align:left;cursor:pointer;min-height:56px;color:var(--fg);font:inherit}
+.sec-t{font-weight:600;font-size:16px;flex:1;min-width:0}
+.sec-i{color:var(--muted);font-size:13.5px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.sec-h svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none;transition:transform .15s;color:var(--muted)}
+.sec-h.on svg{transform:rotate(180deg)}
+.sec-h.alerta .sec-i{color:var(--bad);font-weight:600}
+.sec-b{margin-top:10px}
+html.adm .sec-h{border:1px solid var(--edge);box-shadow:var(--drop);border-radius:22px}
+html.adm .sec-h.on{background:var(--lime);color:#191A23}
+html.adm .sec-h.on .sec-i,html.adm .sec-h.on svg{color:#191A23}
+html.adm .sec-h.alerta:not(.on){box-shadow:0 5px 0 var(--bad)}
 </style>
 <script>if(/^\/adm(\/|$)/.test(location.pathname)){document.documentElement.classList.add('adm');var q=function(x){return document.querySelector(x)};if(q('link[rel=manifest]'))q('link[rel=manifest]').href='/adm.webmanifest';if(q('link[rel=apple-touch-icon]'))q('link[rel=apple-touch-icon]').href='/icons/adm-apple-touch-icon.png';if(q('meta[name=apple-mobile-web-app-title]'))q('meta[name=apple-mobile-web-app-title]').content='Adm Óticas';if(q('meta[name=theme-color]'))q('meta[name=theme-color]').content='#191A23';document.title='Adm Óticas';var f=document.createElement('link');f.rel='stylesheet';f.href='https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap';document.head.appendChild(f)}</script>
 
@@ -2789,20 +2802,28 @@ function viewAdmin(){
     Object.keys(ADMDEF).map(k=>'<div class="card"><div class="field"><span>'+ADMLABEL[k]+'</span><textarea data-admcfg="'+k+'">'+esc(admTpl(k))+'</textarea></div><div><button class="btn sm ghost" data-act="admtplreset" data-k="'+k+'">Restaurar texto padrão</button></div></div>').join('')+'</div></details>';
   return pageHead('Adm Óticas','Controle geral das óticas clientes','<button class="btn primary" data-act="admnova">Nova ótica</button>')+
   (ADM.err?'<p class="hint bad" role="alert">'+esc(ADM.err)+'</p>':'')+kp+
-  (ADM.loaded?'<div class="cols"><div class="panel"><div class="sh"><h2>Cobranças em atraso</h2><span class="sub num">'+brl(sum(late))+'</span></div><div class="stack">'+(late.length?late.map(admCobRow).join(''):none('Nenhuma ótica em atraso.'))+'</div></div>'+
-    '<div class="panel"><div class="sh"><h2>Vencem em até 7 dias</h2><span class="sub num">'+brl(sum(prox))+'</span></div><div class="stack">'+(prox.length?prox.map(admCobRow).join(''):none('Nada vencendo nos próximos dias.'))+'</div></div></div>':'')+
-  (ADM.loaded?admMov()+admRecorrente()+admFunil()+'<div class="sh"><h2>Avisos no celular</h2></div>'+pushCard():'')+
+  (ADM.loaded?'<div class="secs">'+admSec('atraso','Cobranças em atraso',late.length?plural(late.length,'cobrança','cobranças')+' · '+brl(sum(late)):'Nenhuma',late.length>0,'<div class="stack">'+(late.length?late.map(admCobRow).join(''):none('Nenhuma ótica em atraso.'))+'</div>')+
+    admSec('prox','Vencem em até 7 dias',prox.length?plural(prox.length,'cobrança','cobranças')+' · '+brl(sum(prox)):'Nada vencendo',false,'<div class="stack">'+(prox.length?prox.map(admCobRow).join(''):none('Nada vencendo nos próximos dias.'))+'</div>')+
+    admMov()+'</div>':'')+
+  (ADM.loaded?admRecorrente()+admFunil()+'<div class="sh"><h2>Avisos no celular</h2></div>'+pushCard():'')+
   '<div class="sh"><h2>Óticas</h2></div>'+
   (!ADM.loaded?none('Carregando...'):ADM.list.length?'<div class="gridlist">'+ADM.list.map(admCard).join('')+'</div>':'<div class="empty">'+GLASSES+'<h3>Nenhuma ótica cadastrada</h3><p>Toque em Nova ótica para cadastrar a primeira.</p></div>')+(ADM.loaded?msgs:'');
 }
 
 
 /* ---------- saúde de cada ótica ---------- */
+/* seções que ficam fechadas e abrem com um toque (lembra o que você deixou aberto) */
+const SECA={};try{Object.assign(SECA,JSON.parse(localStorage.getItem('adm-secoes')||'{}'))}catch(e){}
+function admSec(k,titulo,info,alerta,corpo){
+  const ab=!!SECA[k];
+  return '<div class="sec-ab"><button type="button" class="sec-h'+(ab?' on':'')+(alerta?' alerta':'')+'" data-act="admsec" data-k="'+k+'" aria-expanded="'+ab+'"><span class="sec-t">'+titulo+'</span><span class="sec-i">'+info+'</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>'+(ab?'<div class="sec-b">'+corpo+'</div>':'')+'</div>';
+}
 function quandoFoi(iso){const m=Math.floor((Date.now()-new Date(iso).getTime())/60000);if(m<1)return 'agora';if(m<60)return 'há '+m+' min';const h=Math.floor(m/60);if(h<24)return 'há '+h+' h';const d=Math.floor(h/24);return d===1?'ontem':'há '+d+' dias'}
 function admMov(){
   const L=ADM.mov||[];
-  return '<div class="sh"><h2>Movimentações das óticas</h2><span class="sub">'+(vivoOn?'<span class="aovivo">● ao vivo</span>':'')+'</span></div>'+
-    (L.length?'<div class="card movs">'+L.map(m=>'<div class="mv"><span class="mv-t chip '+(m.tipo==='Nova venda'?'ok':m.tipo==='Orçamento'?'warn':'')+'">'+m.tipo+'</span><span class="mv-d"><b>'+esc(admOtica(m.otica_id).nome)+'</b>'+(m.nome?' · '+esc(m.nome):'')+'</span><span class="mv-v num">'+(m.valor?brl(m.valor):'')+'</span><span class="mv-q meta">'+quandoFoi(m.em)+'</span></div>').join('')+'</div>':none('Quando as óticas registrarem vendas e clientes, aparece aqui na hora.'));
+  const hoje=L.filter(m=>new Date(m.em).toDateString()===new Date().toDateString()).length;
+  return admSec('mov','Movimentações das óticas',(vivoOn?'<span class="aovivo">●</span> ':'')+(hoje?plural(hoje,'hoje','hoje'):'nenhuma hoje'),false,
+    (L.length?'<div class="card movs">'+L.map(m=>'<div class="mv"><span class="mv-t chip '+(m.tipo==='Nova venda'?'ok':m.tipo==='Orçamento'?'warn':'')+'">'+m.tipo+'</span><span class="mv-d"><b>'+esc(admOtica(m.otica_id).nome)+'</b>'+(m.nome?' · '+esc(m.nome):'')+'</span><span class="mv-v num">'+(m.valor?brl(m.valor):'')+'</span><span class="mv-q meta">'+quandoFoi(m.em)+'</span></div>').join('')+'</div>':none('Quando as óticas registrarem vendas e clientes, aparece aqui na hora.')));
 }
 setInterval(()=>{if(IS_ADMIN&&ui.tab==='admin'&&!admEditando()&&document.querySelector('.movs'))render()},60000);
 function admSaude(o){
@@ -3092,6 +3113,7 @@ Object.assign(A,{
   admcopy(d){const o=ADM.list.find(x=>x.id===d.id);if(o)copiar(admLink(o),'Link copiado')},
   admcopycred(){const c=ADM.cred;if(!c)return;const o=ADM.list.find(x=>x.id===c.id)||{nome:c.nome,dominios:[]};copiar(fillTpl(admTpl('boasvindas'),Object.assign(admCtx(o,null,c.senha),{link:c.link,email:c.email,otica:c.nome})),'Mensagem copiada')},
   async admbaixa(d,b){const c=(ADM.cobAll||ADM.cob).find(x=>x.id===d.id);if(!c)return;const pago=!c.pago;if(pago)confeteDe(b);const r=await sb.from('adm_cobrancas').update({pago:pago,pago_em:pago?todayStr():null}).eq('id',c.id);if(r.error){toast('Não foi possível salvar: '+errTxt(r.error));return}c.pago=pago;c.pago_em=pago?todayStr():null;if(pago&&c.tipo==='implementacao'){try{await admGerar()}catch(e){toast('Não foi possível criar as mensalidades: '+errTxt(e))}}render();toast(pago?'Pagamento registrado':'Baixa desfeita')},
+  admsec(d){SECA[d.k]=!SECA[d.k];try{localStorage.setItem('adm-secoes',JSON.stringify(SECA))}catch(e){}render()},
   pushon(){pushLigar()},
   async sitpix(){const c=sitPix();try{await navigator.clipboard.writeText(c);toast('Pix copiado. Cole no app do seu banco.')}catch(e){prompt('Copie o Pix:',c)}},
   async sitcheck(){await sitCheck();toast(sitBloq()?'Ainda não consta o pagamento. Se já pagou, envie o comprovante.':'Tudo certo, acesso liberado!')},
