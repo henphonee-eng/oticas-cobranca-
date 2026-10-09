@@ -604,7 +604,7 @@ async function logout(msg,silent){
 setInterval(()=>{if(auth!=='ok')return;const m=+cfg().autolock;if(m>0&&Date.now()-last>m*60000)logout('Sessão encerrada por inatividade.')},20000);
 
 /* ---------- modelo ---------- */
-function makeCliente(o){return {id:uid(),nome:String(o.nome||'').trim(),cpf:maskCpf(o.cpf),whatsapp:maskTel(o.whatsapp),endereco:String(o.endereco||'').trim(),nascimento:o.nascimento||'',obs:String(o.obs||'').trim(),criadoEm:Date.now(),bvEm:null}}
+function makeCliente(o){return {receitas:(o.receitas||[]).filter(r=>!receitaVazia(r)),id:uid(),nome:String(o.nome||'').trim(),cpf:maskCpf(o.cpf),whatsapp:maskTel(o.whatsapp),endereco:String(o.endereco||'').trim(),nascimento:o.nascimento||'',obs:String(o.obs||'').trim(),criadoEm:Date.now(),bvEm:null}}
 const cpfDup=(cpf,exceptId)=>{const d=digits(cpf);if(d.length!==11)return null;return Object.values(S.clientes).find(c=>c.id!==exceptId&&digits(c.cpf)===d)||null};
 function makeVenda(clienteId,d){
   const c=calcVenda(d.itens,d.jurosVenda,d.entrada);
@@ -1049,7 +1049,7 @@ function sheetVenda(id){
 
 /* nova venda / editar venda */
 const newItem=tipo=>({tipo:tipo,nome:'',qtd:'1',valor:'',juros:'',lenteId:''});
-function newDraft(cid){return {editId:'',clienteId:cid||(Object.keys(S.clientes).length?'':'__novo'),novo:{nome:'',cpf:'',whatsapp:'',endereco:''},itens:[newItem('produto')],jurosVenda:'',entrada:'',formaEntrada:'Pix',n:'3',primeira:addMonths(todayStr(),1),forma:'Pix',data:todayStr(),obs:''}}
+function newDraft(cid){return {editId:'',clienteId:cid||(Object.keys(S.clientes).length?'':'__novo'),novo:{nome:'',cpf:'',whatsapp:'',endereco:'',receitas:[blankReceita()]},itens:[newItem('produto')],jurosVenda:'',entrada:'',formaEntrada:'Pix',n:'3',primeira:addMonths(todayStr(),1),forma:'Pix',data:todayStr(),obs:''}}
 function editDraft(v){
   const par=v.parcelas.filter(p=>p.tipo==='parcela');const pct=x=>x?String(x).replace('.',','):'';const ent=v.parcelas.find(p=>p.tipo==='entrada');
   return {editId:v.id,clienteId:v.clienteId,novo:{nome:'',cpf:'',whatsapp:'',endereco:''},
@@ -1062,7 +1062,8 @@ function sheetNova(){
   '<div class="sec"><h3>Cliente</h3><div class="field"><span>Quem está comprando</span><select id="f-cli" data-bind="clienteId"><option value="">Escolha o cliente</option>'+cs.map(c=>'<option value="'+c.id+'"'+(D.clienteId===c.id?' selected':'')+'>'+esc(c.nome)+'</option>').join('')+'<option value="__novo"'+(D.clienteId==='__novo'?' selected':'')+'>+ Cadastrar novo cliente</option></select></div>'+
   '<div id="novo-cli" class="sec"'+(D.clienteId==='__novo'?'':' hidden')+'><div class="field"><span>Nome completo</span><input type="text" data-bind="novo.nome" value="'+esc(D.novo.nome)+'" autocomplete="off"></div>'+
   '<div class="grid2"><div class="field"><span>CPF</span><input type="text" inputmode="numeric" data-mask="cpf" data-bind="novo.cpf" value="'+esc(D.novo.cpf)+'" placeholder="000.000.000-00"><span class="hint"></span></div><div class="field"><span>WhatsApp com DDD</span><input type="text" inputmode="tel" data-mask="tel" data-bind="novo.whatsapp" value="'+esc(D.novo.whatsapp)+'" placeholder="(81) 99999-9999"></div></div>'+
-  '<div class="field"><span>Endereço</span><input type="text" data-bind="novo.endereco" value="'+esc(D.novo.endereco)+'" placeholder="Rua, número, bairro, cidade"></div></div></div>'+
+  '<div class="field"><span>Endereço</span><input type="text" data-bind="novo.endereco" value="'+esc(D.novo.endereco)+'" placeholder="Rua, número, bairro, cidade"></div>'+
+  '<details><summary>Grau do cliente (opcional)</summary><div style="margin-top:10px">'+receitaForm((D.novo.receitas||(D.novo.receitas=[blankReceita()]))[0],0,'bind','novo.receitas.',false)+'</div></details></div></div>'+
   '<div class="sec"><h3>Itens da venda</h3><div id="items" class="stack"></div><div class="foot-row"><button class="btn" data-act="additem" data-t="produto">+ Produto</button><button class="btn" data-act="additem" data-t="lente">+ Lente</button></div>'+
   '<div class="field"><span>Juros sobre o total da venda (%), opcional</span><input type="text" inputmode="decimal" data-bind="jurosVenda" value="'+esc(D.jurosVenda)+'" placeholder="0"></div></div>'+
   '<div class="sec"><h3>Pagamento</h3><div class="field"><span>Forma de cobrança das parcelas</span><div class="seg" role="radiogroup" aria-label="Forma de cobrança"><label><input type="radio" name="forma" value="Pix" data-bind="forma"'+(D.forma==='Pix'?' checked':'')+'><span>Pix</span></label><label><input type="radio" name="forma" value="Boleto" data-bind="forma"'+(D.forma==='Boleto'?' checked':'')+'><span>Boleto</span></label></div></div>'+
@@ -1131,16 +1132,21 @@ function salvarVenda(){
 function accHead(k,titulo,info,open){return '<button class="acc-h" type="button" data-act="cacc" data-k="'+k+'" aria-expanded="'+(open?'true':'false')+'"><span class="acc-t">'+titulo+'</span><span class="acc-i">'+info+'</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>'}
 const ultimaReceitaD=D=>(D.receitas||[]).reduce((m,r)=>r.data&&r.data>m?r.data:m,'');
 const rxGet=(r,p)=>p.split('.').reduce((o,k)=>o&&o[k],r)||'';
-function receitasHtml(D){
-  const inp=(i,p,ph,lab)=>'<input type="text" inputmode="decimal" data-cbind="receitas.'+i+'.'+p+'" value="'+esc(rxGet(D.receitas[i],p))+'" placeholder="'+ph+'" aria-label="'+lab+'">';
-  const list=D.receitas.map((r,i)=>'<div class="rx"><div class="grid2"><div class="field"><span>Data da receita</span><input type="date" data-cbind="receitas.'+i+'.data" value="'+esc(r.data||'')+'"></div><div class="field"><span>Médico ou clínica</span><input type="text" data-cbind="receitas.'+i+'.medico" value="'+esc(r.medico||'')+'"></div></div>'+
+const blankReceita=()=>({data:todayStr(),medico:'',od:{esf:'',cil:'',eixo:''},oe:{esf:'',cil:'',eixo:''},adicao:'',dnp:'',obs:''});
+function receitaVazia(r){return !(r.medico||r.obs||r.adicao||r.dnp||['od','oe'].some(k=>r[k]&&(r[k].esf||r[k].cil||r[k].eixo)))}
+function receitaForm(r,i,AT,PRE,rm){
+  const n=p=>'data-'+AT+'="'+PRE+i+'.'+p+'"';
+  const inp=(p,ph,lab)=>'<input type="text" inputmode="decimal" '+n(p)+' value="'+esc(rxGet(r,p))+'" placeholder="'+ph+'" aria-label="'+lab+'">';
+  return '<div class="rx"><div class="grid2"><div class="field"><span>Data da receita</span><input type="date" '+n('data')+' value="'+esc(r.data||'')+'"></div><div class="field"><span>Médico ou clínica</span><input type="text" '+n('medico')+' value="'+esc(r.medico||'')+'"></div></div>'+
     '<div class="rx-grid"><span></span><b>Esférico</b><b>Cilíndrico</b><b>Eixo</b>'+
-    '<span class="rx-eye" title="Olho direito">OD</span>'+inp(i,'od.esf','-1,00','OD esférico')+inp(i,'od.cil','-0,50','OD cilíndrico')+inp(i,'od.eixo','90','OD eixo')+
-    '<span class="rx-eye" title="Olho esquerdo">OE</span>'+inp(i,'oe.esf','-1,00','OE esférico')+inp(i,'oe.cil','-0,50','OE cilíndrico')+inp(i,'oe.eixo','90','OE eixo')+'</div>'+
-    '<div class="grid2"><div class="field"><span>Adição (perto)</span>'+inp(i,'adicao','+2,00','Adição')+'</div><div class="field"><span>DNP</span>'+inp(i,'dnp','31 / 31','DNP')+'</div></div>'+
-    '<div class="field"><span>Observações da receita</span><textarea data-cbind="receitas.'+i+'.obs">'+esc(r.obs||'')+'</textarea></div>'+
-    '<div><button class="btn sm danger" type="button" data-act="rmreceita" data-i="'+i+'">Remover esta receita</button></div></div>').join('');
-  return '<p class="sub" style="margin:0">OD é o olho direito e OE é o olho esquerdo. Depois de preencher, toque em Salvar alterações.</p>'+list+'<div><button class="btn sm" type="button" data-act="addreceita">Adicionar receita</button></div>';
+    '<span class="rx-eye" title="Olho direito">OD</span>'+inp('od.esf','-1,00','OD esférico')+inp('od.cil','-0,50','OD cilíndrico')+inp('od.eixo','90','OD eixo')+
+    '<span class="rx-eye" title="Olho esquerdo">OE</span>'+inp('oe.esf','-1,00','OE esférico')+inp('oe.cil','-0,50','OE cilíndrico')+inp('oe.eixo','90','OE eixo')+'</div>'+
+    '<div class="grid2"><div class="field"><span>Adição (perto)</span>'+inp('adicao','+2,00','Adição')+'</div><div class="field"><span>DNP</span>'+inp('dnp','31 / 31','DNP')+'</div></div>'+
+    '<div class="field"><span>Observações da receita</span><textarea '+n('obs')+'>'+esc(r.obs||'')+'</textarea></div>'+
+    (rm?'<div><button class="btn sm danger" type="button" data-act="rmreceita" data-i="'+i+'">Remover esta receita</button></div>':'')+'</div>';
+}
+function receitasHtml(D){
+  return '<p class="sub" style="margin:0">OD é o olho direito e OE é o olho esquerdo. Depois de preencher, toque em Salvar.</p>'+D.receitas.map((r,i)=>receitaForm(r,i,'cbind','receitas.',true)).join('')+'<div><button class="btn sm" type="button" data-act="addreceita">Adicionar receita</button></div>';
 }
 function clienteBlocos(id,r,vs){
   const D=ui.cdraft;
@@ -1162,8 +1168,8 @@ function sheetCliente(id){
   '<div class="field"><span>Endereço</span><input type="text" data-cbind="endereco" value="'+esc(D.endereco)+'" placeholder="Rua, número, bairro, cidade"></div>'+
   '<div class="field"><span>Data de nascimento</span><input type="date" data-cbind="nascimento" value="'+esc(D.nascimento)+'"></div>'+
   '<div class="field"><span>Observações</span><textarea data-cbind="obs" placeholder="Preferências, receita, combinados">'+esc(D.obs)+'</textarea></div></div>'+
-  (editing?clienteBlocos(id,r,vs):'');
-  const foot='<button class="btn primary" data-act="salvarcliente">'+(editing?'Salvar alterações':'Cadastrar cliente')+'</button>'+(editing?'<div class="foot-row"><button class="btn" data-act="novavenda" data-c="'+id+'">Nova venda</button>'+(vs.length?'':'<button class="btn danger'+(ui.confirm===id?' armed':'')+'" data-act="delcliente" data-c="'+id+'">'+(ui.confirm===id?'Toque de novo para excluir':'Excluir cliente')+'</button>')+'</div>'+(vs.length?'<p class="sub">Clientes com vendas não podem ser excluídos.</p>':''):'');
+  (editing?clienteBlocos(id,r,vs):'<div class="sec"><h3>Grau do cliente (opcional)</h3>'+receitasHtml(D)+'</div>');
+  const foot='<button class="btn primary" data-act="salvarcliente">'+(editing?'Salvar alterações':'Cadastrar cliente')+'</button>'+(editing?'':'<button class="btn" data-act="salvarclientevenda">Cadastrar e registrar a venda</button>')+(editing?'<div class="foot-row"><button class="btn" data-act="novavenda" data-c="'+id+'">Nova venda</button>'+(vs.length?'':'<button class="btn danger'+(ui.confirm===id?' armed':'')+'" data-act="delcliente" data-c="'+id+'">'+(ui.confirm===id?'Toque de novo para excluir':'Excluir cliente')+'</button>')+'</div>'+(vs.length?'<p class="sub">Clientes com vendas não podem ser excluídos.</p>':''):'');
   return sheetShell(editing?'Ficha do cliente':'Novo cliente',body,foot);
 }
 function reciboDados(vid,i){const v=S.vendas[vid];if(!v)return null;const p=v.parcelas[+i];if(!p||!p.pago)return null;return {v:v,p:p,i:+i,c:S.clientes[v.clienteId]||{nome:'Cliente removido',whatsapp:'',cpf:''}}}
@@ -1415,18 +1421,19 @@ const A={
   delvenda(d){if(ui.confirm!==d.v){ui.confirm=d.v;renderSheet();return}delete S.vendas[d.v];persist('vendas',d.v);ui.confirm='';closeSheet();refresh();toast('Venda excluída')},
   vfilter(d){ui.vFilter=d.f;render()},vper(d){ui.vPer=d.f;render()},cfilter(d){ui.cFilter=d.f;render()},cxper(d){ui.cx=d.f;render()},ltipo(d){ui.lTipo=d.f;render()},
   exportvendas(){exportVendas()},exportcaixa(){exportCaixa()},
-  novocliente(){ui.cdraft={nome:'',cpf:'',whatsapp:'',endereco:'',nascimento:'',obs:'',receitas:[]};ui.sheet={kind:'cliente',id:''};renderSheet()},
+  novocliente(){ui.cdraft={nome:'',cpf:'',whatsapp:'',endereco:'',nascimento:'',obs:'',receitas:[blankReceita()]};ui.cacc={};ui.sheet={kind:'cliente',id:''};renderSheet()},
   editcliente(d){const c=S.clientes[d.c];if(!c)return;ui.cdraft={nome:c.nome,cpf:c.cpf,whatsapp:c.whatsapp,endereco:c.endereco,nascimento:c.nascimento||'',obs:c.obs||'',receitas:JSON.parse(JSON.stringify(c.receitas||[]))};ui.confirm='';ui.cacc={};ui.sheet={kind:'cliente',id:c.id};renderSheet()},
-  addreceita(){const D=ui.cdraft;D.receitas=D.receitas||[];D.receitas.unshift({data:todayStr(),medico:'',od:{esf:'',cil:'',eixo:''},oe:{esf:'',cil:'',eixo:''},adicao:'',dnp:'',obs:''});ui.cacc=Object.assign({},ui.cacc,{rec:true});renderSheet()},
+  addreceita(){const D=ui.cdraft;D.receitas=D.receitas||[];D.receitas.unshift(blankReceita());ui.cacc=Object.assign({},ui.cacc,{rec:true});renderSheet()},
   rmreceita(d){ui.cdraft.receitas.splice(+d.i,1);renderSheet()},
   cacc(d){ui.cacc=Object.assign({},ui.cacc);ui.cacc[d.k]=!ui.cacc[d.k];renderSheet()},
   salvarcliente(){
     const D=ui.cdraft;if(!D.nome.trim()){toast('Informe o nome do cliente');return}
     if(digits(D.whatsapp).length<10){toast('Informe o WhatsApp com DDD');return}
     const id=ui.sheet.id;const dup=cpfDup(D.cpf,id);if(dup){toast('Já existe cliente com este CPF: '+dup.nome);return}
-    if(id&&S.clientes[id]){Object.assign(S.clientes[id],{nome:D.nome.trim(),cpf:maskCpf(D.cpf),whatsapp:maskTel(D.whatsapp),endereco:D.endereco.trim(),nascimento:D.nascimento||'',obs:D.obs.trim(),receitas:(D.receitas||[]).filter(r=>r.data||r.medico||r.obs||['od','oe'].some(k=>r[k]&&(r[k].esf||r[k].cil||r[k].eixo))||r.adicao||r.dnp)});persist('clientes',id);ui.sheet=null;ui.cdraft=null;renderSheet();refresh();toast('Cliente atualizado')}
+    if(id&&S.clientes[id]){Object.assign(S.clientes[id],{nome:D.nome.trim(),cpf:maskCpf(D.cpf),whatsapp:maskTel(D.whatsapp),endereco:D.endereco.trim(),nascimento:D.nascimento||'',obs:D.obs.trim(),receitas:(D.receitas||[]).filter(r=>!receitaVazia(r))});persist('clientes',id);ui.sheet=null;ui.cdraft=null;renderSheet();refresh();toast('Cliente atualizado')}
     else{const c=makeCliente(D);S.clientes[c.id]=c;persist('clientes',c.id);ui.cdraft=null;ui.sheet={kind:'cliente-ok',id:c.id};render();renderSheet()}
   },
+  salvarclientevenda(){A.salvarcliente();if(ui.sheet&&ui.sheet.kind==='cliente-ok')openNova(ui.sheet.id)},
   delcliente(d){if(ui.confirm!==d.c){ui.confirm=d.c;renderSheet();return}delete S.clientes[d.c];persist('clientes',d.c);ui.confirm='';closeSheet();refresh();toast('Cliente excluído')},
   addlente(){
     const nome=$('#ln-nome').value.trim(),valor=parseMoney($('#ln-valor').value),tipo=$('#ln-tipo').value.trim();
