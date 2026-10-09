@@ -380,6 +380,7 @@ input[type=color]{padding:2px;height:42px;width:100%;cursor:pointer}
 .kpis.k3 .kpi span{font-size:11.5px}
 .kpi b.c-acc{color:var(--accent)}.kpi b.c-ok{color:var(--ok)}
 @media (min-width:600px){.kpis.k3 .kpi{padding:16px 18px 14px}.kpis.k3 .kpi small{font-size:13px}.kpis.k3 .kpi b{font-size:26px}.kpis.k3 .kpi span{font-size:12.5px}}
+.hintbtn{display:block;width:100%;text-align:left;background:var(--warn-bg);color:var(--warn);border:0;border-radius:8px;padding:9px 12px;font:inherit;font-size:13.5px;font-weight:600;cursor:pointer}
 </style>
 
 </head>
@@ -1179,7 +1180,7 @@ function sheetNova(){
   '<div class="grid2"><div class="field"><span>Parcelas</span><input type="number" min="0" max="36" inputmode="numeric" data-bind="n" value="'+esc(D.n)+'"></div><div class="field"><span>Vencimento da 1ª parcela</span><input type="date" data-bind="primeira" value="'+esc(D.primeira)+'"></div></div>'+
   '<div class="field"><span>Observações (opcional)</span><textarea data-bind="obs" placeholder="Receita, prazo de entrega, combinados com o cliente">'+esc(D.obs)+'</textarea></div></div>'+
   '<div class="sec"><h3>Resumo</h3><div id="sum" class="sum"></div></div>';
-  const foot=(D.editId?'<p class="sub">Ao salvar, as parcelas são recalculadas. As que já foram recebidas continuam como recebidas.</p>':'')+'<div class="hint" id="vhint"></div><button class="btn primary" id="vsave" data-act="salvarvenda">'+(D.editId?'Salvar alterações':'Fechar venda')+'</button>';
+  const foot=(D.editId?'<p class="sub">Ao salvar, as parcelas são recalculadas. As que já foram recebidas continuam como recebidas.</p>':'')+'<button type="button" class="hintbtn" id="vhint" data-act="vfix" hidden></button><button class="btn primary" id="vsave" data-act="salvarvenda">'+(D.editId?'Salvar alterações':'Fechar venda')+'</button>';
   return sheetShell(D.editId?'Editar venda':'Nova venda',body,foot);
 }
 function renderItems(){
@@ -1194,19 +1195,19 @@ function renderItems(){
   }).join('')+((D.itens.some(i=>i.tipo==='lente')&&!ls.length)?'<p class="sub">Cadastre suas lentes na aba Lentes e volte aqui.</p>':'');
 }
 function draftState(){
-  const D=ui.draft;const errs=[];
-  if(D.clienteId==='__novo'){if(!D.novo.nome.trim())errs.push('Informe o nome do cliente');else if(digits(D.novo.whatsapp).length<10)errs.push('Informe o WhatsApp com DDD');else if(cpfDup(D.novo.cpf))errs.push('Já existe cliente com este CPF: '+cpfDup(D.novo.cpf).nome)}
-  else if(!D.clienteId)errs.push('Escolha o cliente');
+  const D=ui.draft;const errs=[],targets=[];const E=(m,sel)=>{errs.push(m);targets.push(sel||'')};
+  if(D.clienteId==='__novo'){if(!D.novo.nome.trim())E('Informe o nome do cliente','[data-bind="novo.nome"]');else if(digits(D.novo.whatsapp).length<10)E('Informe o WhatsApp com DDD','[data-bind="novo.whatsapp"]');else if(cpfDup(D.novo.cpf))E('Já existe cliente com este CPF: '+cpfDup(D.novo.cpf).nome,'[data-bind="novo.cpf"]')}
+  else if(!D.clienteId)E('Escolha o cliente','#f-cli');
   const itens=D.itens.map(it=>({tipo:it.tipo,nome:(it.nome||'').trim(),qtd:Math.max(1,parseInt(it.qtd,10)||1),valor:parseMoney(it.valor),juros:parsePct(it.juros),lenteId:it.lenteId||''}));
   if(!itens.length)errs.push('Adicione ao menos um item');
-  itens.forEach((it,i)=>{if(!it.nome)errs.push('Item '+(i+1)+': '+(it.tipo==='lente'?'escolha a lente':'informe o nome'));else if(it.valor<=0)errs.push('Item '+(i+1)+': informe o valor')});
+  itens.forEach((it,i)=>{if(!it.nome)E('Item '+(i+1)+': '+(it.tipo==='lente'?'escolha a lente':'informe o nome do produto'),it.tipo==='lente'?'[data-lente="'+i+'"]':'[data-item="'+i+'"][data-f="nome"]');else if(it.valor<=0)E('Item '+(i+1)+': informe o valor','[data-item="'+i+'"][data-f="valor"]')});
   const entradaIn=parseMoney(D.entrada);const c=calcVenda(itens,parsePct(D.jurosVenda),entradaIn);
   const n=Math.min(36,Math.max(0,parseInt(D.n,10)||0));
   if(c.total>0&&entradaIn>c.total)errs.push('A entrada é maior que o total');
   if(!/^\d{4}-\d{2}-\d{2}$/.test(D.data))errs.push('Informe a data da venda');
   if(c.saldo>0&&n<1)errs.push('Informe o número de parcelas');
   if(c.saldo>0&&!/^\d{4}-\d{2}-\d{2}$/.test(D.primeira))errs.push('Informe o vencimento da 1ª parcela');
-  return {errs:errs,itens:itens,c:c,n:n,parc:splitParcelas(c.saldo,n,D.primeira)};
+  return {errs:errs,targets:targets,itens:itens,c:c,n:n,parc:splitParcelas(c.saldo,n,D.primeira)};
 }
 function updateVenda(){
   if(!ui.draft||!$('#sum'))return;const st=draftState();const c=st.c;
@@ -1217,7 +1218,7 @@ function updateVenda(){
   h+='<div class="sum-row hl"><span>Saldo parcelado</span><span>'+(st.parc.length?st.parc.length+'x de '+brl(st.parc[0].valor):brl(c.saldo))+'</span></div>';
   if(st.parc.length){h+='<div class="meta">Vencimentos: '+st.parc.slice(0,4).map(p=>fmtShort(p.venc)).join(', ')+(st.parc.length>4?' ... '+fmtDate(st.parc[st.parc.length-1].venc):'')+'</div>';if(st.parc[st.parc.length-1].valor!==st.parc[0].valor)h+='<div class="meta">A última parcela leva a diferença dos centavos: '+brl(st.parc[st.parc.length-1].valor)+'</div>'}
   $('#sum').innerHTML=h;
-  $('#vhint').textContent=st.errs[0]||'';$('#vsave').disabled=st.errs.length>0;
+  ui.vTarget=st.targets[0]||'';const vh=$('#vhint');vh.textContent=st.errs.length?'Falta preencher: '+st.errs[0]+(st.errs.length>1?' (e mais '+(st.errs.length-1)+')':''):'';vh.hidden=!st.errs.length;$('#vsave').disabled=st.errs.length>0;
   const lbl=ui.draft.editId?'Salvar alterações':'Fechar venda';
   $('#vsave').textContent=st.errs.length?lbl:lbl+' de '+brl(c.total);
 }
@@ -1526,6 +1527,7 @@ const A={
   editvenda(d){const v=S.vendas[d.v];if(!v)return;ui.confirm='';ui.draft=editDraft(v);ui.sheet={kind:'nova',id:v.id};renderSheet()},
   additem(d){ui.draft.itens.push(newItem(d.t));renderItems();updateVenda()},
   rmitem(d){ui.draft.itens.splice(+d.i,1);renderItems();updateVenda()},
+  vfix(){const el=ui.vTarget&&document.querySelector('#layer '+ui.vTarget);if(el){el.scrollIntoView({block:'center',behavior:'smooth'});try{el.focus({preventScroll:true})}catch(e){}}},
   salvarvenda(){salvarVenda()},
   pdf(d){baixarPdf(d.v)},
   delvenda(d){if(ui.confirm!==d.v){ui.confirm=d.v;renderSheet();return}delete S.vendas[d.v];persist('vendas',d.v);ui.confirm='';closeSheet();refresh();toast('Venda excluída')},
