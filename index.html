@@ -359,25 +359,29 @@ const cfg=()=>Object.assign({nome:(OTICA&&OTICA.nome)||'Ótica',whatsapp:'',ende
 const tpl=k=>{const c=cfg();return (c.tpl&&c.tpl[k])||DEFAULT_TPL[k]};
 const isMobile=/Android|iPhone|iPad|iPod|Mobi/i.test(navigator.userAgent);
 const mqWide=window.matchMedia('(min-width:900px)');
-const waLink=(raw,text)=>{const n=waNumber(raw);return isMobile?'https://wa.me/'+n+'?text='+encodeURIComponent(text):'https://web.whatsapp.com/send?phone='+n+'&text='+encodeURIComponent(text)};
+const waLink=(raw,text)=>{const n=waNumber(raw);return isMobile?'whatsapp://send?phone='+n+'&text='+encodeURIComponent(text):'https://web.whatsapp.com/send?phone='+n+'&text='+encodeURIComponent(text)};
+const WAT=isMobile?'':' target="_blank" rel="noopener"';
 const pForma=(p,v)=>p.forma||v.forma;
 
 /* ---------- supabase ---------- */
 const SB_URL='https://ovynkeifzhavhjdkjjui.supabase.co',SB_KEY='sb_publishable_7RunIjZPQDCuWNSuPrD10w_Gy_lIUFl';
 const sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});
-const queues={};
+const queues={},pendingW={},recentW={};
 function saveLocal(){}
 function persist(col,id){
   if(!OTICA)return;
   const path=col+'/'+id;const oid=OTICA.id;
+  pendingW[path]=(pendingW[path]||0)+1;
   queues[path]=(queues[path]||Promise.resolve()).then(async()=>{
     const obj=S[col][id];
     try{
       let r;
+      if(obj){(recentW[path]=recentW[path]||[]).push({j:JSON.stringify(obj),t:Date.now()})}
       if(obj)r=await sb.from('docs').upsert({otica_id:oid,col:col,id:id,data:JSON.parse(JSON.stringify(obj))});
       else r=await sb.from('docs').delete().eq('otica_id',oid).eq('col',col).eq('id',id);
       if(r.error)throw r.error;
     }catch(e){toast('Não foi possível salvar na nuvem. Tente de novo.')}
+    pendingW[path]--;
   });
 }
 async function carregar(){
@@ -395,7 +399,14 @@ async function carregar(){
   if(ready&&!chan){
     chan=sb.channel('docs-'+OTICA.id).on('postgres_changes',{event:'*',schema:'public',table:'docs',filter:'otica_id=eq.'+OTICA.id},p=>{
       const row=p.eventType==='DELETE'?p.old:p.new;if(!row||!S[row.col])return;
-      if(p.eventType==='DELETE')delete S[row.col][row.id];else S[row.col][row.id]=JSON.parse(JSON.stringify(row.data));
+      const path=row.col+'/'+row.id;
+      if(p.eventType==='DELETE'){if(pendingW[path]>0)return;delete S[row.col][row.id]}
+      else{
+        const j=JSON.stringify(row.data),now=Date.now();
+        const rl=(recentW[path]||[]).filter(x=>now-x.t<30000);recentW[path]=rl;
+        if(pendingW[path]>0||rl.some(x=>x.j===j))return;
+        S[row.col][row.id]=JSON.parse(j);
+      }
       scheduleRender();
     }).subscribe(st=>{if(st==='SUBSCRIBED'){syncState='cloud'}else if(st==='CHANNEL_ERROR'||st==='TIMED_OUT'){syncState='local'}scheduleRender()});
   }
@@ -567,7 +578,7 @@ function pRow(x,o){
   }else meta=esc(pLabel(v,p))+' · '+fmtDate(p.venc)+' · '+esc(pForma(p,v));
   const baixa=p.pago?'<button class="btn sm ghost" data-act="baixa" data-v="'+v.id+'" data-p="'+i+'">Desfazer</button>':'<button class="btn sm ok" data-act="baixa" data-v="'+v.id+'" data-p="'+i+'">Recebido</button>';
   const kind=st==='atraso'?'atraso':'lembrete';
-  const wa=(!p.pago&&c.whatsapp)?'<a class="btn sm wa" target="_blank" rel="noopener" data-contact="p" data-v="'+v.id+'" data-pi="'+i+'" href="'+esc(waLink(c.whatsapp,fillTpl(tpl(kind),ctx(v,p,c))))+'">WhatsApp</a>':'';
+  const wa=(!p.pago&&c.whatsapp)?'<a class="btn sm wa"'+WAT+' data-contact="p" data-v="'+v.id+'" data-pi="'+i+'" href="'+esc(waLink(c.whatsapp,fillTpl(tpl(kind),ctx(v,p,c))))+'">WhatsApp</a>':'';
   return '<article class="row"><div class="row-main">'+title+'<div class="meta">'+meta+'</div><div class="chips">'+chip+contact+'</div></div><div class="row-side"><div class="amt">'+brl(p.valor)+'</div><div class="acts">'+wa+baixa+'</div></div></article>';
 }
 function recRow(x,showDate){
@@ -711,7 +722,7 @@ function clientesList(){
   if(!list.length)return '<div class="empty">'+GLASSES+'<h3>'+(Object.keys(S.clientes).length?'Nenhum cliente encontrado':'Nenhum cliente cadastrado')+'</h3><p>'+(Object.keys(S.clientes).length?'Confira os filtros e a busca.':'Cadastre pelo botão acima ou direto na hora de registrar uma venda.')+'</p></div>';
   return '<div class="gridlist">'+list.map(c=>{
     const r=clienteResumo(c);
-    const wa=c.whatsapp?'<a class="btn sm wa" target="_blank" rel="noopener" data-contact="bv" data-c="'+c.id+'" href="'+esc(waLink(c.whatsapp,fillTpl(tpl('cadastro'),ctx(null,null,c))))+'">'+(c.bvEm?'WhatsApp de novo':'Boas-vindas')+'</a>':'';
+    const wa=c.whatsapp?'<a class="btn sm wa"'+WAT+' data-contact="bv" data-c="'+c.id+'" href="'+esc(waLink(c.whatsapp,fillTpl(tpl('cadastro'),ctx(null,null,c))))+'">'+(c.bvEm?'WhatsApp de novo':'Boas-vindas')+'</a>':'';
     return '<div class="card"><div class="sale-top"><button class="link" data-act="editcliente" data-c="'+c.id+'">'+esc(c.nome)+demoTag(c)+'</button>'+(r.late?'<span class="chip bad">Em atraso</span>':r.aberto?'<span class="chip warn">Em aberto</span>':'')+'</div>'+
     '<div class="meta">'+esc(c.whatsapp||'Sem WhatsApp')+(c.cpf?' · CPF '+esc(c.cpf):'')+'</div>'+(c.endereco?'<div class="meta">'+esc(c.endereco)+'</div>':'')+
     '<div class="meta num">'+plural(r.vs.length,'compra','compras')+(r.comprado?' · '+brl(r.comprado):'')+(r.aberto?' · em aberto '+brl(r.aberto):'')+'</div>'+
@@ -851,7 +862,7 @@ function sheetVenda(id){
   '<div class="sec"><h3>Parcelas</h3><div class="stack">'+v.parcelas.map((p,i)=>pRow({v:v,p:p,i:i,c:c},{sheet:true})).join('')+'</div></div>'+
   '<div class="sec"><h3>Enviar ao cliente</h3><div class="foot-row"><button class="btn primary" data-act="pdf" data-v="'+v.id+'">Baixar PDF</button>'+(resumoHref?'<a class="btn wa" target="_blank" rel="noopener" href="'+resumoHref+'">Resumo no WhatsApp</a>':'')+'</div>'+
   '<p class="sub">O WhatsApp abre com a mensagem pronta. Para mandar o PDF, baixe o arquivo e anexe na conversa.</p>'+
-  ((c.whatsapp&&!c.bvEm&&S.clientes[v.clienteId])?'<div><a class="btn sm" target="_blank" rel="noopener" data-contact="bv" data-c="'+c.id+'" href="'+esc(waLink(c.whatsapp,fillTpl(tpl('cadastro'),ctx(null,null,c))))+'">Mensagem de boas-vindas</a></div>':'')+'</div>';
+  ((c.whatsapp&&!c.bvEm&&S.clientes[v.clienteId])?'<div><a class="btn sm"'+WAT+' data-contact="bv" data-c="'+c.id+'" href="'+esc(waLink(c.whatsapp,fillTpl(tpl('cadastro'),ctx(null,null,c))))+'">Mensagem de boas-vindas</a></div>':'')+'</div>';
   const foot='<div class="foot-row"><button class="btn" data-act="editvenda" data-v="'+v.id+'">Editar venda</button><button class="btn danger'+(ui.confirm===v.id?' armed':'')+'" data-act="delvenda" data-v="'+v.id+'">'+(ui.confirm===v.id?'Toque de novo para excluir':'Excluir venda')+'</button></div>';
   return sheetShell('Venda',body,foot);
 }
@@ -953,7 +964,7 @@ function sheetCliente(id){
 function sheetClienteOk(id){
   const c=S.clientes[id];if(!c)return null;
   const body='<div class="empty" style="border:0;background:none">'+GLASSES+'<h3>'+esc(c.nome)+' foi cadastrado</h3><p>Se quiser, abra o WhatsApp com a mensagem de boas-vindas pronta.</p></div>';
-  const foot=(c.whatsapp?'<a class="btn wa" target="_blank" rel="noopener" data-contact="bv" data-c="'+c.id+'" href="'+esc(waLink(c.whatsapp,fillTpl(tpl('cadastro'),ctx(null,null,c))))+'">Abrir WhatsApp</a>':'')+'<button class="btn primary" data-act="novavenda" data-c="'+c.id+'">Registrar uma venda</button><button class="btn" data-act="closesheet">Fechar</button>';
+  const foot=(c.whatsapp?'<a class="btn wa"'+WAT+' data-contact="bv" data-c="'+c.id+'" href="'+esc(waLink(c.whatsapp,fillTpl(tpl('cadastro'),ctx(null,null,c))))+'">Abrir WhatsApp</a>':'')+'<button class="btn primary" data-act="novavenda" data-c="'+c.id+'">Registrar uma venda</button><button class="btn" data-act="closesheet">Fechar</button>';
   return sheetShell('Cliente cadastrado',body,foot);
 }
 
@@ -1170,7 +1181,7 @@ function onField(e){
   if(t.id==='q-c'){ui.cQuery=t.value;$('#clist').innerHTML=clientesList()}
   if(t.id==='q-l'){ui.lQuery=t.value;$('#llist').innerHTML=lentesList()}
   if(ch&&t.dataset.cx){ui[t.dataset.cx]=t.value;render()}
-  if(ch&&t.dataset.cfg){const c=Object.assign({id:'otica'},S.config.otica||{});c[t.dataset.cfg]=t.dataset.cfg==='autolock'?+t.value:t.value.trim();S.config.otica=c;persist('config','otica');if(t.dataset.cfg!=='autolock')render();toast('Salvo')}
+  if(ch&&t.dataset.cfg){const c=Object.assign({id:'otica'},S.config.otica||{});c[t.dataset.cfg]=t.dataset.cfg==='autolock'?+t.value:t.value.trim();S.config.otica=c;persist('config','otica');toast('Salvo')}
   if(ch&&t.dataset.tpl){const c=Object.assign({id:'otica'},S.config.otica||{});c.tpl=Object.assign({},c.tpl);c.tpl[t.dataset.tpl]=t.value;S.config.otica=c;persist('config','otica');toast('Mensagem salva')}
   if(ch&&t.dataset.lid){const l=S.lentes[t.dataset.lid];if(l){if(t.dataset.lf==='nome'){if(t.value.trim())l.nome=t.value.trim()}else if(t.dataset.lf==='tipo'){l.tipo=t.value.trim()}else{const v=parseMoney(t.value);if(v>0)l.valor=v}persist('lentes',l.id);refresh()}}
   if(ch&&t.dataset.vencv){const v=S.vendas[t.dataset.vencv];if(v&&/^\d{4}-\d{2}-\d{2}$/.test(t.value)){v.parcelas[+t.dataset.vencp].venc=t.value;persist('vendas',v.id);refresh();toast('Vencimento alterado')}}
