@@ -741,10 +741,10 @@ const DEFAULT_TPL={
   aniversario:'Olá, {cliente}! A equipe da {otica} deseja a você um feliz aniversário, com muita saúde, alegria e um ano cheio de boas imagens. Um grande abraço!',
   revisao:'Olá, {cliente}! Aqui é da {otica}. Já faz {tempo} desde a sua última visita. Que tal revisar o seu grau e dar uma conferida nos seus óculos? É rápido e a gente cuida de você. Posso reservar um horário?',
   orcamento:'Olá, {cliente}! Aqui é da {otica}. Segue o orçamento que combinamos:\n\n{itens}\n\nTotal: {total}\nEntrada: {entrada}\n\nParcelas:\n{resumo}\n\n{pagamento}\nAssim que o pagamento for confirmado, fechamos a sua venda. Qualquer dúvida, é só chamar!',
-  entrega:'Olá, {cliente}! Aqui é da {otica}. Seu pedido já foi entregue. Muito obrigado pela confiança e por escolher a gente! Se precisar de qualquer ajuste ou tiver alguma dúvida, é só chamar por aqui. Foi um prazer atender você!',
+  entrega:'Olá, {cliente}! Aqui é da {otica}. Passando para agradecer pela sua compra e avisar que o seu pedido já foi entregue. Esperamos que você goste! Se precisar de qualquer ajuste ou tiver alguma dúvida, é só chamar por aqui. Foi um prazer atender você!',
   atraso:'Olá, {cliente}! Tudo bem? Aqui é da {otica}. A parcela {parcela}, de {valor}, venceu em {vencimento} e está em atraso há {dias}.{encargos} {pagamento} Se já pagou, pode nos enviar o comprovante. Obrigado!'
 };
-const TPL_LABEL={cadastro:'Boas-vindas ao cadastrar',venda:'Resumo da venda',orcamento:'Orçamento (aguardando pagamento)',lembrete:'Lembrete de vencimento',atraso:'Parcela em atraso',recibo:'Recibo de pagamento',aniversario:'Feliz aniversário',revisao:'Revisão do grau (1 ano depois)',entrega:'Agradecimento pela entrega'};
+const TPL_LABEL={cadastro:'Boas-vindas ao cadastrar',venda:'Resumo da venda',orcamento:'Orçamento (aguardando pagamento)',lembrete:'Lembrete de vencimento',atraso:'Parcela em atraso',recibo:'Recibo de pagamento',aniversario:'Feliz aniversário',revisao:'Revisão do grau (1 ano depois)',entrega:'Agradecimento pela compra (ao entregar)'};
 const S={clientes:{},vendas:{},lentes:{},config:{}};
 const ui={tab:'painel',month:todayStr().slice(0,7),sel:todayStr(),vFilter:'todas',vPer:'todas',vQuery:'',cQuery:'',cFilter:'todos',lQuery:'',lTipo:'',cx:'hoje',cxFrom:'',cxTo:'',sheet:null,draft:null,cdraft:null,confirm:''};
 let ready=true,loadFail=false,syncState='demo';const DEMO=true;
@@ -861,6 +861,7 @@ const ICON={
   prosp:I('<circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/>'),
   crm:I('<rect x="3.5" y="4.5" width="5" height="15" rx="1.5"/><rect x="9.5" y="4.5" width="5" height="10" rx="1.5"/><rect x="15.5" y="4.5" width="5" height="6" rx="1.5"/>'),
   aguard:I('<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>'),
+  entregas:I('<path d="M4 8l8-4 8 4v8l-8 4-8-4z"/><path d="M4 8l8 4 8-4M12 12v8"/>'),
   financeiro:I('<path d="M4 19V9M10 19V5M16 19v-7M21 19H3"/>'),
   metas:I('<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="0.8"/>'),
   campanhas:I('<path d="M4 11v3l11 4V7z"/><path d="M15 9.5a3 3 0 0 1 0 5M7 14.5v3.5"/>'),
@@ -869,7 +870,7 @@ const ICON={
   sair:I('<path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4M15 8l4 4-4 4M19 12H9"/>')
 };
 const GLASSES='<svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11.5" cy="23" r="7"/><circle cx="28.5" cy="23" r="7"/><path d="M18.5 22c1-1.3 2-1.3 3 0M4.5 21 7 12M35.5 21 33 12"/></svg>';
-const TABS=[['painel','Painel'],['agenda','Agenda'],['vendas','Vendas'],['clientes','Clientes'],['cobrar','Cobrar'],['aguard','Aguardando'],['relacao','Relacionamento'],['caixa','Caixa'],['lentes','Lentes'],['ajustes','Ajustes']];
+const TABS=[['painel','Painel'],['agenda','Agenda'],['vendas','Vendas'],['clientes','Clientes'],['cobrar','Cobrar'],['aguard','Aguardando'],['entregas','Entregas'],['relacao','Relacionamento'],['caixa','Caixa'],['lentes','Lentes'],['ajustes','Ajustes']];
 const ADMTAB=['admin','Administração'];
 const MENSTAB=['mensal','Mensalidades'];
 const PROSPTABS=[['prosp','Prospecção'],['crm','CRM']];
@@ -879,7 +880,7 @@ function tabsVis(){
   if(IS_ADMIN)t=t.concat([ADMTAB,MENSTAB],PROSPTABS);
   return t;
 }
-function viewTab(){const k=ui.tab;return k==='painel'?viewPainel():k==='agenda'?viewAgenda():k==='vendas'?viewVendas():k==='aguard'?viewAguard():k==='clientes'?viewClientes():k==='cobrar'?viewCobrar():k==='relacao'?viewRelacao():k==='caixa'?viewCaixa():k==='lentes'?viewLentes():k==='admin'?viewAdmin():k==='mensal'?viewMensal():(k==='financeiro'||k==='metas'||k==='campanhas'||k==='premium')?premView(k):viewAjustes()}
+function viewTab(){const k=ui.tab;return k==='painel'?viewPainel():k==='agenda'?viewAgenda():k==='vendas'?viewVendas():k==='aguard'?viewAguard():k==='entregas'?viewEntregas():k==='clientes'?viewClientes():k==='cobrar'?viewCobrar():k==='relacao'?viewRelacao():k==='caixa'?viewCaixa():k==='lentes'?viewLentes():k==='admin'?viewAdmin():k==='mensal'?viewMensal():(k==='financeiro'||k==='metas'||k==='campanhas'||k==='premium')?premView(k):viewAjustes()}
 let deferredInstall=null;
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;if(auth==='ok')render()});
 const demoTag=o=>o&&o.exemplo?'<span class="demo">exemplo</span>':'';
@@ -944,7 +945,7 @@ function render(){
   if(locked){if(ui.sheet){ui.sheet=null;ui.draft=null;renderSheet()}return}
   const late=lateCount();const wide=mqWide.matches;
   const tv=tabsVis();if(tv.length&&ui.tab!=='premium'&&!tv.some(x=>x[0]===ui.tab))ui.tab=tv[0][0];
-  const btn=t=>'<button class="tab" data-act="tab" data-t="'+t[0]+'"'+(ui.tab===t[0]?' aria-current="page"':'')+'>'+ICON[t[0]]+'<span>'+t[1]+'</span>'+premLock(t[0])+(t[0]==='cobrar'&&late?'<i class="badge">'+late+'</i>':'')+'</button>';
+  const btn=t=>'<button class="tab" data-act="tab" data-t="'+t[0]+'"'+(ui.tab===t[0]?' aria-current="page"':'')+'>'+ICON[t[0]]+'<span>'+t[1]+'</span>'+premLock(t[0])+(t[0]==='cobrar'&&late?'<i class="badge">'+late+'</i>':'')+(t[0]==='entregas'&&entAtras()?'<i class="badge">'+entAtras()+'</i>':'')+'</button>';
   $('#tabs').innerHTML=wide?tv.map(btn).join(''):tv.slice(0,5).map(btn).join('');
   const sv=avisos(),bb=$('#bell');
   if(bb){bb.className='bellbtn'+(sv.late?' bad ring':sv.hoje?' warn ring':'');bb.innerHTML=ICON.cobrar+'<span class="bl">Avisos</span>'+((sv.late+sv.hoje)?'<i class="badge">'+(sv.late+sv.hoje)+'</i>':'');bb.setAttribute('aria-label',sv.txt?'Atenção: '+sv.txt:'Sem avisos de cobrança');bb.title=sv.txt||'Sem avisos de cobrança'}
@@ -1283,15 +1284,40 @@ function renderSheet(){
 function closeSheet(){ui.sheet=null;ui.draft=null;ui.cdraft=null;ui.confirm='';renderSheet()}
 function sheetMais(){
   const late=lateCount();
-  const item=t=>'<button class="btn'+(ui.tab===t[0]?' primary':'')+'" data-act="tab" data-t="'+t[0]+'">'+ICON[t[0]]+'<span>'+t[1]+'</span>'+premLock(t[0])+(t[0]==='cobrar'&&late?'<i class="badge">'+late+'</i>':'')+(t[0]==='aguard'&&orcamentos().length?'<i class="badge">'+orcamentos().length+'</i>':'')+'</button>';
+  const item=t=>'<button class="btn'+(ui.tab===t[0]?' primary':'')+'" data-act="tab" data-t="'+t[0]+'">'+ICON[t[0]]+'<span>'+t[1]+'</span>'+premLock(t[0])+(t[0]==='cobrar'&&late?'<i class="badge">'+late+'</i>':'')+(t[0]==='aguard'&&orcamentos().length?'<i class="badge">'+orcamentos().length+'</i>':'')+(t[0]==='entregas'&&entAtras()?'<i class="badge">'+entAtras()+'</i>':'')+'</button>';
   return '<div class="scrim" data-act="closesheet"></div><section class="sheet drawer" role="dialog" aria-modal="true" aria-label="Menu" tabindex="-1"><div class="sheet-head"><h2>Menu</h2><button class="ib" data-act="closesheet" aria-label="Fechar">&#215;</button></div><div class="sheet-body"><div class="menu">'+tabsVis().map(item).join('')+(deferredInstall?'<button class="btn" data-act="instalar">'+ICON.painel+'<span>Instalar no celular</span></button>':'')+'</div></div></section>';
 }
 
+const entPend=()=>vendasOk().filter(v=>!v.entregueEm&&v.entregaPrev).sort((a,b)=>a.entregaPrev.localeCompare(b.entregaPrev));
+const entAtras=()=>{const t=todayStr();return entPend().filter(v=>v.entregaPrev<=t).length};
+function entRow(v,feito){
+  const c=S.clientes[v.clienteId]||{nome:'Cliente removido',whatsapp:''};const t=todayStr();
+  const href=c.whatsapp?esc(waLink(c.whatsapp,fillTpl(tpl('entrega'),ctx(v,null,c)))):'';
+  let chip;
+  if(feito)chip='<span class="chip ok">Entregue em '+fmtShort(v.entregueEm)+'</span>'+(v.agradEm?'<span class="chip acc">Agradecimento enviado</span>':'<span class="chip warn">Agradecimento pendente</span>');
+  else if(v.entregaPrev<t)chip='<span class="chip bad">Atrasada '+plural(diffDays(t,v.entregaPrev),'dia','dias')+'</span>';
+  else if(v.entregaPrev===t)chip='<span class="chip warn">Entregar hoje</span>';
+  else chip='<span class="chip">Em '+plural(diffDays(v.entregaPrev,t),'dia','dias')+'</span>';
+  const acts=feito?((href&&!v.agradEm)?'<a class="btn sm wa"'+WAT+' data-contact="ent" data-v="'+v.id+'" href="'+href+'">Agradecer</a>':'')+'<button class="btn sm ghost" data-act="desentregar" data-v="'+v.id+'">Desfazer</button>'
+    :(href?'<a class="btn sm wa"'+WAT+' data-contact="ent" data-v="'+v.id+'" href="'+href+'">Entregue e agradecer</a>':'')+'<button class="btn sm ok" data-act="entregar" data-v="'+v.id+'">Dar baixa</button>';
+  return '<article class="row"><div class="row-main"><button class="link" data-act="openvenda" data-v="'+v.id+'">'+esc(c.nome)+demoTag(v)+'</button><div class="meta">'+esc(itensTxt(v))+' · entrega '+fmtDate(v.entregaPrev||v.entregueEm)+'</div><div class="chips">'+chip+'</div></div><div class="row-side"><div class="acts">'+acts+'</div></div></article>';
+}
+function viewEntregas(){
+  const pend=entPend();
+  const feitas=vendasOk().filter(v=>v.entregueEm).sort((a,b)=>b.entregueEm.localeCompare(a.entregueEm)).slice(0,12);
+  const semData=vendasOk().filter(v=>!v.entregueEm&&!v.entregaPrev).length;
+  return pageHead('Entregas','Dê baixa quando o óculos for entregue e agradeça pela compra')+
+  '<p class="sub" style="margin-bottom:12px">A mensagem de agradecimento só sai quando você toca em "Entregue e agradecer". Aqui aparecem as vendas que têm data de entrega.'+(semData?' Para acompanhar uma venda antiga, abra a venda e informe a data prevista.':'')+'</p>'+
+  '<div class="cols"><div class="panel"><div class="sh" style="margin-top:0"><h2>Para entregar</h2><span class="sub num">'+pend.length+'</span></div><div class="stack">'+(pend.length?pend.map(v=>entRow(v,false)).join(''):none('Nenhuma entrega marcada. Ao cadastrar uma venda, informe a data de entrega.'))+'</div></div>'+
+  '<div class="panel"><div class="sh" style="margin-top:0"><h2>Entregues</h2></div><div class="stack">'+(feitas.length?feitas.map(v=>entRow(v,true)).join(''):none('Nada entregue ainda.'))+'</div></div></div>';
+}
+document.addEventListener('change',e=>{const t=e.target;if(!t||!t.dataset||t.dataset.entv===undefined)return;const v=S.vendas[t.dataset.entv];if(!v)return;
+  if(t.value)v.entregaPrev=t.value;else delete v.entregaPrev;persist('vendas',v.id);setTimeout(refresh,60);toast(t.value?'Data de entrega salva':'Data de entrega removida')});
 function entregaSec(v,c){
   const href=c.whatsapp?esc(waLink(c.whatsapp,fillTpl(tpl('entrega'),ctx(v,null,c)))):'';
   const wa=(txt)=>href?'<a class="btn wa"'+WAT+' data-contact="ent" data-v="'+v.id+'" href="'+href+'">'+txt+'</a>':'';
   if(v.entregueEm)return '<div class="sec"><h3>Entrega do produto</h3><div class="chips"><span class="chip ok">Entregue em '+fmtDate(v.entregueEm)+'</span>'+(v.agradEm?'<span class="chip acc">Agradecimento enviado em '+fmtShort(v.agradEm)+'</span>':'')+'</div><div class="foot-row">'+wa(v.agradEm?'Enviar agradecimento de novo':'Agradecer no WhatsApp')+'<button class="btn" data-act="desentregar" data-v="'+v.id+'">Desfazer entrega</button></div></div>';
-  return '<div class="sec"><h3>Entrega do produto</h3><p class="sub" style="margin:0">Quando o cliente retirar o produto, marque como entregue e mande a mensagem de agradecimento.</p><div class="foot-row">'+wa('Entregue: agradecer no WhatsApp')+'<button class="btn" data-act="entregar" data-v="'+v.id+'">Só marcar como entregue</button></div>'+(href?'':'<p class="hint">Sem WhatsApp cadastrado para enviar a mensagem.</p>')+'</div>';
+  return '<div class="sec"><h3>Entrega do produto</h3><div class="field"><span>Data prevista de entrega</span><input type="date" data-entv="'+v.id+'" value="'+esc(v.entregaPrev||'')+'"></div><p class="sub" style="margin:0">Quando o cliente retirar o produto, marque como entregue e mande a mensagem de agradecimento pela compra.</p><div class="foot-row">'+wa('Entregue: agradecer no WhatsApp')+'<button class="btn" data-act="entregar" data-v="'+v.id+'">Só marcar como entregue</button></div>'+(href?'':'<p class="hint">Sem WhatsApp cadastrado para enviar a mensagem.</p>')+'</div>';
 }
 function sheetVenda(id){
   const v=S.vendas[id];if(!v)return null;
@@ -1321,12 +1347,12 @@ const newItem=tipo=>({tipo:tipo,nome:'',qtd:'1',valor:'',juros:'',lenteId:''});
 const cliFalta=c=>{const f=[];if(digits(c.whatsapp||'').length<10)f.push('WhatsApp');if(digits(c.cpf||'').length<11)f.push('CPF');if(!String(c.endereco||'').trim())f.push('endereço');if(!String(c.nascimento||'').trim())f.push('data de nascimento');return f};
 const listaTxt=a=>a.length<2?a.join(''):a.slice(0,-1).join(', ')+' e '+a[a.length-1];
 const avisoFalta=c=>{const f=cliFalta(c);return f.length?'Falta preencher: '+listaTxt(f)+'. Você pode salvar assim e completar depois.':''};
-function newDraft(cid){return {editId:'',clienteId:cid||(Object.keys(S.clientes).length?'':'__novo'),novo:{nome:'',cpf:'',whatsapp:'',endereco:'',nascimento:'',receitas:[blankReceita()]},vendedorId:'',itens:[newItem('produto')],jurosVenda:'',entrada:'',formaEntrada:'Pix',n:'3',primeira:addMonths(todayStr(),1),forma:'Pix',data:todayStr(),obs:'',aguardando:false}}
+function newDraft(cid){return {editId:'',clienteId:cid||(Object.keys(S.clientes).length?'':'__novo'),novo:{nome:'',cpf:'',whatsapp:'',endereco:'',nascimento:'',receitas:[blankReceita()]},vendedorId:'',entrega:'',itens:[newItem('produto')],jurosVenda:'',entrada:'',formaEntrada:'Pix',n:'3',primeira:addMonths(todayStr(),1),forma:'Pix',data:todayStr(),obs:'',aguardando:false}}
 function editDraft(v){
   const par=v.parcelas.filter(p=>p.tipo==='parcela'&&p.parte!==2);const pct=x=>x?String(x).replace('.',','):'';const ent=v.parcelas.find(p=>p.tipo==='entrada');
   return {editId:v.id,clienteId:v.clienteId,novo:{nome:'',cpf:'',whatsapp:'',endereco:''},
     itens:v.itens.map(i=>({tipo:i.tipo,nome:i.nome,qtd:String(i.qtd),valor:centsToStr(i.valor),juros:pct(i.juros),lenteId:i.lenteId||''})),
-    jurosVenda:pct(v.jurosVenda),entrada:v.entrada?centsToStr(v.entrada):'',formaEntrada:(ent&&ent.forma)||'Pix',n:String(par.length),primeira:par.length?par[0].venc:addMonths(todayStr(),1),forma:v.forma,data:v.data,obs:v.obs||'',aguardando:!!v.aguardando,vendedorId:v.vendedorId||''};
+    jurosVenda:pct(v.jurosVenda),entrada:v.entrada?centsToStr(v.entrada):'',formaEntrada:(ent&&ent.forma)||'Pix',n:String(par.length),primeira:par.length?par[0].venc:addMonths(todayStr(),1),forma:v.forma,data:v.data,obs:v.obs||'',aguardando:!!v.aguardando,vendedorId:v.vendedorId||'',entrega:v.entregaPrev||''};
 }
 function sheetNova(){
   const D=ui.draft;const cs=Object.values(S.clientes).sort((a,b)=>a.nome.localeCompare(b.nome));
@@ -1341,7 +1367,7 @@ function sheetNova(){
   '<div class="sec"><h3>Itens da venda</h3><div id="items" class="stack"></div><div class="foot-row"><button class="btn" data-act="additem" data-t="produto">+ Produto</button><button class="btn" data-act="additem" data-t="lente">+ Lente</button></div>'+
   '<div class="field"><span>Juros sobre o total da venda (%), opcional</span><input type="text" inputmode="decimal" data-bind="jurosVenda" value="'+esc(D.jurosVenda)+'" placeholder="0"></div></div>'+
   premVendSale(D)+'<div class="sec"><h3>Pagamento</h3>'+((!D.editId||(S.vendas[D.editId]&&S.vendas[D.editId].aguardando))?'<label class="aguard-box"><input type="checkbox" data-aguard'+(D.aguardando?' checked':'')+'><span><b>Aguardando pagamento</b><small>Use para orçamento: o cliente ainda vai pagar ou dar a entrada. Não conta como venda, nem no caixa, nem nas cobranças. Vira venda quando você marcar como pago.</small></span></label>':'')+'<div class="field"><span>Forma de cobrança das parcelas</span><div class="seg" role="radiogroup" aria-label="Forma de cobrança"><label><input type="radio" name="forma" value="Pix" data-bind="forma"'+(D.forma==='Pix'?' checked':'')+'><span>Pix</span></label><label><input type="radio" name="forma" value="Boleto" data-bind="forma"'+(D.forma==='Boleto'?' checked':'')+'><span>Boleto</span></label></div></div>'+
-  '<div class="field"><span>Data da venda</span><input type="date" data-bind="data" value="'+esc(D.data)+'"></div>'+
+  '<div class="grid2"><div class="field"><span>Data da venda</span><input type="date" data-bind="data" value="'+esc(D.data)+'"></div><div class="field"><span>Data de entrega (opcional)</span><input type="date" data-bind="entrega" value="'+esc(D.entrega||'')+'"></div></div>'+
   '<div class="grid2"><div class="field"><span>Entrada (R$)</span><input type="text" inputmode="decimal" data-bind="entrada" value="'+esc(D.entrada)+'" placeholder="0,00"></div><div class="field"><span>Entrada paga em</span><select data-bind="formaEntrada">'+FORMAS.map(f=>'<option'+(D.formaEntrada===f?' selected':'')+'>'+f+'</option>').join('')+'</select></div></div>'+
   '<div class="grid2"><div class="field"><span>Parcelas</span><input type="number" min="0" max="36" inputmode="numeric" data-bind="n" value="'+esc(D.n)+'"></div><div class="field"><span>Vencimento da 1ª parcela</span><input type="date" data-bind="primeira" value="'+esc(D.primeira)+'"></div></div>'+
   '<div class="field"><span>Observações (opcional)</span><textarea data-bind="obs" placeholder="Receita, prazo de entrega, combinados com o cliente">'+esc(D.obs)+'</textarea></div></div>'+
@@ -1405,6 +1431,8 @@ function salvarVenda(){
   }
   if(!old&&typeof SESSION!=='undefined'&&SESSION&&SESSION.user&&SESSION.user.email)v.por=String(SESSION.user.email).toLowerCase();
   if(D.vendedorId)v.vendedorId=D.vendedorId;
+  if(D.entrega)v.entregaPrev=D.entrega;
+  if(old&&old.entregueEm){v.entregueEm=old.entregueEm;if(old.agradEm)v.agradEm=old.agradEm}
   S.vendas[v.id]=v;persist('vendas',v.id);
   premLog(old?'Venda editada':(v.aguardando?'Orçamento criado':'Venda criada'),((S.clientes[cid]||{}).nome||'')+' · '+brl(v.total));
   ui.draft=null;ui.sheet={kind:'venda',id:v.id};if(!old)ui.tab=v.aguardando?'aguard':'vendas';render();renderSheet();toast(v.aguardando?(old?'Orçamento atualizado':'Orçamento salvo em Aguardando pagamento'):(old?'Venda atualizada':'Venda registrada'));
@@ -1698,6 +1726,7 @@ function loadDemo(){
   const v4=sale(d4,[{tipo:'lente',nome:'Lente multifocal 1.67',qtd:1,valor:89000,juros:0,lenteId:''}],{entrada:30000,n:1,primeira:addMonths(t,-12)});
   v4.data=addMonths(t,-13);v4.parcelas[0].venc=v4.data;v4.parcelas[0].pagoEm=v4.data;v4.parcelas[1].pago=true;v4.parcelas[1].pagoEm=addMonths(t,-12);v4.parcelas[1].forma='Pix';
   const v5=sale(a,[{tipo:'produto',nome:'Óculos de grau com antirreflexo',qtd:1,valor:62000,juros:0,lenteId:''}],{entrada:20000,n:3,primeira:addMonths(t,1)});
+  v1.entregaPrev=addDays(t,-1);v2.entregaPrev=t;v3.entregaPrev=addDays(t,3);v4.entregaPrev=addDays(t,-30);v4.entregueEm=addDays(t,-29);v4.agradEm=addDays(t,-29);
   v5.aguardando=true;v5.parcelas.forEach(p=>{if(p.tipo==='entrada'){p.pago=false;p.pagoEm=null;p.forma=null}});
   [v1,v2,v3,v4,v5].forEach(v=>persist('vendas',v.id));
   [['Lente CR 1.56','Visão simples',12000],['Lente CR 1.56 antirreflexo','Visão simples',18000],['Lente policarbonato 1.59','Visão simples',26000],['Lente multifocal 1.67','Multifocal',89000],['Lente fotossensível','Fotocromática',45000]].forEach(l=>{const id=uid();S.lentes[id]={id:id,nome:l[0],tipo:l[1],valor:l[2],exemplo:true};persist('lentes',id)});
