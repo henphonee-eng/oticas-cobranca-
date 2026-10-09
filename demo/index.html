@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#1B222C">
+<meta name="theme-color" content="#0A2A31">
 <link rel="manifest" href="/demo/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/demo/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-title" content="Demo">
@@ -541,6 +541,76 @@ html.adm .msum.rec .ms:first-child b{color:var(--lime)}
 #lockpay .box{background:var(--surface);color:var(--fg);border-radius:20px;max-width:440px;width:100%;padding:24px 20px;display:flex;flex-direction:column;gap:12px}
 #lockpay h2{font-size:22px}
 #lockpay .pix{font-family:ui-monospace,monospace;font-size:12px;word-break:break-all;background:var(--surface-2);border-radius:10px;padding:10px;max-height:110px;overflow:auto}
+
+/* ===== Acabamento premium (sistema e demo). Não vale no /adm ===== */
+html:not(.adm){
+  --sh1:0 1px 2px rgba(12,28,48,.05),0 8px 24px -12px rgba(12,28,48,.16);
+  --sh2:0 2px 4px rgba(12,28,48,.06),0 18px 40px -16px rgba(12,28,48,.28);
+  --hair:color-mix(in srgb,var(--line) 70%,transparent);
+}
+@media (prefers-color-scheme:dark){html:not(.adm):not([data-theme="light"]){--sh1:0 1px 2px rgba(0,0,0,.4),0 8px 24px -12px rgba(0,0,0,.6);--sh2:0 2px 4px rgba(0,0,0,.45),0 18px 40px -16px rgba(0,0,0,.7)}}
+html[data-theme="dark"]:not(.adm){--sh1:0 1px 2px rgba(0,0,0,.4),0 8px 24px -12px rgba(0,0,0,.6);--sh2:0 2px 4px rgba(0,0,0,.45),0 18px 40px -16px rgba(0,0,0,.7)}
+html:not(.adm) body{background:radial-gradient(900px 420px at 92% -8%,color-mix(in srgb,var(--brand-1) 11%,transparent),transparent 70%),var(--bg);background-attachment:fixed;-webkit-font-smoothing:antialiased}
+html:not(.adm) .ph h1{font-weight:500;letter-spacing:-.025em}
+html:not(.adm) .sh h2{font-size:22px}
+html:not(.adm) .row,html:not(.adm) .card,html:not(.adm) .item,html:not(.adm) .sum,html:not(.adm) details,html:not(.adm) .acc-h,html:not(.adm) .rx,html:not(.adm) .tile,html:not(.adm) .msum{border-color:var(--hair);border-radius:14px;box-shadow:var(--sh1)}
+html:not(.adm) .row,html:not(.adm) .card,html:not(.adm) .acc-h,html:not(.adm) button.tile,html:not(.adm) button.card{transition:border-color .15s,box-shadow .15s,transform .15s}
+html:not(.adm) button.card:hover,html:not(.adm) .acc-h:hover,html:not(.adm) button.tile:hover{box-shadow:var(--sh2);border-color:color-mix(in srgb,var(--accent) 45%,var(--line))}
+html:not(.adm) .empty{border-radius:18px;border-color:var(--line);background:color-mix(in srgb,var(--surface) 70%,transparent)}
+
+/* faixa de indicadores: o primeiro é o destaque da marca */
+html:not(.adm) .kpis{border:0;border-radius:20px;gap:0;background:var(--surface);box-shadow:var(--sh2);overflow:hidden}
+html:not(.adm) .kpi{position:relative;border-left:1px solid var(--hair);border-top:1px solid var(--hair);padding:18px 18px 16px;background:transparent}
+html:not(.adm) .kpi.lead{border:0;color:#fff;background:linear-gradient(135deg,var(--brand-1),var(--brand-2));box-shadow:none;overflow:hidden;isolation:isolate}
+html:not(.adm) .kpi.lead::before{content:'';position:absolute;z-index:-1;right:-46px;top:-60px;width:210px;height:210px;border-radius:50%;border:1px solid rgba(255,255,255,.2);box-shadow:0 0 0 26px rgba(255,255,255,.05),0 0 0 54px rgba(255,255,255,.03)}
+html:not(.adm) .kpi.lead small,html:not(.adm) .kpi.lead span{color:#fff;opacity:.85}
+html:not(.adm) .kpi.lead b{color:#fff;font-size:36px}
+html:not(.adm) .kpi.total{background:color-mix(in srgb,var(--accent) 7%,var(--surface))}
+html:not(.adm) button.kpi:hover{background:color-mix(in srgb,var(--accent) 6%,var(--surface))}
+html:not(.adm) .kpi.neg b{color:var(--bad)}
+@media (min-width:1180px){html:not(.adm) .kpi{border-top:0}html:not(.adm) .kpi.lead b{font-size:38px}}
+html:not(.adm) .tile.hero{background:linear-gradient(135deg,var(--brand-1),var(--brand-2));box-shadow:var(--sh2)}
+
+/* menu lateral */
+html:not(.adm) .side{box-shadow:0 1px 0 rgba(255,255,255,.08) inset}
+@media (min-width:900px){
+  html:not(.adm) .side{background:radial-gradient(120% 55% at 0% 0%,color-mix(in srgb,var(--brand-1) 45%,transparent),transparent 62%),linear-gradient(180deg,var(--side-a),var(--side-b))}
+  html:not(.adm) .tab{border-radius:10px;transition:background .15s,color .15s}
+  html:not(.adm) .tab[aria-current=page]{background:rgba(255,255,255,.13);box-shadow:inset 0 0 0 1px rgba(255,255,255,.1),inset 3px 0 0 var(--tabline)}
+  html:not(.adm) .side-foot{border-top-color:rgba(255,255,255,.16)}
+}
+@media (max-width:899px){html:not(.adm) .tabs{background:color-mix(in srgb,var(--surface) 92%,transparent);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:0 -8px 24px -14px rgba(12,28,48,.25)}}
+
+/* botões, chips, campos */
+html:not(.adm) .btn{border-radius:10px;border-color:var(--hair);box-shadow:0 1px 1px rgba(12,28,48,.04);transition:transform .12s,box-shadow .15s,background .15s}
+html:not(.adm) .btn:hover:not([disabled]){transform:translateY(-1px);box-shadow:0 6px 14px -8px rgba(12,28,48,.35)}
+html:not(.adm) .btn:active:not([disabled]){transform:none}
+html:not(.adm) .btn.primary{background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 86%,#fff),var(--accent));border-color:transparent;box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 8px 16px -8px color-mix(in srgb,var(--accent) 80%,transparent)}
+html:not(.adm) .btn.wa{background:linear-gradient(180deg,color-mix(in srgb,var(--wa) 88%,#fff),var(--wa));border-color:transparent;box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 8px 16px -8px color-mix(in srgb,var(--wa) 80%,transparent)}
+html:not(.adm) .btn.ok{border:1px solid color-mix(in srgb,var(--ok) 25%,transparent)}
+html:not(.adm) .chip{border-radius:999px;padding:0 9px}
+html:not(.adm) .fchip{box-shadow:0 1px 1px rgba(12,28,48,.04);transition:background .15s,color .15s}
+html:not(.adm) .fchip[aria-pressed=true]{box-shadow:0 6px 14px -8px color-mix(in srgb,var(--accent) 80%,transparent)}
+html:not(.adm) input[type=text],html:not(.adm) input[type=search],html:not(.adm) input[type=date],html:not(.adm) input[type=number],html:not(.adm) input[type=password],html:not(.adm) input[type=email],html:not(.adm) select,html:not(.adm) textarea{border-color:var(--line);border-radius:10px;transition:border-color .15s,box-shadow .15s}
+html:not(.adm) input:focus-visible,html:not(.adm) select:focus-visible,html:not(.adm) textarea:focus-visible{outline:0;border-color:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 18%,transparent)}
+html:not(.adm) .alert{border-radius:14px;box-shadow:var(--sh1)}
+
+/* gráfico */
+html:not(.adm) .mb{border-radius:6px 6px 0 0}
+html:not(.adm) .mb.a{background:linear-gradient(180deg,color-mix(in srgb,var(--bar-a) 78%,#fff),var(--bar-a))}
+html:not(.adm) .mb.b{background:linear-gradient(180deg,color-mix(in srgb,var(--bar-b) 78%,#fff),var(--bar-b))}
+html:not(.adm) .bar{height:8px;border-radius:4px}
+
+/* janelas */
+html:not(.adm) .scrim{background:rgba(6,16,20,.55);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+html:not(.adm) .sheet{border-radius:22px 22px 0 0;box-shadow:0 -20px 60px -20px rgba(0,0,0,.5)}
+@media (min-width:760px){html:not(.adm) .sheet{border-radius:22px;box-shadow:0 30px 80px -24px rgba(0,0,0,.55)}}
+html:not(.adm) .sheet-head{border-bottom-color:var(--hair)}
+
+/* tela de entrada */
+html:not(.adm) .gate{background:radial-gradient(60% 50% at 85% 0%,color-mix(in srgb,var(--brand-1) 70%,transparent),transparent 70%),linear-gradient(160deg,var(--brand-2),color-mix(in srgb,var(--brand-2) 55%,#000))}
+html:not(.adm) .gate-card{border:0;border-radius:22px;box-shadow:0 30px 80px -24px rgba(0,0,0,.6)}
+@media (prefers-reduced-motion:reduce){html:not(.adm) .btn,html:not(.adm) .row,html:not(.adm) .card{transition:none}html:not(.adm) .btn:hover{transform:none}}
 .brand-name{font-family:var(--f-display);font-weight:700;font-size:22px;line-height:1;letter-spacing:.04em;color:#fff;display:flex;flex-direction:column;gap:2px}
 .brand-name small{font-family:'IBM Plex Sans',sans-serif;font-weight:500;font-size:11px;letter-spacing:.22em;text-transform:uppercase;opacity:.8}
 @media (min-width:900px){.brand-name{font-size:32px;margin-left:6px}.brand-name small{font-size:12px}}
@@ -552,11 +622,28 @@ html.adm .msum.rec .ms:first-child b{color:var(--lime)}
 .side-cta{display:none}
 @media (min-width:900px){.side-cta{display:inline-flex;justify-content:center}}
 .demo-note .btn{align-self:flex-start;margin-top:6px}
-/* Paleta da demonstração: grafite e cinza quente */
-:root{--bg:#F5F4F2;--surface:#FFFFFF;--surface-2:#EAE8E4;--fg:#1C1B1A;--muted:#6B6560;--line:#DDD9D3;--accent:#34414F;--accent-fg:#FFFFFF;--accent-soft:#E6E9ED;--brand-1:#3E4A59;--brand-2:#1B222C;--bar-a:#475569;--bar-b:#A8A29E}
-:root[data-theme="light"]{--bg:#F5F4F2;--surface:#FFFFFF;--surface-2:#EAE8E4;--fg:#1C1B1A;--muted:#6B6560;--line:#DDD9D3;--accent:#34414F;--accent-fg:#FFFFFF;--accent-soft:#E6E9ED;--brand-1:#3E4A59;--brand-2:#1B222C;--bar-a:#475569;--bar-b:#A8A29E}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111315;--surface:#1A1D21;--surface-2:#262A30;--fg:#ECEDEE;--muted:#A1A7AE;--line:#343A42;--accent:#CBD5E1;--accent-fg:#12151A;--accent-soft:#2A3038;--brand-1:#2F3742;--brand-2:#14181D;--bar-a:#94A3B8;--bar-b:#D6D3D1}}
-:root[data-theme="dark"]{--bg:#111315;--surface:#1A1D21;--surface-2:#262A30;--fg:#ECEDEE;--muted:#A1A7AE;--line:#343A42;--accent:#CBD5E1;--accent-fg:#12151A;--accent-soft:#2A3038;--brand-1:#2F3742;--brand-2:#14181D;--bar-a:#94A3B8;--bar-b:#D6D3D1}
+.dhero{position:relative;overflow:hidden;isolation:isolate;margin-bottom:18px;border-radius:22px;padding:26px 22px 0;color:#F3F7F7;background:radial-gradient(70% 90% at 100% 0%,rgba(201,162,90,.22),transparent 60%),linear-gradient(125deg,#0A2A31,#0F4A52 62%,#14656B);box-shadow:0 2px 4px rgba(10,42,49,.2),0 28px 56px -26px rgba(10,42,49,.65)}
+.dhero::before{content:'';position:absolute;z-index:-1;right:-70px;top:-90px;width:300px;height:300px;border-radius:50%;border:1px solid rgba(255,255,255,.18);box-shadow:0 0 0 30px rgba(255,255,255,.04),0 0 0 64px rgba(255,255,255,.025)}
+.dh-tag{display:inline-block;font-size:12.5px;font-weight:600;color:#E6C887;border:1px solid rgba(230,200,135,.45);border-radius:999px;padding:3px 12px}
+.dhero h2{color:#fff;font-size:27px;line-height:1.14;font-weight:500;margin:14px 0 10px;max-width:28ch;letter-spacing:-.02em}
+.dhero p{margin:0;max-width:52ch;color:rgba(243,247,247,.82);font-size:15px;line-height:1.5}
+.brand-name small{display:none}
+@media (max-width:899px){.brand-name small{display:block}}
+.dh-acts{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0 22px}
+.btn.gold{background:linear-gradient(180deg,#E3C27F,#C9A25A);border-color:transparent;color:#2A1D05;font-weight:700;box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 10px 20px -10px rgba(201,162,90,.8)}
+.btn.ghostw{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.28);color:#fff}
+.dh-pts{list-style:none;margin:0 -22px;padding:0;display:grid;grid-template-columns:1fr;border-top:1px solid rgba(255,255,255,.14);background:rgba(4,22,26,.34)}
+.dh-pts li{padding:14px 22px;display:flex;flex-direction:column;gap:2px;border-top:1px solid rgba(255,255,255,.08)}
+.dh-pts li:first-child{border-top:0}
+.dh-pts b{font-size:14.5px;color:#fff}
+.dh-pts span{font-size:13px;color:rgba(243,247,247,.7)}
+@media (min-width:760px){.dhero{padding:34px 36px 0}.dhero h2{font-size:34px}.dh-pts{margin:0 -36px;grid-template-columns:repeat(3,1fr)}.dh-pts li{padding:16px 36px 18px;border-top:0;border-left:1px solid rgba(255,255,255,.1)}.dh-pts li:first-child{border-left:0}}
+
+/* Paleta da demonstração: petróleo e dourado */
+:root{--bg:#F1F5F4;--surface:#FFFFFF;--surface-2:#E6EDEC;--fg:#0E1F22;--muted:#587074;--line:#D7E1E0;--accent:#0B6A72;--accent-fg:#FFFFFF;--accent-soft:#DDF0F0;--brand-1:#14656B;--brand-2:#0A2A31;--bar-a:#0B6A72;--bar-b:#C9A25A}
+:root[data-theme="light"]{--bg:#F1F5F4;--surface:#FFFFFF;--surface-2:#E6EDEC;--fg:#0E1F22;--muted:#587074;--line:#D7E1E0;--accent:#0B6A72;--accent-fg:#FFFFFF;--accent-soft:#DDF0F0;--brand-1:#14656B;--brand-2:#0A2A31;--bar-a:#0B6A72;--bar-b:#C9A25A}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0A1517;--surface:#112326;--surface-2:#183136;--fg:#E8F1F1;--muted:#93AEB1;--line:#24434A;--accent:#5CC9CF;--accent-fg:#06191B;--accent-soft:#143A3F;--brand-1:#14656B;--brand-2:#0A2A31;--bar-a:#3DB5BC;--bar-b:#D9B56C}}
+:root[data-theme="dark"]{--bg:#0A1517;--surface:#112326;--surface-2:#183136;--fg:#E8F1F1;--muted:#93AEB1;--line:#24434A;--accent:#5CC9CF;--accent-fg:#06191B;--accent-soft:#143A3F;--brand-1:#14656B;--brand-2:#0A2A31;--bar-a:#3DB5BC;--bar-b:#D9B56C}
 </style>
 <script>if(/^\/adm(\/|$)/.test(location.pathname)){document.documentElement.classList.add('adm');var q=function(x){return document.querySelector(x)};if(q('link[rel=manifest]'))q('link[rel=manifest]').href='/adm.webmanifest';if(q('link[rel=apple-touch-icon]'))q('link[rel=apple-touch-icon]').href='/icons/adm-apple-touch-icon.png';if(q('meta[name=apple-mobile-web-app-title]'))q('meta[name=apple-mobile-web-app-title]').content='Adm Óticas';if(q('meta[name=theme-color]'))q('meta[name=theme-color]').content='#191A23';document.title='Adm Óticas';var f=document.createElement('link');f.rel='stylesheet';f.href='https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap';document.head.appendChild(f)}</script>
 
@@ -676,8 +763,19 @@ async function logout(){}
 let DEMO_NOME='Sua Ótica Aqui',DEMO_PERSONAL=false;
 const brandNome=()=>DEMO_NOME;
 const CTA_NUM='5581999707538';
+function demoHero(){
+  if(ui.dhHide)return '';
+  const n=esc(DEMO_NOME);
+  return '<section class="dhero" aria-label="Apresentação"><div class="dh-main">'+
+    '<span class="dh-tag">'+(DEMO_PERSONAL?'Demonstração preparada para '+n:'Demonstração ao vivo')+'</span>'+
+    '<h2>'+(DEMO_PERSONAL?'Cada parcela da '+n+' sob controle, sem planilha e sem cobrança esquecida.':'Cada parcela da sua ótica sob controle, sem planilha e sem cobrança esquecida.')+'</h2>'+
+    '<p>Este painel está funcionando com dados de exemplo. Mexa à vontade: veja quem vence hoje, quem está atrasado e a mensagem de cobrança pronta no WhatsApp.</p>'+
+    '<div class="dh-acts"><a class="btn gold" target="_blank" rel="noopener" href="'+ctaHref()+'">Quero para minha ótica</a><button class="btn ghostw" data-act="dhx">Explorar sozinho</button></div></div>'+
+    '<ul class="dh-pts"><li><b>Cobrança em 1 toque</b><span>Abre o WhatsApp do cliente com a mensagem pronta</span></li><li><b>Recibo em PDF</b><span>Com a marca da sua ótica, na hora do pagamento</span></li><li><b>Pix copia e cola</b><span>Chave pronta para o cliente pagar sem erro</span></li></ul></section>';
+}
+
 const ctaHref=()=>'https://wa.me/'+CTA_NUM+'?text='+encodeURIComponent((DEMO_PERSONAL?'Olá! Sou da '+DEMO_NOME+'. ':'Olá! ')+'Vi a demonstração do sistema de cobranças e quero para a minha ótica.');
-const demoNote=()=>'<div class="demo-note"><b>Demonstração</b><span>Você está vendo dados de exemplo. Pode clicar em tudo, cadastrar clientes e simular vendas. Nada fica salvo: ao recarregar a página, volta ao início.</span><a class="btn wa sm" target="_blank" rel="noopener" href="'+ctaHref()+'">Quero para minha ótica</a></div>';
+const demoNote=()=>(!ui.dhHide&&ui.tab==='painel')?'':'<div class="demo-note"><b>Demonstração</b><span>Você está vendo dados de exemplo. Pode clicar em tudo, cadastrar clientes e simular vendas. Nada fica salvo: ao recarregar a página, volta ao início.</span><a class="btn wa sm" target="_blank" rel="noopener" href="'+ctaHref()+'">Quero para minha ótica</a></div>';
 
 /* ---------- modelo ---------- */
 function makeCliente(o){return {receitas:(o.receitas||[]).filter(r=>!receitaVazia(r)),id:uid(),nome:String(o.nome||'').trim(),cpf:maskCpf(o.cpf),whatsapp:maskTel(o.whatsapp),endereco:String(o.endereco||'').trim(),nascimento:o.nascimento||'',obs:String(o.obs||'').trim(),criadoEm:Date.now(),bvEm:null}}
@@ -924,7 +1022,7 @@ function viewPainel(){
   const ap=aniPend(),rvn=revisoes().filter(x=>!x.c.revEm).length;
   const HEART='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>';
   const rel=(ap.length||rvn)?'<button class="alert info" role="status" data-act="tab" data-t="relacao">'+HEART+'<div><b>Relacionamento: '+[ap.length?plural(ap.length,'aniversariante hoje','aniversariantes hoje'):'',rvn?plural(rvn,'cliente para revisar o grau','clientes para revisar o grau'):''].filter(Boolean).join(' · ')+'</b><span>'+(ap.length?esc(ap.slice(0,3).map(x=>firstName(x.c.nome)).join(', '))+' · ':'')+'toque para mandar a mensagem</span></div></button>':'';
-  return pageHead('Painel',dia,'<button class="btn primary" data-act="novavenda">Nova venda</button>')+
+  return demoHero()+pageHead('Painel',dia,'<button class="btn primary" data-act="novavenda">Nova venda</button>')+
   (noSales?'<div class="empty" style="margin-bottom:18px">'+GLASSES+'<h3>Nenhuma venda registrada ainda</h3><p>Registre a primeira venda parcelada. Os números do dia e os vencimentos aparecem aqui.</p><div class="acts" style="justify-content:center"><button class="btn primary" data-act="novavenda">Nova venda</button><button class="btn" data-act="demo">Ver com exemplos</button></div></div>':'')+
   '<div class="kpis">'+
   '<div class="kpi lead"><small>Entrou hoje</small><b>'+brl(sumV(recHoje))+'</b><span>'+plural(recHoje.length,'recebimento','recebimentos')+'</span></div>'+
@@ -1554,6 +1652,7 @@ function openNova(cid){ui.draft=newDraft(cid);ui.sheet={kind:'nova'};renderSheet
 function setPath(o,p,v){const k=p.split('.');let t=o;for(let i=0;i<k.length-1;i++)t=t[k[i]];t[k[k.length-1]]=v}
 function addLente(nome,tipo,valor){const id=uid();S.lentes[id]={id:id,nome:nome,tipo:tipo||'',valor:valor};persist('lentes',id)}
 const A={
+  dhx(){ui.dhHide=true;render()},
   bell(){if(ADM_MODE){ui.tab='admin';render();window.scrollTo(0,0)}else A.tab({t:'cobrar'})},
   popgo(d){const p=document.getElementById('popup');if(p)p.classList.remove('on');A.tab({t:d.t})},
   popx(){const p=document.getElementById('popup');if(p)p.classList.remove('on')},

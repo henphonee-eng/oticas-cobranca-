@@ -543,6 +543,76 @@ html.adm .msum.rec .ms:first-child b{color:var(--lime)}
 #lockpay .box{background:var(--surface);color:var(--fg);border-radius:20px;max-width:440px;width:100%;padding:24px 20px;display:flex;flex-direction:column;gap:12px}
 #lockpay h2{font-size:22px}
 #lockpay .pix{font-family:ui-monospace,monospace;font-size:12px;word-break:break-all;background:var(--surface-2);border-radius:10px;padding:10px;max-height:110px;overflow:auto}
+
+/* ===== Acabamento premium (sistema e demo). Não vale no /adm ===== */
+html:not(.adm){
+  --sh1:0 1px 2px rgba(12,28,48,.05),0 8px 24px -12px rgba(12,28,48,.16);
+  --sh2:0 2px 4px rgba(12,28,48,.06),0 18px 40px -16px rgba(12,28,48,.28);
+  --hair:color-mix(in srgb,var(--line) 70%,transparent);
+}
+@media (prefers-color-scheme:dark){html:not(.adm):not([data-theme="light"]){--sh1:0 1px 2px rgba(0,0,0,.4),0 8px 24px -12px rgba(0,0,0,.6);--sh2:0 2px 4px rgba(0,0,0,.45),0 18px 40px -16px rgba(0,0,0,.7)}}
+html[data-theme="dark"]:not(.adm){--sh1:0 1px 2px rgba(0,0,0,.4),0 8px 24px -12px rgba(0,0,0,.6);--sh2:0 2px 4px rgba(0,0,0,.45),0 18px 40px -16px rgba(0,0,0,.7)}
+html:not(.adm) body{background:radial-gradient(900px 420px at 92% -8%,color-mix(in srgb,var(--brand-1) 11%,transparent),transparent 70%),var(--bg);background-attachment:fixed;-webkit-font-smoothing:antialiased}
+html:not(.adm) .ph h1{font-weight:500;letter-spacing:-.025em}
+html:not(.adm) .sh h2{font-size:22px}
+html:not(.adm) .row,html:not(.adm) .card,html:not(.adm) .item,html:not(.adm) .sum,html:not(.adm) details,html:not(.adm) .acc-h,html:not(.adm) .rx,html:not(.adm) .tile,html:not(.adm) .msum{border-color:var(--hair);border-radius:14px;box-shadow:var(--sh1)}
+html:not(.adm) .row,html:not(.adm) .card,html:not(.adm) .acc-h,html:not(.adm) button.tile,html:not(.adm) button.card{transition:border-color .15s,box-shadow .15s,transform .15s}
+html:not(.adm) button.card:hover,html:not(.adm) .acc-h:hover,html:not(.adm) button.tile:hover{box-shadow:var(--sh2);border-color:color-mix(in srgb,var(--accent) 45%,var(--line))}
+html:not(.adm) .empty{border-radius:18px;border-color:var(--line);background:color-mix(in srgb,var(--surface) 70%,transparent)}
+
+/* faixa de indicadores: o primeiro é o destaque da marca */
+html:not(.adm) .kpis{border:0;border-radius:20px;gap:0;background:var(--surface);box-shadow:var(--sh2);overflow:hidden}
+html:not(.adm) .kpi{position:relative;border-left:1px solid var(--hair);border-top:1px solid var(--hair);padding:18px 18px 16px;background:transparent}
+html:not(.adm) .kpi.lead{border:0;color:#fff;background:linear-gradient(135deg,var(--brand-1),var(--brand-2));box-shadow:none;overflow:hidden;isolation:isolate}
+html:not(.adm) .kpi.lead::before{content:'';position:absolute;z-index:-1;right:-46px;top:-60px;width:210px;height:210px;border-radius:50%;border:1px solid rgba(255,255,255,.2);box-shadow:0 0 0 26px rgba(255,255,255,.05),0 0 0 54px rgba(255,255,255,.03)}
+html:not(.adm) .kpi.lead small,html:not(.adm) .kpi.lead span{color:#fff;opacity:.85}
+html:not(.adm) .kpi.lead b{color:#fff;font-size:36px}
+html:not(.adm) .kpi.total{background:color-mix(in srgb,var(--accent) 7%,var(--surface))}
+html:not(.adm) button.kpi:hover{background:color-mix(in srgb,var(--accent) 6%,var(--surface))}
+html:not(.adm) .kpi.neg b{color:var(--bad)}
+@media (min-width:1180px){html:not(.adm) .kpi{border-top:0}html:not(.adm) .kpi.lead b{font-size:38px}}
+html:not(.adm) .tile.hero{background:linear-gradient(135deg,var(--brand-1),var(--brand-2));box-shadow:var(--sh2)}
+
+/* menu lateral */
+html:not(.adm) .side{box-shadow:0 1px 0 rgba(255,255,255,.08) inset}
+@media (min-width:900px){
+  html:not(.adm) .side{background:radial-gradient(120% 55% at 0% 0%,color-mix(in srgb,var(--brand-1) 45%,transparent),transparent 62%),linear-gradient(180deg,var(--side-a),var(--side-b))}
+  html:not(.adm) .tab{border-radius:10px;transition:background .15s,color .15s}
+  html:not(.adm) .tab[aria-current=page]{background:rgba(255,255,255,.13);box-shadow:inset 0 0 0 1px rgba(255,255,255,.1),inset 3px 0 0 var(--tabline)}
+  html:not(.adm) .side-foot{border-top-color:rgba(255,255,255,.16)}
+}
+@media (max-width:899px){html:not(.adm) .tabs{background:color-mix(in srgb,var(--surface) 92%,transparent);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:0 -8px 24px -14px rgba(12,28,48,.25)}}
+
+/* botões, chips, campos */
+html:not(.adm) .btn{border-radius:10px;border-color:var(--hair);box-shadow:0 1px 1px rgba(12,28,48,.04);transition:transform .12s,box-shadow .15s,background .15s}
+html:not(.adm) .btn:hover:not([disabled]){transform:translateY(-1px);box-shadow:0 6px 14px -8px rgba(12,28,48,.35)}
+html:not(.adm) .btn:active:not([disabled]){transform:none}
+html:not(.adm) .btn.primary{background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 86%,#fff),var(--accent));border-color:transparent;box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 8px 16px -8px color-mix(in srgb,var(--accent) 80%,transparent)}
+html:not(.adm) .btn.wa{background:linear-gradient(180deg,color-mix(in srgb,var(--wa) 88%,#fff),var(--wa));border-color:transparent;box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 8px 16px -8px color-mix(in srgb,var(--wa) 80%,transparent)}
+html:not(.adm) .btn.ok{border:1px solid color-mix(in srgb,var(--ok) 25%,transparent)}
+html:not(.adm) .chip{border-radius:999px;padding:0 9px}
+html:not(.adm) .fchip{box-shadow:0 1px 1px rgba(12,28,48,.04);transition:background .15s,color .15s}
+html:not(.adm) .fchip[aria-pressed=true]{box-shadow:0 6px 14px -8px color-mix(in srgb,var(--accent) 80%,transparent)}
+html:not(.adm) input[type=text],html:not(.adm) input[type=search],html:not(.adm) input[type=date],html:not(.adm) input[type=number],html:not(.adm) input[type=password],html:not(.adm) input[type=email],html:not(.adm) select,html:not(.adm) textarea{border-color:var(--line);border-radius:10px;transition:border-color .15s,box-shadow .15s}
+html:not(.adm) input:focus-visible,html:not(.adm) select:focus-visible,html:not(.adm) textarea:focus-visible{outline:0;border-color:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 18%,transparent)}
+html:not(.adm) .alert{border-radius:14px;box-shadow:var(--sh1)}
+
+/* gráfico */
+html:not(.adm) .mb{border-radius:6px 6px 0 0}
+html:not(.adm) .mb.a{background:linear-gradient(180deg,color-mix(in srgb,var(--bar-a) 78%,#fff),var(--bar-a))}
+html:not(.adm) .mb.b{background:linear-gradient(180deg,color-mix(in srgb,var(--bar-b) 78%,#fff),var(--bar-b))}
+html:not(.adm) .bar{height:8px;border-radius:4px}
+
+/* janelas */
+html:not(.adm) .scrim{background:rgba(6,16,20,.55);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+html:not(.adm) .sheet{border-radius:22px 22px 0 0;box-shadow:0 -20px 60px -20px rgba(0,0,0,.5)}
+@media (min-width:760px){html:not(.adm) .sheet{border-radius:22px;box-shadow:0 30px 80px -24px rgba(0,0,0,.55)}}
+html:not(.adm) .sheet-head{border-bottom-color:var(--hair)}
+
+/* tela de entrada */
+html:not(.adm) .gate{background:radial-gradient(60% 50% at 85% 0%,color-mix(in srgb,var(--brand-1) 70%,transparent),transparent 70%),linear-gradient(160deg,var(--brand-2),color-mix(in srgb,var(--brand-2) 55%,#000))}
+html:not(.adm) .gate-card{border:0;border-radius:22px;box-shadow:0 30px 80px -24px rgba(0,0,0,.6)}
+@media (prefers-reduced-motion:reduce){html:not(.adm) .btn,html:not(.adm) .row,html:not(.adm) .card{transition:none}html:not(.adm) .btn:hover{transform:none}}
 </style>
 <script>if(/^\/adm(\/|$)/.test(location.pathname)){document.documentElement.classList.add('adm');var q=function(x){return document.querySelector(x)};if(q('link[rel=manifest]'))q('link[rel=manifest]').href='/adm.webmanifest';if(q('link[rel=apple-touch-icon]'))q('link[rel=apple-touch-icon]').href='/icons/adm-apple-touch-icon.png';if(q('meta[name=apple-mobile-web-app-title]'))q('meta[name=apple-mobile-web-app-title]').content='Adm Óticas';if(q('meta[name=theme-color]'))q('meta[name=theme-color]').content='#191A23';document.title='Adm Óticas';var f=document.createElement('link');f.rel='stylesheet';f.href='https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap';document.head.appendChild(f)}</script>
 
