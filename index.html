@@ -717,10 +717,11 @@ const DEFAULT_TPL={
   aniversario:'Olá, {cliente}! A equipe da {otica} deseja a você um feliz aniversário, com muita saúde, alegria e um ano cheio de boas imagens. Um grande abraço!',
   revisao:'Olá, {cliente}! Aqui é da {otica}. Já faz {tempo} desde a sua última visita. Que tal revisar o seu grau e dar uma conferida nos seus óculos? É rápido e a gente cuida de você. Posso reservar um horário?',
   orcamento:'Olá, {cliente}! Aqui é da {otica}. Segue o orçamento que combinamos:\n\n{itens}\n\nTotal: {total}\nEntrada: {entrada}\n\nParcelas:\n{resumo}\n\n{pagamento}\nAssim que o pagamento for confirmado, fechamos a sua venda. Qualquer dúvida, é só chamar!',
+  chegou:'Olá, {cliente}! Aqui é da {otica}. Boa notícia: o seu óculos chegou! Já pode passar aqui na loja para retirar. Qualquer dúvida, é só chamar por aqui.',
   entrega:'Olá, {cliente}! Aqui é da {otica}. Passando para agradecer pela sua compra e avisar que o seu pedido já foi entregue. Esperamos que você goste! Se precisar de qualquer ajuste ou tiver alguma dúvida, é só chamar por aqui. Foi um prazer atender você!',
   atraso:'Olá, {cliente}! Tudo bem? Aqui é da {otica}. A parcela {parcela}, de {valor}, venceu em {vencimento} e está em atraso há {dias}.{encargos} {pagamento} Se já pagou, pode nos enviar o comprovante. Obrigado!'
 };
-const TPL_LABEL={cadastro:'Boas-vindas ao cadastrar',venda:'Resumo da venda',orcamento:'Orçamento (aguardando pagamento)',lembrete:'Lembrete de vencimento',atraso:'Parcela em atraso',recibo:'Recibo de pagamento',aniversario:'Feliz aniversário',revisao:'Revisão do grau (1 ano depois)',entrega:'Agradecimento pela compra (ao entregar)'};
+const TPL_LABEL={chegou:'Aviso: seu óculos chegou',cadastro:'Boas-vindas ao cadastrar',venda:'Resumo da venda',orcamento:'Orçamento (aguardando pagamento)',lembrete:'Lembrete de vencimento',atraso:'Parcela em atraso',recibo:'Recibo de pagamento',aniversario:'Feliz aniversário',revisao:'Revisão do grau (1 ano depois)',entrega:'Agradecimento pela compra (ao entregar)'};
 const S={clientes:{},vendas:{},lentes:{},config:{}};
 const ui={tab:'painel',month:todayStr().slice(0,7),sel:todayStr(),vFilter:'todas',vPer:'todas',vQuery:'',cQuery:'',cFilter:'todos',lQuery:'',lTipo:'',cx:'hoje',cxFrom:'',cxTo:'',sheet:null,draft:null,cdraft:null,confirm:''};
 let ready=false,loadFail=false,syncState='load';
@@ -1450,13 +1451,15 @@ const entAtras=()=>{const t=todayStr();return entPend().filter(v=>v.entregaPrev<
 function entRow(v,feito){
   const c=S.clientes[v.clienteId]||{nome:'Cliente removido',whatsapp:''};const t=todayStr();
   const href=c.whatsapp?esc(waLink(c.whatsapp,fillTpl(tpl('entrega'),ctx(v,null,c)))):'';
+  const hrefC=c.whatsapp?esc(waLink(c.whatsapp,fillTpl(tpl('chegou'),ctx(v,null,c)))):'';
   let chip;
   if(feito)chip='<span class="chip ok">Entregue em '+fmtShort(v.entregueEm)+'</span>'+(v.agradEm?'<span class="chip acc">Agradecimento enviado</span>':'<span class="chip warn">Agradecimento pendente</span>');
   else if(v.entregaPrev<t)chip='<span class="chip bad">Atrasada '+plural(diffDays(t,v.entregaPrev),'dia','dias')+'</span>';
   else if(v.entregaPrev===t)chip='<span class="chip warn">Entregar hoje</span>';
   else chip='<span class="chip">Em '+plural(diffDays(v.entregaPrev,t),'dia','dias')+'</span>';
+  if(!feito)chip+=v.chegouEm?'<span class="chip acc">Cliente avisado que chegou</span>':'';
   const acts=feito?((href&&!v.agradEm)?'<a class="btn sm wa"'+WAT+' data-contact="ent" data-v="'+v.id+'" href="'+href+'">Agradecer</a>':'')+'<button class="btn sm ghost" data-act="desentregar" data-v="'+v.id+'">Desfazer</button>'
-    :(href?'<a class="btn sm wa"'+WAT+' data-contact="ent" data-v="'+v.id+'" href="'+href+'">Entregue e agradecer</a>':'')+'<button class="btn sm ok" data-act="entregar" data-v="'+v.id+'">Dar baixa</button>';
+    :(hrefC?'<a class="btn sm wa"'+WAT+' data-contact="cheg" data-v="'+v.id+'" href="'+hrefC+'">'+(v.chegouEm?'Avisar de novo':'Avisar que chegou')+'</a>':'')+(href?'<a class="btn sm wa"'+WAT+' data-contact="ent" data-v="'+v.id+'" href="'+href+'">Entregue e agradecer</a>':'')+'<button class="btn sm ok" data-act="entregar" data-v="'+v.id+'">Dar baixa</button>';
   return '<article class="row"><div class="row-main"><button class="link" data-act="openvenda" data-v="'+v.id+'">'+esc(c.nome)+demoTag(v)+'</button><div class="meta">'+esc(itensTxt(v))+' · entrega '+fmtDate(v.entregaPrev||v.entregueEm)+'</div><div class="chips">'+chip+'</div></div><div class="row-side"><div class="acts">'+acts+'</div></div></article>';
 }
 function viewEntregas(){
@@ -1464,7 +1467,7 @@ function viewEntregas(){
   const feitas=vendasOk().filter(v=>v.entregueEm).sort((a,b)=>b.entregueEm.localeCompare(a.entregueEm)).slice(0,12);
   const semData=vendasOk().filter(v=>!v.entregueEm&&!v.entregaPrev).length;
   return pageHead('Entregas','Dê baixa quando o óculos for entregue e agradeça pela compra')+
-  '<p class="sub" style="margin-bottom:12px">A mensagem de agradecimento só sai quando você toca em "Entregue e agradecer". Aqui aparecem as vendas que têm data de entrega.'+(semData?' Para acompanhar uma venda antiga, abra a venda e informe a data prevista.':'')+'</p>'+
+  '<p class="sub" style="margin-bottom:12px">Use "Avisar que chegou" quando o óculos chegar e "Entregue e agradecer" depois da retirada. As duas mensagens são opcionais: se esquecer de avisar, pode mandar só o agradecimento. Aqui aparecem as vendas que têm data de entrega.'+(semData?' Para acompanhar uma venda antiga, abra a venda e informe a data prevista.':'')+'</p>'+
   '<div class="cols"><div class="panel"><div class="sh" style="margin-top:0"><h2>Para entregar</h2><span class="sub num">'+pend.length+'</span></div><div class="stack">'+(pend.length?pend.map(v=>entRow(v,false)).join(''):none('Nenhuma entrega marcada. Ao cadastrar uma venda, informe a data de entrega.'))+'</div></div>'+
   '<div class="panel"><div class="sh" style="margin-top:0"><h2>Entregues</h2></div><div class="stack">'+(feitas.length?feitas.map(v=>entRow(v,true)).join(''):none('Nada entregue ainda.'))+'</div></div></div>';
 }
@@ -1472,9 +1475,11 @@ document.addEventListener('change',e=>{const t=e.target;if(!t||!t.dataset||t.dat
   if(t.value)v.entregaPrev=t.value;else delete v.entregaPrev;persist('vendas',v.id);setTimeout(refresh,60);toast(t.value?'Data de entrega salva':'Data de entrega removida')});
 function entregaSec(v,c){
   const href=c.whatsapp?esc(waLink(c.whatsapp,fillTpl(tpl('entrega'),ctx(v,null,c)))):'';
+  const hrefC=c.whatsapp?esc(waLink(c.whatsapp,fillTpl(tpl('chegou'),ctx(v,null,c)))):'';
+  const wc=hrefC?'<a class="btn wa"'+WAT+' data-contact="cheg" data-v="'+v.id+'" href="'+hrefC+'">'+(v.chegouEm?'Avisar de novo que chegou':'Avisar que o óculos chegou')+'</a>':'';
   const wa=(txt)=>href?'<a class="btn wa"'+WAT+' data-contact="ent" data-v="'+v.id+'" href="'+href+'">'+txt+'</a>':'';
   if(v.entregueEm)return '<div class="sec"><h3>Entrega do produto</h3><div class="chips"><span class="chip ok">Entregue em '+fmtDate(v.entregueEm)+'</span>'+(v.agradEm?'<span class="chip acc">Agradecimento enviado em '+fmtShort(v.agradEm)+'</span>':'')+'</div><div class="foot-row">'+wa(v.agradEm?'Enviar agradecimento de novo':'Agradecer no WhatsApp')+'<button class="btn" data-act="desentregar" data-v="'+v.id+'">Desfazer entrega</button></div></div>';
-  return '<div class="sec"><h3>Entrega do produto</h3><div class="field"><span>Data prevista de entrega</span><input type="date" data-entv="'+v.id+'" value="'+esc(v.entregaPrev||'')+'"></div><p class="sub" style="margin:0">Quando o cliente retirar o produto, marque como entregue e mande a mensagem de agradecimento pela compra.</p><div class="foot-row">'+wa('Entregue: agradecer no WhatsApp')+'<button class="btn" data-act="entregar" data-v="'+v.id+'">Só marcar como entregue</button></div>'+(href?'':'<p class="hint">Sem WhatsApp cadastrado para enviar a mensagem.</p>')+'</div>';
+  return '<div class="sec"><h3>Entrega do produto</h3>'+(v.chegouEm?'<div class="chips"><span class="chip acc">Cliente avisado que chegou em '+fmtShort(v.chegouEm)+'</span></div>':'')+'<div class="field"><span>Data prevista de entrega</span><input type="date" data-entv="'+v.id+'" value="'+esc(v.entregaPrev||'')+'"></div><p class="sub" style="margin:0">Quando o cliente retirar o produto, marque como entregue e mande a mensagem de agradecimento pela compra.</p><div class="foot-row">'+wc+wa('Entregue: agradecer no WhatsApp')+'<button class="btn" data-act="entregar" data-v="'+v.id+'">Só marcar como entregue</button></div>'+(href?'':'<p class="hint">Sem WhatsApp cadastrado para enviar a mensagem.</p>')+'</div>';
 }
 function sheetVenda(id){
   const v=S.vendas[id];if(!v)return null;
@@ -1589,6 +1594,7 @@ function salvarVenda(){
   if(!old&&typeof SESSION!=='undefined'&&SESSION&&SESSION.user&&SESSION.user.email)v.por=String(SESSION.user.email).toLowerCase();
   if(D.vendedorId)v.vendedorId=D.vendedorId;
   if(D.entrega)v.entregaPrev=D.entrega;
+  if(old&&old.chegouEm)v.chegouEm=old.chegouEm;
   if(old&&old.entregueEm){v.entregueEm=old.entregueEm;if(old.agradEm)v.agradEm=old.agradEm}
   S.vendas[v.id]=v;persist('vendas',v.id);
   premLog(old?'Venda editada':(v.aguardando?'Orçamento criado':'Venda criada'),((S.clientes[cid]||{}).nome||'')+' · '+brl(v.total));
@@ -2929,6 +2935,7 @@ function markContact(d){
   if(d.contact==='p'){const v=S.vendas[d.v];if(v){v.parcelas[+d.pi].contatoEm=todayStr();persist('vendas',v.id)}}
   else if(d.contact==='ani'){const c=S.clientes[d.c];if(c){c.aniEm=todayStr().slice(0,4);persist('clientes',c.id)}}
   else if(d.contact==='rev'){const c=S.clientes[d.c];if(c){c.revEm=todayStr();persist('clientes',c.id)}}
+  else if(d.contact==='cheg'){const v=S.vendas[d.v];if(v){v.chegouEm=todayStr();persist('vendas',v.id)}}
   else if(d.contact==='ent'){const v=S.vendas[d.v];if(v){if(!v.entregueEm)v.entregueEm=todayStr();v.agradEm=todayStr();persist('vendas',v.id)}}
   else if(d.contact==='bv'){const c=S.clientes[d.c];if(c){c.bvEm=todayStr();persist('clientes',c.id)}}
   setTimeout(refresh,80);
