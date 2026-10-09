@@ -803,12 +803,10 @@ function viewAjustes(){
   '<div class="cols"><div class="panel">'+
   '<div class="sh" style="margin-top:0"><h2>Acesso</h2></div><div class="card" style="gap:12px">'+
   '<div class="field"><span>E-mail de acesso</span><input type="email" id="ac-user" value="'+esc(a.usuario||'')+'" autocomplete="username" autocapitalize="none"></div>'+
-  '<p class="hint bad" id="ac-err-e" role="alert"></p><div><button class="btn primary" data-act="salvaremail">Salvar e-mail</button></div>'+
-  '<div class="field"><span>Bloquear sozinho após</span><select data-cfg="autolock">'+[[5,'5 minutos'],[15,'15 minutos'],[30,'30 minutos'],[60,'1 hora'],[0,'Nunca']].map(o=>'<option value="'+o[0]+'"'+(+c.autolock===o[0]?' selected':'')+'>'+o[1]+'</option>').join('')+'</select></div></div>'+
-  '<div class="sh"><h2>Alterar senha</h2></div><div class="card" style="gap:12px">'+
-  '<div class="grid2"><div class="field"><span>Nova senha</span><input type="password" id="ac-nova" autocomplete="new-password"></div><div class="field"><span>Repita a nova senha</span><input type="password" id="ac-conf" autocomplete="new-password"></div></div>'+
-  '<p class="hint bad" id="ac-err-s" role="alert"></p><div><button class="btn primary" data-act="salvarsenha">Alterar senha</button></div>'+
-  '<p class="sub" style="margin:0">Seu acesso é protegido por e-mail e senha. Troque a senha se outra pessoa chegar a saber.</p></div>'+
+  '<div class="grid2"><div class="field"><span>Nova senha (opcional)</span><input type="password" id="ac-nova" autocomplete="new-password"></div><div class="field"><span>Repita a nova senha</span><input type="password" id="ac-conf" autocomplete="new-password"></div></div>'+
+  '<p class="hint bad" id="ac-err" role="alert"></p><div><button class="btn primary" data-act="salvaracesso">Salvar acesso</button></div>'+
+  '<div class="field"><span>Bloquear sozinho após</span><select data-cfg="autolock">'+[[5,'5 minutos'],[15,'15 minutos'],[30,'30 minutos'],[60,'1 hora'],[0,'Nunca']].map(o=>'<option value="'+o[0]+'"'+(+c.autolock===o[0]?' selected':'')+'>'+o[1]+'</option>').join('')+'</select></div>'+
+  '<p class="sub" style="margin:0">Para trocar só o e-mail, deixe as senhas em branco. Para trocar só a senha, não mexa no e-mail. Não precisa digitar a senha atual.</p></div>'+
   '<div class="sh"><h2>Dados da ótica</h2></div><div class="card" style="gap:12px">'+
   '<div class="field"><span>Nome da ótica</span><input type="text" data-cfg="nome" value="'+esc(c.nome)+'"></div>'+
   '<div class="grid2"><div class="field"><span>WhatsApp da ótica</span><input type="text" inputmode="tel" data-mask="tel" data-cfg="whatsapp" value="'+esc(c.whatsapp)+'"></div><div class="field"><span>Chave Pix</span><input type="text" data-cfg="pix" value="'+esc(c.pix)+'" placeholder="CNPJ, telefone ou e-mail"></div></div>'+
@@ -1127,24 +1125,17 @@ const A={
     document.querySelectorAll('#view [data-cfg]').forEach(el=>{const k=el.dataset.cfg;if(k==='autolock')return;c[k]=el.value.trim()});
     S.config.otica=c;persist('config','otica');render();toast('Dados da ótica salvos');
   },
-  async salvaremail(){
-    const err=m=>{$('#ac-err-e').textContent=m};
-    const user=$('#ac-user').value.trim();
+  async salvaracesso(){
+    const err=m=>{$('#ac-err').textContent=m};
+    const user=$('#ac-user').value.trim(),nova=$('#ac-nova').value,conf=$('#ac-conf').value;
     if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(user))return err('Digite um e-mail válido.');
-    if(user===SESSION.user.email)return err('Esse já é o seu e-mail de acesso.');
-    const r=await sb.auth.updateUser({email:user});
+    if(nova){if(nova.length<6)return err('A nova senha precisa ter ao menos 6 caracteres.');if(nova!==conf)return err('As senhas não conferem.')}
+    const upd={};if(user.toLowerCase()!==String(SESSION.user.email).toLowerCase())upd.email=user;if(nova)upd.password=nova;
+    if(!Object.keys(upd).length)return err('Nada para alterar.');
+    const r=await sb.auth.updateUser(upd);
     if(r.error)return err('Não foi possível salvar: '+r.error.message);
-    err('');toast('Confirme a troca pelo link enviado ao novo e-mail');
-  },
-  async salvarsenha(){
-    const err=m=>{$('#ac-err-s').textContent=m};
-    const nova=$('#ac-nova').value,conf=$('#ac-conf').value;
-    if(!nova)return err('Digite a nova senha.');
-    if(nova.length<6)return err('A nova senha precisa ter ao menos 6 caracteres.');
-    if(nova!==conf)return err('As senhas não conferem.');
-    const r=await sb.auth.updateUser({password:nova});
-    if(r.error)return err('Não foi possível alterar: '+r.error.message);
-    err('');$('#ac-nova').value='';$('#ac-conf').value='';toast('Senha alterada');
+    err('');$('#ac-nova').value='';$('#ac-conf').value='';
+    toast(upd.email&&upd.password?'Senha alterada. Confirme o novo e-mail pelo link enviado a ele':upd.email?'Confirme a troca pelo link enviado ao novo e-mail':'Senha alterada');
   },
   backup(){baixarBackup()},
   restorepick(){$('#restore-file').click()},
