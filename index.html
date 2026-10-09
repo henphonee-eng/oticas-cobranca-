@@ -2042,7 +2042,7 @@ function premView(k){
 const FIN_CATS=['Laboratório','Aluguel','Salários','Fornecedor','Impostos','Água, luz e internet','Outros'];
 const finDoc=()=>{if(!S.config.fin)S.config.fin={id:'fin',itens:{}};if(!S.config.fin.itens)S.config.fin.itens={};return S.config.fin};
 const finSave=()=>persist('config','fin');
-const finBlank=()=>({desc:'',valor:'',venc:todayStr(),cat:FIN_CATS[0],rec:false});
+const finBlank=()=>({desc:'',valor:'',venc:todayStr(),cat:FIN_CATS[0],freq:''});
 function finRow(x){
   const t=todayStr();let chip;
   if(x.pago)chip='<span class="chip ok">Pago em '+fmtShort(x.pagoEm)+'</span>';
@@ -2050,7 +2050,7 @@ function finRow(x){
   else if(x.venc===t)chip='<span class="chip warn">Vence hoje</span>';
   else chip='<span class="chip">Vence em '+plural(diffDays(x.venc,t),'dia','dias')+'</span>';
   const arm=ui.confirm===x.id;
-  return '<article class="row"><div class="row-main"><b>'+esc(x.desc)+'</b><div class="meta">'+esc(x.cat)+' · '+fmtDate(x.venc)+(x.grupo?' · mensal':'')+'</div><div class="chips">'+chip+'</div></div><div class="row-side"><div class="amt">'+brl(x.valor)+'</div><div class="acts"><button class="btn sm '+(x.pago?'ghost':'ok')+'" data-act="finpagar" data-id="'+x.id+'">'+(x.pago?'Desfazer':'Pago')+'</button><button class="btn sm ghost danger'+(arm?' armed':'')+'" data-act="findel" data-id="'+x.id+'">'+(arm?'Toque de novo':'Excluir')+'</button>'+(arm&&x.grupo?'<button class="btn sm ghost danger" data-act="findelnext" data-id="'+x.id+'">Excluir esta e as próximas</button>':'')+'</div></div></article>';
+  return '<article class="row"><div class="row-main"><b>'+esc(x.desc)+'</b><div class="meta">'+esc(x.cat)+' · '+fmtDate(x.venc)+(x.grupo?(x.freq==='semana'?' · semanal':' · mensal'):'')+'</div><div class="chips">'+chip+'</div></div><div class="row-side"><div class="amt">'+brl(x.valor)+'</div><div class="acts"><button class="btn sm '+(x.pago?'ghost':'ok')+'" data-act="finpagar" data-id="'+x.id+'">'+(x.pago?'Desfazer':'Pago')+'</button><button class="btn sm ghost danger'+(arm?' armed':'')+'" data-act="findel" data-id="'+x.id+'">'+(arm?'Toque de novo':'Excluir')+'</button>'+(arm&&x.grupo?'<button class="btn sm ghost danger" data-act="findelnext" data-id="'+x.id+'">Excluir esta e as próximas</button>':'')+'</div></div></article>';
 }
 function viewFin(){
   const t=todayStr(),m=ui.fm||(ui.fm=t.slice(0,7));const it=Object.values(finDoc().itens);
@@ -2066,7 +2066,7 @@ function viewFin(){
   const form=ui.fform?'<div class="card" style="gap:12px;margin-bottom:14px"><div class="field"><span>Descrição</span><input type="text" data-pf="desc" value="'+esc(D.desc)+'" placeholder="Ex.: Laboratório, aluguel da loja" autocomplete="off"></div>'+
    '<div class="grid2"><div class="field"><span>Valor (R$)</span><input type="text" inputmode="decimal" data-pf="valor" value="'+esc(D.valor)+'" placeholder="0,00"></div><div class="field"><span>Vencimento</span><input type="date" data-pf="venc" value="'+esc(D.venc)+'"></div></div>'+
    '<div class="field"><span>Tipo de conta</span><select data-pf="cat">'+FIN_CATS.map(c=>'<option'+(D.cat===c?' selected':'')+'>'+c+'</option>').join('')+'</select></div>'+
-   '<label class="modrow"><input type="checkbox" data-pf="rec"'+(D.rec?' checked':'')+'><span><b>Repetir todo mês</b><small class="sub" style="display:block;margin:0">Cria a conta para os próximos 12 meses. Bom para aluguel e salários.</small></span></label>'+
+   '<div class="field"><span>Repetir</span><select data-pf="freq"><option value=""'+(!D.freq?' selected':'')+'>Não repete</option><option value="semana"'+(D.freq==='semana'?' selected':'')+'>Toda semana (próximas 26 semanas)</option><option value="mes"'+(D.freq==='mes'?' selected':'')+'>Todo mês (próximos 12 meses)</option></select><span class="hint">'+(D.freq==='semana'?'Cria a conta toda semana, no mesmo dia da semana do vencimento. Bom para diárias e feira.':D.freq==='mes'?'Cria a conta para os próximos 12 meses. Bom para aluguel e salários.':'A conta é lançada uma vez só.')+'</span></div>'+
    '<p class="hint bad" role="alert">'+esc(ui.ferr||'')+'</p><div class="foot-row"><button class="btn primary" data-act="finsalvar">Salvar conta</button><button class="btn" data-act="fincancel">Cancelar</button></div></div>':'';
   return pageHead('Financeiro','Contas a pagar e lucro do mês','<div class="acts"><button class="btn primary" data-act="finnova">Nova conta</button></div>')+
   '<div style="margin-bottom:14px">'+mesNav(m,'fin')+'</div>'+form+
@@ -2279,9 +2279,9 @@ Object.assign(A,{
     if(!D.desc.trim()){ui.ferr='Informe a descrição da conta.';render();return}
     if(!(valor>0)){ui.ferr='Informe o valor da conta.';render();return}
     if(!/^\d{4}-\d{2}-\d{2}$/.test(D.venc||'')){ui.ferr='Informe o vencimento.';render();return}
-    const doc=finDoc();const grupo=D.rec?uid():'';const n=D.rec?12:1;
-    for(let i=0;i<n;i++){const id=uid();doc.itens[id]={id:id,desc:D.desc.trim(),valor:valor,venc:addMonths(D.venc,i),cat:D.cat,pago:false,pagoEm:null,grupo:grupo}}
-    finSave();premLog('Conta lançada',D.desc.trim()+' · '+brl(valor)+(D.rec?' · todo mês':''));ui.fform=false;ui.ferr='';ui.fd=finBlank();ui.fm=D.venc.slice(0,7);render();toast(D.rec?'Conta criada para os próximos 12 meses':'Conta salva')
+    const doc=finDoc();const fq=D.freq==='semana'||D.freq==='mes'?D.freq:'';const grupo=fq?uid():'';const n=fq==='semana'?26:fq==='mes'?12:1;
+    for(let i=0;i<n;i++){const id=uid();doc.itens[id]={id:id,desc:D.desc.trim(),valor:valor,venc:fq==='semana'?addDays(D.venc,7*i):addMonths(D.venc,i),cat:D.cat,pago:false,pagoEm:null,grupo:grupo,freq:fq}}
+    finSave();premLog('Conta lançada',D.desc.trim()+' · '+brl(valor)+(fq==='semana'?' · toda semana':fq==='mes'?' · todo mês':''));ui.fform=false;ui.ferr='';ui.fd=finBlank();ui.fm=D.venc.slice(0,7);render();toast(fq==='semana'?'Conta criada para as próximas 26 semanas':fq==='mes'?'Conta criada para os próximos 12 meses':'Conta salva')
   },
   finpagar(d){const x=finDoc().itens[d.id];if(!x)return;x.pago=!x.pago;x.pagoEm=x.pago?todayStr():null;finSave();premLog(x.pago?'Conta paga':'Pagamento de conta desfeito',x.desc+' · '+brl(x.valor));render();toast(x.pago?'Conta marcada como paga':'Pagamento desfeito')},
   findel(d){if(ui.confirm!==d.id){ui.confirm=d.id;render();return}const x=finDoc().itens[d.id];if(x)premLog('Conta excluída',x.desc+' · '+brl(x.valor));delete finDoc().itens[d.id];finSave();ui.confirm='';render();toast('Conta excluída')},
@@ -2309,6 +2309,7 @@ document.addEventListener('input',e=>{const t=e.target;if(!(t instanceof HTMLEle
 document.addEventListener('change',async e=>{
   const t=e.target;if(!(t instanceof HTMLElement))return;
   if(t.dataset.pf!==undefined&&ui.fd)ui.fd[t.dataset.pf]=t.type==='checkbox'?t.checked:t.value;
+  if(t.dataset.pf==='freq'&&ui.fd){render();return}
   if(t.dataset.pm!==undefined){
     const md=metaDoc(),k=t.dataset.pm;
     if(k==='loja')md.loja=parseMoney(t.value);else if(k==='pct')md.pct=t.value.trim();
