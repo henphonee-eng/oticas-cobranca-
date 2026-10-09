@@ -741,9 +741,10 @@ const DEFAULT_TPL={
   aniversario:'Olá, {cliente}! A equipe da {otica} deseja a você um feliz aniversário, com muita saúde, alegria e um ano cheio de boas imagens. Um grande abraço!',
   revisao:'Olá, {cliente}! Aqui é da {otica}. Já faz {tempo} desde a sua última visita. Que tal revisar o seu grau e dar uma conferida nos seus óculos? É rápido e a gente cuida de você. Posso reservar um horário?',
   orcamento:'Olá, {cliente}! Aqui é da {otica}. Segue o orçamento que combinamos:\n\n{itens}\n\nTotal: {total}\nEntrada: {entrada}\n\nParcelas:\n{resumo}\n\n{pagamento}\nAssim que o pagamento for confirmado, fechamos a sua venda. Qualquer dúvida, é só chamar!',
+  entrega:'Olá, {cliente}! Aqui é da {otica}. Seu pedido já foi entregue. Muito obrigado pela confiança e por escolher a gente! Se precisar de qualquer ajuste ou tiver alguma dúvida, é só chamar por aqui. Foi um prazer atender você!',
   atraso:'Olá, {cliente}! Tudo bem? Aqui é da {otica}. A parcela {parcela}, de {valor}, venceu em {vencimento} e está em atraso há {dias}.{encargos} {pagamento} Se já pagou, pode nos enviar o comprovante. Obrigado!'
 };
-const TPL_LABEL={cadastro:'Boas-vindas ao cadastrar',venda:'Resumo da venda',orcamento:'Orçamento (aguardando pagamento)',lembrete:'Lembrete de vencimento',atraso:'Parcela em atraso',recibo:'Recibo de pagamento',aniversario:'Feliz aniversário',revisao:'Revisão do grau (1 ano depois)'};
+const TPL_LABEL={cadastro:'Boas-vindas ao cadastrar',venda:'Resumo da venda',orcamento:'Orçamento (aguardando pagamento)',lembrete:'Lembrete de vencimento',atraso:'Parcela em atraso',recibo:'Recibo de pagamento',aniversario:'Feliz aniversário',revisao:'Revisão do grau (1 ano depois)',entrega:'Agradecimento pela entrega'};
 const S={clientes:{},vendas:{},lentes:{},config:{}};
 const ui={tab:'painel',month:todayStr().slice(0,7),sel:todayStr(),vFilter:'todas',vPer:'todas',vQuery:'',cQuery:'',cFilter:'todos',lQuery:'',lTipo:'',cx:'hoje',cxFrom:'',cxTo:'',sheet:null,draft:null,cdraft:null,confirm:''};
 let ready=true,loadFail=false,syncState='demo';const DEMO=true;
@@ -988,7 +989,7 @@ function saleCard(v){
   const c=S.clientes[v.clienteId]||{nome:'Cliente removido'};const st=vStatus(v);
   const pago=v.parcelas.filter(p=>p.pago).reduce((s,p)=>s+p.valor,0);const pct=v.total?Math.round(pago/v.total*100):100;
   const chip=v.aguardando?'<span class="chip warn">Aguardando pagamento</span>':st==='quitada'?'<span class="chip ok">Quitada</span>':st==='atrasada'?'<span class="chip bad">Atrasada</span>':'<span class="chip warn">Em dia</span>';
-  return '<button class="card" data-act="openvenda" data-v="'+v.id+'"><div class="sale-top"><b>'+esc(c.nome)+demoTag(v)+'</b>'+chip+'</div><div class="meta">'+esc(itensTxt(v))+' · '+fmtDate(v.data)+'</div><div class="sale-bot"><span>Total '+brl(v.total)+'</span><span>Recebido '+brl(pago)+'</span></div><div class="bar" style="flex:none;width:100%" aria-hidden="true"><i style="width:'+pct+'%"></i></div></button>';
+  return '<button class="card" data-act="openvenda" data-v="'+v.id+'"><div class="sale-top"><b>'+esc(c.nome)+demoTag(v)+'</b><span class="chips">'+chip+(v.entregueEm&&!v.aguardando?'<span class="chip acc">Entregue</span>':'')+'</span></div><div class="meta">'+esc(itensTxt(v))+' · '+fmtDate(v.data)+'</div><div class="sale-bot"><span>Total '+brl(v.total)+'</span><span>Recebido '+brl(pago)+'</span></div><div class="bar" style="flex:none;width:100%" aria-hidden="true"><i style="width:'+pct+'%"></i></div></button>';
 }
 const none=t=>'<p class="sub">'+t+'</p>';
 
@@ -1286,6 +1287,12 @@ function sheetMais(){
   return '<div class="scrim" data-act="closesheet"></div><section class="sheet drawer" role="dialog" aria-modal="true" aria-label="Menu" tabindex="-1"><div class="sheet-head"><h2>Menu</h2><button class="ib" data-act="closesheet" aria-label="Fechar">&#215;</button></div><div class="sheet-body"><div class="menu">'+tabsVis().map(item).join('')+(deferredInstall?'<button class="btn" data-act="instalar">'+ICON.painel+'<span>Instalar no celular</span></button>':'')+'</div></div></section>';
 }
 
+function entregaSec(v,c){
+  const href=c.whatsapp?esc(waLink(c.whatsapp,fillTpl(tpl('entrega'),ctx(v,null,c)))):'';
+  const wa=(txt)=>href?'<a class="btn wa"'+WAT+' data-contact="ent" data-v="'+v.id+'" href="'+href+'">'+txt+'</a>':'';
+  if(v.entregueEm)return '<div class="sec"><h3>Entrega do produto</h3><div class="chips"><span class="chip ok">Entregue em '+fmtDate(v.entregueEm)+'</span>'+(v.agradEm?'<span class="chip acc">Agradecimento enviado em '+fmtShort(v.agradEm)+'</span>':'')+'</div><div class="foot-row">'+wa(v.agradEm?'Enviar agradecimento de novo':'Agradecer no WhatsApp')+'<button class="btn" data-act="desentregar" data-v="'+v.id+'">Desfazer entrega</button></div></div>';
+  return '<div class="sec"><h3>Entrega do produto</h3><p class="sub" style="margin:0">Quando o cliente retirar o produto, marque como entregue e mande a mensagem de agradecimento.</p><div class="foot-row">'+wa('Entregue: agradecer no WhatsApp')+'<button class="btn" data-act="entregar" data-v="'+v.id+'">Só marcar como entregue</button></div>'+(href?'':'<p class="hint">Sem WhatsApp cadastrado para enviar a mensagem.</p>')+'</div>';
+}
 function sheetVenda(id){
   const v=S.vendas[id];if(!v)return null;
   const c=S.clientes[v.clienteId]||{nome:'Cliente removido',whatsapp:'',cpf:'',endereco:''};
@@ -1301,6 +1308,7 @@ function sheetVenda(id){
   '<div class="sum-row big"><span>Total</span><span>'+brl(v.total)+'</span></div><div class="sum-row"><span>Entrada</span><span>'+brl(v.entrada)+'</span></div><div class="sum-row"><span>Saldo parcelado</span><span>'+(v.n?v.n+'x · '+brl(v.saldo):'-')+'</span></div>'+(v.aguardando?'':'<div class="sum-row hl"><span>Já recebido</span><span>'+brl(pago)+'</span></div>')+'</div></div>'+
   (v.obs?'<div class="sec"><h3>Observações</h3><p style="margin:0;overflow-wrap:anywhere">'+esc(v.obs)+'</p></div>':'')+
   (v.aguardando?'<div class="sec"><h3>Plano combinado</h3><div class="stack">'+v.parcelas.map(p=>'<div class="sum-row"><span>'+esc(pLabel(v,p))+' · '+(p.tipo==='entrada'?'na confirmação':fmtDate(p.venc))+'</span><b class="num">'+brl(p.valor)+'</b></div>').join('')+'</div><p class="sub">Nada disso conta como venda ainda. Ao confirmar o pagamento, a venda é criada e a entrada é registrada como recebida.</p></div>':'<div class="sec"><h3>Parcelas</h3><div class="stack">'+v.parcelas.map((p,i)=>pRow({v:v,p:p,i:i,c:c},{sheet:true})).join('')+'</div></div>')+
+  (v.aguardando?'':entregaSec(v,c))+
   '<div class="sec"><h3>Enviar ao cliente</h3><div class="foot-row"><button class="btn'+(v.aguardando?'':' primary')+'" data-act="pdf" data-v="'+v.id+'">'+(v.aguardando?'Baixar orçamento em PDF':'Baixar PDF')+'</button>'+(resumoHref?'<a class="btn wa" target="_blank" rel="noopener" href="'+resumoHref+'">'+(v.aguardando?'Enviar orçamento no WhatsApp':'Resumo no WhatsApp')+'</a>':'')+'</div>'+
   '<p class="sub">O WhatsApp abre com a mensagem pronta. Para mandar o PDF, baixe o arquivo e anexe na conversa.</p>'+
   ((c.whatsapp&&!c.bvEm&&S.clientes[v.clienteId])?'<div><a class="btn sm"'+WAT+' data-contact="bv" data-c="'+c.id+'" href="'+esc(waLink(c.whatsapp,fillTpl(tpl('cadastro'),ctx(null,null,c))))+'">Mensagem de boas-vindas</a></div>':'')+'</div>';
@@ -1772,6 +1780,8 @@ const A={
     premLog('Orçamento virou venda (pagamento parcial)',((S.clientes[v.clienteId]||{}).nome||'')+' · '+brl(val)+' de '+brl(ent.valor));
     persist('vendas',v.id);ui.pg=null;ui.tab='vendas';ui.sheet={kind:'venda',id:v.id};render();renderSheet();
     toast('Recebido '+brl(val)+'. Restante de '+brl(resto)+' vence em '+fmtDate(venc)+'.')},
+  entregar(d){const v=S.vendas[d.v];if(!v||v.aguardando)return;v.entregueEm=todayStr();persist('vendas',v.id);refresh();toast('Venda marcada como entregue')},
+  desentregar(d){const v=S.vendas[d.v];if(!v)return;delete v.entregueEm;delete v.agradEm;persist('vendas',v.id);refresh();toast('Entrega desfeita')},
   confirmpag(d,b){const v=S.vendas[d.v];if(!v||!v.aguardando)return;const t=todayStr();
     v.aguardando=false;v.data=t;v.confirmadoEm=Date.now();
     v.parcelas.forEach(p=>{if(p.tipo==='entrada'){p.pago=true;p.pagoEm=t;p.venc=t;p.forma=p.forma||v.forma}});
@@ -1833,6 +1843,7 @@ function markContact(d){
   if(d.contact==='p'){const v=S.vendas[d.v];if(v){v.parcelas[+d.pi].contatoEm=todayStr();persist('vendas',v.id)}}
   else if(d.contact==='ani'){const c=S.clientes[d.c];if(c){c.aniEm=todayStr().slice(0,4);persist('clientes',c.id)}}
   else if(d.contact==='rev'){const c=S.clientes[d.c];if(c){c.revEm=todayStr();persist('clientes',c.id)}}
+  else if(d.contact==='ent'){const v=S.vendas[d.v];if(v){if(!v.entregueEm)v.entregueEm=todayStr();v.agradEm=todayStr();persist('vendas',v.id)}}
   else if(d.contact==='bv'){const c=S.clientes[d.c];if(c){c.bvEm=todayStr();persist('clientes',c.id)}}
   setTimeout(refresh,80);
 }
