@@ -153,6 +153,15 @@ button.tile:hover{border-color:var(--accent)}
 .day.sel{outline:2px solid var(--accent);outline-offset:1px}
 .day .a.nm{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 3px;font-weight:600}
 .day.prev{background:var(--surface-2);border-style:dashed;color:var(--muted)}
+.msum{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.msum .ms{padding:12px 14px;min-width:0;border-left:1px solid var(--line)}
+.msum .ms:first-child{border-left:0}
+.msum small{display:block;font-size:12px;color:var(--muted);font-weight:600}
+.msum b{display:block;font-family:var(--f-display);font-size:22px;line-height:1.25;margin-top:2px;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.msum span{font-size:12px;color:var(--muted)}
+.msum .ok b{color:var(--ok)}.msum .bad b{color:var(--bad)}
+@media (max-width:520px){.msum .ms{padding:10px 8px;text-align:center}.msum b{font-size:16px}.msum small,.msum span{font-size:11px}}
+.legend+.sh,.panel .legend{margin-bottom:6px}
 .menlist .row{flex-direction:column;gap:8px}
 .menlist .row-side{width:100%;display:flex;flex-direction:row-reverse;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
 .menlist .row-side .acts{justify-content:flex-start}
@@ -1713,7 +1722,10 @@ function viewMensal(){
   if(!ADM.loaded)return h+none('Carregando...');
   const L=menDoMes(mk),sum=a=>a.reduce((s,c)=>s+c.valor,0);
   const late=ADM.cob.filter(c=>!c.pago&&c.venc<t);
-  h+='<div class="tiles"><div class="tile t-acc"><small>A receber no mês</small><b>'+brl(sum(L.filter(c=>!c.pago)))+'</b><span>'+plural(L.filter(c=>!c.pago).length,'cobrança','cobranças')+'</span></div><div class="tile t-ok"><small>Recebido no mês</small><b>'+brl(sum(L.filter(c=>c.pago)))+'</b></div><div class="tile t-bad"><small>Em atraso (total)</small><b>'+brl(sum(late))+'</b><span>'+plural(late.length,'cobrança','cobranças')+'</span></div></div>';
+  const ab=L.filter(c=>!c.pago),pg=L.filter(c=>c.pago);
+  h+='<div class="msum"><div class="ms"><small>A receber</small><b>'+brl(sum(ab))+'</b><span>'+plural(ab.length,'cobrança','cobranças')+'</span></div>'+
+    '<div class="ms ok"><small>Recebido</small><b>'+brl(sum(pg))+'</b><span>'+plural(pg.length,'pagamento','pagamentos')+'</span></div>'+
+    '<div class="ms'+(late.length?' bad':'')+'"><small>Em atraso</small><b>'+brl(sum(late))+'</b><span>'+plural(late.length,'cobrança','cobranças')+'</span></div></div>';
   const by={};L.forEach(c=>{(by[c.venc]=by[c.venc]||[]).push(c)});
   const dim=new Date(Y,M,0).getDate(),off=new Date(Y,M-1,1).getDay();
   const mname=cap(new Date(Y,M-1,1).toLocaleDateString('pt-BR',{month:'long',year:'numeric'}));
@@ -1729,7 +1741,7 @@ function viewMensal(){
   const dows=['D','S','T','Q','Q','S','S'].map(d=>'<div class="dow">'+d+'</div>').join('');
   const sel=MEN.sel&&MEN.sel.slice(0,7)===mk?MEN.sel:null;
   const lista=sel?L.filter(c=>c.venc===sel):L;
-  const titulo=sel?cap(parseYmd(sel).toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'})):'Óticas com mensalidade em '+mname.toLowerCase();
+  const titulo=sel?cap(parseYmd(sel).toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'})):'Óticas de '+new Date(Y,M-1,1).toLocaleDateString('pt-BR',{month:'long'});
   h+='<div class="cols agenda" style="margin-top:22px"><div class="panel">'+
     '<div class="calhead"><button class="ib" data-act="menmes" data-n="-1" aria-label="Mês anterior">&#8249;</button><h2>'+mname+'</h2><button class="btn sm" data-act="menmes" data-n="0">Hoje</button><button class="ib" data-act="menmes" data-n="1" aria-label="Próximo mês">&#8250;</button></div>'+
     '<div class="cal">'+dows+cells.join('')+'</div>'+
