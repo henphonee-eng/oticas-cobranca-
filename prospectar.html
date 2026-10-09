@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#00348A">
+<meta name="theme-color" content="#191A23">
 <meta name="robots" content="noindex,nofollow">
 <title>Prospecção de Óticas</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#EDF3FB;--surface:#fff;--surface-2:#E2EBF8;--fg:#0A1D3C;--muted:#53698C;--line:#D0DCEE;
@@ -82,6 +82,44 @@ textarea{resize:vertical;min-height:120px}
 .prev{white-space:pre-wrap;background:var(--surface-2);border-radius:10px;padding:12px;font-size:14px}
 .sec{margin-top:18px}
 .sec h2{font-size:20px;margin-bottom:8px}
+
+/* ===== Tema Adm (estilo Positivus): grafite, verde-limão e branco ===== */
+:root{
+  --bg:#F3F3F3;--surface:#fff;--surface-2:#F3F3F3;--fg:#191A23;--muted:#5B5C66;--line:#D6D6DB;--edge:#191A23;--drop:0 5px 0 #191A23;
+  --accent:#191A23;--accent-fg:#fff;--accent-soft:#E9FFD3;--brand:#191A23;--lime:#B9FF66;
+  --ok:#2E7D1E;--ok-bg:#E2FBC6;--warn:#8A5A00;--warn-bg:#FFF0C7;--bad:#C2271C;--bad-bg:#FFE1DD;
+  --wa:#191A23;--wa-fg:#B9FF66;--hot:#191A23;--hot-bg:#B9FF66;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0E0F14;--surface:#191A23;--surface-2:#23242F;--fg:#F3F3F3;--muted:#A7A8B3;--line:#33343F;--edge:#3D3E4A;--drop:0 5px 0 #000;
+  --accent:#B9FF66;--accent-fg:#191A23;--accent-soft:#2A3A1A;--brand:#191A23;
+  --ok:#B9FF66;--ok-bg:#25351A;--warn:#F2C55C;--warn-bg:#3A2E12;--bad:#FF8A7E;--bad-bg:#3D1A17;
+  --wa:#B9FF66;--wa-fg:#191A23;--hot:#191A23;--hot-bg:#B9FF66;}}
+html,body{font-family:'Space Grotesk',system-ui,sans-serif!important;letter-spacing:-.005em}
+h1,h2{font-family:'Space Grotesk',system-ui,sans-serif!important;font-weight:500!important;letter-spacing:-.02em!important}
+.top,.tabs{background:#191A23!important}
+.tabs button{border-radius:12px 12px 0 0}
+.tabs button.on{opacity:1;border-color:transparent;background:#B9FF66;color:#191A23;border-radius:12px;margin:4px 0 8px;padding:6px 12px}
+.card,.stat,.empty{border:1px solid var(--edge)!important;box-shadow:var(--drop);border-radius:22px!important}
+.card{padding:16px 18px}
+.list{gap:16px!important}
+.stat{border-radius:18px!important}
+.stats .stat:nth-child(2){background:#B9FF66;color:#191A23}
+.stats .stat:nth-child(2) span{color:#191A23;opacity:.75}
+.stat b{font-family:'Space Grotesk',sans-serif!important;font-weight:600}
+.lead h2{display:inline;background:none}
+.sec h2{display:inline-block;background:#B9FF66;color:#191A23;padding:1px 9px;border-radius:7px}
+.btn{border-radius:14px!important;border:1px solid var(--edge)!important;font-weight:500!important}
+.btn.pri{background:var(--accent);color:var(--accent-fg)}
+.btn.wa{background:var(--wa);color:var(--wa-fg)}
+.chip{border:1px solid var(--edge)!important;border-radius:14px!important}
+.chip.on{background:var(--accent)!important;color:var(--accent-fg)!important}
+.tag{border-radius:8px!important;font-weight:500!important}
+.tag.ok{background:#B9FF66;color:#191A23}
+input[type=text],input[type=email],input[type=password],input[type=date],select,textarea{border-radius:14px!important;border-color:var(--edge)!important}
+.note{border-radius:18px;border:1px solid var(--edge)}
+.toast{background:#191A23!important;color:#B9FF66!important;border-radius:14px!important}
+.gate .card{box-shadow:0 6px 0 #B9FF66}
 </style>
 </head>
 <body>
