@@ -792,9 +792,11 @@ function viewAjustes(){
   '<div class="cols"><div class="panel">'+
   '<div class="sh" style="margin-top:0"><h2>Acesso</h2></div><div class="card" style="gap:12px">'+
   '<div class="field"><span>E-mail de acesso</span><input type="email" id="ac-user" value="'+esc(a.usuario||'')+'" autocomplete="username" autocapitalize="none"></div>'+
-  '<div class="grid2"><div class="field"><span>Nova senha (opcional)</span><input type="password" id="ac-nova" autocomplete="new-password"></div><div class="field"><span>Repita a nova senha</span><input type="password" id="ac-conf" autocomplete="new-password"></div></div>'+
-  '<p class="hint bad" id="ac-err" role="alert"></p><div><button class="btn primary" data-act="salvaracesso">Salvar acesso</button></div>'+
-  '<div class="field"><span>Bloquear sozinho após</span><select data-cfg="autolock">'+[[5,'5 minutos'],[15,'15 minutos'],[30,'30 minutos'],[60,'1 hora'],[0,'Nunca']].map(o=>'<option value="'+o[0]+'"'+(+c.autolock===o[0]?' selected':'')+'>'+o[1]+'</option>').join('')+'</select></div>'+
+  '<p class="hint bad" id="ac-err-e" role="alert"></p><div><button class="btn primary" data-act="salvaremail">Salvar e-mail</button></div>'+
+  '<div class="field"><span>Bloquear sozinho após</span><select data-cfg="autolock">'+[[5,'5 minutos'],[15,'15 minutos'],[30,'30 minutos'],[60,'1 hora'],[0,'Nunca']].map(o=>'<option value="'+o[0]+'"'+(+c.autolock===o[0]?' selected':'')+'>'+o[1]+'</option>').join('')+'</select></div></div>'+
+  '<div class="sh"><h2>Alterar senha</h2></div><div class="card" style="gap:12px">'+
+  '<div class="grid2"><div class="field"><span>Nova senha</span><input type="password" id="ac-nova" autocomplete="new-password"></div><div class="field"><span>Repita a nova senha</span><input type="password" id="ac-conf" autocomplete="new-password"></div></div>'+
+  '<p class="hint bad" id="ac-err-s" role="alert"></p><div><button class="btn primary" data-act="salvarsenha">Alterar senha</button></div>'+
   '<p class="sub" style="margin:0">Seu acesso é protegido por e-mail e senha. Troque a senha se outra pessoa chegar a saber.</p></div>'+
   '<div class="sh"><h2>Dados da ótica</h2></div><div class="card" style="gap:12px">'+
   '<div class="field"><span>Nome da ótica</span><input type="text" data-cfg="nome" value="'+esc(c.nome)+'"></div>'+
@@ -1107,16 +1109,24 @@ const A={
     refresh();toast(n?plural(n,'lente importada','lentes importadas'):'Nenhuma linha reconhecida. Use: nome ; valor')
   },
   tplreset(d){const c=Object.assign({id:'otica'},S.config.otica||{});c.tpl=Object.assign({},c.tpl);delete c.tpl[d.k];S.config.otica=c;persist('config','otica');refresh()},
-  async salvaracesso(){
-    const err=m=>{$('#ac-err').textContent=m};
-    const user=$('#ac-user').value.trim(),nova=$('#ac-nova').value,conf=$('#ac-conf').value;
+  async salvaremail(){
+    const err=m=>{$('#ac-err-e').textContent=m};
+    const user=$('#ac-user').value.trim();
     if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(user))return err('Digite um e-mail válido.');
-    if(nova){if(nova.length<6)return err('A nova senha precisa ter ao menos 6 caracteres.');if(nova!==conf)return err('As senhas novas não conferem.')}
-    const upd={};if(user!==SESSION.user.email)upd.email=user;if(nova)upd.password=nova;
-    if(!Object.keys(upd).length)return err('Nada para alterar.');
-    const r=await sb.auth.updateUser(upd);
+    if(user===SESSION.user.email)return err('Esse já é o seu e-mail de acesso.');
+    const r=await sb.auth.updateUser({email:user});
     if(r.error)return err('Não foi possível salvar: '+r.error.message);
-    err('');toast(upd.email?'Confirme a troca de e-mail pelo link enviado ao novo e-mail':'Acesso atualizado');
+    err('');toast('Confirme a troca pelo link enviado ao novo e-mail');
+  },
+  async salvarsenha(){
+    const err=m=>{$('#ac-err-s').textContent=m};
+    const nova=$('#ac-nova').value,conf=$('#ac-conf').value;
+    if(!nova)return err('Digite a nova senha.');
+    if(nova.length<6)return err('A nova senha precisa ter ao menos 6 caracteres.');
+    if(nova!==conf)return err('As senhas não conferem.');
+    const r=await sb.auth.updateUser({password:nova});
+    if(r.error)return err('Não foi possível alterar: '+r.error.message);
+    err('');$('#ac-nova').value='';$('#ac-conf').value='';toast('Senha alterada');
   },
   backup(){baixarBackup()},
   restorepick(){$('#restore-file').click()},
