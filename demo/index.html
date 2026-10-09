@@ -10,7 +10,7 @@
 <meta name="robots" content="noindex,nofollow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* Identidade: azul escuro e azul claro da logo, com branco. Layout: sistema de balcão. Desktop: menu lateral fixo + área de trabalho em duas colunas. Celular: cabeçalho fino, 4 abas + "Mais" na base. Porta de entrada com login. */
 :root{
@@ -263,19 +263,60 @@ details[open] summary{margin-bottom:10px}
 .alert b{display:block;font-size:15.5px}.alert span{font-size:13.5px;opacity:.9}
 .alert.bad{background:var(--bad-bg);border-color:var(--bad);color:var(--bad)}
 .alert.warn{background:var(--warn-bg);border-color:var(--warn);color:var(--warn)}
-.brand-name{font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:22px;line-height:1;letter-spacing:.04em;color:#fff;display:flex;flex-direction:column;gap:2px}
+/* Acabamento: sóbrio, financeiro, premium */
+:root{--f-display:'Newsreader',Georgia,'Times New Roman',serif;--side-a:color-mix(in srgb,var(--brand-2) 80%,#000);--side-b:color-mix(in srgb,var(--brand-2) 46%,#000);--tabline:color-mix(in srgb,var(--brand-1) 55%,#fff)}
+h1,h2,h3{font-weight:500;letter-spacing:-.015em}
+.ph h1{font-size:30px}
+.sh h2{font-size:21px}
+.side{background:linear-gradient(135deg,var(--side-a),var(--side-b))}
+.btn{border-radius:8px;min-height:40px}
+.btn.sm{min-height:34px}
+.chip{border-radius:6px;font-size:11.5px}
+.row,.card,.tile{border-radius:10px}
+.tile small{text-transform:none;letter-spacing:0;font-size:13px;font-weight:500}
+.tile b{font-weight:500;font-size:26px;font-variant-numeric:lining-nums tabular-nums}
+.row .amt{font-weight:600;font-variant-numeric:lining-nums tabular-nums}
+input[type=text],input[type=search],input[type=date],input[type=number],input[type=password],input[type=email],select,textarea{border-radius:8px}
+.sheet-head h2{font-weight:500}
+.alert{border-radius:10px;border-left-width:4px}
+.kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.kpi{background:var(--surface);padding:16px 16px 14px;border:0;text-align:left;min-width:0;display:flex;flex-direction:column;gap:2px;width:100%;color:var(--fg)}
+.kpi.lead{grid-column:1/-1;box-shadow:inset 0 3px 0 var(--accent)}
+.kpi small{font-size:13px;font-weight:500;color:var(--muted)}
+.kpi b{font-family:var(--f-display);font-weight:500;font-size:26px;line-height:1.15;letter-spacing:-.01em;font-variant-numeric:lining-nums tabular-nums;overflow-wrap:anywhere}
+.kpi.lead b{font-size:34px;color:var(--accent)}
+.kpi span{font-size:12.5px;color:var(--muted)}
+.kpi.neg b{color:var(--bad)}
+.kpi.total{background:color-mix(in srgb,var(--accent) 6%,var(--surface))}
+button.kpi{cursor:pointer}
+button.kpi:hover{background:var(--surface-2)}
+@media (min-width:900px){
+  .ph h1{font-size:38px}
+  .side{background:linear-gradient(180deg,var(--side-a),var(--side-b))}
+  .tab{border-radius:8px;padding:10px 14px;font-weight:500;color:rgba(255,255,255,.74)}
+  .tab:hover{background:rgba(255,255,255,.06);color:#fff}
+  .tab[aria-current=page]{background:rgba(255,255,255,.09);color:#fff;font-weight:600;box-shadow:inset 3px 0 0 var(--tabline)}
+}
+@media (min-width:1180px){
+  .kpis{grid-template-columns:1.3fr repeat(4,minmax(0,1fr))}
+  .kpi{padding:20px 20px 18px}
+  .kpi.lead{grid-column:auto}
+  .kpi b{font-size:28px}
+  .kpi.lead b{font-size:34px}
+}
+.brand-name{font-family:var(--f-display);font-weight:700;font-size:22px;line-height:1;letter-spacing:.04em;color:#fff;display:flex;flex-direction:column;gap:2px}
 .brand-name small{font-family:'IBM Plex Sans',sans-serif;font-weight:500;font-size:11px;letter-spacing:.22em;text-transform:uppercase;opacity:.8}
 @media (min-width:900px){.brand-name{font-size:32px;margin-left:6px}.brand-name small{font-size:12px}}
-.demo-note{display:flex;flex-direction:column;gap:2px;background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn);border-radius:12px;padding:10px 14px;margin-bottom:14px;font-size:13.5px}
-.demo-note b{font-size:14px}
+.demo-note{display:flex;flex-direction:column;gap:2px;background:var(--surface);color:var(--muted);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:13.5px}
+.demo-note b{font-size:14px;color:var(--fg)}
 .brand-name{overflow-wrap:anywhere;text-transform:uppercase}
 .brand-name.long{font-size:17px}
 @media (min-width:900px){.brand-name.long{font-size:24px}}
 .side-cta{display:none}
 @media (min-width:900px){.side-cta{display:inline-flex;justify-content:center}}
 .demo-note .btn{align-self:flex-start;margin-top:6px}
-/* Paleta da demonstração: grafite e cinza quente, neutra e discreta */
-:root{--bg:#F5F4F2;--surface:#FFFFFF;--surface-2:#EAE8E4;--fg:#1C1B1A;--muted:#6B6560;--line:#DDD9D3;--accent:#34414F;--accent-fg:#FFFFFF;--accent-soft:#E6E9ED;--brand-1:#3E4A59;--brand-2:#1B222C;--bar-a:#475569;--bar-b:#A8A29E;--shadow:0 1px 2px rgba(20,20,20,.07),0 10px 28px rgba(20,20,20,.12)}
+/* Paleta da demonstração: grafite e cinza quente */
+:root{--bg:#F5F4F2;--surface:#FFFFFF;--surface-2:#EAE8E4;--fg:#1C1B1A;--muted:#6B6560;--line:#DDD9D3;--accent:#34414F;--accent-fg:#FFFFFF;--accent-soft:#E6E9ED;--brand-1:#3E4A59;--brand-2:#1B222C;--bar-a:#475569;--bar-b:#A8A29E}
 :root[data-theme="light"]{--bg:#F5F4F2;--surface:#FFFFFF;--surface-2:#EAE8E4;--fg:#1C1B1A;--muted:#6B6560;--line:#DDD9D3;--accent:#34414F;--accent-fg:#FFFFFF;--accent-soft:#E6E9ED;--brand-1:#3E4A59;--brand-2:#1B222C;--bar-a:#475569;--bar-b:#A8A29E}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111315;--surface:#1A1D21;--surface-2:#262A30;--fg:#ECEDEE;--muted:#A1A7AE;--line:#343A42;--accent:#CBD5E1;--accent-fg:#12151A;--accent-soft:#2A3038;--brand-1:#2F3742;--brand-2:#14181D;--bar-a:#94A3B8;--bar-b:#D6D3D1}}
 :root[data-theme="dark"]{--bg:#111315;--surface:#1A1D21;--surface-2:#262A30;--fg:#ECEDEE;--muted:#A1A7AE;--line:#343A42;--accent:#CBD5E1;--accent-fg:#12151A;--accent-soft:#2A3038;--brand-1:#2F3742;--brand-2:#14181D;--bar-a:#94A3B8;--bar-b:#D6D3D1}
@@ -509,6 +550,7 @@ function viewPainel(){
   const vHoje=vs.filter(v=>v.data===t).sort((a,b)=>(b.criadoEm||0)-(a.criadoEm||0));
   const recHoje=ps.filter(x=>x.p.pago&&x.p.pagoEm===t);
   const venceHoje=ps.filter(x=>!x.p.pago&&x.p.venc===t);
+  const abertas=ps.filter(x=>!x.p.pago);
   const late=ps.filter(x=>!x.p.pago&&x.p.venc<t).sort((a,b)=>a.p.venc.localeCompare(b.p.venc));
   const prox=ps.filter(x=>!x.p.pago&&x.p.venc>t&&diffDays(x.p.venc,t)<=7).sort((a,b)=>a.p.venc.localeCompare(b.p.venc));
   const vMes=vs.filter(v=>v.data.slice(0,7)===mk);
@@ -522,11 +564,12 @@ function viewPainel(){
   (venceHoje.length?'<button class="alert warn" role="status" data-act="tab" data-t="cobrar">'+BELL+'<div><b>Hoje é dia de pagamento: '+plural(venceHoje.length,'parcela vence','parcelas vencem')+' ('+brl(sumV(venceHoje))+')</b><span>'+esc(nomes(venceHoje))+'</span></div></button>':'');
   return pageHead('Painel',dia,'<button class="btn primary" data-act="novavenda">Nova venda</button>')+alerts+
   (noSales?'<div class="empty" style="margin-bottom:18px">'+GLASSES+'<h3>Nenhuma venda registrada ainda</h3><p>Registre a primeira venda parcelada. Os números do dia e os vencimentos aparecem aqui.</p><div class="acts" style="justify-content:center"><button class="btn primary" data-act="novavenda">Nova venda</button><button class="btn" data-act="demo">Ver com exemplos</button></div></div>':'')+
-  '<div class="tiles">'+
-  '<div class="tile hero"><small>Entrou hoje</small><b>'+brl(sumV(recHoje))+'</b><span>'+plural(recHoje.length,'recebimento','recebimentos')+'</span></div>'+
-  '<div class="tile t-acc"><small>Vendas do dia</small><b>'+brl(sumT(vHoje))+'</b><span>'+plural(vHoje.length,'venda','vendas')+'</span></div>'+
-  '<div class="tile"><small>A receber hoje</small><b>'+brl(sumV(venceHoje))+'</b><span>'+plural(venceHoje.length,'parcela','parcelas')+'</span></div>'+
-  '<button class="tile t-bad" data-act="tab" data-t="cobrar"><small>Em atraso</small><b>'+brl(sumV(late))+'</b><span>'+plural(late.length,'parcela','parcelas')+' · ver cobranças</span></button></div>'+
+  '<div class="kpis">'+
+  '<div class="kpi lead"><small>Entrou hoje</small><b>'+brl(sumV(recHoje))+'</b><span>'+plural(recHoje.length,'recebimento','recebimentos')+'</span></div>'+
+  '<div class="kpi"><small>Vendas do dia</small><b>'+brl(sumT(vHoje))+'</b><span>'+plural(vHoje.length,'venda','vendas')+'</span></div>'+
+  '<div class="kpi"><small>A receber hoje</small><b>'+brl(sumV(venceHoje))+'</b><span>'+plural(venceHoje.length,'parcela','parcelas')+'</span></div>'+
+  '<button class="kpi'+(late.length?' neg':'')+'" data-act="tab" data-t="cobrar"><small>Em atraso</small><b>'+brl(sumV(late))+'</b><span>'+plural(late.length,'parcela','parcelas')+(late.length?' · ver cobranças':'')+'</span></button>'+
+  '<div class="kpi total"><small>Total a receber</small><b>'+brl(sumV(abertas))+'</b><span>'+plural(abertas.length,'parcela em aberto','parcelas em aberto')+'</span></div></div>'+
   '<div class="cols"><div class="panel">'+
   '<div class="sh"><h2>Vendas de hoje</h2></div><div class="stack">'+(vHoje.length?vHoje.map(saleCard).join(''):none('Nenhuma venda registrada hoje.'))+'</div>'+
   '<div class="sh"><h2>Recebimentos de hoje</h2><span class="sub num">'+brl(sumV(recHoje))+'</span></div><div class="stack">'+(recHoje.length?recHoje.map(x=>recRow(x)).join(''):none('Nada recebido hoje ainda.'))+'</div>'+
