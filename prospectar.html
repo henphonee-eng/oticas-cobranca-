@@ -129,7 +129,7 @@ async function load(){
   const [lr,cr]=await Promise.all([sb.from('prosp_leads').select('*').order('criado_em',{ascending:false}),sb.from('prosp_config').select('*')]);
   if(lr.error){toast('Erro ao carregar: '+lr.error.message);return}
   st.leads=lr.data||[];st.cfg={};(cr.data||[]).forEach(r=>st.cfg[r.chave]=r.valor);
-  st.loaded=true;if(!st.leads.length)st.tab='buscar';render();
+  st.loaded=true;const qt=new URLSearchParams(location.search).get('tab');if(qt&&['crm','buscar','msg'].includes(qt))st.tab=qt;else if(!st.leads.length)st.tab='buscar';render();
 }
 async function upd(id,patch){
   patch.atualizado_em=new Date().toISOString();
@@ -184,7 +184,7 @@ function render(){
   if(!st.admin)return a.innerHTML='<div class="gate"><div class="card"><h1>Sem acesso</h1><p class="muted">Essa área é só do administrador.</p><button class="btn" data-a="sair">Sair</button></div></div>';
   if(!st.loaded)return a.innerHTML='<div class="empty">Carregando leads…</div>';
   const t=(k,n)=>'<button data-tab="'+k+'" class="'+(st.tab===k?'on':'')+'">'+n+'</button>';
-  a.innerHTML='<header class="top"><div class="in"><h1>Prospecção</h1><span class="sp"></span><a href="/adm">Painel adm</a><button data-a="sair">Sair</button></div></header>'+
+  a.innerHTML='<header class="top"><div class="in"><h1>Prospecção</h1><span class="sp"></span><a href="/adm">← Voltar ao sistema</a><button data-a="sair">Sair</button></div></header>'+
    '<nav class="tabs"><div class="in">'+t('crm','CRM ('+st.leads.length+')')+t('buscar','Buscar óticas')+t('msg','Mensagens')+'</div></nav><main>'+
    (st.tab==='buscar'?vBuscar():st.tab==='msg'?vMsg():vCrm())+'</main>';
 }
