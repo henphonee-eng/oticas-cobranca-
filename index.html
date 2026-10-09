@@ -2109,8 +2109,8 @@ function viewMetas(){
   const linhas=rows.map(r=>{const p=r.meta?Math.round(r.tot/r.meta*100):0;
     const vdet=r.vs.length?'<details><summary>Vendas do mês ('+r.vs.length+')</summary><div class="stack" style="gap:6px">'+r.vs.slice().sort((x,y)=>y.data.localeCompare(x.data)).map(v=>'<div class="sum-row"><span>'+esc((S.clientes[v.clienteId]||{nome:'Cliente removido'}).nome)+' <span class="meta">'+fmtShort(v.data)+'</span></span><span class="num">'+brl(v.total)+' · <b>'+brl(Math.round(v.total*r.pct/100))+'</b></span></div>').join('')+'</div><p class="sub" style="margin:8px 0 0">Valor da venda · comissão sobre ela.</p></details>':'';
     const cdet=r.cad?'<details><summary>Clientes dele ('+r.cli.length+')</summary>'+(r.cli.length?'<div class="stack" style="gap:6px">'+r.cli.slice().sort((x,y)=>x.nome.localeCompare(y.nome)).map(c=>'<div class="sum-row"><span>'+esc(c.nome)+'</span></div>').join('')+'</div>':'<p class="sub" style="margin:0">Nenhum cliente vinculado ainda. Toque em Editar para adicionar.</p>')+'</details>':'';
-    return '<div class="card" style="gap:10px"><div class="sale-top"><b>'+esc(vendNome(r.k))+'</b><span class="chip'+(r.meta&&p>=100?' ok':'')+'">'+(r.meta?p+'% da meta':'Sem meta')+'</span></div><div class="sale-bot"><span>Vendido '+brl(r.tot)+' · '+plural(r.n,'venda','vendas')+'</span><span>Comissão '+brl(r.com)+(r.pct?' ('+String(r.pct).replace('.',',')+'%)':'')+'</span></div>'+(r.meta?barra(p):'')+vdet+cdet+
-    (dono?'<div class="grid2"><div class="field"><span>Meta do mês (R$)</span><input type="text" inputmode="decimal" data-pm="v:'+esc(r.k)+':meta" value="'+(r.meta?centsToStr(r.meta):'')+'" placeholder="0,00"></div><div class="field"><span>Comissão (%)</span><input type="text" inputmode="decimal" data-pm="v:'+esc(r.k)+':pct" value="'+esc(r.cfgPct===undefined?'':r.cfgPct)+'" placeholder="padrão"></div></div>'+(r.cad?'<div><button class="btn sm" data-act="vdedit" data-k="'+esc(r.k)+'">Editar vendedor e clientes</button></div>':''):'')+'</div>'}).join('');
+    return '<div class="card" style="gap:10px"><div class="sale-top"><b>'+esc(vendNome(r.k))+'</b><span class="acts" style="align-items:center"><span class="chip'+(r.meta&&p>=100?' ok':'')+'">'+(r.meta?p+'% da meta':'Sem meta')+'</span>'+((dono&&r.cad)?'<button class="btn sm" data-act="vdedit" data-k="'+esc(r.k)+'">Editar</button><button class="btn sm ghost danger'+(ui.confirm===r.k?' armed':'')+'" data-act="vdexcluir" data-k="'+esc(r.k)+'">'+(ui.confirm===r.k?'Toque de novo para excluir':'Excluir')+'</button>':'')+'</span></div><div class="sale-bot"><span>Vendido '+brl(r.tot)+' · '+plural(r.n,'venda','vendas')+'</span><span>Comissão '+brl(r.com)+(r.pct?' ('+String(r.pct).replace('.',',')+'%)':'')+'</span></div>'+(r.meta?barra(p):'')+vdet+cdet+
+    (dono?'<div class="grid2"><div class="field"><span>Meta do mês (R$)</span><input type="text" inputmode="decimal" data-pm="v:'+esc(r.k)+':meta" value="'+(r.meta?centsToStr(r.meta):'')+'" placeholder="0,00"></div><div class="field"><span>Comissão (%)</span><input type="text" inputmode="decimal" data-pm="v:'+esc(r.k)+':pct" value="'+esc(r.cfgPct===undefined?'':r.cfgPct)+'" placeholder="padrão"></div></div>'+'':'')+'</div>'}).join('');
   const cfgBox=dono?'<div class="sh"><h2>Regras</h2></div><div class="card" style="gap:12px"><div class="grid2"><div class="field"><span>Meta mensal da loja (R$)</span><input type="text" inputmode="decimal" data-pm="loja" value="'+(md.loja?centsToStr(md.loja):'')+'" placeholder="0,00"></div><div class="field"><span>Comissão padrão (%)</span><input type="text" inputmode="decimal" data-pm="pct" value="'+esc(md.pct||'')+'" placeholder="0"></div></div><p class="sub" style="margin:0">A comissão é calculada sobre o valor vendido no mês. A venda vai para o vendedor escolhido na venda; se nada for escolhido, vai para o vendedor do cliente. A meta e a comissão de cada vendedor valem para qualquer mês.</p></div>':'';
   return pageHead('Metas e comissão',dono?'Acompanhe a loja e cada vendedor':'Seus números do mês',dono?'<div class="acts"><button class="btn primary" data-act="vdnovo">Cadastrar vendedor</button></div>':'<div class="acts"></div>')+'<div style="margin-bottom:14px">'+mesNav(m,'meta')+'</div>'+loja+
   '<div class="stack">'+(linhas||'<div class="empty">'+GLASSES+'<h3>Nenhum vendedor ainda</h3><p>Cadastre os vendedores, ligue os clientes a eles e acompanhe vendas e comissão.</p>'+(dono?'<div class="acts" style="justify-content:center"><button class="btn primary" data-act="vdnovo">Cadastrar vendedor</button></div>':'')+'</div>')+'</div>'+cfgBox;
@@ -2139,6 +2139,11 @@ function premVendSale(D){if(!modOn('metas')||!vendList().length)return '';
   return '<div class="sec"><h3>Vendedor</h3><div class="field"><span>Quem vendeu (comissão)</span><select data-bind="vendedorId">'+vendOpts(D.vendedorId||'','Automático: vendedor do cliente')+'</select></div></div>'}
 function premVendCli(D){if(!modOn('metas')||!vendList().length)return '';
   return '<div class="field"><span>Vendedor (quem trouxe o cliente)</span><select data-cbind="vendedorId">'+vendOpts(D.vendedorId||'','Nenhum')+'</select></div>'}
+function vdRemove(id){
+  const md=metaDoc();const nome=(md.vends[id]||{}).nome||'';delete md.vends[id];delete md.vend[id];
+  Object.values(S.clientes).forEach(c=>{if(c.vendedorId===id){c.vendedorId='';persist('clientes',c.id)}});
+  persist('config','metas');premLog('Vendedor excluído',nome);ui.vd=null;ui.confirm='';ui.sheet=null;renderSheet();render();toast('Vendedor excluído. As vendas dele ficam em "Sem vendedor".');
+}
 Object.assign(A,{
   vdnovo(){ui.vd=vdBlank();ui.confirm='';ui.sheet={kind:'vendedor',id:ui.vd.id};renderSheet()},
   vdedit(d){const md=metaDoc();const x=(md.vends||{})[d.k];if(!x)return;const c=md.vend[d.k]||{};const sel={};Object.values(S.clientes).forEach(cl=>{if(cl.vendedorId===x.id)sel[cl.id]=true});
@@ -2153,10 +2158,8 @@ Object.assign(A,{
     persist('config','metas');ch.forEach(id=>persist('clientes',id));
     premLog(D.novo?'Vendedor cadastrado':'Vendedor editado',D.nome.trim()+' · '+plural(Object.keys(D.sel).filter(k=>D.sel[k]).length,'cliente','clientes'));
     ui.vd=null;ui.sheet=null;renderSheet();ui.tab='metas';render();toast(D.novo?'Vendedor cadastrado':'Vendedor atualizado')},
-  vddel(){const D=ui.vd;if(!D)return;if(ui.confirm!==D.id){ui.confirm=D.id;renderSheet();return}
-    const md=metaDoc();const nome=(md.vends[D.id]||{}).nome||'';delete md.vends[D.id];delete md.vend[D.id];
-    Object.values(S.clientes).forEach(c=>{if(c.vendedorId===D.id){c.vendedorId='';persist('clientes',c.id)}});
-    persist('config','metas');premLog('Vendedor excluído',nome);ui.vd=null;ui.confirm='';ui.sheet=null;renderSheet();render();toast('Vendedor excluído. As vendas dele ficam em "Sem vendedor".')}
+  vddel(){const D=ui.vd;if(!D)return;if(ui.confirm!==D.id){ui.confirm=D.id;renderSheet();return}vdRemove(D.id)},
+  vdexcluir(d){if(ui.confirm!==d.k){ui.confirm=d.k;render();return}vdRemove(d.k)}
 });
 
 /* ----- campanhas e pesquisa de satisfação ----- */
