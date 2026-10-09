@@ -998,6 +998,7 @@ const PROSPTABS=[['prosp','Prospecção'],['crm','CRM']];
 function tabsVis(){
   if(!OTICA)return IS_ADMIN?[ADMTAB,MENSTAB].concat(PROSPTABS):[];
   let t=TABS.filter(x=>ROLE==='dono'||!['caixa','lentes','ajustes','financeiro','campanhas'].includes(x[0]));
+  if(ROLE!=='dono'){const ac=premAcTabs();if(ac){t=TABS.filter(x=>x[0]!=='ajustes'&&ac.includes(x[0]));if(!t.length)t=TABS.filter(x=>x[0]==='painel')}}
   if(IS_ADMIN)t=t.concat([ADMTAB,MENSTAB],PROSPTABS);
   return t;
 }
@@ -2036,6 +2037,7 @@ const A={
 const MODS=[
  {k:'financeiro',n:'Contas a pagar e lucro',d:'Lance as contas da ótica e veja, mês a mês, quanto entrou, quanto saiu e quanto sobrou.',b:['Contas a pagar com vencimento e aviso de atraso','Despesas fixas que se repetem todo mês (aluguel, salários)','Lucro do mês: o que você recebeu menos o que pagou','Previsão do mês com o que ainda vai entrar e sair']},
  {k:'metas',n:'Metas e comissão',d:'Defina a meta da loja e de cada vendedor e acompanhe o quanto cada um já vendeu no mês.',b:['Cadastro de vendedores, com os clientes que vieram por cada um','Meta mensal da loja e de cada vendedor, com barra de progresso','Comissão de cada venda calculada sozinha, em % ou em valor fixo por venda','O vendedor vê só os próprios números']},
+ {k:'acessos',n:'Acesso da equipe com permissões',d:'Cadastre seus vendedores com e-mail e senha e escolha, tela por tela, o que cada um pode ver ao entrar no sistema.',b:['Você marca quais telas cada vendedor enxerga','Vendedor entra com o próprio e-mail e só vê o que você liberou','Troque as permissões quando quiser, sem criar outro acesso']},
  {k:'pixcobr',n:'Pix copia e cola nas cobranças',d:'A mensagem de cobrança já vai com o código Pix com o valor exato da parcela, com multa e juros se estiver em atraso.',b:['Código Pix gerado para cada parcela','Valor atualizado com multa e juros no atraso','Botão para copiar o Pix na hora','O cliente paga sem digitar valor nem chave']},
  {k:'ficha',n:'Ficha completa do cliente',d:'Tudo do cliente em um lugar só: evolução do grau, fotos e anotações dos atendimentos.',b:['Histórico do grau com gráfico da evolução','Fotos da armação e da receita em papel','Anotações com data e quem escreveu']},
  {k:'campanhas',n:'Campanhas por grupo de clientes',d:'Escolha um grupo e envie a mensagem pelo WhatsApp com poucos toques, sem digitar o nome de ninguém.',b:['Grupos prontos: sem comprar há 1 ano, grau antigo, em atraso, aniversariantes','Mensagem editável com o nome do cliente já preenchido','Marca quem já recebeu para não repetir']},
@@ -2380,6 +2382,11 @@ document.addEventListener('change',async e=>{
   const t=e.target;if(!(t instanceof HTMLElement))return;
   if(t.dataset.pf!==undefined&&ui.fd)ui.fd[t.dataset.pf]=t.type==='checkbox'?t.checked:t.value;
   if(t.dataset.pf==='freq'&&ui.fd){render();return}
+  if(t.dataset.pa!==undefined){
+    const q=t.dataset.pa.split('|'),r=acDoc().u[q[0]],cur=(r&&Array.isArray(r.tabs))?r.tabs.slice():AC_DEF.slice();
+    const i=cur.indexOf(q[1]);if(t.checked&&i<0)cur.push(q[1]);if(!t.checked&&i>=0)cur.splice(i,1);
+    acSet(q[0],cur);return;
+  }
   if(t.dataset.pm!==undefined){
     const md=metaDoc(),k=t.dataset.pm;
     if(k==='loja')md.loja=parseMoney(t.value);else if(k==='pct')md.pct=t.value.trim();else if(k==='fixo')md.fixo=parseMoney(t.value);
@@ -2403,6 +2410,23 @@ document.addEventListener('click',e=>{
   if(a.dataset.camp){const c=S.clientes[a.dataset.c];if(c){a.href=waLink(c.whatsapp,fillTpl(campTpl(a.dataset.camp),{cliente:firstName(c.nome),otica:cfg().nome}));(c.campEm=c.campEm||{})[a.dataset.camp]=t;persist('clientes',c.id)}}
   else{const v=S.vendas[a.dataset.pesq];if(v){const c=S.clientes[v.clienteId]||{},P=pm();a.href=waLink(c.whatsapp,fillTpl(P.pesqTpl||PESQ_TPL,{cliente:firstName(c.nome),otica:cfg().nome,link:P.gLink||''}));v.pesqEm=t;persist('vendas',v.id)}}
   setTimeout(render,500);
+});
+const AC_DEF=['painel','agenda','vendas','clientes','cobrar','aguard','entregas','relacao','metas'];
+const acDoc=()=>{if(!S.config.acessos)S.config.acessos={id:'acessos',u:{}};if(!S.config.acessos.u)S.config.acessos.u={};return S.config.acessos};
+function premAcTabs(){if(!modOn('acessos'))return null;const r=acDoc().u[meEmail()];return r&&Array.isArray(r.tabs)?r.tabs:null}
+function premAcBtn(m){if(!modOn('acessos')||m.papel==='dono'||!OTICA)return '';return '<button class="btn sm" data-act="acabrir" data-u="'+m.user_id+'">'+(ui.acOpen===m.user_id?'Fechar acessos':'Acessos')+'</button>'}
+function premAcBox(m){
+  if(!modOn('acessos')||m.papel==='dono'||!OTICA||ui.acOpen!==m.user_id)return '';
+  const e=String(m.email).toLowerCase(),r=acDoc().u[e],cur=(r&&Array.isArray(r.tabs))?r.tabs:AC_DEF;
+  return '<div class="card" style="gap:8px;margin:2px 0 10px"><b>O que '+esc(m.email)+' pode ver</b><p class="sub" style="margin:0">Marque as telas liberadas. O vendedor só enxerga o que estiver marcado; a mudança vale na próxima vez que ele abrir o sistema.</p>'+
+    '<div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(170px,1fr))">'+TABS.filter(x=>x[0]!=='ajustes').map(x=>'<label class="aguard-box" style="margin:0"><input type="checkbox" data-pa="'+esc(e)+'|'+x[0]+'"'+(cur.includes(x[0])?' checked':'')+'> '+esc(x[1])+'</label>').join('')+'</div>'+
+    '<div class="acts"><button class="btn sm ghost" data-act="acpadrao" data-e="'+esc(e)+'">Voltar ao padrão</button><button class="btn sm ghost" data-act="actudo" data-e="'+esc(e)+'">Liberar tudo</button></div></div>'
+}
+function acSet(e,tabs){const d=acDoc();d.u[e]={tabs:TABS.map(x=>x[0]).filter(k=>k!=='ajustes'&&tabs.includes(k))};persist('config','acessos');premLog('Acesso do vendedor alterado',e)}
+Object.assign(A,{
+  acabrir(d){ui.acOpen=ui.acOpen===d.u?'':d.u;render()},
+  acpadrao(d){acSet(d.e,AC_DEF);render();toast('Acessos voltaram ao padrão')},
+  actudo(d){acSet(d.e,TABS.map(x=>x[0]));render();toast('Todas as telas liberadas')}
 });
 /* ---------- PREMIUM-FIM ---------- */
 /* ---------- ADMIN-INICIO (somente sistema real) ---------- */
@@ -2820,8 +2844,8 @@ function equipeCard(oid){
     const pw=EQ.pw===m.user_id;
     return '<div class="team"><div class="who2"><b>'+esc(m.email)+'</b><div class="meta">'+(m.papel==='dono'?'Dono (vê tudo)':'Vendedor')+(self?' · você':'')+'</div></div><div class="acts">'+
       (pw?'<input type="text" id="eq-pw-'+m.user_id+'" placeholder="Nova senha" autocomplete="off" style="max-width:150px"><button class="btn sm primary" data-act="eqpwsave" data-o="'+oid+'" data-u="'+m.user_id+'">Salvar</button>':'<button class="btn sm" data-act="eqpw" data-u="'+m.user_id+'">Nova senha</button>')+
-      (self?'':'<button class="btn sm danger'+(EQ.confirm===m.user_id?' armed':'')+'" data-act="eqrm" data-o="'+oid+'" data-u="'+m.user_id+'">'+(EQ.confirm===m.user_id?'Confirmar':'Remover')+'</button>')+'</div></div>'}).join(''):none('Ninguém na equipe ainda.'));
-  return '<div class="sh"><h2>Equipe</h2></div><div class="card" style="gap:12px"><p class="sub" style="margin:0">O dono vê e muda tudo. O vendedor registra vendas, clientes e cobranças, mas não vê o caixa, a tabela de lentes nem os ajustes.</p>'+
+      (oid===(OTICA&&OTICA.id)?premAcBtn(m):'')+(self?'':'<button class="btn sm danger'+(EQ.confirm===m.user_id?' armed':'')+'" data-act="eqrm" data-o="'+oid+'" data-u="'+m.user_id+'">'+(EQ.confirm===m.user_id?'Confirmar':'Remover')+'</button>')+'</div></div>'+(oid===(OTICA&&OTICA.id)?premAcBox(m):'')}).join(''):none('Ninguém na equipe ainda.'));
+  return '<div class="sh"><h2>Equipe</h2></div><div class="card" style="gap:12px"><p class="sub" style="margin:0">O dono vê e muda tudo. O vendedor registra vendas, clientes e cobranças, mas não vê o caixa, a tabela de lentes nem os ajustes.'+(OTICA&&modOn('acessos')?' Use o botão Acessos para escolher o que cada vendedor pode ver.':'')+'</p>'+
     (EQ.err?'<p class="hint bad" role="alert">'+esc(EQ.err)+'</p>':'')+'<div>'+rows+'</div>'+
     '<div class="grid2"><div class="field"><span>E-mail do novo usuário</span><input type="email" id="eq-email" autocapitalize="none" autocomplete="off"></div><div class="field"><span>Senha (6+ caracteres)</span><input type="text" id="eq-senha" autocomplete="off"></div></div>'+
     '<div class="field"><span>Papel</span><select id="eq-papel"><option value="vendedor">Vendedor</option><option value="dono">Dono</option></select></div><p class="hint bad" id="eq-err" role="alert"></p>'+
