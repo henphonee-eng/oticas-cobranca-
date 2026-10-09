@@ -77,6 +77,8 @@ textarea{resize:vertical;min-height:120px}
 .toast.on{opacity:1}
 .res{display:flex;gap:10px;align-items:flex-start}
 .res input[type=checkbox]{width:20px;height:20px;margin-top:3px;accent-color:var(--accent);flex:none}
+.acs{display:grid;gap:4px;font-size:13px;max-height:180px;overflow:auto;background:var(--surface-2);border-radius:10px;padding:8px 10px}
+.stat{font:inherit;color:inherit}
 .prev{white-space:pre-wrap;background:var(--surface-2);border-radius:10px;padding:12px;font-size:14px}
 .sec{margin-top:18px}
 .sec h2{font-size:20px;margin-bottom:8px}
@@ -105,7 +107,7 @@ const DEF={
   followup:'Oi, pessoal da {otica}! Passando só para saber se conseguiram dar uma olhada na demonstração do sistema de cobrança:\n{link}\n\nSe fizer sentido, te mostro rapidinho por aqui mesmo.'
 };
 
-const st={tab:'crm',user:null,admin:false,leads:[],cfg:{},loaded:false,
+const st={tab:'crm',user:null,admin:false,leads:[],cfg:{},ac:{},loaded:false,
   q:'óticas em Recife',res:[],next:null,busy:false,sel:{},serr:'',noKey:false,
   f:'todos',fq:'',open:null};
 
@@ -121,14 +123,17 @@ const foneDe=l=>l.whatsapp||l.telefone;
 function waUrl(num,text){const n=brNumber(num);return isMobile?'whatsapp://send?phone='+n+'&text='+encodeURIComponent(text):'https://web.whatsapp.com/send?phone='+n+'&text='+encodeURIComponent(text)}
 
 /* ---------- mensagem ---------- */
-const demoLink=l=>location.origin+'/demo/?o='+encodeURIComponent(l.nome)+'&l='+l.id;
+const demoLink=(l,meu)=>location.origin+'/demo/?o='+encodeURIComponent(l.nome)+(meu?'':'&l='+l.id);
+const fmtDH=iso=>{const d=new Date(iso);return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+' às '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
+const acessos=l=>st.ac[l.id]||[];
 function msg(kind,l){return cfg(kind).replace(/\{otica\}/g,l.nome).replace(/\{link\}/g,demoLink(l)).replace(/\{cidade\}/g,l.cidade||'').replace(/\{seu_nome\}/g,cfg('seu_nome')||'').replace(/\n{3,}/g,'\n\n')}
 
 /* ---------- dados ---------- */
 async function load(){
-  const [lr,cr]=await Promise.all([sb.from('prosp_leads').select('*').order('criado_em',{ascending:false}),sb.from('prosp_config').select('*')]);
+  const [lr,cr,ar]=await Promise.all([sb.from('prosp_leads').select('*').order('criado_em',{ascending:false}),sb.from('prosp_config').select('*'),sb.from('prosp_acessos').select('lead_id,em,aparelho').order('em',{ascending:false}).limit(5000)]);
   if(lr.error){toast('Erro ao carregar: '+lr.error.message);return}
   st.leads=lr.data||[];st.cfg={};(cr.data||[]).forEach(r=>st.cfg[r.chave]=r.valor);
+  st.ac={};((ar&&ar.data)||[]).forEach(a=>{(st.ac[a.lead_id]=st.ac[a.lead_id]||[]).push(a)});
   st.loaded=true;const qt=new URLSearchParams(location.search).get('tab');if(qt&&['crm','buscar','msg'].includes(qt))st.tab=qt;else if(!st.leads.length)st.tab='buscar';render();
 }
 async function upd(id,patch){
@@ -218,28 +223,30 @@ function vBuscar(){
 function vCrm(){
   const c={};st.leads.forEach(l=>c[l.status]=(c[l.status]||0)+1);
   const fu=st.leads.filter(l=>l.follow_up&&l.follow_up<=today()&&['enviado','respondeu','interessada'].includes(l.status));
-  const ab=st.leads.filter(l=>l.demo_aberturas>0&&!['fechou','sem_interesse'].includes(l.status));
+  const ab=st.leads.filter(l=>acessos(l).length&&!['fechou','sem_interesse'].includes(l.status)).sort((a,b)=>acessos(b)[0].em.localeCompare(acessos(a)[0].em));
+  const totAc=st.leads.reduce((n,l)=>n+acessos(l).length,0);
   let h='<div class="stats">'+
     '<div class="stat"><b>'+enviadosHoje()+'<span style="font-size:14px"> / '+(cfg('limite')||'∞')+'</span></b><span>Abordagens hoje</span></div>'+
-    '<div class="stat"><b>'+ab.length+'</b><span>Abriram o demo</span></div>'+
+    '<button class="stat" data-f="abriu" style="text-align:left;cursor:pointer"><b>'+ab.length+'</b><span>Abriram o demo · '+totAc+' acessos</span></button>'+
     '<div class="stat"><b>'+fu.length+'</b><span>Follow-up para hoje</span></div>'+
     '<div class="stat"><b>'+((c.interessada||0))+'</b><span>Interessadas</span></div>'+
     '<div class="stat"><b>'+(c.fechou||0)+'</b><span>Fecharam</span></div></div>';
   if(!st.leads.length)return h+'<div class="empty">Nenhuma ótica no CRM ainda.<br><br><button class="btn pri" data-tab="buscar">Buscar óticas</button></div>';
   const chip=(k,n,x)=>'<button class="chip '+(st.f===k?'on':'')+'" data-f="'+k+'">'+n+' '+x+'</button>';
   h+='<input type="text" id="fq" placeholder="Procurar por nome, bairro ou telefone" value="'+esc(st.fq)+'">';
-  h+='<div class="chips">'+chip('todos','Todas',st.leads.length)+chip('hoje','Follow-up hoje',fu.length)+chip('abriu','Abriram o demo',ab.length)+Object.keys(STATUS).map(k=>chip(k,STATUS[k],c[k]||0)).join('')+'</div>';
+  h+='<div class="chips">'+chip('todos','Todas',st.leads.length)+chip('hoje','Follow-up hoje',fu.length)+chip('abriu','👀 Abriram o demo',ab.length)+Object.keys(STATUS).map(k=>chip(k,STATUS[k],c[k]||0)).join('')+'</div>';
   const q=st.fq.trim().toLowerCase();
   let L=st.f==='todos'?st.leads:st.f==='hoje'?fu:st.f==='abriu'?ab:st.leads.filter(l=>l.status===st.f);
   if(q)L=L.filter(l=>(l.nome+' '+(l.endereco||'')+' '+digits(foneDe(l))).toLowerCase().includes(q));
-  if(!L.length)return h+'<div class="empty">Nada aqui.</div>';
+  if(st.f==='abriu')h+='<p class="small muted" style="margin:8px 0 0">Óticas que abriram o link, da mais recente para a mais antiga. Só contam acessos reais: os seus, a prévia do WhatsApp e recarregar a página em menos de 30 min ficam de fora.</p>';
+  if(!L.length)return h+'<div class="empty">'+(st.f==='abriu'?'Nenhuma ótica abriu o demo ainda.':'Nada aqui.')+'</div>';
   h+='<div class="list two">'+L.map(cardLead).join('')+'</div>';
   return h;
 }
 function cardLead(l){
   const op=st.open===l.id,tf=tipoFone(foneDe(l)),late=l.follow_up&&l.follow_up<=today()&&['enviado','respondeu','interessada'].includes(l.status);
   let h='<div class="card lead"><div class="row"><h2 class="grow">'+esc(l.nome)+'</h2><span class="tag '+STAG[l.status]+'">'+STATUS[l.status]+'</span></div><div class="meta">'+
-    (l.demo_aberturas?'<span class="tag hot">Abriu o demo '+l.demo_aberturas+'x · '+fmtD((l.demo_aberto_em||'').slice(0,10))+'</span>':'')+
+    (acessos(l).length?'<span class="tag hot">👀 '+acessos(l).length+(acessos(l).length>1?' acessos':' acesso')+' ao demo · último '+fmtDH(acessos(l)[0].em)+'</span>':l.status!=='novo'?'<span class="tag">Ainda não abriu o demo</span>':'')+
     (late?'<span class="tag warn">Follow-up '+(l.follow_up<today()?'atrasado':'hoje')+'</span>':l.follow_up&&l.status!=='fechou'&&l.status!=='sem_interesse'?'<span class="tag">Follow-up '+fmtD(l.follow_up)+'</span>':'')+
     (tf==='fixo'?'<span class="tag warn">Fixo</span>':'')+(!foneDe(l)?'<span class="tag bad">Sem telefone</span>':'')+
     (l.site?'<span class="tag">Tem site</span>':'')+(l.nota?'<span class="tag">★ '+l.nota+' · '+l.avaliacoes+'</span>':'')+
@@ -256,7 +263,8 @@ function cardLead(l){
       '<div><label>Próximo follow-up</label><input type="date" data-upd="'+l.id+'" data-fld="follow_up" value="'+esc(l.follow_up||'')+'"></div>'+
       '<div class="full"><label>WhatsApp (se for diferente do telefone do Google)</label><input type="text" data-upd="'+l.id+'" data-fld="whatsapp" value="'+esc(l.whatsapp||'')+'" placeholder="(81) 9XXXX-XXXX"></div>'+
       '<div class="full"><label>Anotações</label><textarea data-upd="'+l.id+'" data-fld="notas" style="min-height:70px" placeholder="Quem atendeu, o que perguntou, quantas lojas…">'+esc(l.notas||'')+'</textarea></div>'+
-      '<div class="full acts"><button class="btn sm" data-copy="'+l.id+'">Copiar link do demo</button><a class="btn sm" href="'+esc(demoLink(l))+'" target="_blank" rel="noopener">Ver demo</a>'+(l.maps_url?'<a class="btn sm" href="'+esc(l.maps_url)+'" target="_blank" rel="noopener">Google Maps</a>':'')+(l.site?'<a class="btn sm" href="'+esc(l.site)+'" target="_blank" rel="noopener">Site</a>':'')+(l.status!=='novo'?'<button class="btn sm" data-env="'+l.id+'" data-k="abordagem">Reenviar abordagem</button>':'')+'<button class="btn sm" data-del="'+l.id+'" style="color:var(--bad)">Remover</button></div>'+
+      '<div class="full acts"><button class="btn sm" data-copy="'+l.id+'">Copiar link do demo</button><a class="btn sm" href="'+esc(demoLink(l,true))+'" target="_blank" rel="noopener">Ver demo</a>'+(l.maps_url?'<a class="btn sm" href="'+esc(l.maps_url)+'" target="_blank" rel="noopener">Google Maps</a>':'')+(l.site?'<a class="btn sm" href="'+esc(l.site)+'" target="_blank" rel="noopener">Site</a>':'')+(l.status!=='novo'?'<button class="btn sm" data-env="'+l.id+'" data-k="abordagem">Reenviar abordagem</button>':'')+'<button class="btn sm" data-del="'+l.id+'" style="color:var(--bad)">Remover</button></div>'+
+      '<div class="full"><label>Acessos ao demo</label>'+(acessos(l).length?'<div class="acs">'+acessos(l).map((a,i)=>'<div><b>'+(acessos(l).length-i)+'º</b> '+fmtDH(a.em)+(a.aparelho?' · '+esc(a.aparelho):'')+'</div>').join('')+'</div>':'<div class="small muted">Nenhum acesso ainda.</div>')+'</div>'+
       '<div class="full small muted">'+(l.historico||[]).slice().reverse().map(x=>fmtD(x.em.slice(0,10))+' '+x.em.slice(11,16)+' — '+esc(x.txt)).join('<br>')+'</div></div>';
   }
   return h+'</div>';
@@ -314,6 +322,7 @@ async function boot(){
   render();
 }
 boot();
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&st.admin&&st.loaded)load()});
 </script>
 </body>
 </html>
