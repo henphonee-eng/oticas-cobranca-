@@ -1505,7 +1505,6 @@ function viewFollow(){
   const late=ps.filter(x=>x.p.venc<t).sort((a,b)=>a.p.venc.localeCompare(b.p.venc));
   const soon=ps.filter(x=>x.p.venc>=t&&diffDays(x.p.venc,t)<=3).sort((a,b)=>a.p.venc.localeCompare(b.p.venc));
   const an=aniversariantes(7),rv=revisoes(),bv=bvPend(),mp=fupPend(),mf=Object.values(fupDoc().itens).filter(x=>x.feitoEm).sort((a,b)=>b.feitoEm.localeCompare(a.feitoEm)).slice(0,5);
-  const orc=orcamentos().length;
   const bvRow=c=>'<article class="row"><div class="row-main"><button class="link" data-act="editcliente" data-c="'+c.id+'">'+esc(c.nome)+demoTag(c)+'</button><div class="meta">Cadastrado em '+fmtDate(new Date(c.criadoEm).toISOString().slice(0,10))+'</div><div class="chips"><span class="chip warn">Boas-vindas pendente</span></div></div><div class="row-side"><div class="acts"><a class="btn sm wa"'+WAT+' data-contact="bv" data-c="'+c.id+'" href="'+esc(waLink(c.whatsapp,fillTpl(tpl('cadastro'),ctx(null,null,c))))+'">Enviar boas-vindas</a></div></div></article>';
   const S_=[
    ['manual','Meus follow-ups',mp.length,'<div class="stack">'+(mp.length?mp.map(fupRow).join(''):none('Nenhum follow-up manual pendente. Use o botão Novo follow-up para anotar o que não pode esquecer.'))+(mf.length?'<p class="sub" style="margin:10px 0 4px">Feitos recentemente</p>'+mf.map(fupRow).join(''):'')+'</div>'],
@@ -1513,8 +1512,7 @@ function viewFollow(){
    ['boasvindas','Boas-vindas',bv.length,'<p class="sub" style="margin:0 0 8px">Clientes cadastrados nos últimos 30 dias que ainda não receberam a mensagem de boas-vindas.</p><div class="stack">'+(bv.length?bv.map(bvRow).join(''):none('Nenhuma boas-vindas pendente.'))+'</div>'],
    ['cobrar','Cobranças',late.length+soon.length,'<div class="stack">'+(late.length?'<p class="sub" style="margin:0">Em atraso</p>'+late.map(x=>pRow(x)).join(''):'')+(soon.length?'<p class="sub" style="margin:8px 0 0">Vencem em até 3 dias</p>'+soon.map(x=>pRow(x)).join(''):'')+(late.length||soon.length?'':none('Tudo em dia por aqui.'))+'</div>'],
    ['aniversarios','Aniversários',an.length,'<div class="stack">'+(an.length?an.map(R.aniRow).join(''):none('Nenhum aniversário nos próximos 7 dias.'))+'</div>'],
-   ['revisao','Revisão do grau',rv.length,'<p class="sub" style="margin:0 0 8px">Clientes com 11 meses ou mais desde a última compra ou receita.</p><div class="stack">'+(rv.length?rv.slice(0,30).map(R.revRow).join(''):none('Nenhum cliente para revisão agora.'))+'</div>'],
-   ['orcamentos','Orçamentos aguardando',orc,orc?'<div id="aglist">'+aguardList()+'</div>':none('Nenhum orçamento aguardando pagamento.')]
+   ['revisao','Revisão do grau',rv.length,'<p class="sub" style="margin:0 0 8px">Clientes com 11 meses ou mais desde a última compra ou receita.</p><div class="stack">'+(rv.length?rv.slice(0,30).map(R.revRow).join(''):none('Nenhum cliente para revisão agora.'))+'</div>']
   ];
   const pesq=premFuPesq();if(pesq)S_.push(['pesquisa','Avaliação do cliente',pesq.n,pesq.html]);
   const chips=[['todos','Todos']].concat(S_.map(x=>[x[0],x[1]+(x[2]?' ('+x[2]+')':'')]));
