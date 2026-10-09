@@ -905,7 +905,7 @@ async function logout(msg,silent){
 setInterval(()=>{if(auth!=='ok')return;const m=+cfg().autolock;if(m>0&&Date.now()-last>m*60000)logout('Sessão encerrada por inatividade.')},20000);
 
 /* ---------- modelo ---------- */
-function makeCliente(o){return {receitas:(o.receitas||[]).filter(r=>!receitaVazia(r)),id:uid(),nome:String(o.nome||'').trim(),cpf:maskCpf(o.cpf),whatsapp:maskTel(o.whatsapp),endereco:String(o.endereco||'').trim(),nascimento:o.nascimento||'',obs:String(o.obs||'').trim(),criadoEm:Date.now(),bvEm:null}}
+function makeCliente(o){return {receitas:(o.receitas||[]).filter(r=>!receitaVazia(r)),id:uid(),nome:String(o.nome||'').trim(),cpf:maskCpf(o.cpf),whatsapp:maskTel(o.whatsapp),endereco:String(o.endereco||'').trim(),vendedorId:o.vendedorId||'',nascimento:o.nascimento||'',obs:String(o.obs||'').trim(),criadoEm:Date.now(),bvEm:null}}
 const cpfDup=(cpf,exceptId)=>{const d=digits(cpf);if(d.length!==11)return null;return Object.values(S.clientes).find(c=>c.id!==exceptId&&digits(c.cpf)===d)||null};
 function makeVenda(clienteId,d){
   const c=calcVenda(d.itens,d.jurosVenda,d.entrada);
@@ -1426,7 +1426,7 @@ function renderSheet(){
   if(!s){el.innerHTML='';el.dataset.key='';document.documentElement.classList.remove('lock');return}
   const key=s.kind+(s.id||'');const old=el.querySelector('.sheet-body');const top=(old&&el.dataset.key===key)?old.scrollTop:0;
   let html=null;
-  if(s.kind==='venda')html=sheetVenda(s.id);else if(s.kind==='nova')html=sheetNova();else if(s.kind==='cliente')html=sheetCliente(s.id);else if(s.kind==='cliente-ok')html=sheetClienteOk(s.id);else if(s.kind==='mais')html=sheetMais();else if(s.kind==='hist')html=sheetHist();else if(s.kind==='recibo')html=sheetRecibo(s);else if(s.kind==='pagorc')html=sheetPagOrc(s);else if(s.kind==='pagparc')html=sheetPagParc(s);else if(s.kind==='relatorio')html=sheetRelatorio();else if(s.kind==='adm')html=sheetAdm();else if(s.kind==='admok')html=sheetAdmOk();
+  if(s.kind==='venda')html=sheetVenda(s.id);else if(s.kind==='nova')html=sheetNova();else if(s.kind==='cliente')html=sheetCliente(s.id);else if(s.kind==='cliente-ok')html=sheetClienteOk(s.id);else if(s.kind==='mais')html=sheetMais();else if(s.kind==='hist')html=sheetHist();else if(s.kind==='recibo')html=sheetRecibo(s);else if(s.kind==='pagorc')html=sheetPagOrc(s);else if(s.kind==='pagparc')html=sheetPagParc(s);else if(s.kind==='vendedor')html=sheetVend();else if(s.kind==='relatorio')html=sheetRelatorio();else if(s.kind==='adm')html=sheetAdm();else if(s.kind==='admok')html=sheetAdmOk();
   if(html===null){ui.sheet=null;renderSheet();return}
   document.documentElement.classList.add('lock');
   el.innerHTML=html;
@@ -1469,12 +1469,12 @@ const newItem=tipo=>({tipo:tipo,nome:'',qtd:'1',valor:'',juros:'',lenteId:''});
 const cliFalta=c=>{const f=[];if(digits(c.whatsapp||'').length<10)f.push('WhatsApp');if(digits(c.cpf||'').length<11)f.push('CPF');if(!String(c.endereco||'').trim())f.push('endereço');if(!String(c.nascimento||'').trim())f.push('data de nascimento');return f};
 const listaTxt=a=>a.length<2?a.join(''):a.slice(0,-1).join(', ')+' e '+a[a.length-1];
 const avisoFalta=c=>{const f=cliFalta(c);return f.length?'Falta preencher: '+listaTxt(f)+'. Você pode salvar assim e completar depois.':''};
-function newDraft(cid){return {editId:'',clienteId:cid||(Object.keys(S.clientes).length?'':'__novo'),novo:{nome:'',cpf:'',whatsapp:'',endereco:'',nascimento:'',receitas:[blankReceita()]},itens:[newItem('produto')],jurosVenda:'',entrada:'',formaEntrada:'Pix',n:'3',primeira:addMonths(todayStr(),1),forma:'Pix',data:todayStr(),obs:'',aguardando:false}}
+function newDraft(cid){return {editId:'',clienteId:cid||(Object.keys(S.clientes).length?'':'__novo'),novo:{nome:'',cpf:'',whatsapp:'',endereco:'',nascimento:'',receitas:[blankReceita()]},vendedorId:'',itens:[newItem('produto')],jurosVenda:'',entrada:'',formaEntrada:'Pix',n:'3',primeira:addMonths(todayStr(),1),forma:'Pix',data:todayStr(),obs:'',aguardando:false}}
 function editDraft(v){
   const par=v.parcelas.filter(p=>p.tipo==='parcela'&&p.parte!==2);const pct=x=>x?String(x).replace('.',','):'';const ent=v.parcelas.find(p=>p.tipo==='entrada');
   return {editId:v.id,clienteId:v.clienteId,novo:{nome:'',cpf:'',whatsapp:'',endereco:''},
     itens:v.itens.map(i=>({tipo:i.tipo,nome:i.nome,qtd:String(i.qtd),valor:centsToStr(i.valor),juros:pct(i.juros),lenteId:i.lenteId||''})),
-    jurosVenda:pct(v.jurosVenda),entrada:v.entrada?centsToStr(v.entrada):'',formaEntrada:(ent&&ent.forma)||'Pix',n:String(par.length),primeira:par.length?par[0].venc:addMonths(todayStr(),1),forma:v.forma,data:v.data,obs:v.obs||'',aguardando:!!v.aguardando};
+    jurosVenda:pct(v.jurosVenda),entrada:v.entrada?centsToStr(v.entrada):'',formaEntrada:(ent&&ent.forma)||'Pix',n:String(par.length),primeira:par.length?par[0].venc:addMonths(todayStr(),1),forma:v.forma,data:v.data,obs:v.obs||'',aguardando:!!v.aguardando,vendedorId:v.vendedorId||''};
 }
 function sheetNova(){
   const D=ui.draft;const cs=Object.values(S.clientes).sort((a,b)=>a.nome.localeCompare(b.nome));
@@ -1488,7 +1488,7 @@ function sheetNova(){
   '<details><summary>Grau do cliente (opcional)</summary><div style="margin-top:10px">'+receitaForm((D.novo.receitas||(D.novo.receitas=[blankReceita()]))[0],0,'bind','novo.receitas.',false)+'</div></details></div></div>'+
   '<div class="sec"><h3>Itens da venda</h3><div id="items" class="stack"></div><div class="foot-row"><button class="btn" data-act="additem" data-t="produto">+ Produto</button><button class="btn" data-act="additem" data-t="lente">+ Lente</button></div>'+
   '<div class="field"><span>Juros sobre o total da venda (%), opcional</span><input type="text" inputmode="decimal" data-bind="jurosVenda" value="'+esc(D.jurosVenda)+'" placeholder="0"></div></div>'+
-  '<div class="sec"><h3>Pagamento</h3>'+((!D.editId||(S.vendas[D.editId]&&S.vendas[D.editId].aguardando))?'<label class="aguard-box"><input type="checkbox" data-aguard'+(D.aguardando?' checked':'')+'><span><b>Aguardando pagamento</b><small>Use para orçamento: o cliente ainda vai pagar ou dar a entrada. Não conta como venda, nem no caixa, nem nas cobranças. Vira venda quando você marcar como pago.</small></span></label>':'')+'<div class="field"><span>Forma de cobrança das parcelas</span><div class="seg" role="radiogroup" aria-label="Forma de cobrança"><label><input type="radio" name="forma" value="Pix" data-bind="forma"'+(D.forma==='Pix'?' checked':'')+'><span>Pix</span></label><label><input type="radio" name="forma" value="Boleto" data-bind="forma"'+(D.forma==='Boleto'?' checked':'')+'><span>Boleto</span></label></div></div>'+
+  premVendSale(D)+'<div class="sec"><h3>Pagamento</h3>'+((!D.editId||(S.vendas[D.editId]&&S.vendas[D.editId].aguardando))?'<label class="aguard-box"><input type="checkbox" data-aguard'+(D.aguardando?' checked':'')+'><span><b>Aguardando pagamento</b><small>Use para orçamento: o cliente ainda vai pagar ou dar a entrada. Não conta como venda, nem no caixa, nem nas cobranças. Vira venda quando você marcar como pago.</small></span></label>':'')+'<div class="field"><span>Forma de cobrança das parcelas</span><div class="seg" role="radiogroup" aria-label="Forma de cobrança"><label><input type="radio" name="forma" value="Pix" data-bind="forma"'+(D.forma==='Pix'?' checked':'')+'><span>Pix</span></label><label><input type="radio" name="forma" value="Boleto" data-bind="forma"'+(D.forma==='Boleto'?' checked':'')+'><span>Boleto</span></label></div></div>'+
   '<div class="field"><span>Data da venda</span><input type="date" data-bind="data" value="'+esc(D.data)+'"></div>'+
   '<div class="grid2"><div class="field"><span>Entrada (R$)</span><input type="text" inputmode="decimal" data-bind="entrada" value="'+esc(D.entrada)+'" placeholder="0,00"></div><div class="field"><span>Entrada paga em</span><select data-bind="formaEntrada">'+FORMAS.map(f=>'<option'+(D.formaEntrada===f?' selected':'')+'>'+f+'</option>').join('')+'</select></div></div>'+
   '<div class="grid2"><div class="field"><span>Parcelas</span><input type="number" min="0" max="36" inputmode="numeric" data-bind="n" value="'+esc(D.n)+'"></div><div class="field"><span>Vencimento da 1ª parcela</span><input type="date" data-bind="primeira" value="'+esc(D.primeira)+'"></div></div>'+
@@ -1552,6 +1552,7 @@ function salvarVenda(){
     if(!v.parcelas.some(p=>p.parte&&p.tipo==='parcela'))v.parcelas.forEach(p=>{if(p.tipo!=='parcela')return;const o=old.parcelas.find(q=>q.tipo==='parcela'&&q.n===p.n);if(o){p.contatoEm=o.contatoEm||null;if(o.pago){p.pago=true;p.pagoEm=o.pagoEm;p.forma=o.forma||null}}});
   }
   if(!old&&typeof SESSION!=='undefined'&&SESSION&&SESSION.user&&SESSION.user.email)v.por=String(SESSION.user.email).toLowerCase();
+  if(D.vendedorId)v.vendedorId=D.vendedorId;
   S.vendas[v.id]=v;persist('vendas',v.id);
   premLog(old?'Venda editada':(v.aguardando?'Orçamento criado':'Venda criada'),((S.clientes[cid]||{}).nome||'')+' · '+brl(v.total));
   ui.draft=null;ui.sheet={kind:'venda',id:v.id};if(!old)ui.tab=v.aguardando?'aguard':'vendas';render();renderSheet();toast(v.aguardando?(old?'Orçamento atualizado':'Orçamento salvo em Aguardando pagamento'):(old?'Venda atualizada':'Venda registrada'));
@@ -1595,7 +1596,7 @@ function sheetCliente(id){
   const body='<div class="sec"><div class="field"><span>Nome completo</span><input type="text" data-cbind="nome" value="'+esc(D.nome)+'" autocomplete="off"></div>'+
   '<div class="grid2"><div class="field"><span>CPF</span><input type="text" inputmode="numeric" data-mask="cpf" data-cbind="cpf" value="'+esc(D.cpf)+'" placeholder="000.000.000-00"><span class="hint"></span></div><div class="field"><span>WhatsApp com DDD</span><input type="text" inputmode="tel" data-mask="tel" data-cbind="whatsapp" value="'+esc(D.whatsapp)+'" placeholder="(81) 99999-9999"></div></div>'+
   '<div class="field"><span>Endereço</span><input type="text" data-cbind="endereco" value="'+esc(D.endereco)+'" placeholder="Rua, número, bairro, cidade"></div>'+
-  '<div class="field"><span>Data de nascimento</span><input type="date" data-cbind="nascimento" value="'+esc(D.nascimento)+'"><span class="hint">Para avisar você no aniversário do cliente.</span></div>'+
+  '<div class="field"><span>Data de nascimento</span><input type="date" data-cbind="nascimento" value="'+esc(D.nascimento)+'"><span class="hint">Para avisar você no aniversário do cliente.</span></div>'+premVendCli(D)+
   '<p class="hint warn-soft" id="cli-aviso" style="margin:0"'+(D.nome.trim()&&avisoFalta(D)?'':' hidden')+'>'+esc(D.nome.trim()?avisoFalta(D):'')+'</p>'+
   '<div class="field"><span>Observações</span><textarea data-cbind="obs" placeholder="Preferências, receita, combinados">'+esc(D.obs)+'</textarea></div></div>'+
   (editing?clienteBlocos(id,r,vs):'<div class="sec"><h3>Grau do cliente (opcional)</h3>'+receitasHtml(D)+'</div>');
@@ -1942,14 +1943,14 @@ const A={
   vfilter(d){ui.vFilter=d.f;render()},vper(d){ui.vPer=d.f;render()},cfilter(d){ui.cFilter=d.f;render()},cxper(d){ui.cx=d.f;render()},ltipo(d){ui.lTipo=d.f;render()},
   exportvendas(){exportVendas()},exportcaixa(){exportCaixa()},
   novocliente(){ui.cdraft={nome:'',cpf:'',whatsapp:'',endereco:'',nascimento:'',obs:'',receitas:[blankReceita()]};ui.cacc={};ui.sheet={kind:'cliente',id:''};renderSheet()},
-  editcliente(d){const c=S.clientes[d.c];if(!c)return;ui.cdraft={nome:c.nome,cpf:c.cpf,whatsapp:c.whatsapp,endereco:c.endereco,nascimento:c.nascimento||'',obs:c.obs||'',receitas:JSON.parse(JSON.stringify(c.receitas||[]))};ui.confirm='';ui.cacc={};ui.sheet={kind:'cliente',id:c.id};renderSheet()},
+  editcliente(d){const c=S.clientes[d.c];if(!c)return;ui.cdraft={nome:c.nome,cpf:c.cpf,whatsapp:c.whatsapp,endereco:c.endereco,nascimento:c.nascimento||'',vendedorId:c.vendedorId||'',obs:c.obs||'',receitas:JSON.parse(JSON.stringify(c.receitas||[]))};ui.confirm='';ui.cacc={};ui.sheet={kind:'cliente',id:c.id};renderSheet()},
   addreceita(){const D=ui.cdraft;D.receitas=D.receitas||[];D.receitas.unshift(blankReceita());ui.cacc=Object.assign({},ui.cacc,{rec:true});renderSheet()},
   rmreceita(d){ui.cdraft.receitas.splice(+d.i,1);renderSheet()},
   cacc(d){ui.cacc=Object.assign({},ui.cacc);ui.cacc[d.k]=!ui.cacc[d.k];renderSheet()},
   salvarcliente(){
     const D=ui.cdraft;if(!D.nome.trim()){toast('Informe o nome do cliente');return}
     const id=ui.sheet.id;const dup=cpfDup(D.cpf,id);if(dup){toast('Já existe cliente com este CPF: '+dup.nome);return}
-    if(id&&S.clientes[id]){Object.assign(S.clientes[id],{nome:D.nome.trim(),cpf:maskCpf(D.cpf),whatsapp:maskTel(D.whatsapp),endereco:D.endereco.trim(),nascimento:D.nascimento||'',obs:D.obs.trim(),receitas:(D.receitas||[]).filter(r=>!receitaVazia(r))});persist('clientes',id);premLog('Cliente editado',D.nome.trim());ui.sheet=null;ui.cdraft=null;renderSheet();refresh();const fl=cliFalta(S.clientes[id]);toast('Cliente atualizado'+(fl.length?'. Falta preencher: '+listaTxt(fl)+'.':''))}
+    if(id&&S.clientes[id]){Object.assign(S.clientes[id],{nome:D.nome.trim(),cpf:maskCpf(D.cpf),whatsapp:maskTel(D.whatsapp),endereco:D.endereco.trim(),nascimento:D.nascimento||'',vendedorId:D.vendedorId||'',obs:D.obs.trim(),receitas:(D.receitas||[]).filter(r=>!receitaVazia(r))});persist('clientes',id);premLog('Cliente editado',D.nome.trim());ui.sheet=null;ui.cdraft=null;renderSheet();refresh();const fl=cliFalta(S.clientes[id]);toast('Cliente atualizado'+(fl.length?'. Falta preencher: '+listaTxt(fl)+'.':''))}
     else{const c=makeCliente(D);S.clientes[c.id]=c;persist('clientes',c.id);premLog('Cliente cadastrado',c.nome);ui.cdraft=null;ui.sheet={kind:'cliente-ok',id:c.id};render();renderSheet()}
   },
   salvarclientevenda(){A.salvarcliente();if(ui.sheet&&ui.sheet.kind==='cliente-ok')openNova(ui.sheet.id)},
@@ -1995,7 +1996,7 @@ const A={
 /* ---------- PREMIUM-INICIO (somente sistema real; fora da demonstração) ---------- */
 const MODS=[
  {k:'financeiro',n:'Contas a pagar e lucro',d:'Lance as contas da ótica e veja, mês a mês, quanto entrou, quanto saiu e quanto sobrou.',b:['Contas a pagar com vencimento e aviso de atraso','Despesas fixas que se repetem todo mês (aluguel, salários)','Lucro do mês: o que você recebeu menos o que pagou','Previsão do mês com o que ainda vai entrar e sair']},
- {k:'metas',n:'Metas e comissão',d:'Defina a meta da loja e de cada vendedor e acompanhe o quanto cada um já vendeu no mês.',b:['Meta mensal da loja e de cada vendedor, com barra de progresso','Comissão calculada sozinha sobre o que foi vendido','O vendedor vê só os próprios números','Vendas passam a registrar quem vendeu']},
+ {k:'metas',n:'Metas e comissão',d:'Defina a meta da loja e de cada vendedor e acompanhe o quanto cada um já vendeu no mês.',b:['Cadastro de vendedores, com os clientes que vieram por cada um','Meta mensal da loja e de cada vendedor, com barra de progresso','Comissão de cada venda calculada sozinha','O vendedor vê só os próprios números']},
  {k:'pixcobr',n:'Pix copia e cola nas cobranças',d:'A mensagem de cobrança já vai com o código Pix com o valor exato da parcela, com multa e juros se estiver em atraso.',b:['Código Pix gerado para cada parcela','Valor atualizado com multa e juros no atraso','Botão para copiar o Pix na hora','O cliente paga sem digitar valor nem chave']},
  {k:'ficha',n:'Ficha completa do cliente',d:'Tudo do cliente em um lugar só: evolução do grau, fotos e anotações dos atendimentos.',b:['Histórico do grau com gráfico da evolução','Fotos da armação e da receita em papel','Anotações com data e quem escreveu']},
  {k:'campanhas',n:'Campanhas por grupo de clientes',d:'Escolha um grupo e envie a mensagem pelo WhatsApp com poucos toques, sem digitar o nome de ninguém.',b:['Grupos prontos: sem comprar há 1 ano, grau antigo, em atraso, aniversariantes','Mensagem editável com o nome do cliente já preenchido','Marca quem já recebeu para não repetir']},
@@ -2076,29 +2077,87 @@ function viewFin(){
 }
 
 /* ----- metas e comissão ----- */
-const metaDoc=()=>{if(!S.config.metas)S.config.metas={id:'metas',loja:0,pct:'',vend:{}};if(!S.config.metas.vend)S.config.metas.vend={};return S.config.metas};
-function metaLinhas(m){
-  const rows={},md=metaDoc();
-  vendasOk().filter(v=>v.data.slice(0,7)===m).forEach(v=>{const k=String(v.por||'').toLowerCase();const r=rows[k]||(rows[k]={k:k,n:0,tot:0});r.n++;r.tot+=v.total});
-  Object.keys(md.vend).forEach(k=>{if(!rows[k])rows[k]={k:k,n:0,tot:0}});
-  (EQ.list||[]).forEach(e=>{const k=String(e.email||'').toLowerCase();if(k&&!rows[k])rows[k]={k:k,n:0,tot:0}});
-  return Object.values(rows).map(r=>{const c=md.vend[r.k]||{};const pct=(c.pct!==undefined&&c.pct!=='')?parsePct(c.pct):parsePct(md.pct);return Object.assign(r,{meta:c.meta||0,pct:pct,com:Math.round(r.tot*pct/100),cfgPct:c.pct})}).sort((a,b)=>b.tot-a.tot||nomeVend(a.k).localeCompare(nomeVend(b.k)));
+const metaDoc=()=>{if(!S.config.metas)S.config.metas={id:'metas',loja:0,pct:'',vend:{},vends:{}};if(!S.config.metas.vend)S.config.metas.vend={};if(!S.config.metas.vends)S.config.metas.vends={};return S.config.metas};
+const vendList=()=>Object.values(metaDoc().vends||{}).sort((x,y)=>x.nome.localeCompare(y.nome));
+const vendNome=k=>{const x=(metaDoc().vends||{})[k];return x?x.nome:nomeVend(k)};
+/* de quem é a venda: escolhida na venda, senão o vendedor do cliente, senão o e-mail de quem registrou */
+function vendKey(v){
+  const md=metaDoc(),vs=md.vends||{};
+  if(v.vendedorId==='-')return '';
+  if(v.vendedorId&&vs[v.vendedorId])return v.vendedorId;
+  const c=S.clientes[v.clienteId];if(c&&c.vendedorId&&vs[c.vendedorId])return c.vendedorId;
+  const em=String(v.por||'').toLowerCase();const hit=Object.values(vs).find(x=>x.email&&String(x.email).toLowerCase()===em);
+  return hit?hit.id:em;
 }
+function metaLinhas(m){
+  const rows={},md=metaDoc();const mk=k=>rows[k]||(rows[k]={k:k,n:0,tot:0,vs:[],cli:[]});
+  vendasOk().filter(v=>v.data.slice(0,7)===m).forEach(v=>{const r=mk(vendKey(v));r.n++;r.tot+=v.total;r.vs.push(v)});
+  Object.keys(md.vends||{}).forEach(k=>mk(k));
+  Object.keys(md.vend).forEach(k=>{const c=md.vend[k]||{};if(rows[k]||c.meta||(c.pct!==undefined&&c.pct!==''))mk(k)});
+  Object.values(S.clientes).forEach(c=>{if(c.vendedorId&&rows[c.vendedorId])rows[c.vendedorId].cli.push(c)});
+  return Object.values(rows).map(r=>{const c=md.vend[r.k]||{};const pct=(c.pct!==undefined&&c.pct!=='')?parsePct(c.pct):parsePct(md.pct);return Object.assign(r,{meta:c.meta||0,pct:pct,com:Math.round(r.tot*pct/100),cfgPct:c.pct,cad:!!(md.vends||{})[r.k]})}).sort((a,b)=>(b.cad-a.cad)||b.tot-a.tot||vendNome(a.k).localeCompare(vendNome(b.k)));
+}
+const meKeys=()=>{const e=meEmail();const hit=vendList().find(x=>x.email&&String(x.email).toLowerCase()===e);return hit?[e,hit.id]:[e]};
 const barra=(p)=>'<div class="bar" style="flex:none;width:100%" aria-hidden="true"><i style="width:'+Math.min(100,p)+'%"></i></div>';
 function viewMetas(){
   eqLoad();
   const m=ui.mm||(ui.mm=todayStr().slice(0,7));const md=metaDoc();const dono=ROLE==='dono';
-  let rows=metaLinhas(m);if(!dono){const me=meEmail();rows=rows.filter(r=>r.k===me)}
-  const tot=metaLinhas(m).reduce((s,r)=>s+r.tot,0);const nv=metaLinhas(m).reduce((s,r)=>s+r.n,0);
+  const all=metaLinhas(m);let rows=all;if(!dono){const me=meKeys();rows=rows.filter(r=>me.includes(r.k))}
+  const tot=all.reduce((s,r)=>s+r.tot,0);const nv=all.reduce((s,r)=>s+r.n,0);const comTot=all.reduce((s,r)=>s+r.com,0);
   const pl=md.loja?Math.round(tot/md.loja*100):0;
-  const loja=dono?'<div class="card" style="gap:10px;margin-bottom:14px"><div class="sale-top"><b>Meta da loja</b><span class="chip'+(md.loja&&pl>=100?' ok':'')+'">'+(md.loja?pl+'% da meta':'Sem meta definida')+'</span></div><div class="sale-bot"><span>Vendido '+brl(tot)+' em '+plural(nv,'venda','vendas')+'</span><span>Meta '+(md.loja?brl(md.loja):'-')+'</span></div>'+(md.loja?barra(pl):'')+'</div>':'';
+  const loja=dono?'<div class="card" style="gap:10px;margin-bottom:14px"><div class="sale-top"><b>Meta da loja</b><span class="chip'+(md.loja&&pl>=100?' ok':'')+'">'+(md.loja?pl+'% da meta':'Sem meta definida')+'</span></div><div class="sale-bot"><span>Vendido '+brl(tot)+' em '+plural(nv,'venda','vendas')+'</span><span>Meta '+(md.loja?brl(md.loja):'-')+'</span></div>'+(md.loja?barra(pl):'')+'<div class="sale-bot"><span>Comissões do mês</span><b>'+brl(comTot)+'</b></div></div>':'';
   const linhas=rows.map(r=>{const p=r.meta?Math.round(r.tot/r.meta*100):0;
-    return '<div class="card" style="gap:10px"><div class="sale-top"><b>'+esc(nomeVend(r.k))+'</b><span class="chip'+(r.meta&&p>=100?' ok':'')+'">'+(r.meta?p+'% da meta':'Sem meta')+'</span></div><div class="sale-bot"><span>Vendido '+brl(r.tot)+' · '+plural(r.n,'venda','vendas')+'</span><span>Comissão '+brl(r.com)+(r.pct?' ('+String(r.pct).replace('.',',')+'%)':'')+'</span></div>'+(r.meta?barra(p):'')+
-    (dono?'<div class="grid2"><div class="field"><span>Meta do mês (R$)</span><input type="text" inputmode="decimal" data-pm="v:'+esc(r.k)+':meta" value="'+(r.meta?centsToStr(r.meta):'')+'" placeholder="0,00"></div><div class="field"><span>Comissão (%)</span><input type="text" inputmode="decimal" data-pm="v:'+esc(r.k)+':pct" value="'+esc(r.cfgPct===undefined?'':r.cfgPct)+'" placeholder="padrão"></div></div>':'')+'</div>'}).join('');
-  const cfgBox=dono?'<div class="sh"><h2>Regras</h2></div><div class="card" style="gap:12px"><div class="grid2"><div class="field"><span>Meta mensal da loja (R$)</span><input type="text" inputmode="decimal" data-pm="loja" value="'+(md.loja?centsToStr(md.loja):'')+'" placeholder="0,00"></div><div class="field"><span>Comissão padrão (%)</span><input type="text" inputmode="decimal" data-pm="pct" value="'+esc(md.pct||'')+'" placeholder="0"></div></div><p class="sub" style="margin:0">A comissão é calculada sobre o valor vendido no mês. A meta e a comissão de cada vendedor aparecem nos cartões abaixo e valem para qualquer mês. Vendas antigas, feitas antes deste recurso, entram em "Sem vendedor registrado".</p></div>':'';
-  return pageHead('Metas e comissão',dono?'Acompanhe a loja e cada vendedor':'Seus números do mês','<div class="acts"></div>')+'<div style="margin-bottom:14px">'+mesNav(m,'meta')+'</div>'+loja+
-  '<div class="stack">'+(linhas||'<div class="empty">'+GLASSES+'<h3>Sem vendas neste mês</h3><p>As vendas novas passam a registrar quem vendeu.</p></div>')+'</div>'+cfgBox;
+    const vdet=r.vs.length?'<details><summary>Vendas do mês ('+r.vs.length+')</summary><div class="stack" style="gap:6px">'+r.vs.slice().sort((x,y)=>y.data.localeCompare(x.data)).map(v=>'<div class="sum-row"><span>'+esc((S.clientes[v.clienteId]||{nome:'Cliente removido'}).nome)+' <span class="meta">'+fmtShort(v.data)+'</span></span><span class="num">'+brl(v.total)+' · <b>'+brl(Math.round(v.total*r.pct/100))+'</b></span></div>').join('')+'</div><p class="sub" style="margin:8px 0 0">Valor da venda · comissão sobre ela.</p></details>':'';
+    const cdet=r.cad?'<details><summary>Clientes dele ('+r.cli.length+')</summary>'+(r.cli.length?'<div class="stack" style="gap:6px">'+r.cli.slice().sort((x,y)=>x.nome.localeCompare(y.nome)).map(c=>'<div class="sum-row"><span>'+esc(c.nome)+'</span></div>').join('')+'</div>':'<p class="sub" style="margin:0">Nenhum cliente vinculado ainda. Toque em Editar para adicionar.</p>')+'</details>':'';
+    return '<div class="card" style="gap:10px"><div class="sale-top"><b>'+esc(vendNome(r.k))+'</b><span class="chip'+(r.meta&&p>=100?' ok':'')+'">'+(r.meta?p+'% da meta':'Sem meta')+'</span></div><div class="sale-bot"><span>Vendido '+brl(r.tot)+' · '+plural(r.n,'venda','vendas')+'</span><span>Comissão '+brl(r.com)+(r.pct?' ('+String(r.pct).replace('.',',')+'%)':'')+'</span></div>'+(r.meta?barra(p):'')+vdet+cdet+
+    (dono?'<div class="grid2"><div class="field"><span>Meta do mês (R$)</span><input type="text" inputmode="decimal" data-pm="v:'+esc(r.k)+':meta" value="'+(r.meta?centsToStr(r.meta):'')+'" placeholder="0,00"></div><div class="field"><span>Comissão (%)</span><input type="text" inputmode="decimal" data-pm="v:'+esc(r.k)+':pct" value="'+esc(r.cfgPct===undefined?'':r.cfgPct)+'" placeholder="padrão"></div></div>'+(r.cad?'<div><button class="btn sm" data-act="vdedit" data-k="'+esc(r.k)+'">Editar vendedor e clientes</button></div>':''):'')+'</div>'}).join('');
+  const cfgBox=dono?'<div class="sh"><h2>Regras</h2></div><div class="card" style="gap:12px"><div class="grid2"><div class="field"><span>Meta mensal da loja (R$)</span><input type="text" inputmode="decimal" data-pm="loja" value="'+(md.loja?centsToStr(md.loja):'')+'" placeholder="0,00"></div><div class="field"><span>Comissão padrão (%)</span><input type="text" inputmode="decimal" data-pm="pct" value="'+esc(md.pct||'')+'" placeholder="0"></div></div><p class="sub" style="margin:0">A comissão é calculada sobre o valor vendido no mês. A venda vai para o vendedor escolhido na venda; se nada for escolhido, vai para o vendedor do cliente. A meta e a comissão de cada vendedor valem para qualquer mês.</p></div>':'';
+  return pageHead('Metas e comissão',dono?'Acompanhe a loja e cada vendedor':'Seus números do mês',dono?'<div class="acts"><button class="btn primary" data-act="vdnovo">Cadastrar vendedor</button></div>':'<div class="acts"></div>')+'<div style="margin-bottom:14px">'+mesNav(m,'meta')+'</div>'+loja+
+  '<div class="stack">'+(linhas||'<div class="empty">'+GLASSES+'<h3>Nenhum vendedor ainda</h3><p>Cadastre os vendedores, ligue os clientes a eles e acompanhe vendas e comissão.</p>'+(dono?'<div class="acts" style="justify-content:center"><button class="btn primary" data-act="vdnovo">Cadastrar vendedor</button></div>':'')+'</div>')+'</div>'+cfgBox;
 }
+/* cadastro de vendedor */
+function vdBlank(){return {id:'vd'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),nome:'',email:'',pct:'',meta:'',novo:true,sel:{},q:''}}
+function sheetVend(){
+  const D=ui.vd;if(!D)return null;const md=metaDoc();
+  const cs=Object.values(S.clientes).sort((a,b)=>a.nome.localeCompare(b.nome));
+  const body='<div class="sec"><div class="field"><span>Nome do vendedor</span><input type="text" id="vd-nome" value="'+esc(D.nome)+'" autocomplete="off" placeholder="Ex.: Carla"></div>'+
+   '<div class="field"><span>E-mail de acesso (se ele entra no sistema)</span><input type="email" id="vd-email" value="'+esc(D.email)+'" autocomplete="off" placeholder="opcional"><span class="hint">Com o e-mail, as vendas que ele registrar entram nos números dele sozinhas.</span></div>'+
+   '<div class="grid2"><div class="field"><span>Comissão (%)</span><input type="text" inputmode="decimal" id="vd-pct" value="'+esc(D.pct)+'" placeholder="padrão da loja"></div><div class="field"><span>Meta do mês (R$)</span><input type="text" inputmode="decimal" id="vd-meta" value="'+esc(D.meta)+'" placeholder="0,00"></div></div></div>'+
+   '<div class="sec"><h3>Clientes que vieram por ele</h3><div class="field"><input type="search" id="vd-q" placeholder="Buscar cliente" autocomplete="off"></div>'+
+   '<p class="hint" id="vd-cont" style="margin:0">'+plural(Object.keys(D.sel).filter(k=>D.sel[k]).length,'cliente selecionado','clientes selecionados')+'</p>'+
+   '<div class="stack" style="gap:6px;max-height:280px;overflow:auto" id="vd-lista">'+(cs.length?cs.map(c=>{const outro=c.vendedorId&&c.vendedorId!==D.id&&md.vends[c.vendedorId]?md.vends[c.vendedorId].nome:'';return '<label class="modrow" data-n="'+esc(c.nome.toLowerCase())+'"><input type="checkbox" data-vdsel="'+c.id+'"'+(D.sel[c.id]?' checked':'')+'><span>'+esc(c.nome)+(outro?' <span class="meta">(hoje de '+esc(outro)+')</span>':'')+'</span></label>'}).join(''):'<p class="sub" style="margin:0">Cadastre clientes primeiro.</p>')+'</div><p class="sub" style="margin:0">As vendas desses clientes entram na comissão dele, a não ser que outro vendedor seja escolhido na venda.</p></div>';
+  const foot='<button class="btn primary" data-act="vdsalvar">'+(D.novo?'Cadastrar vendedor':'Salvar alterações')+'</button>'+(D.novo?'':'<button class="btn danger'+(ui.confirm===D.id?' armed':'')+'" data-act="vddel">'+(ui.confirm===D.id?'Toque de novo para excluir':'Excluir vendedor')+'</button>');
+  return sheetShell(D.novo?'Novo vendedor':'Vendedor',body,foot);
+}
+document.addEventListener('input',e=>{const t=e.target;if(!t||!t.id||!ui.vd)return;
+  if(t.id==='vd-q'){const q=t.value.trim().toLowerCase();document.querySelectorAll('#vd-lista [data-n]').forEach(l=>{l.hidden=!!q&&l.dataset.n.indexOf(q)<0})}
+  else if(t.id==='vd-nome')ui.vd.nome=t.value;else if(t.id==='vd-email')ui.vd.email=t.value;else if(t.id==='vd-pct')ui.vd.pct=t.value;else if(t.id==='vd-meta')ui.vd.meta=t.value});
+document.addEventListener('change',e=>{const t=e.target;if(!t||!t.dataset||t.dataset.vdsel===undefined||!ui.vd)return;ui.vd.sel[t.dataset.vdsel]=t.checked;const h=$('#vd-cont');if(h)h.textContent=plural(Object.keys(ui.vd.sel).filter(k=>ui.vd.sel[k]).length,'cliente selecionado','clientes selecionados')});
+/* ganchos: escolher o vendedor na venda e na ficha do cliente */
+function vendOpts(sel,auto){const o=vendList();return (auto?'<option value="">'+auto+'</option>':'<option value="">Nenhum</option>')+o.map(x=>'<option value="'+x.id+'"'+(sel===x.id?' selected':'')+'>'+esc(x.nome)+'</option>').join('')+(auto?'<option value="-"'+(sel==='-'?' selected':'')+'>Sem vendedor</option>':'')}
+function premVendSale(D){if(!modOn('metas')||!vendList().length)return '';
+  return '<div class="sec"><h3>Vendedor</h3><div class="field"><span>Quem vendeu (comissão)</span><select data-bind="vendedorId">'+vendOpts(D.vendedorId||'','Automático: vendedor do cliente')+'</select></div></div>'}
+function premVendCli(D){if(!modOn('metas')||!vendList().length)return '';
+  return '<div class="field"><span>Vendedor (quem trouxe o cliente)</span><select data-cbind="vendedorId">'+vendOpts(D.vendedorId||'','Nenhum')+'</select></div>'}
+Object.assign(A,{
+  vdnovo(){ui.vd=vdBlank();ui.confirm='';ui.sheet={kind:'vendedor',id:ui.vd.id};renderSheet()},
+  vdedit(d){const md=metaDoc();const x=(md.vends||{})[d.k];if(!x)return;const c=md.vend[d.k]||{};const sel={};Object.values(S.clientes).forEach(cl=>{if(cl.vendedorId===x.id)sel[cl.id]=true});
+    ui.vd={id:x.id,nome:x.nome,email:x.email||'',pct:c.pct===undefined?'':String(c.pct),meta:c.meta?centsToStr(c.meta):'',novo:false,sel:sel,q:''};ui.confirm='';ui.sheet={kind:'vendedor',id:x.id};renderSheet()},
+  vdsalvar(){
+    const D=ui.vd;if(!D)return;const md=metaDoc();if(!md.vends)md.vends={};
+    if(!D.nome.trim()){toast('Informe o nome do vendedor');return}
+    const em=D.email.trim().toLowerCase();if(em&&Object.values(md.vends).some(x=>x.id!==D.id&&String(x.email||'').toLowerCase()===em)){toast('Já existe vendedor com este e-mail');return}
+    md.vends[D.id]={id:D.id,nome:D.nome.trim(),email:em};
+    const r=md.vend[D.id]||(md.vend[D.id]={});r.pct=D.pct.trim();r.meta=parseMoney(D.meta);
+    const ch=[];Object.values(S.clientes).forEach(c=>{const quer=!!D.sel[c.id];if(quer&&c.vendedorId!==D.id){c.vendedorId=D.id;ch.push(c.id)}else if(!quer&&c.vendedorId===D.id){c.vendedorId='';ch.push(c.id)}});
+    persist('config','metas');ch.forEach(id=>persist('clientes',id));
+    premLog(D.novo?'Vendedor cadastrado':'Vendedor editado',D.nome.trim()+' · '+plural(Object.keys(D.sel).filter(k=>D.sel[k]).length,'cliente','clientes'));
+    ui.vd=null;ui.sheet=null;renderSheet();ui.tab='metas';render();toast(D.novo?'Vendedor cadastrado':'Vendedor atualizado')},
+  vddel(){const D=ui.vd;if(!D)return;if(ui.confirm!==D.id){ui.confirm=D.id;renderSheet();return}
+    const md=metaDoc();const nome=(md.vends[D.id]||{}).nome||'';delete md.vends[D.id];delete md.vend[D.id];
+    Object.values(S.clientes).forEach(c=>{if(c.vendedorId===D.id){c.vendedorId='';persist('clientes',c.id)}});
+    persist('config','metas');premLog('Vendedor excluído',nome);ui.vd=null;ui.confirm='';ui.sheet=null;renderSheet();render();toast('Vendedor excluído. As vendas dele ficam em "Sem vendedor".')}
+});
 
 /* ----- campanhas e pesquisa de satisfação ----- */
 const CAMP=[

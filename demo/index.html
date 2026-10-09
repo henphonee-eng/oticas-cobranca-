@@ -767,7 +767,7 @@ function computeAuth(){auth='ok'}
 function renderGate(){const g=$('#gate');g.classList.remove('on');g.innerHTML=''}
 const gateErr=()=>{};
 const hexRgb=h=>{const m=/^#?([0-9a-f]{6})$/i.exec(h||'');if(!m)return[4,134,222];const n=parseInt(m[1],16);return[n>>16&255,n>>8&255,n&255]};
-const modOn=()=>false;function premLock(){return ''}function premView(){return ''}function premCtx(){}function premFicha(){return ''}function premAjustes(){return ''}function premInit(){}function premLog(){}function premPix(){return ''}function sheetHist(){return null}
+const modOn=()=>false;function premLock(){return ''}function premView(){return ''}function premCtx(){}function premFicha(){return ''}function premAjustes(){return ''}function premInit(){}function premLog(){}function premPix(){return ''}function premVendSale(){return ''}function premVendCli(){return ''}function sheetVend(){return null}function sheetHist(){return null}
 function brandAdm(){}function viewAdmin(){return ''}function equipeCard(){return ''}function eqLoad(){}function admLoad(){}function sheetAdm(){return null}function sheetAdmOk(){return null}
 async function logout(){}
 let DEMO_NOME='Sua Ótica Aqui',DEMO_PERSONAL=false;
@@ -784,7 +784,7 @@ const ctaHref=()=>'https://wa.me/'+CTA_NUM+'?text='+encodeURIComponent((DEMO_PER
 const demoNote=()=>(!ui.dhHide&&ui.tab==='painel')?'':'<div class="demo-note"><b>Demonstração</b><span>Você está vendo dados de exemplo. Pode clicar em tudo, cadastrar clientes e simular vendas. Nada fica salvo: ao recarregar a página, volta ao início.</span><a class="btn wa sm" target="_blank" rel="noopener" href="'+ctaHref()+'">Quero para minha ótica</a></div>';
 
 /* ---------- modelo ---------- */
-function makeCliente(o){return {receitas:(o.receitas||[]).filter(r=>!receitaVazia(r)),id:uid(),nome:String(o.nome||'').trim(),cpf:maskCpf(o.cpf),whatsapp:maskTel(o.whatsapp),endereco:String(o.endereco||'').trim(),nascimento:o.nascimento||'',obs:String(o.obs||'').trim(),criadoEm:Date.now(),bvEm:null}}
+function makeCliente(o){return {receitas:(o.receitas||[]).filter(r=>!receitaVazia(r)),id:uid(),nome:String(o.nome||'').trim(),cpf:maskCpf(o.cpf),whatsapp:maskTel(o.whatsapp),endereco:String(o.endereco||'').trim(),vendedorId:o.vendedorId||'',nascimento:o.nascimento||'',obs:String(o.obs||'').trim(),criadoEm:Date.now(),bvEm:null}}
 const cpfDup=(cpf,exceptId)=>{const d=digits(cpf);if(d.length!==11)return null;return Object.values(S.clientes).find(c=>c.id!==exceptId&&digits(c.cpf)===d)||null};
 function makeVenda(clienteId,d){
   const c=calcVenda(d.itens,d.jurosVenda,d.entrada);
@@ -1270,7 +1270,7 @@ function renderSheet(){
   if(!s){el.innerHTML='';el.dataset.key='';document.documentElement.classList.remove('lock');return}
   const key=s.kind+(s.id||'');const old=el.querySelector('.sheet-body');const top=(old&&el.dataset.key===key)?old.scrollTop:0;
   let html=null;
-  if(s.kind==='venda')html=sheetVenda(s.id);else if(s.kind==='nova')html=sheetNova();else if(s.kind==='cliente')html=sheetCliente(s.id);else if(s.kind==='cliente-ok')html=sheetClienteOk(s.id);else if(s.kind==='mais')html=sheetMais();else if(s.kind==='hist')html=sheetHist();else if(s.kind==='recibo')html=sheetRecibo(s);else if(s.kind==='pagorc')html=sheetPagOrc(s);else if(s.kind==='pagparc')html=sheetPagParc(s);else if(s.kind==='relatorio')html=sheetRelatorio();else if(s.kind==='adm')html=sheetAdm();else if(s.kind==='admok')html=sheetAdmOk();
+  if(s.kind==='venda')html=sheetVenda(s.id);else if(s.kind==='nova')html=sheetNova();else if(s.kind==='cliente')html=sheetCliente(s.id);else if(s.kind==='cliente-ok')html=sheetClienteOk(s.id);else if(s.kind==='mais')html=sheetMais();else if(s.kind==='hist')html=sheetHist();else if(s.kind==='recibo')html=sheetRecibo(s);else if(s.kind==='pagorc')html=sheetPagOrc(s);else if(s.kind==='pagparc')html=sheetPagParc(s);else if(s.kind==='vendedor')html=sheetVend();else if(s.kind==='relatorio')html=sheetRelatorio();else if(s.kind==='adm')html=sheetAdm();else if(s.kind==='admok')html=sheetAdmOk();
   if(html===null){ui.sheet=null;renderSheet();return}
   document.documentElement.classList.add('lock');
   el.innerHTML=html;
@@ -1313,12 +1313,12 @@ const newItem=tipo=>({tipo:tipo,nome:'',qtd:'1',valor:'',juros:'',lenteId:''});
 const cliFalta=c=>{const f=[];if(digits(c.whatsapp||'').length<10)f.push('WhatsApp');if(digits(c.cpf||'').length<11)f.push('CPF');if(!String(c.endereco||'').trim())f.push('endereço');if(!String(c.nascimento||'').trim())f.push('data de nascimento');return f};
 const listaTxt=a=>a.length<2?a.join(''):a.slice(0,-1).join(', ')+' e '+a[a.length-1];
 const avisoFalta=c=>{const f=cliFalta(c);return f.length?'Falta preencher: '+listaTxt(f)+'. Você pode salvar assim e completar depois.':''};
-function newDraft(cid){return {editId:'',clienteId:cid||(Object.keys(S.clientes).length?'':'__novo'),novo:{nome:'',cpf:'',whatsapp:'',endereco:'',nascimento:'',receitas:[blankReceita()]},itens:[newItem('produto')],jurosVenda:'',entrada:'',formaEntrada:'Pix',n:'3',primeira:addMonths(todayStr(),1),forma:'Pix',data:todayStr(),obs:'',aguardando:false}}
+function newDraft(cid){return {editId:'',clienteId:cid||(Object.keys(S.clientes).length?'':'__novo'),novo:{nome:'',cpf:'',whatsapp:'',endereco:'',nascimento:'',receitas:[blankReceita()]},vendedorId:'',itens:[newItem('produto')],jurosVenda:'',entrada:'',formaEntrada:'Pix',n:'3',primeira:addMonths(todayStr(),1),forma:'Pix',data:todayStr(),obs:'',aguardando:false}}
 function editDraft(v){
   const par=v.parcelas.filter(p=>p.tipo==='parcela'&&p.parte!==2);const pct=x=>x?String(x).replace('.',','):'';const ent=v.parcelas.find(p=>p.tipo==='entrada');
   return {editId:v.id,clienteId:v.clienteId,novo:{nome:'',cpf:'',whatsapp:'',endereco:''},
     itens:v.itens.map(i=>({tipo:i.tipo,nome:i.nome,qtd:String(i.qtd),valor:centsToStr(i.valor),juros:pct(i.juros),lenteId:i.lenteId||''})),
-    jurosVenda:pct(v.jurosVenda),entrada:v.entrada?centsToStr(v.entrada):'',formaEntrada:(ent&&ent.forma)||'Pix',n:String(par.length),primeira:par.length?par[0].venc:addMonths(todayStr(),1),forma:v.forma,data:v.data,obs:v.obs||'',aguardando:!!v.aguardando};
+    jurosVenda:pct(v.jurosVenda),entrada:v.entrada?centsToStr(v.entrada):'',formaEntrada:(ent&&ent.forma)||'Pix',n:String(par.length),primeira:par.length?par[0].venc:addMonths(todayStr(),1),forma:v.forma,data:v.data,obs:v.obs||'',aguardando:!!v.aguardando,vendedorId:v.vendedorId||''};
 }
 function sheetNova(){
   const D=ui.draft;const cs=Object.values(S.clientes).sort((a,b)=>a.nome.localeCompare(b.nome));
@@ -1332,7 +1332,7 @@ function sheetNova(){
   '<details><summary>Grau do cliente (opcional)</summary><div style="margin-top:10px">'+receitaForm((D.novo.receitas||(D.novo.receitas=[blankReceita()]))[0],0,'bind','novo.receitas.',false)+'</div></details></div></div>'+
   '<div class="sec"><h3>Itens da venda</h3><div id="items" class="stack"></div><div class="foot-row"><button class="btn" data-act="additem" data-t="produto">+ Produto</button><button class="btn" data-act="additem" data-t="lente">+ Lente</button></div>'+
   '<div class="field"><span>Juros sobre o total da venda (%), opcional</span><input type="text" inputmode="decimal" data-bind="jurosVenda" value="'+esc(D.jurosVenda)+'" placeholder="0"></div></div>'+
-  '<div class="sec"><h3>Pagamento</h3>'+((!D.editId||(S.vendas[D.editId]&&S.vendas[D.editId].aguardando))?'<label class="aguard-box"><input type="checkbox" data-aguard'+(D.aguardando?' checked':'')+'><span><b>Aguardando pagamento</b><small>Use para orçamento: o cliente ainda vai pagar ou dar a entrada. Não conta como venda, nem no caixa, nem nas cobranças. Vira venda quando você marcar como pago.</small></span></label>':'')+'<div class="field"><span>Forma de cobrança das parcelas</span><div class="seg" role="radiogroup" aria-label="Forma de cobrança"><label><input type="radio" name="forma" value="Pix" data-bind="forma"'+(D.forma==='Pix'?' checked':'')+'><span>Pix</span></label><label><input type="radio" name="forma" value="Boleto" data-bind="forma"'+(D.forma==='Boleto'?' checked':'')+'><span>Boleto</span></label></div></div>'+
+  premVendSale(D)+'<div class="sec"><h3>Pagamento</h3>'+((!D.editId||(S.vendas[D.editId]&&S.vendas[D.editId].aguardando))?'<label class="aguard-box"><input type="checkbox" data-aguard'+(D.aguardando?' checked':'')+'><span><b>Aguardando pagamento</b><small>Use para orçamento: o cliente ainda vai pagar ou dar a entrada. Não conta como venda, nem no caixa, nem nas cobranças. Vira venda quando você marcar como pago.</small></span></label>':'')+'<div class="field"><span>Forma de cobrança das parcelas</span><div class="seg" role="radiogroup" aria-label="Forma de cobrança"><label><input type="radio" name="forma" value="Pix" data-bind="forma"'+(D.forma==='Pix'?' checked':'')+'><span>Pix</span></label><label><input type="radio" name="forma" value="Boleto" data-bind="forma"'+(D.forma==='Boleto'?' checked':'')+'><span>Boleto</span></label></div></div>'+
   '<div class="field"><span>Data da venda</span><input type="date" data-bind="data" value="'+esc(D.data)+'"></div>'+
   '<div class="grid2"><div class="field"><span>Entrada (R$)</span><input type="text" inputmode="decimal" data-bind="entrada" value="'+esc(D.entrada)+'" placeholder="0,00"></div><div class="field"><span>Entrada paga em</span><select data-bind="formaEntrada">'+FORMAS.map(f=>'<option'+(D.formaEntrada===f?' selected':'')+'>'+f+'</option>').join('')+'</select></div></div>'+
   '<div class="grid2"><div class="field"><span>Parcelas</span><input type="number" min="0" max="36" inputmode="numeric" data-bind="n" value="'+esc(D.n)+'"></div><div class="field"><span>Vencimento da 1ª parcela</span><input type="date" data-bind="primeira" value="'+esc(D.primeira)+'"></div></div>'+
@@ -1396,6 +1396,7 @@ function salvarVenda(){
     if(!v.parcelas.some(p=>p.parte&&p.tipo==='parcela'))v.parcelas.forEach(p=>{if(p.tipo!=='parcela')return;const o=old.parcelas.find(q=>q.tipo==='parcela'&&q.n===p.n);if(o){p.contatoEm=o.contatoEm||null;if(o.pago){p.pago=true;p.pagoEm=o.pagoEm;p.forma=o.forma||null}}});
   }
   if(!old&&typeof SESSION!=='undefined'&&SESSION&&SESSION.user&&SESSION.user.email)v.por=String(SESSION.user.email).toLowerCase();
+  if(D.vendedorId)v.vendedorId=D.vendedorId;
   S.vendas[v.id]=v;persist('vendas',v.id);
   premLog(old?'Venda editada':(v.aguardando?'Orçamento criado':'Venda criada'),((S.clientes[cid]||{}).nome||'')+' · '+brl(v.total));
   ui.draft=null;ui.sheet={kind:'venda',id:v.id};if(!old)ui.tab=v.aguardando?'aguard':'vendas';render();renderSheet();toast(v.aguardando?(old?'Orçamento atualizado':'Orçamento salvo em Aguardando pagamento'):(old?'Venda atualizada':'Venda registrada'));
@@ -1439,7 +1440,7 @@ function sheetCliente(id){
   const body='<div class="sec"><div class="field"><span>Nome completo</span><input type="text" data-cbind="nome" value="'+esc(D.nome)+'" autocomplete="off"></div>'+
   '<div class="grid2"><div class="field"><span>CPF</span><input type="text" inputmode="numeric" data-mask="cpf" data-cbind="cpf" value="'+esc(D.cpf)+'" placeholder="000.000.000-00"><span class="hint"></span></div><div class="field"><span>WhatsApp com DDD</span><input type="text" inputmode="tel" data-mask="tel" data-cbind="whatsapp" value="'+esc(D.whatsapp)+'" placeholder="(81) 99999-9999"></div></div>'+
   '<div class="field"><span>Endereço</span><input type="text" data-cbind="endereco" value="'+esc(D.endereco)+'" placeholder="Rua, número, bairro, cidade"></div>'+
-  '<div class="field"><span>Data de nascimento</span><input type="date" data-cbind="nascimento" value="'+esc(D.nascimento)+'"><span class="hint">Para avisar você no aniversário do cliente.</span></div>'+
+  '<div class="field"><span>Data de nascimento</span><input type="date" data-cbind="nascimento" value="'+esc(D.nascimento)+'"><span class="hint">Para avisar você no aniversário do cliente.</span></div>'+premVendCli(D)+
   '<p class="hint warn-soft" id="cli-aviso" style="margin:0"'+(D.nome.trim()&&avisoFalta(D)?'':' hidden')+'>'+esc(D.nome.trim()?avisoFalta(D):'')+'</p>'+
   '<div class="field"><span>Observações</span><textarea data-cbind="obs" placeholder="Preferências, receita, combinados">'+esc(D.obs)+'</textarea></div></div>'+
   (editing?clienteBlocos(id,r,vs):'<div class="sec"><h3>Grau do cliente (opcional)</h3>'+receitasHtml(D)+'</div>');
@@ -1787,14 +1788,14 @@ const A={
   vfilter(d){ui.vFilter=d.f;render()},vper(d){ui.vPer=d.f;render()},cfilter(d){ui.cFilter=d.f;render()},cxper(d){ui.cx=d.f;render()},ltipo(d){ui.lTipo=d.f;render()},
   exportvendas(){exportVendas()},exportcaixa(){exportCaixa()},
   novocliente(){ui.cdraft={nome:'',cpf:'',whatsapp:'',endereco:'',nascimento:'',obs:'',receitas:[blankReceita()]};ui.cacc={};ui.sheet={kind:'cliente',id:''};renderSheet()},
-  editcliente(d){const c=S.clientes[d.c];if(!c)return;ui.cdraft={nome:c.nome,cpf:c.cpf,whatsapp:c.whatsapp,endereco:c.endereco,nascimento:c.nascimento||'',obs:c.obs||'',receitas:JSON.parse(JSON.stringify(c.receitas||[]))};ui.confirm='';ui.cacc={};ui.sheet={kind:'cliente',id:c.id};renderSheet()},
+  editcliente(d){const c=S.clientes[d.c];if(!c)return;ui.cdraft={nome:c.nome,cpf:c.cpf,whatsapp:c.whatsapp,endereco:c.endereco,nascimento:c.nascimento||'',vendedorId:c.vendedorId||'',obs:c.obs||'',receitas:JSON.parse(JSON.stringify(c.receitas||[]))};ui.confirm='';ui.cacc={};ui.sheet={kind:'cliente',id:c.id};renderSheet()},
   addreceita(){const D=ui.cdraft;D.receitas=D.receitas||[];D.receitas.unshift(blankReceita());ui.cacc=Object.assign({},ui.cacc,{rec:true});renderSheet()},
   rmreceita(d){ui.cdraft.receitas.splice(+d.i,1);renderSheet()},
   cacc(d){ui.cacc=Object.assign({},ui.cacc);ui.cacc[d.k]=!ui.cacc[d.k];renderSheet()},
   salvarcliente(){
     const D=ui.cdraft;if(!D.nome.trim()){toast('Informe o nome do cliente');return}
     const id=ui.sheet.id;const dup=cpfDup(D.cpf,id);if(dup){toast('Já existe cliente com este CPF: '+dup.nome);return}
-    if(id&&S.clientes[id]){Object.assign(S.clientes[id],{nome:D.nome.trim(),cpf:maskCpf(D.cpf),whatsapp:maskTel(D.whatsapp),endereco:D.endereco.trim(),nascimento:D.nascimento||'',obs:D.obs.trim(),receitas:(D.receitas||[]).filter(r=>!receitaVazia(r))});persist('clientes',id);premLog('Cliente editado',D.nome.trim());ui.sheet=null;ui.cdraft=null;renderSheet();refresh();const fl=cliFalta(S.clientes[id]);toast('Cliente atualizado'+(fl.length?'. Falta preencher: '+listaTxt(fl)+'.':''))}
+    if(id&&S.clientes[id]){Object.assign(S.clientes[id],{nome:D.nome.trim(),cpf:maskCpf(D.cpf),whatsapp:maskTel(D.whatsapp),endereco:D.endereco.trim(),nascimento:D.nascimento||'',vendedorId:D.vendedorId||'',obs:D.obs.trim(),receitas:(D.receitas||[]).filter(r=>!receitaVazia(r))});persist('clientes',id);premLog('Cliente editado',D.nome.trim());ui.sheet=null;ui.cdraft=null;renderSheet();refresh();const fl=cliFalta(S.clientes[id]);toast('Cliente atualizado'+(fl.length?'. Falta preencher: '+listaTxt(fl)+'.':''))}
     else{const c=makeCliente(D);S.clientes[c.id]=c;persist('clientes',c.id);premLog('Cliente cadastrado',c.nome);ui.cdraft=null;ui.sheet={kind:'cliente-ok',id:c.id};render();renderSheet()}
   },
   salvarclientevenda(){A.salvarcliente();if(ui.sheet&&ui.sheet.kind==='cliente-ok')openNova(ui.sheet.id)},
