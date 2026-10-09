@@ -618,6 +618,13 @@ html:not(.adm) .gate-card{border:0;border-radius:22px;box-shadow:0 30px 80px -24
   .side::-webkit-scrollbar{width:6px}.side::-webkit-scrollbar-thumb{background:rgba(255,255,255,.28);border-radius:3px}
   .side>*{flex-shrink:0}
 }
+
+/* olhinho de esconder valores */
+.eyebtn{flex:none;width:42px;height:42px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--muted);display:grid;place-items:center;padding:0}
+.eyebtn svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.eyebtn[aria-pressed=true]{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+html.vh .kpi b,html.vh .tile b,html.vh .msum b,html.vh .row .amt,html.vh .sale-bot,html.vh .sum-row,html.vh .brk b,html.vh .mval,html.vh .mes-h span,html.vh .sh .sub.num,html.vh .item-bot b,html.vh .acc-i{filter:blur(9px);user-select:none;pointer-events:none}
+html.vh .mbars{filter:blur(6px)}
 .brand-name{font-family:var(--f-display);font-weight:700;font-size:22px;line-height:1;letter-spacing:.04em;color:#fff;display:flex;flex-direction:column;gap:2px}
 .brand-name small{font-family:'IBM Plex Sans',sans-serif;font-weight:500;font-size:11px;letter-spacing:.22em;text-transform:uppercase;opacity:.8}
 @media (min-width:900px){.brand-name{font-size:32px;margin-left:6px}.brand-name small{font-size:12px}}
@@ -1029,7 +1036,7 @@ function viewPainel(){
   const ap=aniPend(),rvn=revisoes().filter(x=>!x.c.revEm).length;
   const HEART='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>';
   const rel=(ap.length||rvn)?'<button class="alert info" role="status" data-act="tab" data-t="relacao">'+HEART+'<div><b>Relacionamento: '+[ap.length?plural(ap.length,'aniversariante hoje','aniversariantes hoje'):'',rvn?plural(rvn,'cliente para revisar o grau','clientes para revisar o grau'):''].filter(Boolean).join(' · ')+'</b><span>'+(ap.length?esc(ap.slice(0,3).map(x=>firstName(x.c.nome)).join(', '))+' · ':'')+'toque para mandar a mensagem</span></div></button>':'';
-  return demoHero()+pageHead('Painel',dia,'<button class="btn primary" data-act="novavenda">Nova venda</button>')+
+  return demoHero()+pageHead('Painel',dia,'<div class="acts" style="align-items:center">'+eyeBtn()+'<button class="btn primary" data-act="novavenda">Nova venda</button></div>')+
   (noSales?'<div class="empty" style="margin-bottom:18px">'+GLASSES+'<h3>Nenhuma venda registrada ainda</h3><p>Registre a primeira venda parcelada. Os números do dia e os vencimentos aparecem aqui.</p><div class="acts" style="justify-content:center"><button class="btn primary" data-act="novavenda">Nova venda</button><button class="btn" data-act="demo">Ver com exemplos</button></div></div>':'')+
   '<div class="kpis">'+
   '<div class="kpi lead"><small>Entrou hoje</small><b>'+brl(sumV(recHoje))+'</b><span>'+plural(recHoje.length,'recebimento','recebimentos')+'</span></div>'+
@@ -1658,8 +1665,13 @@ function clearDemo(){
 function openNova(cid){ui.draft=newDraft(cid);ui.sheet={kind:'nova'};renderSheet()}
 function setPath(o,p,v){const k=p.split('.');let t=o;for(let i=0;i<k.length-1;i++)t=t[k[i]];t[k[k.length-1]]=v}
 function addLente(nome,tipo,valor){const id=uid();S.lentes[id]={id:id,nome:nome,tipo:tipo||'',valor:valor};persist('lentes',id)}
+/* olhinho: esconde os valores em dinheiro na tela (só visual, fica salvo neste aparelho) */
+let HIDE_VAL=false;try{HIDE_VAL=localStorage.getItem('oc-hide')==='1'}catch(e){}
+document.documentElement.classList.toggle('vh',HIDE_VAL);
+const eyeBtn=()=>'<button class="eyebtn" data-act="eye" aria-pressed="'+HIDE_VAL+'" aria-label="'+(HIDE_VAL?'Mostrar valores':'Esconder valores')+'" title="'+(HIDE_VAL?'Mostrar valores':'Esconder valores')+'"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>'+(HIDE_VAL?'<path d="M4 4l16 16"/>':'')+'</svg></button>';
 const A={
   dhx(){ui.dhHide=true;render()},
+  eye(){HIDE_VAL=!HIDE_VAL;try{localStorage.setItem('oc-hide',HIDE_VAL?'1':'0')}catch(e){}document.documentElement.classList.toggle('vh',HIDE_VAL);toast(HIDE_VAL?'Valores escondidos':'Valores à mostra');render()},
   bell(){if(ADM_MODE){ui.tab='admin';render();window.scrollTo(0,0)}else A.tab({t:'cobrar'})},
   popgo(d){const p=document.getElementById('popup');if(p)p.classList.remove('on');A.tab({t:d.t})},
   popx(){const p=document.getElementById('popup');if(p)p.classList.remove('on')},
