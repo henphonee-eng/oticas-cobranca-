@@ -334,6 +334,9 @@ button.kpi:hover{background:var(--surface-2)}
 .logo-prev{display:flex;align-items:center;gap:10px}
 .logo-prev .adm-logo{width:96px;height:56px}
 input[type=color]{padding:2px;height:42px;width:100%;cursor:pointer}
+.brand-adm{font-family:var(--f-display);font-size:28px;font-weight:600;line-height:1;color:#fff;display:flex;flex-direction:column;gap:4px}
+.brand-adm small{font-family:'IBM Plex Sans',sans-serif;font-size:11px;font-weight:500;letter-spacing:.2em;text-transform:uppercase;opacity:.8}
+@media (max-width:899px){.brand-adm{font-size:22px}.brand-adm small{display:none}}
 .brand-name{font-family:var(--f-display);font-weight:700;font-size:22px;line-height:1;letter-spacing:.04em;color:#fff;display:flex;flex-direction:column;gap:2px}
 .brand-name small{font-family:'IBM Plex Sans',sans-serif;font-weight:500;font-size:11px;letter-spacing:.22em;text-transform:uppercase;opacity:.8}
 @media (min-width:900px){.brand-name{font-size:32px;margin-left:6px}.brand-name small{font-size:12px}}
@@ -459,7 +462,7 @@ function computeAuth(){auth='ok'}
 function renderGate(){const g=$('#gate');g.classList.remove('on');g.innerHTML=''}
 const gateErr=()=>{};
 const hexRgb=h=>{const m=/^#?([0-9a-f]{6})$/i.exec(h||'');if(!m)return[4,134,222];const n=parseInt(m[1],16);return[n>>16&255,n>>8&255,n&255]};
-function viewAdmin(){return ''}function equipeCard(){return ''}function eqLoad(){}function admLoad(){}function sheetAdm(){return null}function sheetAdmOk(){return null}
+function brandAdm(){}function viewAdmin(){return ''}function equipeCard(){return ''}function eqLoad(){}function admLoad(){}function sheetAdm(){return null}function sheetAdmOk(){return null}
 async function logout(){}
 let DEMO_NOME='Sua Ótica Aqui',DEMO_PERSONAL=false;
 const brandNome=()=>DEMO_NOME;
@@ -573,6 +576,7 @@ function render(){
   v.innerHTML=demoNote()+viewTab();
   if(ui.tab==='ajustes'&&ROLE==='dono')eqLoad();
   if(ui.tab==='admin')admLoad();
+  brandAdm();
 }
 mqWide.addEventListener('change',()=>render());
 

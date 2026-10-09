@@ -334,6 +334,9 @@ button.kpi:hover{background:var(--surface-2)}
 .logo-prev{display:flex;align-items:center;gap:10px}
 .logo-prev .adm-logo{width:96px;height:56px}
 input[type=color]{padding:2px;height:42px;width:100%;cursor:pointer}
+.brand-adm{font-family:var(--f-display);font-size:28px;font-weight:600;line-height:1;color:#fff;display:flex;flex-direction:column;gap:4px}
+.brand-adm small{font-family:'IBM Plex Sans',sans-serif;font-size:11px;font-weight:500;letter-spacing:.2em;text-transform:uppercase;opacity:.8}
+@media (max-width:899px){.brand-adm{font-size:22px}.brand-adm small{display:none}}
 </style>
 
 </head>
@@ -706,6 +709,7 @@ function render(){
   v.innerHTML=viewTab();
   if(ui.tab==='ajustes'&&ROLE==='dono')eqLoad();
   if(ui.tab==='admin')admLoad();
+  brandAdm();
 }
 mqWide.addEventListener('change',()=>render());
 
@@ -1463,32 +1467,118 @@ const A={
   cleardemo(){clearDemo()}
 };
 /* ---------- ADMIN-INICIO (somente sistema real) ---------- */
-const ADM={list:[],loaded:false,busy:false,err:'',draft:null,logoB:null,logoW:null,saving:false,cred:null};
+const ADM={list:[],cob:[],cfg:{},loaded:false,busy:false,err:'',draft:null,logoB:null,logoW:null,saving:false,cred:null};
 const EQ={list:[],for:'',busy:false,err:'',pw:'',confirm:''};
 const hexOk=h=>/^#[0-9a-fA-F]{6}$/.test(h||'');
 const errTxt=e=>String((e&&e.message)||e||'Erro desconhecido').replace(/^.*?exception:?\s*/i,'');
-async function admLoad(){
-  if(ADM.loaded||ADM.busy||!IS_ADMIN)return;ADM.busy=true;
-  const r=await sb.rpc('admin_listar_oticas');ADM.busy=false;
-  if(r.error)ADM.err='Não foi possível carregar as óticas: '+errTxt(r.error);else{ADM.list=r.data||[];ADM.err=''}
-  ADM.loaded=true;render();
+const ADMDEF={
+  boasvindas:'Olá, {nome}! Seja bem-vindo(a) ao sistema de cobranças da {otica}. O seu acesso já está pronto.\n\nLink: {link}\nE-mail: {email}{senha}\n\nQualquer dúvida, é só chamar por aqui.',
+  lembrete:'Olá, {nome}! Passando para lembrar que a {descricao} do sistema da {otica}, de {valor}, vence em {vencimento}. Pagamento via Pix: {pix}. Obrigado!',
+  atraso:'Olá, {nome}! A {descricao} do sistema da {otica}, de {valor}, venceu em {vencimento} e está em atraso há {dias}. Pagamento via Pix: {pix}. Se já pagou, é só enviar o comprovante. Obrigado!'
+};
+const ADMLABEL={boasvindas:'Boas-vindas (ótica nova)',lembrete:'Parcela perto de vencer ou vencendo hoje',atraso:'Parcela vencida'};
+const admTpl=k=>(ADM.cfg[k]&&ADM.cfg[k].trim())?ADM.cfg[k]:ADMDEF[k];
+async function admLoad(force){
+  if((ADM.loaded&&!force)||ADM.busy||!IS_ADMIN)return;ADM.busy=true;
+  try{
+    const [lr,or,cr,gr]=await Promise.all([sb.rpc('admin_listar_oticas'),sb.from('oticas').select('*'),sb.from('adm_cobrancas').select('*'),sb.from('adm_config').select('*')]);
+    if(lr.error)throw lr.error;
+    const extra={};((or&&or.data)||[]).forEach(o=>{extra[o.id]=o});
+    ADM.list=(lr.data||[]).map(o=>Object.assign({},extra[o.id]||{},o));
+    ADM.cob=(cr&&cr.data)||[];ADM.cfg={};((gr&&gr.data)||[]).forEach(g=>{ADM.cfg[g.chave]=g.valor});
+    ADM.err=(cr&&cr.error)?'Não foi possível carregar as cobranças: '+errTxt(cr.error):'';
+    await admGerar();
+  }catch(e){ADM.err='Não foi possível carregar as óticas: '+errTxt(e)}
+  ADM.busy=false;ADM.loaded=true;render();
+}
+/* cria as mensalidades que ainda não existem (mês atual e o próximo) */
+async function admGerar(){
+  const hoje=todayStr(),rows=[],fim=addMonths(hoje.slice(0,7)+'-01',1);
+  ADM.list.forEach(o=>{
+    if(!o.ativa||!(+o.mensalidade>0))return;
+    const ini=String(o.impl_data||o.criada_em||hoje).slice(0,10);
+    for(let m=ini.slice(0,7)+'-01';m<=fim;m=addMonths(m,1)){
+      const venc=m.slice(0,7)+'-'+pad(Math.min(Math.max(+o.dia_venc||10,1),28));
+      if(venc<ini)continue;
+      if(!ADM.cob.some(c=>c.otica_id===o.id&&c.tipo==='mensalidade'&&c.venc===venc))rows.push({otica_id:o.id,tipo:'mensalidade',venc:venc,valor:+o.mensalidade});
+    }
+  });
+  if(!rows.length)return;
+  const r=await sb.from('adm_cobrancas').upsert(rows,{onConflict:'otica_id,tipo,venc',ignoreDuplicates:true});
+  if(r.error)throw r.error;
+  const c=await sb.from('adm_cobrancas').select('*');if(!c.error)ADM.cob=c.data||[];
 }
 const admLink=o=>(o.dominios&&o.dominios.length)?'https://'+o.dominios[0]+'/':location.origin+'/?o='+encodeURIComponent(o.slug);
+const admOtica=id=>ADM.list.find(o=>o.id===id)||{nome:'Ótica removida'};
+const admDesc=c=>c.tipo==='implementacao'?'implantação':'mensalidade de '+parseYmd(c.venc).toLocaleDateString('pt-BR',{month:'long'});
+function admCtx(o,c,senha){
+  const x={nome:firstName(o.dono_nome)||'tudo bem',otica:o.nome,link:admLink(o),email:o.email_dono||'o e-mail cadastrado',senha:senha?'\nSenha: '+senha:'',pix:(ADM.cfg.pix||'').trim()||'(informe a chave Pix)'};
+  if(c){x.descricao=admDesc(c);x.valor=brl(c.valor);x.vencimento=fmtDate(c.venc);x.dias=plural(Math.max(0,diffDays(todayStr(),c.venc)),'dia','dias')}
+  return x;
+}
+const admWa=(o,txt)=>o.whatsapp_dono?waLink(o.whatsapp_dono,txt):'';
+function admCobRow(c){
+  const o=admOtica(c.otica_id),st=pStatus(c),t=todayStr();
+  const chip=st==='pago'?'<span class="chip ok">Recebido em '+fmtShort(c.pago_em)+'</span>':st==='atraso'?'<span class="chip bad">'+plural(diffDays(t,c.venc),'dia','dias')+' em atraso</span>':st==='hoje'?'<span class="chip warn">Vence hoje</span>':'<span class="chip">Vence em '+plural(diffDays(c.venc,t),'dia','dias')+'</span>';
+  const ct=(!c.pago&&c.contato_em)?'<span class="chip acc">Cobrado em '+fmtShort(c.contato_em)+'</span>':'';
+  const href=(!c.pago&&o.whatsapp_dono)?admWa(o,fillTpl(admTpl(st==='atraso'?'atraso':'lembrete'),admCtx(o,c))):'';
+  return '<article class="row"><div class="row-main"><b>'+esc(o.nome)+'</b><div class="meta">'+esc(cap(admDesc(c)))+' · '+fmtDate(c.venc)+'</div><div class="chips">'+chip+ct+'</div></div><div class="row-side"><div class="amt">'+brl(c.valor)+'</div><div class="acts">'+
+    (href?'<a class="btn sm wa"'+WAT+' data-admc="cob" data-id="'+c.id+'" href="'+esc(href)+'">WhatsApp</a>':(!c.pago?'<span class="meta">sem WhatsApp</span>':''))+
+    '<button class="btn sm '+(c.pago?'ghost':'ok')+'" data-act="admbaixa" data-id="'+c.id+'">'+(c.pago?'Desfazer':'Recebido')+'</button></div></div></article>';
+}
 function admCard(o){
   const ini=esc(String(o.nome||'?').trim().split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase());
+  const cs=ADM.cob.filter(c=>c.otica_id===o.id),aberta=cs.filter(c=>!c.pago),late=aberta.filter(c=>c.venc<todayStr());
+  const sit=late.length?'<span class="chip bad">'+plural(late.length,'cobrança vencida','cobranças vencidas')+'</span>':cs.length?'<span class="chip ok">Pagamentos em dia</span>':'<span class="chip">Sem cobrança</span>';
+  const impl=cs.find(c=>c.tipo==='implementacao');
+  const bv=o.whatsapp_dono?'<a class="btn sm wa"'+WAT+' data-admc="bv" data-id="'+o.id+'" href="'+esc(admWa(o,fillTpl(admTpl('boasvindas'),admCtx(o,null,''))))+'">'+(o.boas_vindas_em?'Boas-vindas de novo':'Boas-vindas')+'</a>':'';
   return '<div class="card"><div class="adm-top"><div class="adm-logo" style="background:linear-gradient(135deg,'+esc(o.cor1)+','+esc(o.cor2)+')">'+(o.logo_escuro?'<img src="'+esc(o.logo_escuro)+'" alt="">':ini)+'</div><div style="min-width:0"><b>'+esc(o.nome)+'</b><div class="meta">'+esc(o.slug)+' · '+plural(+o.usuarios||0,'usuário','usuários')+'</div></div><span class="chip '+(o.ativa?'ok':'bad')+'" style="margin-left:auto">'+(o.ativa?'Ativa':'Desativada')+'</span></div>'+
-    '<div class="meta">Endereço: '+esc(admLink(o))+'</div><div class="acts" style="justify-content:flex-start"><button class="btn sm primary" data-act="admedit" data-id="'+o.id+'">Editar</button><button class="btn sm" data-act="admcopy" data-id="'+o.id+'">Copiar link</button></div></div>';
+    '<div class="chips">'+sit+(o.boas_vindas_em?'<span class="chip acc">Boas-vindas enviadas</span>':'')+'</div>'+
+    '<div class="meta num">Mensalidade '+(+o.mensalidade>0?brl(+o.mensalidade)+' · vence dia '+(o.dia_venc||10):'não definida')+(impl?' · Implantação '+brl(impl.valor)+(impl.pago?' (paga)':' (em aberto)'):'')+'</div>'+
+    '<div class="meta">'+(o.dono_nome?esc(o.dono_nome)+' · ':'')+esc(o.whatsapp_dono||'sem WhatsApp do responsável')+'</div>'+
+    '<div class="acts" style="justify-content:flex-start"><button class="btn sm primary" data-act="admedit" data-id="'+o.id+'">Editar</button>'+bv+'<button class="btn sm" data-act="admcopy" data-id="'+o.id+'">Copiar link</button></div></div>';
 }
 function viewAdmin(){
-  return pageHead('Administração','Óticas que usam o sistema','<button class="btn primary" data-act="admnova">Nova ótica</button>')+
-  (ADM.err?'<p class="hint bad" role="alert">'+esc(ADM.err)+'</p>':'')+
-  (!ADM.loaded?none('Carregando...'):ADM.list.length?'<div class="gridlist">'+ADM.list.map(admCard).join('')+'</div>':'<div class="empty">'+GLASSES+'<h3>Nenhuma ótica cadastrada</h3><p>Toque em Nova ótica para cadastrar a primeira.</p></div>');
+  const t=todayStr(),mk=t.slice(0,7),C=ADM.cob;
+  const noMes=C.filter(c=>c.venc.slice(0,7)===mk);
+  const mens=noMes.filter(c=>c.tipo==='mensalidade'),impl=noMes.filter(c=>c.tipo==='implementacao');
+  const sum=a=>a.reduce((s,c)=>s+c.valor,0);
+  const late=C.filter(c=>!c.pago&&c.venc<t).sort((a,b)=>a.venc.localeCompare(b.venc));
+  const prox=C.filter(c=>!c.pago&&c.venc>=t&&diffDays(c.venc,t)<=7).sort((a,b)=>a.venc.localeCompare(b.venc));
+  const recMes=C.filter(c=>c.pago&&c.pago_em&&c.pago_em.slice(0,7)===mk);
+  const ativas=ADM.list.filter(o=>o.ativa).length;
+  const kp=ADM.loaded?'<div class="kpis">'+
+    '<div class="kpi lead"><small>Óticas cadastradas</small><b>'+ADM.list.length+'</b><span>'+plural(ativas,'ativa','ativas')+'</span></div>'+
+    '<div class="kpi"><small>Mensalidades a receber</small><b>'+brl(sum(mens.filter(c=>!c.pago)))+'</b><span>de '+brl(sum(mens))+' no mês</span></div>'+
+    '<div class="kpi"><small>Implantações do mês</small><b>'+brl(sum(impl))+'</b><span>'+brl(sum(impl.filter(c=>c.pago)))+' recebido</span></div>'+
+    '<div class="kpi'+(late.length?' neg':'')+'"><small>Em atraso</small><b>'+brl(sum(late))+'</b><span>'+plural(late.length,'cobrança','cobranças')+'</span></div>'+
+    '<div class="kpi total"><small>Recebido no mês</small><b>'+brl(sum(recMes))+'</b><span>'+plural(recMes.length,'pagamento','pagamentos')+'</span></div></div>':'';
+  const msgs='<details style="margin-top:18px"><summary>Mensagens de WhatsApp e chave Pix</summary><div class="stack" style="margin-top:10px"><div class="card"><div class="field"><span>Sua chave Pix (vai nas cobranças)</span><input type="text" data-admcfg="pix" value="'+esc(ADM.cfg.pix||'')+'"></div></div>'+
+    '<p class="sub" style="margin:0">Pode usar: {nome} {otica} {descricao} {valor} {vencimento} {dias} {pix} {link} {email} {senha}</p>'+
+    Object.keys(ADMDEF).map(k=>'<div class="card"><div class="field"><span>'+ADMLABEL[k]+'</span><textarea data-admcfg="'+k+'">'+esc(admTpl(k))+'</textarea></div><div><button class="btn sm ghost" data-act="admtplreset" data-k="'+k+'">Restaurar texto padrão</button></div></div>').join('')+'</div></details>';
+  return pageHead('Adm Óticas','Controle geral das óticas clientes','<button class="btn primary" data-act="admnova">Nova ótica</button>')+
+  (ADM.err?'<p class="hint bad" role="alert">'+esc(ADM.err)+'</p>':'')+kp+
+  (ADM.loaded?'<div class="cols"><div class="panel"><div class="sh"><h2>Cobranças em atraso</h2><span class="sub num">'+brl(sum(late))+'</span></div><div class="stack">'+(late.length?late.map(admCobRow).join(''):none('Nenhuma ótica em atraso.'))+'</div></div>'+
+    '<div class="panel"><div class="sh"><h2>Vencem em até 7 dias</h2><span class="sub num">'+brl(sum(prox))+'</span></div><div class="stack">'+(prox.length?prox.map(admCobRow).join(''):none('Nada vencendo nos próximos dias.'))+'</div></div></div>':'')+
+  '<div class="sh"><h2>Óticas</h2></div>'+
+  (!ADM.loaded?none('Carregando...'):ADM.list.length?'<div class="gridlist">'+ADM.list.map(admCard).join('')+'</div>':'<div class="empty">'+GLASSES+'<h3>Nenhuma ótica cadastrada</h3><p>Toque em Nova ótica para cadastrar a primeira.</p></div>')+(ADM.loaded?msgs:'');
 }
-const admBlank=()=>({id:'',slug:'',nome:'',cor1:'#0486DE',cor2:'#00348A',dominios:'',ativa:true,email:'',senha:'',logo_claro:'',logo_escuro:'',err:''});
+function brandAdm(){
+  const adm=ui.tab==='admin';const bl=$('#brand-logo');if(!bl)return;
+  let ab=$('#brand-adm');if(!ab){ab=document.createElement('div');ab.id='brand-adm';ab.className='brand-adm';ab.innerHTML='Adm Óticas<small>controle geral</small>';bl.parentNode.insertBefore(ab,bl.nextSibling)}
+  ab.hidden=!adm;bl.hidden=adm||!LOGO_W;
+  const bs=document.querySelector('.brand-sub');if(bs)bs.hidden=adm;
+  document.title=adm?'Adm Óticas':((OTICA&&OTICA.nome)||'Cobranças')+' · Cobranças';
+}
+const admBlank=()=>({id:'',slug:'',nome:'',cor1:'#0486DE',cor2:'#00348A',dominios:'',ativa:true,email:'',senha:'',logo_claro:'',logo_escuro:'',err:'',dono_nome:'',whatsapp_dono:'',mensalidade:'',dia_venc:'10',impl_valor:'',impl_data:todayStr()});
 function sheetAdm(){
   const D=ADM.draft;if(!D)return null;const novo=!D.id;
   const prevB=ADM.logoB?ADM.logoB.url:D.logo_claro,prevW=ADM.logoW?ADM.logoW.url:D.logo_escuro;
   const body='<div class="sec"><div class="field"><span>Nome da ótica</span><input type="text" data-abind="nome" value="'+esc(D.nome)+'"></div>'+
+    '<div class="grid2"><div class="field"><span>Nome do responsável</span><input type="text" data-abind="dono_nome" value="'+esc(D.dono_nome)+'"></div><div class="field"><span>WhatsApp do responsável</span><input type="text" inputmode="tel" data-mask="tel" data-abind="whatsapp_dono" value="'+esc(D.whatsapp_dono)+'"></div></div>'+
+    '<div class="grid2"><div class="field"><span>Mensalidade (R$)</span><input type="text" inputmode="decimal" data-abind="mensalidade" value="'+esc(D.mensalidade)+'" placeholder="0,00"></div><div class="field"><span>Vence todo dia (1 a 28)</span><input type="text" inputmode="numeric" data-abind="dia_venc" value="'+esc(D.dia_venc)+'"></div></div>'+
+    '<div class="grid2"><div class="field"><span>Implantação (R$)</span><input type="text" inputmode="decimal" data-abind="impl_valor" value="'+esc(D.impl_valor)+'" placeholder="0,00"></div><div class="field"><span>Data da implantação</span><input type="date" data-abind="impl_data" value="'+esc(D.impl_data)+'"></div></div>'+
+    '<p class="sub" style="margin:0">As mensalidades são criadas sozinhas a cada mês, a partir da data da implantação.</p>'+
     (novo?'<div class="field"><span>Identificador do link (letras minúsculas, números e hífen)</span><input type="text" data-abind="slug" value="'+esc(D.slug)+'" autocapitalize="none" placeholder="oticaexemplo"></div>':'<div class="field"><span>Identificador</span><input type="text" value="'+esc(D.slug)+'" disabled></div>')+
     '<div class="grid2"><div class="field"><span>Cor principal</span><input type="color" data-abind="cor1" value="'+esc(D.cor1)+'"></div><div class="field"><span>Cor do menu e botões</span><input type="color" data-abind="cor2" value="'+esc(D.cor2)+'"></div></div>'+
     '<div class="field"><span>Endereços próprios (opcional, separados por vírgula)</span><input type="text" data-abind="dominios" value="'+esc(D.dominios)+'" placeholder="cobranca.minhaotica.com.br" autocapitalize="none"></div>'+
@@ -1503,9 +1593,11 @@ function sheetAdm(){
 }
 function sheetAdmOk(){
   const c=ADM.cred;if(!c)return null;
-  const txt='Acesso ao sistema de cobranças da '+c.nome+'\nLink: '+c.link+'\nE-mail: '+c.email+'\nSenha: '+c.senha;
-  const body='<div class="sec"><dl class="kv"><dt>Ótica</dt><dd><b>'+esc(c.nome)+'</b></dd><dt>Link</dt><dd>'+esc(c.link)+'</dd><dt>E-mail</dt><dd>'+esc(c.email)+'</dd><dt>Senha</dt><dd>'+esc(c.senha)+'</dd></dl><p class="sub">Envie estes dados ao dono. Ele pode trocar a senha em Ajustes.</p></div>';
-  return sheetShell('Ótica cadastrada',body,'<button class="btn primary" data-act="admcopycred">Copiar dados de acesso</button><a class="btn wa" target="_blank" rel="noopener" href="https://wa.me/?text='+encodeURIComponent(txt)+'">Enviar por WhatsApp</a>');
+  const o=ADM.list.find(x=>x.id===c.id)||{nome:c.nome,slug:'',dono_nome:c.dono_nome,whatsapp_dono:c.whats,dominios:[]};
+  const txt=fillTpl(admTpl('boasvindas'),Object.assign(admCtx(o,null,c.senha),{link:c.link,email:c.email,otica:c.nome}));
+  const href=c.whats?waLink(c.whats,txt):'https://wa.me/?text='+encodeURIComponent(txt);
+  const body='<div class="sec"><dl class="kv"><dt>Ótica</dt><dd><b>'+esc(c.nome)+'</b></dd><dt>Link</dt><dd>'+esc(c.link)+'</dd><dt>E-mail</dt><dd>'+esc(c.email)+'</dd><dt>Senha</dt><dd>'+esc(c.senha)+'</dd></dl><p class="sub">Envie a mensagem de boas-vindas ao responsável. Ele pode trocar a senha em Ajustes.</p></div>';
+  return sheetShell('Ótica cadastrada',body,'<a class="btn wa"'+WAT+' data-admc="bv" data-id="'+c.id+'" href="'+esc(href)+'">'+(c.whats?'Enviar boas-vindas no WhatsApp':'Escolher contato e enviar boas-vindas')+'</a><button class="btn" data-act="admcopycred">Copiar mensagem</button>');
 }
 /* logo: lê o arquivo, gera a versão clara (original) e a branca (silhueta) */
 function lerImagem(file){return new Promise((ok,no)=>{const u=URL.createObjectURL(file);const im=new Image();im.onload=()=>ok({im:im,u:u});im.onerror=()=>no(new Error('Não foi possível ler a imagem.'));im.src=u})}
@@ -1527,10 +1619,23 @@ async function subirLogo(slug,nome,blob){
   if(r.error)throw r.error;
   return sb.storage.from('logos').getPublicUrl(path).data.publicUrl;
 }
+document.addEventListener('change',async e=>{
+  const t=e.target;if(!(t instanceof HTMLElement)||t.dataset.admcfg===undefined)return;
+  const k=t.dataset.admcfg,v=t.value.trim();ADM.cfg[k]=v;
+  const r=await sb.from('adm_config').upsert({chave:k,valor:v});toast(r.error?'Não foi possível salvar':'Salvo');
+});
+document.addEventListener('click',async e=>{
+  const a=e.target.closest('a[data-admc]');if(!a)return;
+  const hoje=todayStr();
+  if(a.dataset.admc==='cob'){const c=ADM.cob.find(x=>x.id===a.dataset.id);if(c){c.contato_em=hoje;await sb.from('adm_cobrancas').update({contato_em:hoje}).eq('id',c.id)}}
+  else{const o=ADM.list.find(x=>x.id===a.dataset.id);if(o){o.boas_vindas_em=hoje;await sb.from('oticas').update({boas_vindas_em:hoje}).eq('id',o.id)}}
+  setTimeout(()=>{render()},80);
+});
 document.addEventListener('input',e=>{
   const t=e.target;if(!(t instanceof HTMLElement)||!ADM.draft||t.dataset.abind===undefined)return;
   const k=t.dataset.abind;let v=t.value;
   if(k==='ativa')v=v==='1';else if(k==='slug')v=v.toLowerCase().replace(/[^a-z0-9-]/g,'');else if(k==='nome'||k==='dominios'||k==='email'||k==='senha'){}
+  if(t.dataset.mask==='tel'){v=maskTel(v);t.value=v}
   ADM.draft[k]=v;
   if(k==='slug'&&t.value!==v)t.value=v;
 });
@@ -1575,9 +1680,11 @@ const eqF=n=>document.querySelector('#layer #eq-'+n)||document.querySelector('#v
 const copiar=async(txt,msg)=>{try{await navigator.clipboard.writeText(txt);toast(msg)}catch(e){window.prompt('Copie o texto:',txt)}};
 Object.assign(A,{
   admnova(){ADM.draft=admBlank();ADM.logoB=null;ADM.logoW=null;ADM.logoWmanual=false;ui.sheet={kind:'adm',id:'novo'};renderSheet()},
-  admedit(d){const o=ADM.list.find(x=>x.id===d.id);if(!o)return;ADM.draft={id:o.id,slug:o.slug,nome:o.nome,cor1:o.cor1,cor2:o.cor2,dominios:(o.dominios||[]).join(', '),ativa:!!o.ativa,email:'',senha:'',logo_claro:o.logo_claro||'',logo_escuro:o.logo_escuro||'',err:''};ADM.logoB=null;ADM.logoW=null;ADM.logoWmanual=false;EQ.for='';ui.sheet={kind:'adm',id:o.id};renderSheet()},
+  admedit(d){const o=ADM.list.find(x=>x.id===d.id);if(!o)return;ADM.draft={dono_nome:o.dono_nome||'',whatsapp_dono:o.whatsapp_dono||'',mensalidade:+o.mensalidade>0?centsToStr(+o.mensalidade):'',dia_venc:String(o.dia_venc||10),impl_valor:+o.impl_valor>0?centsToStr(+o.impl_valor):'',impl_data:o.impl_data||todayStr(),id:o.id,slug:o.slug,nome:o.nome,cor1:o.cor1,cor2:o.cor2,dominios:(o.dominios||[]).join(', '),ativa:!!o.ativa,email:'',senha:'',logo_claro:o.logo_claro||'',logo_escuro:o.logo_escuro||'',err:''};ADM.logoB=null;ADM.logoW=null;ADM.logoWmanual=false;EQ.for='';ui.sheet={kind:'adm',id:o.id};renderSheet()},
   admcopy(d){const o=ADM.list.find(x=>x.id===d.id);if(o)copiar(admLink(o),'Link copiado')},
-  admcopycred(){const c=ADM.cred;if(c)copiar('Acesso ao sistema de cobranças da '+c.nome+'\nLink: '+c.link+'\nE-mail: '+c.email+'\nSenha: '+c.senha,'Dados copiados')},
+  admcopycred(){const c=ADM.cred;if(!c)return;const o=ADM.list.find(x=>x.id===c.id)||{nome:c.nome,dominios:[]};copiar(fillTpl(admTpl('boasvindas'),Object.assign(admCtx(o,null,c.senha),{link:c.link,email:c.email,otica:c.nome})),'Mensagem copiada')},
+  async admbaixa(d){const c=ADM.cob.find(x=>x.id===d.id);if(!c)return;const pago=!c.pago;const r=await sb.from('adm_cobrancas').update({pago:pago,pago_em:pago?todayStr():null}).eq('id',c.id);if(r.error){toast('Não foi possível salvar: '+errTxt(r.error));return}c.pago=pago;c.pago_em=pago?todayStr():null;render();toast(pago?'Pagamento registrado':'Baixa desfeita')},
+  async admtplreset(d){delete ADM.cfg[d.k];await sb.from('adm_config').upsert({chave:d.k,valor:''});render()},
   async admsalvar(){
     const D=ADM.draft;if(!D||ADM.saving)return;const novo=!D.id;const fail=m=>{D.err=m;renderSheet()};
     if(!D.nome.trim())return fail('Informe o nome da ótica.');
@@ -1585,6 +1692,8 @@ Object.assign(A,{
     if(novo){if(!/^[a-z0-9-]{2,40}$/.test(D.slug))return fail('O identificador precisa ter de 2 a 40 letras minúsculas, números ou hífen.');
       if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(D.email.trim()))return fail('Digite um e-mail válido para o dono.');
       if(D.senha.length<6)return fail('A senha inicial precisa ter ao menos 6 caracteres.')}
+    const dia=Math.min(28,Math.max(1,parseInt(D.dia_venc,10)||10));
+    if(parseMoney(D.mensalidade)<0)return fail('Mensalidade inválida.');
     const doms=D.dominios.split(/[,\s]+/).map(x=>x.trim().toLowerCase().replace(/^https?:\/\//,'').replace(/\/.*$/,'')).filter(Boolean);
     ADM.saving=true;D.err='';renderSheet();
     try{
@@ -1595,10 +1704,18 @@ Object.assign(A,{
       if(ADM.logoW&&ADM.logoW.blob)le=await subirLogo(D.slug,'escuro',ADM.logoW.blob);
       const u=await sb.rpc('admin_atualizar_otica',{p_id:id,p_nome:D.nome.trim(),p_cor1:D.cor1,p_cor2:D.cor2,p_dominios:doms,p_ativa:D.ativa,p_logo_claro:lc,p_logo_escuro:le});
       if(u.error)throw u.error;
+      const fin={dono_nome:D.dono_nome.trim()||null,whatsapp_dono:D.whatsapp_dono.trim()||null,mensalidade:parseMoney(D.mensalidade),dia_venc:dia,impl_valor:parseMoney(D.impl_valor),impl_data:D.impl_data||null};if(novo)fin.email_dono=D.email.trim();
+      const fr=await sb.from('oticas').update(fin).eq('id',id);if(fr.error)throw fr.error;
+      const hoje=todayStr();
+      const cb=await sb.from('adm_cobrancas').select('*').eq('otica_id',id);const cobs=(cb&&cb.data)||[];
+      if(fin.impl_valor>0){const ex=cobs.find(c=>c.tipo==='implementacao');
+        if(!ex){const ir=await sb.from('adm_cobrancas').insert({otica_id:id,tipo:'implementacao',venc:fin.impl_data||hoje,valor:fin.impl_valor});if(ir.error)throw ir.error}
+        else if(!ex.pago){const ir=await sb.from('adm_cobrancas').update({valor:fin.impl_valor,venc:fin.impl_data||ex.venc}).eq('id',ex.id);if(ir.error)throw ir.error}}
+      if(!novo&&fin.mensalidade>0){const ur=await sb.from('adm_cobrancas').update({valor:fin.mensalidade}).eq('otica_id',id).eq('tipo','mensalidade').eq('pago',false).gte('venc',hoje);if(ur.error)throw ur.error}
       ADM.saving=false;ADM.loaded=false;
-      const lista=await sb.rpc('admin_listar_oticas');if(!lista.error){ADM.list=lista.data||[];ADM.loaded=true}
+      await admLoad(true);
       if(OTICA&&id===OTICA.id){const o=(ADM.list||[]).find(x=>x.id===id);if(o){Object.assign(OTICA,{nome:o.nome,cor1:o.cor1,cor2:o.cor2,logo_claro:o.logo_claro,logo_escuro:o.logo_escuro,dominios:o.dominios,ativa:o.ativa});await applyBrand(OTICA)}}
-      if(novo){const o=(ADM.list||[]).find(x=>x.id===id)||{slug:D.slug,dominios:doms};ADM.cred={nome:D.nome.trim(),link:admLink(o),email:D.email.trim(),senha:D.senha};ui.sheet={kind:'admok',id:id};ADM.draft=null;renderSheet();render()}
+      if(novo){const o=(ADM.list||[]).find(x=>x.id===id)||{slug:D.slug,dominios:doms};ADM.cred={id:id,nome:D.nome.trim(),link:admLink(o),email:D.email.trim(),senha:D.senha,whats:D.whatsapp_dono.trim(),dono_nome:D.dono_nome.trim()};ui.sheet={kind:'admok',id:id};ADM.draft=null;renderSheet();render()}
       else{ADM.draft=null;closeSheet();render();toast('Ótica atualizada')}
     }catch(x){ADM.saving=false;D.err='Não foi possível salvar: '+errTxt(x);renderSheet()}
   },
