@@ -947,7 +947,7 @@ function revisoes(){
 const aniPend=()=>aniversariantes(0).filter(x=>x.c.aniEm!==todayStr().slice(0,4));
 const sumT=a=>a.reduce((s,v)=>s+v.total,0);
 const itensTxt=v=>v.itens.map(i=>(i.qtd>1?i.qtd+'x ':'')+i.nome).join(', ');
-const pLabel=(v,p)=>p.tipo==='entrada'?(p.parte===1?'Entrada (1ª parte)':p.parte===2?'Entrada (restante)':'Entrada'):'Parcela '+p.n+'/'+v.n;
+const pLabel=(v,p)=>(p.tipo==='entrada'?'Entrada':'Parcela '+p.n+'/'+v.n)+(p.parte===1?' (parcial)':p.parte===2?' (restante)':'');
 function pagamentoTxt(v){const c=cfg();if(v&&v.forma==='Boleto')return 'Pagamento por boleto.';return c.pix?'Pagamento via Pix. Chave Pix: '+c.pix:'Pagamento via Pix.'}
 function parcelasTxt(v){return v.parcelas.map(p=>pLabel(v,p)+': '+brl(p.valor)+' - '+fmtDate(p.venc)+(p.pago?' (pago)':'')).join('\n')}
 function ctx(v,p,cli){
@@ -1123,7 +1123,7 @@ function pRow(x,o){
       ?fmtDate(p.venc)+' <label class="mini"><span>Recebido via</span><select data-formav="'+v.id+'" data-formap="'+i+'" aria-label="Forma de recebimento">'+FORMAS.map(f=>'<option'+(f===pForma(p,v)?' selected':'')+'>'+f+'</option>').join('')+'</select></label>'
       :'<label class="mini"><span>Vence em</span><input type="date" value="'+p.venc+'" data-vencv="'+v.id+'" data-vencp="'+i+'" aria-label="Data de vencimento"></label>';
   }else meta=esc(pLabel(v,p))+' · '+fmtDate(p.venc)+' · '+esc(pForma(p,v));
-  const baixa=p.pago?'<button class="btn sm" data-act="recibo" data-v="'+v.id+'" data-p="'+i+'">Recibo</button><button class="btn sm ghost" data-act="baixa" data-v="'+v.id+'" data-p="'+i+'">Desfazer</button>':'<button class="btn sm ok" data-act="baixa" data-v="'+v.id+'" data-p="'+i+'">Recebido</button>';
+  const baixa=p.pago?'<button class="btn sm" data-act="recibo" data-v="'+v.id+'" data-p="'+i+'">Recibo</button><button class="btn sm ghost" data-act="baixa" data-v="'+v.id+'" data-p="'+i+'">Desfazer</button>':'<button class="btn sm ok" data-act="receber" data-v="'+v.id+'" data-p="'+i+'">Recebido</button>';
   const kind=st==='atraso'?'atraso':'lembrete';
   const wa=(!p.pago&&c.whatsapp)?'<a class="btn sm wa"'+WAT+' data-contact="p" data-v="'+v.id+'" data-pi="'+i+'" href="'+esc(waLink(c.whatsapp,fillTpl(tpl(kind),ctx(v,p,c))))+'">WhatsApp</a>':'';
   return '<article class="row"><div class="row-main">'+title+'<div class="meta">'+meta+'</div><div class="chips">'+chip+contact+'</div></div><div class="row-side"><div class="amt">'+brl(p.valor)+'</div><div class="acts">'+wa+premPix(x)+baixa+'</div></div></article>';
@@ -1424,7 +1424,7 @@ function renderSheet(){
   if(!s){el.innerHTML='';el.dataset.key='';document.documentElement.classList.remove('lock');return}
   const key=s.kind+(s.id||'');const old=el.querySelector('.sheet-body');const top=(old&&el.dataset.key===key)?old.scrollTop:0;
   let html=null;
-  if(s.kind==='venda')html=sheetVenda(s.id);else if(s.kind==='nova')html=sheetNova();else if(s.kind==='cliente')html=sheetCliente(s.id);else if(s.kind==='cliente-ok')html=sheetClienteOk(s.id);else if(s.kind==='mais')html=sheetMais();else if(s.kind==='hist')html=sheetHist();else if(s.kind==='recibo')html=sheetRecibo(s);else if(s.kind==='pagorc')html=sheetPagOrc(s);else if(s.kind==='relatorio')html=sheetRelatorio();else if(s.kind==='adm')html=sheetAdm();else if(s.kind==='admok')html=sheetAdmOk();
+  if(s.kind==='venda')html=sheetVenda(s.id);else if(s.kind==='nova')html=sheetNova();else if(s.kind==='cliente')html=sheetCliente(s.id);else if(s.kind==='cliente-ok')html=sheetClienteOk(s.id);else if(s.kind==='mais')html=sheetMais();else if(s.kind==='hist')html=sheetHist();else if(s.kind==='recibo')html=sheetRecibo(s);else if(s.kind==='pagorc')html=sheetPagOrc(s);else if(s.kind==='pagparc')html=sheetPagParc(s);else if(s.kind==='relatorio')html=sheetRelatorio();else if(s.kind==='adm')html=sheetAdm();else if(s.kind==='admok')html=sheetAdmOk();
   if(html===null){ui.sheet=null;renderSheet();return}
   document.documentElement.classList.add('lock');
   el.innerHTML=html;
@@ -1466,7 +1466,7 @@ function sheetVenda(id){
 const newItem=tipo=>({tipo:tipo,nome:'',qtd:'1',valor:'',juros:'',lenteId:''});
 function newDraft(cid){return {editId:'',clienteId:cid||(Object.keys(S.clientes).length?'':'__novo'),novo:{nome:'',cpf:'',whatsapp:'',endereco:'',receitas:[blankReceita()]},itens:[newItem('produto')],jurosVenda:'',entrada:'',formaEntrada:'Pix',n:'3',primeira:addMonths(todayStr(),1),forma:'Pix',data:todayStr(),obs:'',aguardando:false}}
 function editDraft(v){
-  const par=v.parcelas.filter(p=>p.tipo==='parcela');const pct=x=>x?String(x).replace('.',','):'';const ent=v.parcelas.find(p=>p.tipo==='entrada');
+  const par=v.parcelas.filter(p=>p.tipo==='parcela'&&p.parte!==2);const pct=x=>x?String(x).replace('.',','):'';const ent=v.parcelas.find(p=>p.tipo==='entrada');
   return {editId:v.id,clienteId:v.clienteId,novo:{nome:'',cpf:'',whatsapp:'',endereco:''},
     itens:v.itens.map(i=>({tipo:i.tipo,nome:i.nome,qtd:String(i.qtd),valor:centsToStr(i.valor),juros:pct(i.juros),lenteId:i.lenteId||''})),
     jurosVenda:pct(v.jurosVenda),entrada:v.entrada?centsToStr(v.entrada):'',formaEntrada:(ent&&ent.forma)||'Pix',n:String(par.length),primeira:par.length?par[0].venc:addMonths(todayStr(),1),forma:v.forma,data:v.data,obs:v.obs||'',aguardando:!!v.aguardando};
@@ -1537,10 +1537,11 @@ function salvarVenda(){
   const old=D.editId?S.vendas[D.editId]:null;
   if(D.aguardando&&(!old||old.aguardando)){v.aguardando=true;v.parcelas.forEach(p=>{if(p.tipo==='entrada'){p.pago=false;p.pagoEm=null;p.forma=null}})}
   if(old){
-    const oe=old.parcelas.filter(p=>p.tipo==='entrada');
-    if(!old.aguardando&&oe.length>1&&v.entrada===old.entrada)v.parcelas=oe.concat(v.parcelas.filter(p=>p.tipo!=='entrada'));
+    const oe=old.parcelas.filter(p=>p.tipo==='entrada');const op0=old.parcelas.find(p=>p.tipo==='parcela');
+    if(!old.aguardando&&old.parcelas.some(p=>p.parte&&p.tipo==='parcela')&&v.total===old.total&&v.entrada===old.entrada&&v.n===old.n&&D.primeira===(op0&&op0.venc)){v.parcelas=JSON.parse(JSON.stringify(old.parcelas))}
+    else if(!old.aguardando&&oe.length>1&&v.entrada===old.entrada)v.parcelas=oe.concat(v.parcelas.filter(p=>p.tipo!=='entrada'));
     v.id=old.id;v.criadoEm=old.criadoEm;if(old.exemplo)v.exemplo=true;if(old.por)v.por=old.por;
-    v.parcelas.forEach(p=>{if(p.tipo!=='parcela')return;const o=old.parcelas.find(q=>q.tipo==='parcela'&&q.n===p.n);if(o){p.contatoEm=o.contatoEm||null;if(o.pago){p.pago=true;p.pagoEm=o.pagoEm;p.forma=o.forma||null}}});
+    if(!v.parcelas.some(p=>p.parte&&p.tipo==='parcela'))v.parcelas.forEach(p=>{if(p.tipo!=='parcela')return;const o=old.parcelas.find(q=>q.tipo==='parcela'&&q.n===p.n);if(o){p.contatoEm=o.contatoEm||null;if(o.pago){p.pago=true;p.pagoEm=o.pagoEm;p.forma=o.forma||null}}});
   }
   if(!old&&typeof SESSION!=='undefined'&&SESSION&&SESSION.user&&SESSION.user.email)v.por=String(SESSION.user.email).toLowerCase();
   S.vendas[v.id]=v;persist('vendas',v.id);
@@ -1603,14 +1604,30 @@ function sheetPagOrc(s){
    '<div class="filters" style="margin:0"><button class="fchip" data-act="pgmodo" data-m="total" aria-pressed="'+(!par)+'">Pagou a entrada toda</button><button class="fchip" data-act="pgmodo" data-m="parcial" aria-pressed="'+par+'">Pagou só uma parte</button></div>'+
    (par?'<div class="sec"><div class="grid2"><div class="field"><span>Valor recebido agora</span><input id="pg-val" type="text" inputmode="decimal" placeholder="0,00" value="'+esc(g.val||'')+'" autocomplete="off"></div><div class="field"><span>Data do recebimento</span><input id="pg-dt" type="date" value="'+esc(g.dt||t)+'"></div></div>'+
      '<div class="grid2"><div class="field"><span>Forma de pagamento</span><select id="pg-forma">'+FORMAS.map(f=>'<option'+((g.forma||v.forma||'Pix')===f?' selected':'')+'>'+f+'</option>').join('')+'</select></div><div class="field"><span>Restante vence em</span><input id="pg-venc" type="date" value="'+esc(g.venc||addDays(t,20))+'"></div></div>'+
-     '<p class="hint" id="pg-rest">'+(rest?'Falta receber '+brl(rest)+' da entrada. Ele fica em Cobrar e no Painel até a data combinada.':'Informe quanto o cliente pagou agora. O restante da entrada fica para a data combinada.')+'</p></div>'
+     '<p class="hint" id="pg-rest">'+pgHint(val,ent.valor,'da entrada')+'</p></div>'
    :'<p class="sub" style="margin:0">A entrada de '+brl(ent.valor)+' entra no caixa hoje e o orçamento vira venda.</p>');
   const foot=par?'<button class="btn primary" data-act="confirmparcial" data-v="'+v.id+'">Registrar pagamento parcial</button>':'<button class="btn primary" data-act="confirmpag" data-v="'+v.id+'">Confirmar pagamento e virar venda</button>';
   return sheetShell('Marcar como pago',body,foot);
 }
+const pgBase=()=>{const sh=ui.sheet;const v=sh&&S.vendas[sh.id];if(!v)return {x:0,w:''};if(sh.kind==='pagparc'){const p=v.parcelas[sh.i];return {x:p?p.valor:0,w:'da parcela'}}const e=v.parcelas.find(p=>p.tipo==='entrada');return {x:e?e.valor:0,w:'da entrada'}};
+const pgHint=(x,base,w)=>(x>0&&x<base)?'Falta receber '+brl(base-x)+' '+w+'. Ele fica em Cobrar e no Painel até a data combinada.':(x>=base&&base>0?'Esse valor cobre tudo: use "Pagou tudo".':'Informe quanto o cliente pagou agora. O restante fica para a data combinada.');
 document.addEventListener('input',e=>{const t=e.target;if(!t||!t.id||t.id.slice(0,3)!=='pg-'||!ui.pg)return;ui.pg[t.id.slice(3)]=t.value;
-  if(t.id==='pg-val'){const v=ui.sheet&&S.vendas[ui.sheet.id];const ent=v&&v.parcelas.find(p=>p.tipo==='entrada');const h=$('#pg-rest');const x=parseMoney(t.value||'');
-    if(h&&ent)h.textContent=(x>0&&x<ent.valor)?'Falta receber '+brl(ent.valor-x)+' da entrada. Ele fica em Cobrar e no Painel até a data combinada.':(x>=ent.valor?'Esse valor cobre a entrada toda: use "Pagou a entrada toda".':'Informe quanto o cliente pagou agora. O restante da entrada fica para a data combinada.')}});
+  if(t.id==='pg-val'){const h=$('#pg-rest');const o=pgBase();if(h&&o.x)h.textContent=pgHint(parseMoney(t.value||''),o.x,o.w)}});
+function sheetPagParc(s){
+  const v=S.vendas[s.id];const p=v&&v.parcelas[s.i];if(!p||p.pago)return null;
+  const g=ui.pg||(ui.pg={modo:'total'});const t=todayStr();const c=S.clientes[v.clienteId]||{nome:''};
+  const par=g.modo==='parcial';const e=encargos(p,t);
+  const val=parseMoney(g.val||'');
+  const body='<p style="margin:0"><b>'+esc(c.nome)+'</b> · '+esc(pLabel(v,p))+' · vence '+fmtDate(p.venc)+' · <b class="num">'+brl(p.valor)+'</b></p>'+
+   (e.total>p.valor?'<p class="hint bad" style="margin:0">Em atraso: pagando tudo hoje, o valor atualizado é '+brl(e.total)+' (com multa e juros).</p>':'')+
+   '<div class="filters" style="margin:0"><button class="fchip" data-act="pgmodo" data-m="total" aria-pressed="'+(!par)+'">Pagou tudo</button><button class="fchip" data-act="pgmodo" data-m="parcial" aria-pressed="'+par+'">Pagou só uma parte</button></div>'+
+   (par?'<div class="sec"><div class="grid2"><div class="field"><span>Valor recebido agora</span><input id="pg-val" type="text" inputmode="decimal" placeholder="0,00" value="'+esc(g.val||'')+'" autocomplete="off"></div><div class="field"><span>Data do recebimento</span><input id="pg-dt" type="date" value="'+esc(g.dt||t)+'"></div></div>'+
+     '<div class="grid2"><div class="field"><span>Forma de pagamento</span><select id="pg-forma">'+FORMAS.map(f=>'<option'+((g.forma||pForma(p,v))===f?' selected':'')+'>'+f+'</option>').join('')+'</select></div><div class="field"><span>Restante vence em</span><input id="pg-venc" type="date" value="'+esc(g.venc||addDays(t,15))+'"></div></div>'+
+     '<p class="hint" id="pg-rest">'+pgHint(val,p.valor,'da parcela')+'</p></div>'
+   :'<p class="sub" style="margin:0">O valor de '+brl(e.total)+' entra no caixa hoje e a parcela fica quitada.</p>');
+  const foot=par?'<button class="btn primary" data-act="parcialparc" data-v="'+v.id+'" data-p="'+s.i+'">Registrar pagamento parcial</button>':'<button class="btn primary" data-act="baixapc" data-v="'+v.id+'" data-p="'+s.i+'">Confirmar recebimento</button>';
+  return sheetShell('Receber parcela',body,foot);
+}
 function sheetRecibo(s){
   const r=reciboDados(s.id,s.i);if(!r)return null;const v=r.v,p=r.p,c=r.c;
   const href=c.whatsapp?esc(waLink(c.whatsapp,fillTpl(tpl('recibo'),ctx(v,p,c)))):'';
@@ -1865,6 +1882,22 @@ const A={
   pagarorc(d,b){const v=S.vendas[d.v];if(!v||!v.aguardando)return;const ent=v.parcelas.find(p=>p.tipo==='entrada');
     if(!ent){A.confirmpag(d,b);return}
     ui.pg={modo:'total'};ui.sheet={kind:'pagorc',id:v.id};renderSheet()},
+  receber(d,b){const v=S.vendas[d.v];const p=v&&v.parcelas[+d.p];if(!p||p.pago)return;
+    ui.pg={modo:'total',from:(ui.sheet&&ui.sheet.kind==='venda')?v.id:''};ui.sheet={kind:'pagparc',id:v.id,i:+d.p};renderSheet()},
+  baixapc(d,b){const from=ui.pg&&ui.pg.from;A.baixa(d,b);ui.pg=null;ui.sheet=from?{kind:'venda',id:from}:null;renderSheet()},
+  parcialparc(d,b){const v=S.vendas[d.v];const i=+d.p;const p=v&&v.parcelas[i];if(!p||p.pago)return;const from=ui.pg&&ui.pg.from;
+    const val=parseMoney(($('#pg-val')||{}).value||''),dt=($('#pg-dt')||{}).value||'',venc=($('#pg-venc')||{}).value||'',forma=($('#pg-forma')||{}).value||pForma(p,v);
+    const ymd=x=>/^\d{4}-\d{2}-\d{2}$/.test(x);
+    if(!(val>0)||val>=p.valor){toast('Informe um valor menor que '+brl(p.valor));return}
+    if(!ymd(dt)){toast('Informe a data do recebimento');return}
+    if(!ymd(venc)||venc<dt){toast('A data do restante não pode ser antes do recebimento');return}
+    const e=encargos({valor:val,venc:p.venc,pago:false},dt);const resto=p.valor-val;const label=pLabel(v,p);
+    Object.assign(p,{parte:1,valor:val,pago:true,pagoEm:dt,forma:forma});
+    if(e.total>val){p.recebido=e.total;p.multaAtraso=e.multa;p.jurosAtraso=e.juros}else{delete p.recebido;delete p.multaAtraso;delete p.jurosAtraso}
+    v.parcelas.splice(i+1,0,{n:p.n,tipo:p.tipo,parte:2,venc:venc,valor:resto,pago:false,pagoEm:null,contatoEm:null,forma:null});
+    premLog('Recebimento parcial',((S.clientes[v.clienteId]||{}).nome||'')+' · '+label.replace(/ \((parcial|restante)\)$/,'')+' · '+brl(val)+' de '+brl(val+resto));
+    persist('vendas',v.id);ui.pg=null;ui.sheet=from?{kind:'venda',id:from}:null;refresh();renderSheet();
+    toast('Recebido '+brl(val)+'. Restante de '+brl(resto)+' vence em '+fmtDate(venc)+'.')},
   pgmodo(d){if(!ui.pg)ui.pg={};ui.pg.modo=d.m;renderSheet()},
   confirmparcial(d,b){const v=S.vendas[d.v];if(!v||!v.aguardando)return;const ent=v.parcelas.find(p=>p.tipo==='entrada');if(!ent)return;
     const val=parseMoney(($('#pg-val')||{}).value||''),dt=($('#pg-dt')||{}).value||'',venc=($('#pg-venc')||{}).value||'',forma=($('#pg-forma')||{}).value||v.forma||'Pix';
