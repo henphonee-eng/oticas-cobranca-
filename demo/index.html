@@ -769,7 +769,7 @@ function computeAuth(){auth='ok'}
 function renderGate(){const g=$('#gate');g.classList.remove('on');g.innerHTML=''}
 const gateErr=()=>{};
 const hexRgb=h=>{const m=/^#?([0-9a-f]{6})$/i.exec(h||'');if(!m)return[4,134,222];const n=parseInt(m[1],16);return[n>>16&255,n>>8&255,n&255]};
-const modOn=()=>false;function premLock(){return ''}function premView(){return ''}function premCtx(){}function premFicha(){return ''}function premAjustes(){return ''}function premInit(){}function premLog(){}function premPix(){return ''}function premVendSale(){return ''}function premAcTabs(){return null}function premCliOrigem(){}function premPainelVend(){return ''}function premVendCli(){return ''}function sheetVend(){return null}function sheetFinPag(){return null}function sheetHist(){return null}
+const modOn=()=>false;function premLock(){return ''}function premView(){return ''}function premCtx(){}function premFicha(){return ''}function premAjustes(){return ''}function premInit(){}function premLog(){}function premPix(){return ''}function premVendSale(){return ''}function premAcTabs(){return null}function premCliOrigem(){}function premPainelVend(){return ''}function premFuPesq(){return null}function premVendCli(){return ''}function sheetVend(){return null}function sheetFinPag(){return null}function sheetHist(){return null}
 function brandAdm(){}function viewAdmin(){return ''}function equipeCard(){return ''}function eqLoad(){}function admLoad(){}function sheetAdm(){return null}function sheetAdmOk(){return null}
 async function logout(){}
 let DEMO_NOME='Sua Ótica Aqui',DEMO_PERSONAL=false;
@@ -871,7 +871,7 @@ const ICON={
   sair:I('<path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4M15 8l4 4-4 4M19 12H9"/>')
 };
 const GLASSES='<svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11.5" cy="23" r="7"/><circle cx="28.5" cy="23" r="7"/><path d="M18.5 22c1-1.3 2-1.3 3 0M4.5 21 7 12M35.5 21 33 12"/></svg>';
-const TABS=[['painel','Painel'],['agenda','Agenda'],['vendas','Vendas'],['clientes','Clientes'],['cobrar','Cobrar'],['aguard','Aguardando'],['entregas','Entregas'],['relacao','Relacionamento'],['caixa','Caixa'],['lentes','Lentes'],['ajustes','Ajustes']];
+const TABS=[['painel','Painel'],['agenda','Agenda'],['vendas','Vendas'],['clientes','Clientes'],['cobrar','Cobrar'],['aguard','Aguardando'],['entregas','Follow-up'],['relacao','Relacionamento'],['caixa','Caixa'],['lentes','Lentes'],['ajustes','Ajustes']];
 const ADMTAB=['admin','Administração'];
 const MENSTAB=['mensal','Mensalidades'];
 const PROSPTABS=[['prosp','Prospecção'],['crm','CRM']];
@@ -882,7 +882,7 @@ function tabsVis(){
   if(IS_ADMIN)t=t.concat([ADMTAB,MENSTAB],PROSPTABS);
   return t;
 }
-function viewTab(){const k=ui.tab;return k==='painel'?viewPainel():k==='agenda'?viewAgenda():k==='vendas'?viewVendas():k==='aguard'?viewAguard():k==='entregas'?viewEntregas():k==='clientes'?viewClientes():k==='cobrar'?viewCobrar():k==='relacao'?viewRelacao():k==='caixa'?viewCaixa():k==='lentes'?viewLentes():k==='admin'?viewAdmin():k==='mensal'?viewMensal():(k==='financeiro'||k==='metas'||k==='campanhas'||k==='premium')?premView(k):viewAjustes()}
+function viewTab(){const k=ui.tab;return k==='painel'?viewPainel():k==='agenda'?viewAgenda():k==='vendas'?viewVendas():k==='aguard'?viewAguard():k==='entregas'?viewFollow():k==='clientes'?viewClientes():k==='cobrar'?viewCobrar():k==='relacao'?viewRelacao():k==='caixa'?viewCaixa():k==='lentes'?viewLentes():k==='admin'?viewAdmin():k==='mensal'?viewMensal():(k==='financeiro'||k==='metas'||k==='campanhas'||k==='premium')?premView(k):viewAjustes()}
 let deferredInstall=null;
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;if(auth==='ok')render()});
 const demoTag=o=>o&&o.exemplo?'<span class="demo">exemplo</span>':'';
@@ -947,7 +947,7 @@ function render(){
   if(locked){if(ui.sheet){ui.sheet=null;ui.draft=null;renderSheet()}return}
   const late=lateCount();const wide=mqWide.matches;
   const tv=tabsVis();if(tv.length&&ui.tab!=='premium'&&!tv.some(x=>x[0]===ui.tab))ui.tab=tv[0][0];
-  const btn=t=>'<button class="tab" data-act="tab" data-t="'+t[0]+'"'+(ui.tab===t[0]?' aria-current="page"':'')+'>'+ICON[t[0]]+'<span>'+t[1]+'</span>'+premLock(t[0])+(t[0]==='cobrar'&&late?'<i class="badge">'+late+'</i>':'')+(t[0]==='entregas'&&entAtras()?'<i class="badge">'+entAtras()+'</i>':'')+'</button>';
+  const btn=t=>'<button class="tab" data-act="tab" data-t="'+t[0]+'"'+(ui.tab===t[0]?' aria-current="page"':'')+'>'+ICON[t[0]]+'<span>'+t[1]+'</span>'+premLock(t[0])+(t[0]==='cobrar'&&late?'<i class="badge">'+late+'</i>':'')+(t[0]==='entregas'&&(entAtras()+fupAtras())?'<i class="badge">'+(entAtras()+fupAtras())+'</i>':'')+'</button>';
   $('#tabs').innerHTML=wide?tv.map(btn).join(''):tv.slice(0,5).map(btn).join('');
   const sv=avisos(),bb=$('#bell');
   if(bb){bb.className='bellbtn'+(sv.late?' bad ring':sv.hoje?' warn ring':'');bb.innerHTML=ICON.cobrar+'<span class="bl">Avisos</span>'+((sv.late+sv.hoje)?'<i class="badge">'+(sv.late+sv.hoje)+'</i>':'');bb.setAttribute('aria-label',sv.txt?'Atenção: '+sv.txt:'Sem avisos de cobrança');bb.title=sv.txt||'Sem avisos de cobrança'}
@@ -1154,7 +1154,7 @@ function clientesList(){
     return '<div class="card"><div class="sale-top"><button class="link" data-act="editcliente" data-c="'+c.id+'">'+esc(c.nome)+demoTag(c)+'</button>'+(r.late?'<span class="chip bad">Em atraso</span>':r.aberto?'<span class="chip warn">Em aberto</span>':'')+'</div>'+
     '<div class="meta">'+esc(c.whatsapp||'Sem WhatsApp')+(c.cpf?' · CPF '+esc(c.cpf):'')+'</div>'+(c.endereco?'<div class="meta">'+esc(c.endereco)+'</div>':'')+
     '<div class="meta num">'+plural(r.vs.length,'compra','compras')+(r.comprado?' · '+brl(r.comprado):'')+(r.aberto?' · em aberto '+brl(r.aberto):'')+'</div>'+(r.ultima?'<div class="meta">Última compra em '+fmtDate(r.ultima)+'</div>':'')+
-    '<div class="acts" style="justify-content:flex-start">'+wa+'<button class="btn sm primary" data-act="novavenda" data-c="'+c.id+'">Nova venda</button><button class="btn sm" data-act="editcliente" data-c="'+c.id+'">Ficha</button></div></div>';
+    '<div class="acts" style="justify-content:flex-start">'+wa+'<button class="btn sm primary" data-act="novavenda" data-c="'+c.id+'">Nova venda</button><button class="btn sm" data-act="editcliente" data-c="'+c.id+'">Editar</button></div></div>';
   }).join('')+'</div>';
 }
 
@@ -1163,7 +1163,7 @@ function viewCobrar(){
   const t=todayStr();const ps=allP().filter(x=>!x.p.pago);
   const late=ps.filter(x=>x.p.venc<t).sort((a,b)=>a.p.venc.localeCompare(b.p.venc));
   const soon=ps.filter(x=>x.p.venc>=t&&diffDays(x.p.venc,t)<=3).sort((a,b)=>a.p.venc.localeCompare(b.p.venc));
-  return pageHead('Follow-up',late.length?plural(late.length,'parcela atrasada','parcelas atrasadas')+' · '+brl(sumV(late)):'Nenhuma parcela atrasada')+
+  return pageHead('Cobranças',late.length?plural(late.length,'parcela atrasada','parcelas atrasadas')+' · '+brl(sumV(late)):'Nenhuma parcela atrasada')+
   '<p class="sub" style="margin-bottom:6px">Toque em WhatsApp para abrir a conversa com a mensagem pronta. Depois é só enviar. Quando o cliente pagar, toque em Recebido.</p>'+
   '<div class="cols"><div class="panel"><div class="sh"><h2>Em atraso</h2></div><div class="stack">'+(late.length?late.map(x=>pRow(x)).join(''):none('Tudo em dia por aqui.'))+'</div></div>'+
   '<div class="panel"><div class="sh"><h2>Vencem em até 3 dias</h2></div><div class="stack">'+(soon.length?soon.map(x=>pRow(x)).join(''):none('Nenhum vencimento nos próximos dias.'))+'</div></div></div>';
@@ -1274,7 +1274,7 @@ function renderSheet(){
   if(!s){el.innerHTML='';el.dataset.key='';document.documentElement.classList.remove('lock');return}
   const key=s.kind+(s.id||'');const old=el.querySelector('.sheet-body');const top=(old&&el.dataset.key===key)?old.scrollTop:0;
   let html=null;
-  if(s.kind==='venda')html=sheetVenda(s.id);else if(s.kind==='os')html=sheetOS(s.id);else if(s.kind==='nova')html=sheetNova();else if(s.kind==='cliente')html=sheetCliente(s.id);else if(s.kind==='cliente-ok')html=sheetClienteOk(s.id);else if(s.kind==='mais')html=sheetMais();else if(s.kind==='hist')html=sheetHist();else if(s.kind==='recibo')html=sheetRecibo(s);else if(s.kind==='pagorc')html=sheetPagOrc(s);else if(s.kind==='pagparc')html=sheetPagParc(s);else if(s.kind==='vendedor')html=sheetVend();else if(s.kind==='finpag')html=sheetFinPag(s);else if(s.kind==='relatorio')html=sheetRelatorio();else if(s.kind==='adm')html=sheetAdm();else if(s.kind==='admok')html=sheetAdmOk();
+  if(s.kind==='venda')html=sheetVenda(s.id);else if(s.kind==='os')html=sheetOS(s.id);else if(s.kind==='fup')html=sheetFup();else if(s.kind==='nova')html=sheetNova();else if(s.kind==='cliente')html=sheetCliente(s.id);else if(s.kind==='cliente-ok')html=sheetClienteOk(s.id);else if(s.kind==='mais')html=sheetMais();else if(s.kind==='hist')html=sheetHist();else if(s.kind==='recibo')html=sheetRecibo(s);else if(s.kind==='pagorc')html=sheetPagOrc(s);else if(s.kind==='pagparc')html=sheetPagParc(s);else if(s.kind==='vendedor')html=sheetVend();else if(s.kind==='finpag')html=sheetFinPag(s);else if(s.kind==='relatorio')html=sheetRelatorio();else if(s.kind==='adm')html=sheetAdm();else if(s.kind==='admok')html=sheetAdmOk();
   if(html===null){ui.sheet=null;renderSheet();return}
   document.documentElement.classList.add('lock');
   el.innerHTML=html;
@@ -1286,7 +1286,7 @@ function renderSheet(){
 function closeSheet(){ui.sheet=null;ui.draft=null;ui.cdraft=null;ui.confirm='';renderSheet()}
 function sheetMais(){
   const late=lateCount();
-  const item=t=>'<button class="btn'+(ui.tab===t[0]?' primary':'')+'" data-act="tab" data-t="'+t[0]+'">'+ICON[t[0]]+'<span>'+t[1]+'</span>'+premLock(t[0])+(t[0]==='cobrar'&&late?'<i class="badge">'+late+'</i>':'')+(t[0]==='aguard'&&orcamentos().length?'<i class="badge">'+orcamentos().length+'</i>':'')+(t[0]==='entregas'&&entAtras()?'<i class="badge">'+entAtras()+'</i>':'')+'</button>';
+  const item=t=>'<button class="btn'+(ui.tab===t[0]?' primary':'')+'" data-act="tab" data-t="'+t[0]+'">'+ICON[t[0]]+'<span>'+t[1]+'</span>'+premLock(t[0])+(t[0]==='cobrar'&&late?'<i class="badge">'+late+'</i>':'')+(t[0]==='aguard'&&orcamentos().length?'<i class="badge">'+orcamentos().length+'</i>':'')+(t[0]==='entregas'&&(entAtras()+fupAtras())?'<i class="badge">'+(entAtras()+fupAtras())+'</i>':'')+'</button>';
   return '<div class="scrim" data-act="closesheet"></div><section class="sheet drawer" role="dialog" aria-modal="true" aria-label="Menu" tabindex="-1"><div class="sheet-head"><h2>Menu</h2><button class="ib" data-act="closesheet" aria-label="Fechar">&#215;</button></div><div class="sheet-body"><div class="menu">'+tabsVis().map(item).join('')+(deferredInstall?'<button class="btn" data-act="instalar">'+ICON.painel+'<span>Instalar no celular</span></button>':'')+'</div></div></section>';
 }
 
@@ -1305,6 +1305,66 @@ function entRow(v,feito){
   const acts=feito?((href&&!v.agradEm)?'<a class="btn sm wa"'+WAT+' data-contact="ent" data-v="'+v.id+'" href="'+href+'">Agradecer</a>':'')+'<button class="btn sm ghost" data-act="desentregar" data-v="'+v.id+'">Desfazer</button>'
     :(hrefC?'<a class="btn sm wa"'+WAT+' data-contact="cheg" data-v="'+v.id+'" href="'+hrefC+'">'+(v.chegouEm?'Avisar de novo':'Avisar que chegou')+'</a>':'')+(href?'<a class="btn sm wa"'+WAT+' data-contact="ent" data-v="'+v.id+'" href="'+href+'">Entregue e agradecer</a>':'')+'<button class="btn sm ok" data-act="entregar" data-v="'+v.id+'">Dar baixa</button>';
   return '<article class="row"><div class="row-main"><button class="link" data-act="openvenda" data-v="'+v.id+'">'+esc(c.nome)+demoTag(v)+'</button><div class="meta">'+esc(itensTxt(v))+' · entrega '+fmtDate(v.entregaPrev||v.entregueEm)+'</div><div class="chips">'+chip+'</div></div><div class="row-side"><div class="acts">'+acts+'</div></div></article>';
+}
+
+/* ---------- Follow-up: central de acompanhamento ---------- */
+function relRows(){const t=todayStr(),ano=t.slice(0,4);
+  const aniRow=x=>{const c=x.c;const feito=c.aniEm===ano&&x.d===0;
+    const wa=c.whatsapp?'<a class="btn sm wa"'+WAT+' data-contact="ani" data-c="'+c.id+'" href="'+esc(waLink(c.whatsapp,fillTpl(tpl('aniversario'),ctx(null,null,c))))+'">'+(feito?'Enviar de novo':'Parabenizar')+'</a>':'';
+    const quando=x.d===0?'Hoje':x.d===1?'Amanhã':'Em '+x.d+' dias ('+fmtShort(ano+'-'+c.nascimento.slice(5))+')';
+    return '<article class="row"><div class="row-main"><button class="link" data-act="editcliente" data-c="'+c.id+'">'+esc(c.nome)+demoTag(c)+'</button><div class="meta">Faz '+x.idade+' anos · '+quando+'</div><div class="chips">'+(feito?'<span class="chip ok">Parabenizado</span>':x.d===0?'<span class="chip warn">Parabenizar hoje</span>':'')+'</div></div><div class="row-side"><div class="acts">'+wa+'</div></div></article>'}
+  const revRow=x=>{const c=x.c;
+    const wa=c.whatsapp?'<a class="btn sm wa"'+WAT+' data-contact="rev" data-c="'+c.id+'" href="'+esc(waLink(c.whatsapp,fillTpl(tpl('revisao'),ctx(null,null,c))))+'">Chamar para revisão</a>':'';
+    const rc=ultimaReceita(c);
+    return '<article class="row"><div class="row-main"><button class="link" data-act="editcliente" data-c="'+c.id+'">'+esc(c.nome)+demoTag(c)+'</button><div class="meta">Última visita há '+tempoTxt(x.ref)+' ('+fmtDate(x.ref)+')'+(rc?' · receita de '+fmtDate(rc):'')+'</div></div><div class="row-side"><div class="acts">'+wa+'</div></div></article>'};
+  return {aniRow:aniRow,revRow:revRow}}
+const fupDoc=()=>{if(!S.config.fups)S.config.fups={id:'fups',itens:{}};if(!S.config.fups.itens)S.config.fups.itens={};return S.config.fups};
+const fupPend=()=>Object.values(fupDoc().itens).filter(x=>!x.feitoEm).sort((a,b)=>a.data.localeCompare(b.data));
+const fupAtras=()=>{const t=todayStr();return fupPend().filter(x=>x.data<=t).length};
+function fupRow(x){
+  const c=S.clientes[x.clienteId],t=todayStr();
+  const chip=x.feitoEm?'<span class="chip ok">Feito em '+fmtShort(x.feitoEm)+'</span>':x.data<t?'<span class="chip bad">Atrasado '+plural(diffDays(t,x.data),'dia','dias')+'</span>':x.data===t?'<span class="chip warn">Hoje</span>':'<span class="chip">Em '+plural(diffDays(x.data,t),'dia','dias')+'</span>';
+  const first=c?String(c.nome).split(' ')[0]:'';
+  const wa=(c&&c.whatsapp)?'<a class="btn sm wa"'+WAT+' href="'+esc(waLink(c.whatsapp,'Olá, '+first+'! Aqui é da '+cfg().nome+'. '+(x.nota||x.titulo)))+'">WhatsApp</a>':'';
+  const arm=ui.confirm==='fup'+x.id;
+  return '<article class="row"><div class="row-main"><b>'+esc(x.titulo)+'</b><div class="meta">'+(c?esc(c.nome)+' · ':'')+fmtDate(x.data)+(x.nota?' · '+esc(x.nota):'')+'</div><div class="chips">'+chip+'</div></div><div class="row-side"><div class="acts">'+wa+
+    '<button class="btn sm '+(x.feitoEm?'ghost':'ok')+'" data-act="fupfeito" data-id="'+x.id+'">'+(x.feitoEm?'Reabrir':'Feito')+'</button><button class="btn sm ghost" data-act="fupedit" data-id="'+x.id+'">Editar</button><button class="btn sm ghost danger'+(arm?' armed':'')+'" data-act="fupdel" data-id="'+x.id+'">'+(arm?'Toque de novo':'Excluir')+'</button></div></div></article>';
+}
+function sheetFup(){
+  const D=ui.fu;if(!D)return null;
+  const cs=Object.values(S.clientes).sort((a,b)=>a.nome.localeCompare(b.nome));
+  const body='<div class="sec"><div class="field"><span>O que precisa ser feito</span><input type="text" data-fu="titulo" value="'+esc(D.titulo)+'" placeholder="Ex.: Ligar para confirmar o ajuste do óculos" autocomplete="off"></div>'+
+   '<div class="field"><span>Cliente (opcional)</span><select data-fu="clienteId"><option value="">Sem cliente</option>'+cs.map(c=>'<option value="'+c.id+'"'+(D.clienteId===c.id?' selected':'')+'>'+esc(c.nome)+'</option>').join('')+'</select></div>'+
+   '<div class="field"><span>Data do follow-up</span><input type="date" data-fu="data" value="'+esc(D.data)+'"></div>'+
+   '<div class="field"><span>Observação ou mensagem (opcional)</span><textarea data-fu="nota" placeholder="Se tiver cliente com WhatsApp, o texto vai na mensagem">'+esc(D.nota)+'</textarea></div></div>';
+  return sheetShell(D.id?'Editar follow-up':'Novo follow-up',body,'<button class="btn primary" data-act="fupsalvar">Salvar follow-up</button>');
+}
+function bvPend(){const lim=Date.now()-30*864e5;return Object.values(S.clientes).filter(c=>!c.exemplo&&!c.bvEm&&c.whatsapp&&(c.criadoEm||0)>=lim).sort((a,b)=>(b.criadoEm||0)-(a.criadoEm||0))}
+function viewFollow(){
+  const t=todayStr(),R=relRows();
+  const sec=ui.fus||'todos';
+  const pend=entPend(),feitas=vendasOk().filter(v=>v.entregueEm).sort((a,b)=>b.entregueEm.localeCompare(a.entregueEm)).slice(0,8);
+  const semData=vendasOk().filter(v=>!v.entregueEm&&!v.entregaPrev).length;
+  const ps=allP().filter(x=>!x.p.pago);
+  const late=ps.filter(x=>x.p.venc<t).sort((a,b)=>a.p.venc.localeCompare(b.p.venc));
+  const soon=ps.filter(x=>x.p.venc>=t&&diffDays(x.p.venc,t)<=3).sort((a,b)=>a.p.venc.localeCompare(b.p.venc));
+  const an=aniversariantes(7),rv=revisoes(),bv=bvPend(),mp=fupPend(),mf=Object.values(fupDoc().itens).filter(x=>x.feitoEm).sort((a,b)=>b.feitoEm.localeCompare(a.feitoEm)).slice(0,5);
+  const orc=orcamentos().length;
+  const bvRow=c=>'<article class="row"><div class="row-main"><button class="link" data-act="editcliente" data-c="'+c.id+'">'+esc(c.nome)+demoTag(c)+'</button><div class="meta">Cadastrado em '+fmtDate(new Date(c.criadoEm).toISOString().slice(0,10))+'</div><div class="chips"><span class="chip warn">Boas-vindas pendente</span></div></div><div class="row-side"><div class="acts"><a class="btn sm wa"'+WAT+' data-contact="bv" data-c="'+c.id+'" href="'+esc(waLink(c.whatsapp,fillTpl(tpl('cadastro'),ctx(null,null,c))))+'">Enviar boas-vindas</a></div></div></article>';
+  const S_=[
+   ['manual','Meus follow-ups',mp.length,'<div class="stack">'+(mp.length?mp.map(fupRow).join(''):none('Nenhum follow-up manual pendente. Use o botão Novo follow-up para anotar o que não pode esquecer.'))+(mf.length?'<p class="sub" style="margin:10px 0 4px">Feitos recentemente</p>'+mf.map(fupRow).join(''):'')+'</div>'],
+   ['entregas','Entregas',pend.length,'<p class="sub" style="margin:0 0 8px">Use "Avisar que chegou" quando o óculos chegar e "Entregue e agradecer" depois da retirada. As duas mensagens são opcionais.'+(semData?' Para acompanhar uma venda antiga, abra a venda e informe a data prevista.':'')+'</p><div class="stack">'+(pend.length?pend.map(v=>entRow(v,false)).join(''):none('Nenhuma entrega marcada. Ao cadastrar uma venda, informe a data de entrega.'))+'</div>'+(feitas.length?'<p class="sub" style="margin:10px 0 4px">Entregues</p><div class="stack">'+feitas.map(v=>entRow(v,true)).join('')+'</div>':'')],
+   ['boasvindas','Boas-vindas',bv.length,'<p class="sub" style="margin:0 0 8px">Clientes cadastrados nos últimos 30 dias que ainda não receberam a mensagem de boas-vindas.</p><div class="stack">'+(bv.length?bv.map(bvRow).join(''):none('Nenhuma boas-vindas pendente.'))+'</div>'],
+   ['cobrar','Cobranças',late.length+soon.length,'<div class="stack">'+(late.length?'<p class="sub" style="margin:0">Em atraso</p>'+late.map(x=>pRow(x)).join(''):'')+(soon.length?'<p class="sub" style="margin:8px 0 0">Vencem em até 3 dias</p>'+soon.map(x=>pRow(x)).join(''):'')+(late.length||soon.length?'':none('Tudo em dia por aqui.'))+'</div>'],
+   ['aniversarios','Aniversários',an.length,'<div class="stack">'+(an.length?an.map(R.aniRow).join(''):none('Nenhum aniversário nos próximos 7 dias.'))+'</div>'],
+   ['revisao','Revisão do grau',rv.length,'<p class="sub" style="margin:0 0 8px">Clientes com 11 meses ou mais desde a última compra ou receita.</p><div class="stack">'+(rv.length?rv.slice(0,30).map(R.revRow).join(''):none('Nenhum cliente para revisão agora.'))+'</div>'],
+   ['orcamentos','Orçamentos aguardando',orc,orc?'<div id="aglist">'+aguardList()+'</div>':none('Nenhum orçamento aguardando pagamento.')]
+  ];
+  const pesq=premFuPesq();if(pesq)S_.push(['pesquisa','Avaliação do cliente',pesq.n,pesq.html]);
+  const chips=[['todos','Todos']].concat(S_.map(x=>[x[0],x[1]+(x[2]?' ('+x[2]+')':'')]));
+  return pageHead('Follow-up','Tudo o que precisa de contato com o cliente, em um lugar só','<button class="btn primary" data-act="fupnovo">Novo follow-up</button>')+
+  '<div class="filters">'+chips.map(c=>'<button class="fchip" data-act="fusec" data-f="'+c[0]+'" aria-pressed="'+(sec===c[0])+'">'+esc(c[1])+'</button>').join('')+'</div>'+
+  S_.filter(x=>sec==='todos'||sec===x[0]).map(x=>'<div class="panel" style="margin-bottom:16px"><div class="sh" style="margin-top:0"><h2>'+x[1]+'</h2><span class="sub num">'+x[2]+'</span></div>'+x[3]+'</div>').join('');
 }
 function viewEntregas(){
   const pend=entPend();
@@ -1956,6 +2016,17 @@ Object.assign(A,{
   osimprimir(d){osGerar(d.v,true)},
   ospdf(d){osGerar(d.v,false)}
 });
+Object.assign(A,{
+  fusec(d){ui.fus=d.f;render()},
+  fupnovo(){ui.fu={id:'',titulo:'',clienteId:'',data:todayStr(),nota:''};ui.sheet={kind:'fup',id:'novo'};renderSheet()},
+  fupedit(d){const x=fupDoc().itens[d.id];if(!x)return;ui.fu={id:x.id,titulo:x.titulo,clienteId:x.clienteId||'',data:x.data,nota:x.nota||''};ui.sheet={kind:'fup',id:x.id};renderSheet()},
+  fupsalvar(){const D=ui.fu;if(!D)return;if(!D.titulo.trim()){toast('Escreva o que precisa ser feito');return}
+    const id=D.id||'fu'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);const old=fupDoc().itens[id]||{};
+    fupDoc().itens[id]=Object.assign(old,{id:id,titulo:D.titulo.trim(),clienteId:D.clienteId||'',data:D.data||todayStr(),nota:D.nota.trim(),criadoEm:old.criadoEm||Date.now()});
+    persist('config','fups');ui.fu=null;ui.sheet=null;renderSheet();render();toast('Follow-up salvo')},
+  fupfeito(d){const x=fupDoc().itens[d.id];if(!x)return;x.feitoEm=x.feitoEm?null:todayStr();persist('config','fups');render()},
+  fupdel(d){if(ui.confirm!=='fup'+d.id){ui.confirm='fup'+d.id;render();return}ui.confirm='';delete fupDoc().itens[d.id];persist('config','fups');render();toast('Follow-up excluído')}
+});
 document.addEventListener('click',e=>{
   const a=e.target.closest('a[data-contact]');if(a){markContact(a.dataset);return}
   const b=e.target.closest('[data-act]');if(!b)return;const f=A[b.dataset.act];if(f)f(b.dataset,b,e);
@@ -1977,6 +2048,7 @@ function onField(e){
   if(t.dataset.aguard!==undefined&&ui.draft){ui.draft.aguardando=t.checked;updateVenda()}
   if(t.dataset.cbind&&ui.cdraft)setPath(ui.cdraft,t.dataset.cbind,t.value);
   if(t.dataset.os!==undefined&&ui.os)setPath(ui.os,t.dataset.os,t.value);
+  if(t.dataset.fu!==undefined&&ui.fu)ui.fu[t.dataset.fu]=t.value;
   if(t.dataset.item!==undefined&&ui.draft){ui.draft.itens[+t.dataset.item][t.dataset.f]=t.value;updateVenda()}
   if(ch&&t.dataset.lente!==undefined&&ui.draft){const it=ui.draft.itens[+t.dataset.lente];const l=S.lentes[t.value];it.lenteId=l?l.id:'';it.nome=l?l.nome:'';it.valor=l?centsToStr(l.valor):'';renderItems();updateVenda()}
   if(t.id==='q-v'){ui.vQuery=t.value;$('#vlist').innerHTML=vendasList()}
