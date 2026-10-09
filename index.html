@@ -613,6 +613,13 @@ html:not(.adm) .sheet-head{border-bottom-color:var(--hair)}
 html:not(.adm) .gate{background:radial-gradient(60% 50% at 85% 0%,color-mix(in srgb,var(--brand-1) 70%,transparent),transparent 70%),linear-gradient(160deg,var(--brand-2),color-mix(in srgb,var(--brand-2) 55%,#000))}
 html:not(.adm) .gate-card{border:0;border-radius:22px;box-shadow:0 30px 80px -24px rgba(0,0,0,.6)}
 @media (prefers-reduced-motion:reduce){html:not(.adm) .btn,html:not(.adm) .row,html:not(.adm) .card{transition:none}html:not(.adm) .btn:hover{transform:none}}
+
+/* menu lateral rola quando a tela é baixa */
+@media (min-width:900px){
+  .side{overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.3) transparent}
+  .side::-webkit-scrollbar{width:6px}.side::-webkit-scrollbar-thumb{background:rgba(255,255,255,.28);border-radius:3px}
+  .side>*{flex-shrink:0}
+}
 </style>
 <script>if(/^\/adm(\/|$)/.test(location.pathname)){document.documentElement.classList.add('adm');var q=function(x){return document.querySelector(x)};if(q('link[rel=manifest]'))q('link[rel=manifest]').href='/adm.webmanifest';if(q('link[rel=apple-touch-icon]'))q('link[rel=apple-touch-icon]').href='/icons/adm-apple-touch-icon.png';if(q('meta[name=apple-mobile-web-app-title]'))q('meta[name=apple-mobile-web-app-title]').content='Adm Óticas';if(q('meta[name=theme-color]'))q('meta[name=theme-color]').content='#191A23';document.title='Adm Óticas';var f=document.createElement('link');f.rel='stylesheet';f.href='https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap';document.head.appendChild(f)}</script>
 
