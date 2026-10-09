@@ -120,6 +120,42 @@ input[type=text],input[type=email],input[type=password],input[type=date],select,
 .note{border-radius:18px;border:1px solid var(--edge)}
 .toast{background:#191A23!important;color:#B9FF66!important;border-radius:14px!important}
 .gate .card{box-shadow:0 6px 0 #B9FF66}
+
+/* ===== menu igual ao do painel: barra de baixo no celular, lateral no computador ===== */
+.top,.tabs{display:none!important}
+.mtop{position:sticky;top:0;z-index:6;background:#191A23;color:#fff;display:flex;align-items:center;gap:12px;padding:12px 16px;padding-top:max(12px,env(safe-area-inset-top))}
+.mtop b{font-size:20px;font-weight:600;letter-spacing:-.02em}
+.mtop .sp{flex:1}
+.mtop button{background:none;border:1px solid rgba(255,255,255,.45);color:#fff;border-radius:12px;padding:7px 14px;font:inherit;font-size:14px;cursor:pointer}
+.pnav{position:fixed;left:0;right:0;bottom:0;z-index:10;background:var(--surface);border-top:1px solid var(--edge);display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);padding-bottom:env(safe-area-inset-bottom,0px)}
+.pnav a{display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 2px 8px;color:var(--muted);font-size:11px;font-weight:500;text-decoration:none;min-width:0}
+.pnav a span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.pnav svg,.pside svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.pnav a.on{color:var(--fg);font-weight:600}
+.pnav a.on svg{background:#B9FF66;color:#191A23;border-radius:8px;padding:2px;box-sizing:content-box;margin:-2px}
+.pside{display:none}
+main{padding-bottom:calc(100px + env(safe-area-inset-bottom,0px))!important}
+.ph{margin:6px 0 14px}
+.ph h1{font-size:32px;line-height:1.1}
+.ph p{margin:4px 0 0;color:var(--muted);font-size:14px}
+.subtabs{display:flex;gap:8px;margin:0 0 14px}
+.toast{bottom:calc(86px + env(safe-area-inset-bottom,0px))!important}
+@media (min-width:900px){
+  .mtop,.pnav{display:none}
+  .pside{display:flex;flex-direction:column;gap:18px;position:fixed;top:0;bottom:0;left:0;width:248px;background:#191A23;color:#fff;padding:28px 14px 20px;z-index:10}
+  .pside .brand{padding:0 0 0 0}
+  .pside .brand b{display:block;font-size:26px;font-weight:600;letter-spacing:-.02em}
+  .pside .brand small{display:block;font-size:11px;letter-spacing:.14em;text-transform:uppercase;opacity:.75;margin-top:2px}
+  .pside nav{display:flex;flex-direction:column;gap:4px}
+  .pside a{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:12px;color:rgba(255,255,255,.72);text-decoration:none;font-size:15px;font-weight:500}
+  .pside a:hover{background:rgba(255,255,255,.07);color:#fff}
+  .pside a.on{background:#B9FF66;color:#191A23;font-weight:600}
+  .pside .foot{margin-top:auto;border-top:1px solid rgba(255,255,255,.15);padding-top:14px;font-size:13px;font-weight:600}
+  .pside .foot button{display:block;width:100%;margin-top:12px;background:none;border:1px solid rgba(255,255,255,.45);color:#fff;border-radius:12px;padding:9px;font:inherit;cursor:pointer}
+  main{margin-left:248px!important;max-width:none!important;padding:36px 40px 48px!important}
+  .ph h1{font-size:44px}
+  .toast{bottom:28px!important}
+}
 </style>
 </head>
 <body>
@@ -218,19 +254,29 @@ function enviar(id,kind){
     :{follow_up:addDays(4),historico:hist(l,'Follow-up enviado')};
   upd(id,patch);
 }
-function go(t){st.tab=t;render();scrollTo(0,0)}
+function go(t){st.tab=t;st.open=null;try{history.replaceState(null,'','/prospectar?tab='+t)}catch(e){}render();scrollTo(0,0)}
 
 /* ---------- telas ---------- */
+const IC=p=>'<svg viewBox="0 0 24 24" aria-hidden="true">'+p+'</svg>';
+const NAV=[
+  ['adm','Administração','/adm',IC('<path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/>')],
+  ['mensal','Mensalidades','/adm?tab=mensal',IC('<rect x="4" y="5" width="16" height="15" rx="2.5"/><path d="M4 10h16M9 3v4M15 3v4M8.5 14.5h3"/>')],
+  ['buscar','Prospecção',null,IC('<circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/>')],
+  ['crm','CRM',null,IC('<rect x="3.5" y="4.5" width="5" height="15" rx="1.5"/><rect x="9.5" y="4.5" width="5" height="10" rx="1.5"/><rect x="15.5" y="4.5" width="5" height="6" rx="1.5"/>')]];
 function render(){
   const a=$('#app');
   if(st.user===null)return a.innerHTML='<div class="empty">Carregando…</div>';
   if(!st.user)return a.innerHTML=gate();
   if(!st.admin)return a.innerHTML='<div class="gate"><div class="card"><h1>Sem acesso</h1><p class="muted">Essa área é só do administrador.</p><button class="btn" data-a="sair">Sair</button></div></div>';
   if(!st.loaded)return a.innerHTML='<div class="empty">Carregando leads…</div>';
-  const t=(k,n)=>'<button data-tab="'+k+'" class="'+(st.tab===k?'on':'')+'">'+n+'</button>';
-  a.innerHTML='<header class="top"><div class="in"><h1>Prospecção</h1><span class="sp"></span><a href="/adm">← Voltar ao sistema</a><button data-a="sair">Sair</button></div></header>'+
-   '<nav class="tabs"><div class="in">'+t('crm','CRM ('+st.leads.length+')')+t('buscar','Buscar óticas')+t('msg','Mensagens')+'</div></nav><main>'+
-   (st.tab==='buscar'?vBuscar():st.tab==='msg'?vMsg():vCrm())+'</main>';
+  const sec=st.tab==='buscar'?'buscar':'crm';
+  const item=n=>n[2]?'<a href="'+n[2]+'"'+(sec===n[0]?' class="on"':'')+'>'+n[3]+'<span>'+n[1]+'</span></a>':'<a href="/prospectar?tab='+n[0]+'" data-tab="'+n[0]+'"'+(sec===n[0]?' class="on" aria-current="page"':'')+'>'+n[3]+'<span>'+n[1]+'</span></a>';
+  const head=st.tab==='buscar'?['Prospecção','Encontre óticas no Google Maps e adicione ao CRM']:['CRM','Óticas abordadas, follow-up e acessos ao demo'];
+  const sub=st.tab==='buscar'?'':'<div class="subtabs"><button class="chip '+(st.tab==='crm'?'on':'')+'" data-tab="crm">Óticas ('+st.leads.length+')</button><button class="chip '+(st.tab==='msg'?'on':'')+'" data-tab="msg">Mensagens</button></div>';
+  a.innerHTML='<aside class="pside"><div class="brand"><b>Adm Óticas</b><small>Controle geral</small></div><nav>'+NAV.map(item).join('')+'</nav><div class="foot"><div>'+esc((st.user&&st.user.email)||'')+'</div><button data-a="sair">Sair</button></div></aside>'+
+   '<header class="mtop"><b>Adm Óticas</b><span class="sp"></span><button data-a="sair">Sair</button></header>'+
+   '<main><div class="ph"><h1>'+head[0]+'</h1><p>'+head[1]+'</p></div>'+sub+(st.tab==='buscar'?vBuscar():st.tab==='msg'?vMsg():vCrm())+'</main>'+
+   '<nav class="pnav" aria-label="Seções">'+NAV.map(item).join('')+'</nav>';
 }
 function gate(){return '<div class="gate"><div class="card"><h1>Prospecção</h1><p class="muted small" style="margin:0">Entre com o mesmo e-mail e senha do painel administrativo.</p><input type="email" id="g-e" placeholder="E-mail" autocomplete="username"><input type="password" id="g-p" placeholder="Senha" autocomplete="current-password"><div class="err" id="g-err"></div><button class="btn pri" data-a="entrar">Entrar</button></div></div>'}
 
@@ -322,7 +368,7 @@ function vMsg(){
 /* ---------- eventos ---------- */
 document.addEventListener('click',async e=>{
   const b=e.target.closest('button,[data-tab]');if(!b)return;const d=b.dataset;
-  if(d.tab)return go(d.tab);
+  if(d.tab){e.preventDefault();return go(d.tab)}
   if(d.f){st.f=d.f;return render()}
   if(d.open){st.open=st.open===d.open?null:d.open;return render()}
   if(d.env)return enviar(d.env,d.k);
@@ -361,10 +407,16 @@ async function boot(){
   render();
 }
 boot();
-document.addEventListener('visibilitychange',()=>{if(!document.hidden&&st.admin&&st.loaded)load()});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&st.admin&&st.loaded)recarregar(300)});
 /* aviso na hora quando uma ótica abre o demo */
-let vivo=null;
-function aoVivo(){if(vivo||!st.admin)return;vivo=sb.channel('crm-acessos').on('postgres_changes',{event:'INSERT',schema:'public',table:'prosp_acessos'},p=>{const l=st.leads.find(x=>x.id===p.new.lead_id);toast('👀 '+((l&&l.nome)||'Uma ótica')+' abriu o demo agora');load()}).subscribe()}
+let vivo=null,vt=0,vp=false;
+const digitando=()=>{const a=document.activeElement;return !!(a&&/INPUT|TEXTAREA|SELECT/.test(a.tagName))};
+function recarregar(ms){clearTimeout(vt);vt=setTimeout(()=>{if(digitando()||st.busy){vp=true;return recarregar(2500)}vp=false;const y=scrollY;load().then(()=>scrollTo(0,y))},ms==null?1200:ms)}
+document.addEventListener('focusout',()=>{if(vp)recarregar(600)});
+function aoVivo(){if(vivo||!st.admin)return;vivo=sb.channel('crm-ao-vivo')
+  .on('postgres_changes',{event:'INSERT',schema:'public',table:'prosp_acessos'},p=>{const l=st.leads.find(x=>x.id===p.new.lead_id);toast('👀 '+((l&&l.nome)||'Uma ótica')+' abriu o demo agora');recarregar(300)})
+  .on('postgres_changes',{event:'*',schema:'public',table:'prosp_leads'},()=>recarregar())
+  .subscribe()}
 </script>
 </body>
 </html>

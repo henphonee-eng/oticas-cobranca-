@@ -629,6 +629,15 @@ html.vh .kpi b,html.vh .tile b,html.vh .msum b,html.vh .row .amt,html.vh .sale-b
 html.vh .mbars{filter:blur(6px)}
 
 .hint.warn-soft{color:var(--warn);background:var(--warn-bg);border-radius:8px;padding:8px 10px;font-weight:500}
+
+.movs{gap:0;padding:6px 16px}
+.mv{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--line);font-size:14px}
+.mv:first-child{border-top:0}
+.mv-d{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mv-q{font-size:12.5px;white-space:nowrap}
+.aovivo{color:var(--ok);font-weight:600;font-size:12.5px}
+html.adm .aovivo{color:#2E7D1E}
+@media (max-width:520px){.mv{grid-template-columns:minmax(0,1fr) auto;gap:4px 10px}.mv-t{grid-column:1;grid-row:1;justify-self:start}.mv-q{grid-column:2;grid-row:1;justify-self:end}.mv-d{grid-column:1;grid-row:2}.mv-v{grid-column:2;grid-row:2;justify-self:end}}
 </style>
 <script>if(/^\/adm(\/|$)/.test(location.pathname)){document.documentElement.classList.add('adm');var q=function(x){return document.querySelector(x)};if(q('link[rel=manifest]'))q('link[rel=manifest]').href='/adm.webmanifest';if(q('link[rel=apple-touch-icon]'))q('link[rel=apple-touch-icon]').href='/icons/adm-apple-touch-icon.png';if(q('meta[name=apple-mobile-web-app-title]'))q('meta[name=apple-mobile-web-app-title]').content='Adm Óticas';if(q('meta[name=theme-color]'))q('meta[name=theme-color]').content='#191A23';document.title='Adm Óticas';var f=document.createElement('link');f.rel='stylesheet';f.href='https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap';document.head.appendChild(f)}</script>
 
@@ -869,7 +878,7 @@ async function entrar(session){
   IS_ADMIN=ADM_MODE&&!!(ar&&ar.data===true);
   if(ADM_MODE){
     if(!IS_ADMIN){await sb.auth.signOut();SESSION=null;authChecked=true;gateNote='Esta conta não tem acesso à administração.';gateKey='';render();return}
-    OTICA=null;ROLE='admin';ui.tab='admin';last=Date.now();gateNote='';gateKey='';ready=true;syncState='cloud';render();return;
+    OTICA=null;ROLE='admin';ui.tab=admTabInicial();last=Date.now();gateNote='';gateKey='';ready=true;syncState='cloud';render();return;
   }
   const ms=((mr&&mr.data)||[]).filter(m=>m.oticas);
   const ts=tenantSlug();
@@ -882,7 +891,7 @@ async function entrar(session){
     return;
   }
   if(IS_ADMIN){
-    OTICA=null;ROLE='admin';ui.tab='admin';last=Date.now();gateNote='';gateKey='';ready=true;syncState='cloud';render();return;
+    OTICA=null;ROLE='admin';ui.tab=admTabInicial();last=Date.now();gateNote='';gateKey='';ready=true;syncState='cloud';render();return;
   }
   const msg=pick?'Esta conta está desativada. Fale com o suporte do sistema.':'Este e-mail não está ligado a nenhuma ótica.';
   await sb.auth.signOut();SESSION=null;authChecked=true;gateNote=msg;gateKey='';render();
@@ -994,6 +1003,7 @@ const ICON={
 };
 const GLASSES='<svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11.5" cy="23" r="7"/><circle cx="28.5" cy="23" r="7"/><path d="M18.5 22c1-1.3 2-1.3 3 0M4.5 21 7 12M35.5 21 33 12"/></svg>';
 const TABS=[['painel','Painel'],['agenda','Agenda'],['vendas','Vendas'],['clientes','Clientes'],['cobrar','Cobrar'],['aguard','Aguardando'],['entregas','Follow-up'],['os','Ordens de serviço'],['relacao','Relacionamento'],['caixa','Caixa'],['financeiro','Financeiro'],['metas','Metas'],['campanhas','Campanhas'],['lentes','Lentes'],['ajustes','Ajustes']];
+function admTabInicial(){const q=new URLSearchParams(location.search),t=q.get('tab');if(t){q.delete('tab');history.replaceState(null,'',location.pathname+(q.toString()?'?'+q:''))}return t==='mensal'?'mensal':'admin'}
 const ADMTAB=['admin','Administração'];
 const MENSTAB=['mensal','Mensalidades'];
 const PROSPTABS=[['prosp','Prospecção'],['crm','CRM']];
@@ -2645,6 +2655,15 @@ async function admLoad(force){
     const [lr,or,cr,gr,pl]=await Promise.all([sb.rpc('admin_listar_oticas'),sb.from('oticas').select('*'),sb.from('adm_cobrancas').select('*'),sb.from('adm_config').select('*'),sb.from('prosp_leads').select('status,enviado_em,demo_aberturas,historico,criado_em')]);
     ADM.leads=(pl&&!pl.error&&pl.data)||[];
     try{const sr=await sb.rpc('admin_saude');ADM.saude={};((sr&&sr.data)||[]).forEach(x=>{ADM.saude[x.otica_id]=x})}catch(e){ADM.saude={}}
+    try{
+      const mv=await sb.from('docs').select('otica_id,col,id,atualizado_em,data').in('col',['vendas','clientes']).order('atualizado_em',{ascending:false}).limit(12);
+      const rows=(mv&&!mv.error&&mv.data)||[];const ids=[...new Set(rows.filter(r=>r.col==='vendas'&&r.data&&r.data.clienteId).map(r=>r.data.clienteId))];
+      const nomes={};rows.filter(r=>r.col==='clientes').forEach(r=>{nomes[r.id]=r.data&&r.data.nome});
+      const falta=ids.filter(i=>!nomes[i]);
+      if(falta.length){const cr=await sb.from('docs').select('id,data->>nome').eq('col','clientes').in('id',falta);((cr&&cr.data)||[]).forEach(c=>{nomes[c.id]=c.nome})}
+      ADM.mov=rows.map(r=>{const d=r.data||{},novo=d.criadoEm&&Math.abs(new Date(r.atualizado_em).getTime()-(+d.criadoEm))<120000;
+        return {otica_id:r.otica_id,em:r.atualizado_em,tipo:r.col==='clientes'?(novo?'Cliente cadastrado':'Cliente atualizado'):d.aguardando?'Orçamento':(novo?'Nova venda':'Venda atualizada'),nome:r.col==='clientes'?d.nome:nomes[d.clienteId],valor:r.col==='vendas'?+d.total||0:0}});
+    }catch(e){ADM.mov=ADM.mov||[]}
     if(lr.error)throw lr.error;
     const extra={};((or&&or.data)||[]).forEach(o=>{extra[o.id]=o});
     ADM.list=(lr.data||[]).map(o=>Object.assign({},extra[o.id]||{},o));
@@ -2772,20 +2791,27 @@ function viewAdmin(){
   (ADM.err?'<p class="hint bad" role="alert">'+esc(ADM.err)+'</p>':'')+kp+
   (ADM.loaded?'<div class="cols"><div class="panel"><div class="sh"><h2>Cobranças em atraso</h2><span class="sub num">'+brl(sum(late))+'</span></div><div class="stack">'+(late.length?late.map(admCobRow).join(''):none('Nenhuma ótica em atraso.'))+'</div></div>'+
     '<div class="panel"><div class="sh"><h2>Vencem em até 7 dias</h2><span class="sub num">'+brl(sum(prox))+'</span></div><div class="stack">'+(prox.length?prox.map(admCobRow).join(''):none('Nada vencendo nos próximos dias.'))+'</div></div></div>':'')+
-  (ADM.loaded?admRecorrente()+admFunil()+'<div class="sh"><h2>Avisos no celular</h2></div>'+pushCard():'')+
+  (ADM.loaded?admMov()+admRecorrente()+admFunil()+'<div class="sh"><h2>Avisos no celular</h2></div>'+pushCard():'')+
   '<div class="sh"><h2>Óticas</h2></div>'+
   (!ADM.loaded?none('Carregando...'):ADM.list.length?'<div class="gridlist">'+ADM.list.map(admCard).join('')+'</div>':'<div class="empty">'+GLASSES+'<h3>Nenhuma ótica cadastrada</h3><p>Toque em Nova ótica para cadastrar a primeira.</p></div>')+(ADM.loaded?msgs:'');
 }
 
 
 /* ---------- saúde de cada ótica ---------- */
+function quandoFoi(iso){const m=Math.floor((Date.now()-new Date(iso).getTime())/60000);if(m<1)return 'agora';if(m<60)return 'há '+m+' min';const h=Math.floor(m/60);if(h<24)return 'há '+h+' h';const d=Math.floor(h/24);return d===1?'ontem':'há '+d+' dias'}
+function admMov(){
+  const L=ADM.mov||[];
+  return '<div class="sh"><h2>Movimentações das óticas</h2><span class="sub">'+(vivoOn?'<span class="aovivo">● ao vivo</span>':'')+'</span></div>'+
+    (L.length?'<div class="card movs">'+L.map(m=>'<div class="mv"><span class="mv-t chip '+(m.tipo==='Nova venda'?'ok':m.tipo==='Orçamento'?'warn':'')+'">'+m.tipo+'</span><span class="mv-d"><b>'+esc(admOtica(m.otica_id).nome)+'</b>'+(m.nome?' · '+esc(m.nome):'')+'</span><span class="mv-v num">'+(m.valor?brl(m.valor):'')+'</span><span class="mv-q meta">'+quandoFoi(m.em)+'</span></div>').join('')+'</div>':none('Quando as óticas registrarem vendas e clientes, aparece aqui na hora.'));
+}
+setInterval(()=>{if(IS_ADMIN&&ui.tab==='admin'&&!admEditando()&&document.querySelector('.movs'))render()},60000);
 function admSaude(o){
   const x=(ADM.saude||{})[o.id];if(!x)return '';
   const uso=[x.ultimo_uso,x.ultimo_login].filter(Boolean).sort().pop();
   const dias=uso?Math.floor((Date.now()-new Date(uso).getTime())/86400000):null;
   const chip=dias==null?'<span class="chip bad">Nunca usou</span>':dias>=14?'<span class="chip bad">Sem uso há '+dias+' dias</span>':dias>=7?'<span class="chip warn">Sem uso há '+dias+' dias</span>':'<span class="chip ok">Em uso</span>';
   const quando=dias==null?'':dias===0?'hoje':dias===1?'ontem':'há '+dias+' dias';
-  return '<div class="saude">'+chip+'<span class="meta">'+(quando?'Último uso '+quando+' · ':'')+plural(+x.vendas_mes||0,'venda','vendas')+' este mês'+(+x.total_mes>0?' ('+brl(Math.round(+x.total_mes*100))+')':'')+' · '+plural(+x.clientes||0,'cliente','clientes')+'</span></div>';
+  return '<div class="saude">'+chip+'<span class="meta">'+(quando?'Último uso '+quando+' · ':'')+plural(+x.vendas_mes||0,'venda','vendas')+' este mês'+(+x.total_mes>0?' ('+brl(Math.round(+x.total_mes))+')':'')+' · '+plural(+x.clientes||0,'cliente','clientes')+'</span></div>';
 }
 /* ---------- avisos: notificação no celular e aviso na tela ---------- */
 const VAPID_PUB='BDXkszBkrvnEWg4gLP0w3thBD3Wlsg4OmLkfRTloZG9Ia_2fEVEb6u8Wqiw6gcCrfVKhspulXeAyKuUyzZqvIUk';
@@ -2814,15 +2840,38 @@ async function pushLigar(){
     PUSH.st='on';render();toast('Avisos ligados neste aparelho');
   }catch(e){toast('Não foi possível ligar: '+errTxt(e))}
 }
-let vivo=null;
+let vivo=null,vivoTimer=0,vivoPend=false,vivoOn=false;
+/* não atualiza a tela enquanto você digita ou edita algo; atualiza assim que terminar */
+const admEditando=()=>{const a=document.activeElement;return !!(ui.sheet||MEN.edit||(a&&/INPUT|TEXTAREA|SELECT/.test(a.tagName)&&a.closest('#view')))};
+function admAgendar(ms){clearTimeout(vivoTimer);vivoTimer=setTimeout(admAtualizar,ms==null?1200:ms)}
+async function admAtualizar(){
+  if(!IS_ADMIN||!(ui.tab==='admin'||ui.tab==='mensal'))return;
+  if(admEditando()||ADM.busy){vivoPend=true;return admAgendar(2500)}
+  vivoPend=false;await admLoad(true);
+}
+document.addEventListener('focusout',()=>{if(vivoPend)admAgendar(600)});
 function admAoVivo(){
   if(vivo||!IS_ADMIN)return;
-  vivo=sb.channel('acessos-demo').on('postgres_changes',{event:'INSERT',schema:'public',table:'prosp_acessos'},async p=>{
-    const r=await sb.from('prosp_leads').select('nome').eq('id',p.new.lead_id).single();
-    showPop('👀 '+((r.data&&r.data.nome)||'Uma ótica')+' abriu o demo',(p.new.aparelho||'Agora')+' · toque para ver no CRM','crm');
-  }).subscribe();
+  vivo=sb.channel('adm-ao-vivo')
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'prosp_acessos'},async p=>{
+      const r=await sb.from('prosp_leads').select('nome').eq('id',p.new.lead_id).single();
+      showPop('👀 '+((r.data&&r.data.nome)||'Uma ótica')+' abriu o demo',(p.new.aparelho||'Agora')+' · toque para ver no CRM','crm');admAgendar();
+    })
+    .on('postgres_changes',{event:'*',schema:'public',table:'docs'},p=>{
+      const n=p.new||{},d=n.data||{};
+      if(p.eventType==='INSERT'&&n.col==='vendas'&&!d.aguardando)toast('🛒 '+admOtica(n.otica_id).nome+' registrou uma venda'+(+d.total>0?' de '+brl(+d.total):''));
+      else if(p.eventType==='INSERT'&&n.col==='clientes')toast('👤 '+admOtica(n.otica_id).nome+' cadastrou um cliente');
+      admAgendar();
+    })
+    .on('postgres_changes',{event:'*',schema:'public',table:'adm_cobrancas'},()=>admAgendar())
+    .on('postgres_changes',{event:'*',schema:'public',table:'oticas'},()=>admAgendar())
+    .on('postgres_changes',{event:'*',schema:'public',table:'prosp_leads'},()=>admAgendar(3000))
+    .subscribe(st=>{vivoOn=st==='SUBSCRIBED';if(st==='SUBSCRIBED'){syncState='cloud'}render()});
   pushEstado().then(render);
 }
+/* ao voltar para o app (celular desbloqueado, aba trocada), busca o que mudou */
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&IS_ADMIN&&ADM_MODE)admAgendar(300)});
+window.addEventListener('online',()=>{if(IS_ADMIN&&ADM_MODE)admAgendar(300)});
 /* ---------- aba Mensalidades ---------- */
 const MEN={month:null,sel:null,edit:null,saving:false};
 function menRow(c){
