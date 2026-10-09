@@ -151,6 +151,11 @@ button.tile:hover{border-color:var(--accent)}
 .day.paid{background:var(--ok-bg);border-color:transparent;color:var(--ok)}
 .day.today .n{background:var(--accent);color:var(--accent-fg);border-radius:9px;min-width:22px;text-align:center;padding:0 4px}
 .day.sel{outline:2px solid var(--accent);outline-offset:1px}
+.day .a.nm{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 3px;font-weight:600}
+.day.prev{background:var(--surface-2);border-style:dashed;color:var(--muted)}
+.menlist .row{flex-direction:column;gap:8px}
+.menlist .row-side{width:100%;display:flex;flex-direction:row-reverse;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.menlist .row-side .acts{justify-content:flex-start}
 .legend{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center}
 
 /* linhas e cartões */
@@ -1578,7 +1583,7 @@ async function admLoad(force){
     if(lr.error)throw lr.error;
     const extra={};((or&&or.data)||[]).forEach(o=>{extra[o.id]=o});
     ADM.list=(lr.data||[]).map(o=>Object.assign({},extra[o.id]||{},o));
-    ADM.cob=((cr&&cr.data)||[]).filter(admVisivel);ADM.cfg={};((gr&&gr.data)||[]).forEach(g=>{ADM.cfg[g.chave]=g.valor});
+    ADM.cobAll=(cr&&cr.data)||[];ADM.cob=ADM.cobAll.filter(admVisivel);ADM.cfg={};((gr&&gr.data)||[]).forEach(g=>{ADM.cfg[g.chave]=g.valor});
     ADM.err=(cr&&cr.error)?'Não foi possível carregar as cobranças: '+errTxt(cr.error):'';
     await admGerar();
   }catch(e){ADM.err='Não foi possível carregar as óticas: '+errTxt(e)}
@@ -1589,7 +1594,7 @@ async function admLoad(force){
 function admFimMes(){const t=todayStr();return addDays(addMonths(t.slice(0,7)+'-01',1),-1)}
 const admVisivel=c=>c.tipo!=='mensalidade'||c.pago||c.venc<=admFimMes();
 function admBase(o){
-  const impl=ADM.cob.find(c=>c.otica_id===o.id&&c.tipo==='implementacao');
+  const impl=(ADM.cobAll||ADM.cob).find(c=>c.otica_id===o.id&&c.tipo==='implementacao');
   if(impl)return impl.pago?String(impl.pago_em||impl.venc).slice(0,10):null;
   return String(o.impl_data||o.criada_em||'').slice(0,10)||null;
 }
@@ -1599,7 +1604,7 @@ async function admGerar(){
     if(!o.ativa||!(+o.mensalidade>0))return;
     const base=admBase(o);if(!base)return;
     /* segue a última mensalidade existente, para respeitar datas editadas à mão */
-    const ex=ADM.cob.filter(c=>c.otica_id===o.id&&c.tipo==='mensalidade'&&c.parcela).sort((x,y)=>x.parcela-y.parcela);
+    const ex=(ADM.cobAll||ADM.cob).filter(c=>c.otica_id===o.id&&c.tipo==='mensalidade'&&c.parcela).sort((x,y)=>x.parcela-y.parcela);
     const last=ex[ex.length-1];
     const ref=last?{n:last.parcela,venc:last.venc}:{n:1,venc:addDays(base,30)};
     for(let n=last?last.parcela+1:1;n<=240;n++){
@@ -1610,7 +1615,7 @@ async function admGerar(){
   if(!rows.length)return;
   const r=await sb.from('adm_cobrancas').upsert(rows,{onConflict:'otica_id,tipo,parcela',ignoreDuplicates:true});
   if(r.error)throw r.error;
-  const c=await sb.from('adm_cobrancas').select('*');if(!c.error)ADM.cob=(c.data||[]).filter(admVisivel);
+  const c=await sb.from('adm_cobrancas').select('*');if(!c.error){ADM.cobAll=c.data||[];ADM.cob=ADM.cobAll.filter(admVisivel)}
 }
 const admLink=o=>(o.dominios&&o.dominios.length)?'https://'+o.dominios[0]+'/':location.origin+'/?o='+encodeURIComponent(o.slug);
 const admOtica=id=>ADM.list.find(o=>o.id===id)||{nome:'Ótica removida'};
@@ -1669,7 +1674,7 @@ function viewAdmin(){
 }
 
 /* ---------- aba Mensalidades ---------- */
-const MEN={f:'aberto',edit:null,saving:false};
+const MEN={month:null,sel:null,edit:null,saving:false};
 function menRow(c){
   const o=admOtica(c.otica_id);
   if(MEN.edit===c.id){
@@ -1681,38 +1686,76 @@ function menRow(c){
   const html=admCobRow(c);
   return html.replace('<div class="acts">','<div class="acts"><button class="btn sm ghost" data-act="menedit" data-id="'+c.id+'">Editar data</button>');
 }
-function viewMensal(){
-  const t=todayStr(),C=ADM.cob.slice();
-  let L=MEN.f==='aberto'?C.filter(c=>!c.pago):MEN.f==='pagas'?C.filter(c=>c.pago):MEN.f==='atraso'?C.filter(c=>!c.pago&&c.venc<t):C;
-  L.sort((a,b)=>MEN.f==='pagas'?b.venc.localeCompare(a.venc):a.venc.localeCompare(b.venc));
-  const sum=a=>a.reduce((s,c)=>s+c.valor,0);
-  const chips=[['aberto','Em aberto'],['atraso','Em atraso'],['pagas','Pagas'],['todas','Todas']];
-  let h=pageHead('Mensalidades','Implantação e mensalidades de todas as óticas clientes')+
-    (ADM.err?'<p class="hint bad" role="alert">'+esc(ADM.err)+'</p>':'')+
-    '<div class="filters">'+chips.map(c=>'<button class="fchip" data-act="menf" data-f="'+c[0]+'" aria-pressed="'+(MEN.f===c[0])+'">'+c[1]+'</button>').join('')+'</div>';
-  if(!ADM.loaded)return h+none('Carregando...');
-  if(!L.length)return h+none(MEN.f==='atraso'?'Nenhuma mensalidade em atraso.':'Nada por aqui.');
-  const grp={};L.forEach(c=>{const k=c.venc.slice(0,7);(grp[k]=grp[k]||[]).push(c)});
-  Object.keys(grp).forEach(k=>{
-    const nm=parseYmd(k+'-01').toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
-    h+='<div class="sh"><h2>'+esc(cap(nm))+'</h2><span class="sub num">'+brl(sum(grp[k]))+'</span></div><div class="stack">'+grp[k].map(menRow).join('')+'</div>';
+/* mensalidades de um mês: as reais + as previstas das óticas ativas */
+function menDoMes(mk){
+  const all=ADM.cobAll||ADM.cob,out=all.filter(c=>c.venc.slice(0,7)===mk);
+  ADM.list.forEach(o=>{
+    if(!o.ativa||!(+o.mensalidade>0))return;
+    if(out.some(c=>c.otica_id===o.id&&c.tipo==='mensalidade'))return;
+    const ex=all.filter(c=>c.otica_id===o.id&&c.tipo==='mensalidade'&&c.parcela).sort((x,y)=>x.parcela-y.parcela);
+    let ref;
+    if(ex.length){const l=ex[ex.length-1];ref={n:l.parcela,venc:l.venc}}
+    else{const base=admBase(o);if(!base)return;ref={n:1,venc:addDays(base,30)}}
+    if(mk<ref.venc.slice(0,7)||(ex.length&&mk===ref.venc.slice(0,7)))return;
+    const k=(+mk.slice(0,4)-+ref.venc.slice(0,4))*12+(+mk.slice(5,7)-+ref.venc.slice(5,7));
+    out.push({id:'prev-'+o.id+'-'+mk,otica_id:o.id,tipo:'mensalidade',parcela:ref.n+k,venc:addMonths(ref.venc,k),valor:+o.mensalidade,pago:false,prevista:true});
   });
-  return h+'<p class="sub" style="margin-top:14px">A 1ª mensalidade vence 30 dias depois do pagamento da implantação. Cada mensalidade só aparece quando o mês dela começa, para as óticas ativas.</p>';
+  return out.sort((x,y)=>x.venc.localeCompare(y.venc)||admOtica(x.otica_id).nome.localeCompare(admOtica(y.otica_id).nome));
+}
+function menPrevRow(c){
+  const o=admOtica(c.otica_id);
+  return '<article class="row"><div class="row-main"><b>'+esc(o.nome)+'</b><div class="meta">'+esc(cap(admDesc(c)))+' · '+fmtDate(c.venc)+'</div><div class="chips"><span class="chip">Prevista · aparece quando o mês começar</span></div></div><div class="row-side"><div class="amt">'+brl(c.valor)+'</div></div></article>';
+}
+function viewMensal(){
+  const t=todayStr();if(!MEN.month)MEN.month=t.slice(0,7);
+  const mk=MEN.month,Y=+mk.slice(0,4),M=+mk.slice(5,7);
+  let h=pageHead('Mensalidades','Implantação e mensalidades das óticas clientes')+(ADM.err?'<p class="hint bad" role="alert">'+esc(ADM.err)+'</p>':'');
+  if(!ADM.loaded)return h+none('Carregando...');
+  const L=menDoMes(mk),sum=a=>a.reduce((s,c)=>s+c.valor,0);
+  const late=ADM.cob.filter(c=>!c.pago&&c.venc<t);
+  h+='<div class="tiles"><div class="tile t-acc"><small>A receber no mês</small><b>'+brl(sum(L.filter(c=>!c.pago)))+'</b><span>'+plural(L.filter(c=>!c.pago).length,'cobrança','cobranças')+'</span></div><div class="tile t-ok"><small>Recebido no mês</small><b>'+brl(sum(L.filter(c=>c.pago)))+'</b></div><div class="tile t-bad"><small>Em atraso (total)</small><b>'+brl(sum(late))+'</b><span>'+plural(late.length,'cobrança','cobranças')+'</span></div></div>';
+  const by={};L.forEach(c=>{(by[c.venc]=by[c.venc]||[]).push(c)});
+  const dim=new Date(Y,M,0).getDate(),off=new Date(Y,M-1,1).getDay();
+  const mname=cap(new Date(Y,M-1,1).toLocaleDateString('pt-BR',{month:'long',year:'numeric'}));
+  const cells=[];for(let i=0;i<off;i++)cells.push('<div class="day out"></div>');
+  for(let d=1;d<=dim;d++){
+    const ds=mk+'-'+pad(d),x=by[ds];let cls='day',lab='';
+    if(x){const lt=x.some(c=>!c.pago&&!c.prevista&&c.venc<t),ab=x.some(c=>!c.pago);cls+=lt?' late':ab?' open':' paid';if(x.every(c=>c.prevista))cls+=' prev';
+      lab=x.length>1?x.length+' óticas':esc(String(admOtica(x[0].otica_id).nome).replace(/^óticas?\s+/i,'').split(/\s+/)[0])}
+    if(ds===t)cls+=' today';if(ds===MEN.sel)cls+=' sel';
+    cells.push('<button class="'+cls+'" data-act="mensel" data-d="'+ds+'"><span class="n">'+d+'</span><span class="a nm">'+lab+'</span></button>');
+  }
+  while(cells.length%7)cells.push('<div class="day out"></div>');
+  const dows=['D','S','T','Q','Q','S','S'].map(d=>'<div class="dow">'+d+'</div>').join('');
+  const sel=MEN.sel&&MEN.sel.slice(0,7)===mk?MEN.sel:null;
+  const lista=sel?L.filter(c=>c.venc===sel):L;
+  const titulo=sel?cap(parseYmd(sel).toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'})):'Óticas com mensalidade em '+mname.toLowerCase();
+  h+='<div class="cols agenda" style="margin-top:22px"><div class="panel">'+
+    '<div class="calhead"><button class="ib" data-act="menmes" data-n="-1" aria-label="Mês anterior">&#8249;</button><h2>'+mname+'</h2><button class="btn sm" data-act="menmes" data-n="0">Hoje</button><button class="ib" data-act="menmes" data-n="1" aria-label="Próximo mês">&#8250;</button></div>'+
+    '<div class="cal">'+dows+cells.join('')+'</div>'+
+    '<div class="legend"><span class="chip bad">Em atraso</span><span class="chip warn">A receber</span><span class="chip ok">Recebido</span><span class="chip">Prevista</span></div></div>'+
+    '<div class="panel"><div class="sh" style="margin-top:0"><h2>'+esc(titulo)+'</h2><span class="sub num">'+brl(sum(lista))+'</span></div>'+
+    (sel?'<p style="margin:-4px 0 10px"><button class="btn sm ghost" data-act="mensel" data-d="">Ver o mês inteiro</button></p>':'')+
+    '<div class="stack menlist">'+(lista.length?lista.map(c=>c.prevista?menPrevRow(c):menRow(c)).join(''):none(sel?'Nenhuma mensalidade neste dia.':'Nenhuma mensalidade neste mês.'))+'</div></div></div>';
+  const atrasoFora=late.filter(c=>c.venc.slice(0,7)!==mk);
+  if(atrasoFora.length)h+='<div class="sh"><h2>Em atraso de outros meses</h2><span class="sub num">'+brl(sum(atrasoFora))+'</span></div><div class="stack">'+atrasoFora.map(menRow).join('')+'</div>';
+  return h+'<p class="sub" style="margin-top:14px">A 1ª mensalidade vence 30 dias depois do pagamento da implantação. Nos meses futuros elas aparecem como previstas e viram cobrança quando o mês começa.</p>';
 }
 const menActs={
-  menf(d){MEN.f=d.f;MEN.edit=null;render()},
+  menmes(d){const n=+d.n;if(!n){MEN.month=todayStr().slice(0,7)}else{const Y=+MEN.month.slice(0,4),M=+MEN.month.slice(5,7);const x=new Date(Y,M-1+n,1);MEN.month=x.getFullYear()+'-'+pad(x.getMonth()+1)}MEN.sel=null;MEN.edit=null;render()},
+  mensel(d){MEN.sel=d.d&&MEN.sel!==d.d?d.d:null;MEN.edit=null;render()},
   menedit(d){MEN.edit=d.id||null;render()},
   async mensave(d){
-    const c=ADM.cob.find(x=>x.id===d.id);if(!c||MEN.saving)return;
+    const c=(ADM.cobAll||ADM.cob).find(x=>x.id===d.id);if(!c||MEN.saving)return;
     const venc=($('#men-venc')||{}).value,valor=parseMoney(($('#men-valor')||{}).value||'');
     if(!/^\d{4}-\d{2}-\d{2}$/.test(venc||''))return toast('Escolha a data de vencimento');
     if(!(valor>=0))return toast('Valor inválido');
     const seg=c.tipo==='mensalidade'&&$('#men-seguintes')&&$('#men-seguintes').checked;
     const up=[{id:c.id,venc:venc,valor:valor}];
-    if(seg&&c.parcela){ADM.cob.filter(x=>x.otica_id===c.otica_id&&x.tipo==='mensalidade'&&!x.pago&&x.parcela>c.parcela).forEach(x=>up.push({id:x.id,venc:addMonths(venc,x.parcela-c.parcela)}))}
+    if(seg&&c.parcela){(ADM.cobAll||ADM.cob).filter(x=>x.otica_id===c.otica_id&&x.tipo==='mensalidade'&&!x.pago&&x.parcela>c.parcela).forEach(x=>up.push({id:x.id,venc:addMonths(venc,x.parcela-c.parcela)}))}
     MEN.saving=true;render();
     try{
-      for(const u of up){const p=Object.assign({},u);delete p.id;const r=await sb.from('adm_cobrancas').update(p).eq('id',u.id);if(r.error)throw r.error;Object.assign(ADM.cob.find(x=>x.id===u.id),p)}
+      for(const u of up){const p=Object.assign({},u);delete p.id;const r=await sb.from('adm_cobrancas').update(p).eq('id',u.id);if(r.error)throw r.error;Object.assign((ADM.cobAll||ADM.cob).find(x=>x.id===u.id),p)}if(ADM.cobAll)ADM.cob=ADM.cobAll.filter(admVisivel);
       MEN.edit=null;toast(up.length>1?plural(up.length,'mensalidade atualizada','mensalidades atualizadas'):'Data atualizada');
     }catch(e){toast('Não foi possível salvar: '+errTxt(e))}
     MEN.saving=false;render();
@@ -1839,7 +1882,7 @@ Object.assign(A,{
   admedit(d){const o=ADM.list.find(x=>x.id===d.id);if(!o)return;ADM.draft={dono_nome:o.dono_nome||'',whatsapp_dono:o.whatsapp_dono||'',mensalidade:+o.mensalidade>0?centsToStr(+o.mensalidade):'',dia_venc:String(o.dia_venc||10),impl_valor:+o.impl_valor>0?centsToStr(+o.impl_valor):'',impl_data:o.impl_data||todayStr(),id:o.id,slug:o.slug,nome:o.nome,cor1:o.cor1,cor2:o.cor2,dominios:(o.dominios||[]).join(', '),ativa:!!o.ativa,email:'',senha:'',logo_claro:o.logo_claro||'',logo_escuro:o.logo_escuro||'',err:''};ADM.logoB=null;ADM.logoW=null;ADM.logoWmanual=false;EQ.for='';ui.sheet={kind:'adm',id:o.id};renderSheet()},
   admcopy(d){const o=ADM.list.find(x=>x.id===d.id);if(o)copiar(admLink(o),'Link copiado')},
   admcopycred(){const c=ADM.cred;if(!c)return;const o=ADM.list.find(x=>x.id===c.id)||{nome:c.nome,dominios:[]};copiar(fillTpl(admTpl('boasvindas'),Object.assign(admCtx(o,null,c.senha),{link:c.link,email:c.email,otica:c.nome})),'Mensagem copiada')},
-  async admbaixa(d,b){const c=ADM.cob.find(x=>x.id===d.id);if(!c)return;const pago=!c.pago;if(pago)confeteDe(b);const r=await sb.from('adm_cobrancas').update({pago:pago,pago_em:pago?todayStr():null}).eq('id',c.id);if(r.error){toast('Não foi possível salvar: '+errTxt(r.error));return}c.pago=pago;c.pago_em=pago?todayStr():null;if(pago&&c.tipo==='implementacao'){try{await admGerar()}catch(e){toast('Não foi possível criar as mensalidades: '+errTxt(e))}}render();toast(pago?'Pagamento registrado':'Baixa desfeita')},
+  async admbaixa(d,b){const c=(ADM.cobAll||ADM.cob).find(x=>x.id===d.id);if(!c)return;const pago=!c.pago;if(pago)confeteDe(b);const r=await sb.from('adm_cobrancas').update({pago:pago,pago_em:pago?todayStr():null}).eq('id',c.id);if(r.error){toast('Não foi possível salvar: '+errTxt(r.error));return}c.pago=pago;c.pago_em=pago?todayStr():null;if(pago&&c.tipo==='implementacao'){try{await admGerar()}catch(e){toast('Não foi possível criar as mensalidades: '+errTxt(e))}}render();toast(pago?'Pagamento registrado':'Baixa desfeita')},
   async admtplreset(d){delete ADM.cfg[d.k];await sb.from('adm_config').upsert({chave:d.k,valor:''});render()},
   async admsalvar(){
     const D=ADM.draft;if(!D||ADM.saving)return;const novo=!D.id;const fail=m=>{D.err=m;renderSheet()};
