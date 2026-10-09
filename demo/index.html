@@ -767,7 +767,7 @@ function computeAuth(){auth='ok'}
 function renderGate(){const g=$('#gate');g.classList.remove('on');g.innerHTML=''}
 const gateErr=()=>{};
 const hexRgb=h=>{const m=/^#?([0-9a-f]{6})$/i.exec(h||'');if(!m)return[4,134,222];const n=parseInt(m[1],16);return[n>>16&255,n>>8&255,n&255]};
-const modOn=()=>false;function premLock(){return ''}function premView(){return ''}function premCtx(){}function premFicha(){return ''}function premAjustes(){return ''}function premInit(){}function premLog(){}function premPix(){return ''}function premVendSale(){return ''}function premVendCli(){return ''}function sheetVend(){return null}function sheetHist(){return null}
+const modOn=()=>false;function premLock(){return ''}function premView(){return ''}function premCtx(){}function premFicha(){return ''}function premAjustes(){return ''}function premInit(){}function premLog(){}function premPix(){return ''}function premVendSale(){return ''}function premVendCli(){return ''}function sheetVend(){return null}function sheetFinPag(){return null}function sheetHist(){return null}
 function brandAdm(){}function viewAdmin(){return ''}function equipeCard(){return ''}function eqLoad(){}function admLoad(){}function sheetAdm(){return null}function sheetAdmOk(){return null}
 async function logout(){}
 let DEMO_NOME='Sua Ótica Aqui',DEMO_PERSONAL=false;
@@ -1270,7 +1270,7 @@ function renderSheet(){
   if(!s){el.innerHTML='';el.dataset.key='';document.documentElement.classList.remove('lock');return}
   const key=s.kind+(s.id||'');const old=el.querySelector('.sheet-body');const top=(old&&el.dataset.key===key)?old.scrollTop:0;
   let html=null;
-  if(s.kind==='venda')html=sheetVenda(s.id);else if(s.kind==='nova')html=sheetNova();else if(s.kind==='cliente')html=sheetCliente(s.id);else if(s.kind==='cliente-ok')html=sheetClienteOk(s.id);else if(s.kind==='mais')html=sheetMais();else if(s.kind==='hist')html=sheetHist();else if(s.kind==='recibo')html=sheetRecibo(s);else if(s.kind==='pagorc')html=sheetPagOrc(s);else if(s.kind==='pagparc')html=sheetPagParc(s);else if(s.kind==='vendedor')html=sheetVend();else if(s.kind==='relatorio')html=sheetRelatorio();else if(s.kind==='adm')html=sheetAdm();else if(s.kind==='admok')html=sheetAdmOk();
+  if(s.kind==='venda')html=sheetVenda(s.id);else if(s.kind==='nova')html=sheetNova();else if(s.kind==='cliente')html=sheetCliente(s.id);else if(s.kind==='cliente-ok')html=sheetClienteOk(s.id);else if(s.kind==='mais')html=sheetMais();else if(s.kind==='hist')html=sheetHist();else if(s.kind==='recibo')html=sheetRecibo(s);else if(s.kind==='pagorc')html=sheetPagOrc(s);else if(s.kind==='pagparc')html=sheetPagParc(s);else if(s.kind==='vendedor')html=sheetVend();else if(s.kind==='finpag')html=sheetFinPag(s);else if(s.kind==='relatorio')html=sheetRelatorio();else if(s.kind==='adm')html=sheetAdm();else if(s.kind==='admok')html=sheetAdmOk();
   if(html===null){ui.sheet=null;renderSheet();return}
   document.documentElement.classList.add('lock');
   el.innerHTML=html;
@@ -1463,10 +1463,10 @@ function sheetPagOrc(s){
   const foot=par?'<button class="btn primary" data-act="confirmparcial" data-v="'+v.id+'">Registrar pagamento parcial</button>':'<button class="btn primary" data-act="confirmpag" data-v="'+v.id+'">Confirmar pagamento e virar venda</button>';
   return sheetShell('Marcar como pago',body,foot);
 }
-const pgBase=()=>{const sh=ui.sheet;const v=sh&&S.vendas[sh.id];if(!v)return {x:0,w:''};if(sh.kind==='pagparc'){const p=v.parcelas[sh.i];return {x:p?p.valor:0,w:'da parcela'}}const e=v.parcelas.find(p=>p.tipo==='entrada');return {x:e?e.valor:0,w:'da entrada'}};
-const pgHint=(x,base,w)=>(x>0&&x<base)?'Falta receber '+brl(base-x)+' '+w+'. Ele fica em Cobrar e no Painel até a data combinada.':(x>=base&&base>0?'Esse valor cobre tudo: use "Pagou tudo".':'Informe quanto o cliente pagou agora. O restante fica para a data combinada.');
+const pgBase=()=>{const sh=ui.sheet;if(sh&&sh.kind==='finpag'){const f=finDoc().itens[sh.id];return {x:f?f.valor:0,w:'da conta',t:' O restante fica como conta a pagar até a data combinada.'}}const v=sh&&S.vendas[sh.id];if(!v)return {x:0,w:''};if(sh.kind==='pagparc'){const p=v.parcelas[sh.i];return {x:p?p.valor:0,w:'da parcela'}}const e=v.parcelas.find(p=>p.tipo==='entrada');return {x:e?e.valor:0,w:'da entrada'}};
+const pgHint=(x,base,w,t)=>(x>0&&x<base)?'Falta '+(t?'pagar ':'receber ')+brl(base-x)+' '+w+'.'+(t||' Ele fica em Cobrar e no Painel até a data combinada.'):(x>=base&&base>0?'Esse valor cobre tudo: use "Pagou tudo".':'Informe quanto o cliente pagou agora. O restante fica para a data combinada.');
 document.addEventListener('input',e=>{const t=e.target;if(!t||!t.id||t.id.slice(0,3)!=='pg-'||!ui.pg)return;ui.pg[t.id.slice(3)]=t.value;
-  if(t.id==='pg-val'){const h=$('#pg-rest');const o=pgBase();if(h&&o.x)h.textContent=pgHint(parseMoney(t.value||''),o.x,o.w)}});
+  if(t.id==='pg-val'){const h=$('#pg-rest');const o=pgBase();if(h&&o.x)h.textContent=pgHint(parseMoney(t.value||''),o.x,o.w,o.t)}});
 function sheetPagParc(s){
   const v=S.vendas[s.id];const p=v&&v.parcelas[s.i];if(!p||p.pago)return null;
   const g=ui.pg||(ui.pg={modo:'total'});const t=todayStr();const c=S.clientes[v.clienteId]||{nome:''};

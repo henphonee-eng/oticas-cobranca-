@@ -1426,7 +1426,7 @@ function renderSheet(){
   if(!s){el.innerHTML='';el.dataset.key='';document.documentElement.classList.remove('lock');return}
   const key=s.kind+(s.id||'');const old=el.querySelector('.sheet-body');const top=(old&&el.dataset.key===key)?old.scrollTop:0;
   let html=null;
-  if(s.kind==='venda')html=sheetVenda(s.id);else if(s.kind==='nova')html=sheetNova();else if(s.kind==='cliente')html=sheetCliente(s.id);else if(s.kind==='cliente-ok')html=sheetClienteOk(s.id);else if(s.kind==='mais')html=sheetMais();else if(s.kind==='hist')html=sheetHist();else if(s.kind==='recibo')html=sheetRecibo(s);else if(s.kind==='pagorc')html=sheetPagOrc(s);else if(s.kind==='pagparc')html=sheetPagParc(s);else if(s.kind==='vendedor')html=sheetVend();else if(s.kind==='relatorio')html=sheetRelatorio();else if(s.kind==='adm')html=sheetAdm();else if(s.kind==='admok')html=sheetAdmOk();
+  if(s.kind==='venda')html=sheetVenda(s.id);else if(s.kind==='nova')html=sheetNova();else if(s.kind==='cliente')html=sheetCliente(s.id);else if(s.kind==='cliente-ok')html=sheetClienteOk(s.id);else if(s.kind==='mais')html=sheetMais();else if(s.kind==='hist')html=sheetHist();else if(s.kind==='recibo')html=sheetRecibo(s);else if(s.kind==='pagorc')html=sheetPagOrc(s);else if(s.kind==='pagparc')html=sheetPagParc(s);else if(s.kind==='vendedor')html=sheetVend();else if(s.kind==='finpag')html=sheetFinPag(s);else if(s.kind==='relatorio')html=sheetRelatorio();else if(s.kind==='adm')html=sheetAdm();else if(s.kind==='admok')html=sheetAdmOk();
   if(html===null){ui.sheet=null;renderSheet();return}
   document.documentElement.classList.add('lock');
   el.innerHTML=html;
@@ -1619,10 +1619,10 @@ function sheetPagOrc(s){
   const foot=par?'<button class="btn primary" data-act="confirmparcial" data-v="'+v.id+'">Registrar pagamento parcial</button>':'<button class="btn primary" data-act="confirmpag" data-v="'+v.id+'">Confirmar pagamento e virar venda</button>';
   return sheetShell('Marcar como pago',body,foot);
 }
-const pgBase=()=>{const sh=ui.sheet;const v=sh&&S.vendas[sh.id];if(!v)return {x:0,w:''};if(sh.kind==='pagparc'){const p=v.parcelas[sh.i];return {x:p?p.valor:0,w:'da parcela'}}const e=v.parcelas.find(p=>p.tipo==='entrada');return {x:e?e.valor:0,w:'da entrada'}};
-const pgHint=(x,base,w)=>(x>0&&x<base)?'Falta receber '+brl(base-x)+' '+w+'. Ele fica em Cobrar e no Painel até a data combinada.':(x>=base&&base>0?'Esse valor cobre tudo: use "Pagou tudo".':'Informe quanto o cliente pagou agora. O restante fica para a data combinada.');
+const pgBase=()=>{const sh=ui.sheet;if(sh&&sh.kind==='finpag'){const f=finDoc().itens[sh.id];return {x:f?f.valor:0,w:'da conta',t:' O restante fica como conta a pagar até a data combinada.'}}const v=sh&&S.vendas[sh.id];if(!v)return {x:0,w:''};if(sh.kind==='pagparc'){const p=v.parcelas[sh.i];return {x:p?p.valor:0,w:'da parcela'}}const e=v.parcelas.find(p=>p.tipo==='entrada');return {x:e?e.valor:0,w:'da entrada'}};
+const pgHint=(x,base,w,t)=>(x>0&&x<base)?'Falta '+(t?'pagar ':'receber ')+brl(base-x)+' '+w+'.'+(t||' Ele fica em Cobrar e no Painel até a data combinada.'):(x>=base&&base>0?'Esse valor cobre tudo: use "Pagou tudo".':'Informe quanto o cliente pagou agora. O restante fica para a data combinada.');
 document.addEventListener('input',e=>{const t=e.target;if(!t||!t.id||t.id.slice(0,3)!=='pg-'||!ui.pg)return;ui.pg[t.id.slice(3)]=t.value;
-  if(t.id==='pg-val'){const h=$('#pg-rest');const o=pgBase();if(h&&o.x)h.textContent=pgHint(parseMoney(t.value||''),o.x,o.w)}});
+  if(t.id==='pg-val'){const h=$('#pg-rest');const o=pgBase();if(h&&o.x)h.textContent=pgHint(parseMoney(t.value||''),o.x,o.w,o.t)}});
 function sheetPagParc(s){
   const v=S.vendas[s.id];const p=v&&v.parcelas[s.i];if(!p||p.pago)return null;
   const g=ui.pg||(ui.pg={modo:'total'});const t=todayStr();const c=S.clientes[v.clienteId]||{nome:''};
@@ -2050,7 +2050,7 @@ function finRow(x){
   else if(x.venc===t)chip='<span class="chip warn">Vence hoje</span>';
   else chip='<span class="chip">Vence em '+plural(diffDays(x.venc,t),'dia','dias')+'</span>';
   const arm=ui.confirm===x.id;
-  return '<article class="row"><div class="row-main"><b>'+esc(x.desc)+'</b><div class="meta">'+esc(x.cat)+' · '+fmtDate(x.venc)+(x.grupo?(x.freq==='semana'?' · semanal':' · mensal'):'')+'</div><div class="chips">'+chip+'</div></div><div class="row-side"><div class="amt">'+brl(x.valor)+'</div><div class="acts"><button class="btn sm '+(x.pago?'ghost':'ok')+'" data-act="finpagar" data-id="'+x.id+'">'+(x.pago?'Desfazer':'Pago')+'</button><button class="btn sm ghost danger'+(arm?' armed':'')+'" data-act="findel" data-id="'+x.id+'">'+(arm?'Toque de novo':'Excluir')+'</button>'+(arm&&x.grupo?'<button class="btn sm ghost danger" data-act="findelnext" data-id="'+x.id+'">Excluir esta e as próximas</button>':'')+'</div></div></article>';
+  return '<article class="row"><div class="row-main"><b>'+esc(x.desc)+(x.parte===1?' (parcial)':x.parte===2?' (restante)':'')+'</b><div class="meta">'+esc(x.cat)+' · '+fmtDate(x.venc)+(x.grupo?(x.freq==='semana'?' · semanal':' · mensal'):'')+'</div><div class="chips">'+chip+'</div></div><div class="row-side"><div class="amt">'+brl(x.valor)+'</div><div class="acts"><button class="btn sm '+(x.pago?'ghost':'ok')+'" data-act="'+(x.pago?'finpagar':'finpag')+'" data-id="'+x.id+'">'+(x.pago?'Desfazer':'Pago')+'</button><button class="btn sm ghost danger'+(arm?' armed':'')+'" data-act="findel" data-id="'+x.id+'">'+(arm?'Toque de novo':'Excluir')+'</button>'+(arm&&x.grupo?'<button class="btn sm ghost danger" data-act="findelnext" data-id="'+x.id+'">Excluir esta e as próximas</button>':'')+'</div></div></article>';
 }
 function viewFin(){
   const t=todayStr(),m=ui.fm||(ui.fm=t.slice(0,7));const it=Object.values(finDoc().itens);
@@ -2114,6 +2114,19 @@ function viewMetas(){
   const cfgBox=dono?'<div class="sh"><h2>Regras</h2></div><div class="card" style="gap:12px"><div class="grid2"><div class="field"><span>Meta mensal da loja (R$)</span><input type="text" inputmode="decimal" data-pm="loja" value="'+(md.loja?centsToStr(md.loja):'')+'" placeholder="0,00"></div><div class="field"><span>Comissão padrão (%)</span><input type="text" inputmode="decimal" data-pm="pct" value="'+esc(md.pct||'')+'" placeholder="0"></div></div><p class="sub" style="margin:0">A comissão é calculada sobre o valor vendido no mês. A venda vai para o vendedor escolhido na venda; se nada for escolhido, vai para o vendedor do cliente. A meta e a comissão de cada vendedor valem para qualquer mês.</p></div>':'';
   return pageHead('Metas e comissão',dono?'Acompanhe a loja e cada vendedor':'Seus números do mês',dono?'<div class="acts"><button class="btn primary" data-act="vdnovo">Cadastrar vendedor</button></div>':'<div class="acts"></div>')+'<div style="margin-bottom:14px">'+mesNav(m,'meta')+'</div>'+loja+
   '<div class="stack">'+(linhas||'<div class="empty">'+GLASSES+'<h3>Nenhum vendedor ainda</h3><p>Cadastre os vendedores, ligue os clientes a eles e acompanhe vendas e comissão.</p>'+(dono?'<div class="acts" style="justify-content:center"><button class="btn primary" data-act="vdnovo">Cadastrar vendedor</button></div>':'')+'</div>')+'</div>'+cfgBox;
+}
+/* pagamento parcial de conta */
+function sheetFinPag(s){
+  const x=finDoc().itens[s.id];if(!x||x.pago)return null;
+  const g=ui.pg||(ui.pg={modo:'total'});const t=todayStr();const par=g.modo==='parcial';const val=parseMoney(g.val||'');
+  const body='<p style="margin:0"><b>'+esc(x.desc)+'</b> · vence '+fmtDate(x.venc)+' · <b class="num">'+brl(x.valor)+'</b></p>'+
+   '<div class="filters" style="margin:0"><button class="fchip" data-act="pgmodo" data-m="total" aria-pressed="'+(!par)+'">Pagou tudo</button><button class="fchip" data-act="pgmodo" data-m="parcial" aria-pressed="'+par+'">Pagou só uma parte</button></div>'+
+   (par?'<div class="sec"><div class="grid2"><div class="field"><span>Valor pago agora</span><input id="pg-val" type="text" inputmode="decimal" placeholder="0,00" value="'+esc(g.val||'')+'" autocomplete="off"></div><div class="field"><span>Data do pagamento</span><input id="pg-dt" type="date" value="'+esc(g.dt||t)+'"></div></div>'+
+     '<div class="field"><span>Restante vence em</span><input id="pg-venc" type="date" value="'+esc(g.venc||addDays(t,15))+'"></div>'+
+     '<p class="hint" id="pg-rest">'+pgHint(val,x.valor,'da conta',' O restante fica como conta a pagar até a data combinada.')+'</p></div>'
+   :'<p class="sub" style="margin:0">A conta de '+brl(x.valor)+' fica marcada como paga hoje.</p>');
+  const foot=par?'<button class="btn primary" data-act="finparcial" data-id="'+x.id+'">Registrar pagamento parcial</button>':'<button class="btn primary" data-act="fintudo" data-id="'+x.id+'">Marcar como paga</button>';
+  return sheetShell('Pagar conta',body,foot);
 }
 /* cadastro de vendedor */
 function vdBlank(){return {id:'vd'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),nome:'',email:'',pct:'',meta:'',novo:true,sel:{},q:''}}
@@ -2286,6 +2299,19 @@ Object.assign(A,{
     for(let i=0;i<n;i++){const id=uid();doc.itens[id]={id:id,desc:D.desc.trim(),valor:valor,venc:fq==='semana'?addDays(D.venc,7*i):addMonths(D.venc,i),cat:D.cat,pago:false,pagoEm:null,grupo:grupo,freq:fq}}
     finSave();premLog('Conta lançada',D.desc.trim()+' · '+brl(valor)+(fq==='semana'?' · toda semana':fq==='mes'?' · todo mês':''));ui.fform=false;ui.ferr='';ui.fd=finBlank();ui.fm=D.venc.slice(0,7);render();toast(fq==='semana'?'Conta criada para as próximas 26 semanas':fq==='mes'?'Conta criada para os próximos 12 meses':'Conta salva')
   },
+  finpag(d){const x=finDoc().itens[d.id];if(!x||x.pago)return;ui.pg={modo:'total'};ui.sheet={kind:'finpag',id:x.id};renderSheet()},
+  fintudo(d){A.finpagar(d);ui.pg=null;ui.sheet=null;renderSheet()},
+  finparcial(d){const doc=finDoc();const x=doc.itens[d.id];if(!x||x.pago)return;
+    const val=parseMoney(($('#pg-val')||{}).value||''),dt=($('#pg-dt')||{}).value||'',venc=($('#pg-venc')||{}).value||'';
+    const ymd=z=>/^\d{4}-\d{2}-\d{2}$/.test(z);
+    if(!(val>0)||val>=x.valor){toast('Informe um valor menor que '+brl(x.valor));return}
+    if(!ymd(dt)){toast('Informe a data do pagamento');return}
+    if(!ymd(venc)||venc<dt){toast('A data do restante não pode ser antes do pagamento');return}
+    const resto=x.valor-val;const id=uid();
+    Object.assign(x,{parte:1,valor:val,pago:true,pagoEm:dt});
+    doc.itens[id]={id:id,desc:x.desc,valor:resto,venc:venc,cat:x.cat,pago:false,pagoEm:null,grupo:'',parte:2};
+    finSave();premLog('Pagamento parcial de conta',x.desc+' · '+brl(val)+' de '+brl(val+resto));ui.pg=null;ui.sheet=null;renderSheet();ui.fm=ui.fm||venc.slice(0,7);render();
+    toast('Pago '+brl(val)+'. Restante de '+brl(resto)+' vence em '+fmtDate(venc)+'.')},
   finpagar(d){const x=finDoc().itens[d.id];if(!x)return;x.pago=!x.pago;x.pagoEm=x.pago?todayStr():null;finSave();premLog(x.pago?'Conta paga':'Pagamento de conta desfeito',x.desc+' · '+brl(x.valor));render();toast(x.pago?'Conta marcada como paga':'Pagamento desfeito')},
   findel(d){if(ui.confirm!==d.id){ui.confirm=d.id;render();return}const x=finDoc().itens[d.id];if(x)premLog('Conta excluída',x.desc+' · '+brl(x.valor));delete finDoc().itens[d.id];finSave();ui.confirm='';render();toast('Conta excluída')},
   findelnext(d){const doc=finDoc();const x=doc.itens[d.id];if(!x)return;Object.keys(doc.itens).forEach(k=>{const y=doc.itens[k];if(y.grupo&&y.grupo===x.grupo&&y.venc>=x.venc)delete doc.itens[k]});finSave();premLog('Contas excluídas',x.desc+' · esta e as próximas');ui.confirm='';render();toast('Contas excluídas')},
