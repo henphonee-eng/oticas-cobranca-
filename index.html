@@ -3,13 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#00348A">
-<link rel="manifest" href="/manifest.webmanifest">
-<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
-<meta name="apple-mobile-web-app-title" content="Cobranças">
+<script>/* o iPhone lê estes dados ao salvar na tela de início: o /adm precisa do seu próprio ícone, nome e endereço */
+(function(){var a=/^\/adm(\/|$)/.test(location.pathname);
+document.write('<meta name="theme-color" content="'+(a?'#191A23':'#00348A')+'">'+
+'<link rel="manifest" href="'+(a?'/adm.webmanifest':'/manifest.webmanifest')+'">'+
+'<link rel="apple-touch-icon" href="'+(a?'/icons/adm-apple-touch-icon.png':'/icons/apple-touch-icon.png')+'">'+
+'<meta name="apple-mobile-web-app-title" content="'+(a?'Adm Óticas':'Cobranças')+'">'+
+'<title>'+(a?'Adm Óticas':'Cobranças')+'</title>')})();</script>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<title>Cobranças</title>
 <meta name="robots" content="noindex,nofollow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -550,7 +552,7 @@ html.adm .msum.rec .ms:first-child b{color:var(--lime)}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 'use strict';
-window.addEventListener('error',function(e){try{var f=document.getElementById('fatal');f.style.display='block';f.textContent='Erro no sistema: '+(e.message||'desconhecido')+' — recarregue a página (Ctrl+F5).'}catch(_){}});
+window.addEventListener('error',function(e){if(!e.filename||e.message==='Script error.'||(e.filename.indexOf(location.origin)!==0)){try{console.warn('erro externo ignorado:',e.message)}catch(_){}return}try{var f=document.getElementById('fatal');f.style.display='block';f.textContent='Erro no sistema: '+(e.message||'desconhecido')+' — recarregue a página (Ctrl+F5).'}catch(_){}});
 window.addEventListener('unhandledrejection',function(e){try{var f=document.getElementById('fatal');f.style.display='block';f.textContent='Erro: '+((e.reason&&e.reason.message)||e.reason||'falha')+' — recarregue a página.'}catch(_){}});
 //#PURE-START
 const pad=n=>String(n).padStart(2,'0');
