@@ -907,7 +907,7 @@ async function logout(msg,silent){
 setInterval(()=>{if(auth!=='ok')return;const m=+cfg().autolock;if(m>0&&Date.now()-last>m*60000)logout('Sessão encerrada por inatividade.')},20000);
 
 /* ---------- modelo ---------- */
-function makeCliente(o){return {receitas:(o.receitas||[]).filter(r=>!receitaVazia(r)),id:uid(),nome:String(o.nome||'').trim(),cpf:maskCpf(o.cpf),whatsapp:maskTel(o.whatsapp),endereco:String(o.endereco||'').trim(),vendedorId:o.vendedorId||'',nascimento:o.nascimento||'',obs:String(o.obs||'').trim(),criadoEm:Date.now(),bvEm:null}}
+function makeCliente(o){const c={receitas:(o.receitas||[]).filter(r=>!receitaVazia(r)),id:uid(),nome:String(o.nome||'').trim(),cpf:maskCpf(o.cpf),whatsapp:maskTel(o.whatsapp),endereco:String(o.endereco||'').trim(),vendedorId:o.vendedorId||'',nascimento:o.nascimento||'',obs:String(o.obs||'').trim(),criadoEm:Date.now(),bvEm:null};premCliOrigem(c);return c}
 const cpfDup=(cpf,exceptId)=>{const d=digits(cpf);if(d.length!==11)return null;return Object.values(S.clientes).find(c=>c.id!==exceptId&&digits(c.cpf)===d)||null};
 function makeVenda(clienteId,d){
   const c=calcVenda(d.itens,d.jurosVenda,d.entrada);
@@ -1182,7 +1182,7 @@ function viewPainel(){
   const ap=aniPend(),rvn=revisoes().filter(x=>!x.c.revEm).length;
   const HEART='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>';
   const rel=(ap.length||rvn)?'<button class="alert info" role="status" data-act="tab" data-t="relacao">'+HEART+'<div><b>Relacionamento: '+[ap.length?plural(ap.length,'aniversariante hoje','aniversariantes hoje'):'',rvn?plural(rvn,'cliente para revisar o grau','clientes para revisar o grau'):''].filter(Boolean).join(' · ')+'</b><span>'+(ap.length?esc(ap.slice(0,3).map(x=>firstName(x.c.nome)).join(', '))+' · ':'')+'toque para mandar a mensagem</span></div></button>':'';
-  return pageHead('Painel',dia,'<div class="acts" style="align-items:center">'+eyeBtn()+'<button class="btn primary" data-act="novavenda">Nova venda</button></div>')+
+  return pageHead('Painel',dia,'<div class="acts" style="align-items:center">'+eyeBtn()+'<button class="btn primary" data-act="novavenda">Nova venda</button></div>')+premPainelVend()+
   (noSales?'<div class="empty" style="margin-bottom:18px">'+GLASSES+'<h3>Nenhuma venda registrada ainda</h3><p>Registre a primeira venda parcelada. Os números do dia e os vencimentos aparecem aqui.</p><div class="acts" style="justify-content:center"><button class="btn primary" data-act="novavenda">Nova venda</button><button class="btn" data-act="demo">Ver com exemplos</button></div></div>':'')+
   '<div class="kpis">'+
   '<div class="kpi lead"><small>Entrou hoje</small><b>'+brl(sumV(recHoje))+'</b><span>'+plural(recHoje.length,'recebimento','recebimentos')+'</span></div>'+
@@ -1849,8 +1849,8 @@ function baixarPdf(id){
 }
 
 /* ---------- OS (ordem de serviço) ---------- */
-const rxNum=x=>{const n=parseFloat(String(x||'').replace(',','.'));return isNaN(n)?null:n};
-const rxFmt=n=>(n>0?'+':'')+n.toFixed(2).replace('.',',');
+const osNum=x=>{const n=parseFloat(String(x||'').replace(',','.'));return isNaN(n)?null:n};
+const osFmt=n=>(n>0?'+':'')+n.toFixed(2).replace('.',',');
 function osNumero(v){const ids=Object.values(S.vendas).sort((a,b)=>String(a.data||'').localeCompare(String(b.data||''))||(+a.criadoEm||0)-(+b.criadoEm||0)||a.id.localeCompare(b.id)).map(x=>x.id);return String(ids.indexOf(v.id)+1).padStart(4,'0')}
 function osBase(v){
   if(v.os)return JSON.parse(JSON.stringify(v.os));
@@ -1858,8 +1858,8 @@ function osBase(v){
   const e=()=>({esf:'',cil:'',eixo:''}),o={num:osNumero(v),longe:{od:e(),oe:e()},perto:{od:e(),oe:e()},dpL:'',altL:'',dpP:'',altP:'',tipo:'',cor:''};
   if(r){
     ['od','oe'].forEach(k=>{const l=r[k]||{};o.longe[k]={esf:l.esf||'',cil:l.cil||'',eixo:l.eixo||''};
-      const a=rxNum(r.adicao),en=rxNum(l.esf);
-      if(a!==null&&en!==null)o.perto[k]={esf:rxFmt(en+a),cil:l.cil||'',eixo:l.eixo||''}});
+      const a=osNum(r.adicao),en=osNum(l.esf);
+      if(a!==null&&en!==null)o.perto[k]={esf:osFmt(en+a),cil:l.cil||'',eixo:l.eixo||''}});
     if(r.dnp)o.dpL=r.dnp;
   }
   const ln=(v.itens||[]).filter(i=>i.tipo==='lente'||i.lenteId).map(i=>i.nome).filter(Boolean);
@@ -2245,12 +2245,13 @@ function sheetFinPag(s){
   return sheetShell('Pagar conta',body,foot);
 }
 /* cadastro de vendedor */
-function vdBlank(){return {id:'vd'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),nome:'',email:'',pct:'',meta:'',novo:true,sel:{},q:''}}
+function vdBlank(){return {sal:'',id:'vd'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),nome:'',email:'',pct:'',meta:'',novo:true,sel:{},q:''}}
 function sheetVend(){
   const D=ui.vd;if(!D)return null;const md=metaDoc();
   const cs=Object.values(S.clientes).sort((a,b)=>a.nome.localeCompare(b.nome));
   const body='<div class="sec"><div class="field"><span>Nome do vendedor</span><input type="text" id="vd-nome" value="'+esc(D.nome)+'" autocomplete="off" placeholder="Ex.: Carla"></div>'+
    '<div class="field"><span>E-mail de acesso (se ele entra no sistema)</span><input type="email" id="vd-email" value="'+esc(D.email)+'" autocomplete="off" placeholder="opcional"><span class="hint">Com o e-mail, as vendas que ele registrar entram nos números dele sozinhas.</span></div>'+
+   '<div class="field"><span>Salário fixo por mês (R$)</span><input type="text" inputmode="decimal" id="vd-sal" value="'+esc(D.sal||'')+'" placeholder="opcional"><span class="hint">O vendedor vê o salário do mês, da semana e a comissão dele no painel inicial.</span></div>'+
    '<div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))"><div class="field"><span>Comissão (%)</span><input type="text" inputmode="decimal" id="vd-pct" value="'+esc(D.pct)+'" placeholder="padrão da loja"></div><div class="field"><span>Valor por venda (R$)</span><input type="text" inputmode="decimal" id="vd-fixo" value="'+esc(D.fixo||'')+'" placeholder="padrão da loja"></div><div class="field"><span>Meta do mês (R$)</span><input type="text" inputmode="decimal" id="vd-meta" value="'+esc(D.meta)+'" placeholder="0,00"></div></div><p class="hint" style="margin:0">Comissão: porcentagem do valor vendido, valor fixo por venda, ou os dois somados.</p></div>'+
    '<div class="sec"><h3>Clientes que vieram por ele</h3><div class="field"><input type="search" id="vd-q" placeholder="Buscar cliente" autocomplete="off"></div>'+
    '<p class="hint" id="vd-cont" style="margin:0">'+plural(Object.keys(D.sel).filter(k=>D.sel[k]).length,'cliente selecionado','clientes selecionados')+'</p>'+
@@ -2260,7 +2261,7 @@ function sheetVend(){
 }
 document.addEventListener('input',e=>{const t=e.target;if(!t||!t.id||!ui.vd)return;
   if(t.id==='vd-q'){const q=t.value.trim().toLowerCase();document.querySelectorAll('#vd-lista [data-n]').forEach(l=>{l.hidden=!!q&&l.dataset.n.indexOf(q)<0})}
-  else if(t.id==='vd-nome')ui.vd.nome=t.value;else if(t.id==='vd-email')ui.vd.email=t.value;else if(t.id==='vd-pct')ui.vd.pct=t.value;else if(t.id==='vd-fixo')ui.vd.fixo=t.value;else if(t.id==='vd-meta')ui.vd.meta=t.value});
+  else if(t.id==='vd-nome')ui.vd.nome=t.value;else if(t.id==='vd-email')ui.vd.email=t.value;else if(t.id==='vd-pct')ui.vd.pct=t.value;else if(t.id==='vd-fixo')ui.vd.fixo=t.value;else if(t.id==='vd-sal')ui.vd.sal=t.value;else if(t.id==='vd-meta')ui.vd.meta=t.value});
 document.addEventListener('change',e=>{const t=e.target;if(!t||!t.dataset||t.dataset.vdsel===undefined||!ui.vd)return;ui.vd.sel[t.dataset.vdsel]=t.checked;const h=$('#vd-cont');if(h)h.textContent=plural(Object.keys(ui.vd.sel).filter(k=>ui.vd.sel[k]).length,'cliente selecionado','clientes selecionados')});
 /* ganchos: escolher o vendedor na venda e na ficha do cliente */
 function vendOpts(sel,auto){const o=vendList();return (auto?'<option value="">'+auto+'</option>':'<option value="">Nenhum</option>')+o.map(x=>'<option value="'+x.id+'"'+(sel===x.id?' selected':'')+'>'+esc(x.nome)+'</option>').join('')+(auto?'<option value="-"'+(sel==='-'?' selected':'')+'>Sem vendedor</option>':'')}
@@ -2276,13 +2277,13 @@ function vdRemove(id){
 Object.assign(A,{
   vdnovo(){ui.vd=vdBlank();ui.confirm='';ui.sheet={kind:'vendedor',id:ui.vd.id};renderSheet()},
   vdedit(d){const md=metaDoc();const x=(md.vends||{})[d.k];if(!x)return;const c=md.vend[d.k]||{};const sel={};Object.values(S.clientes).forEach(cl=>{if(cl.vendedorId===x.id)sel[cl.id]=true});
-    ui.vd={id:x.id,nome:x.nome,email:x.email||'',pct:c.pct===undefined?'':String(c.pct),fixo:(c.fixo===undefined||c.fixo==='')?'':centsToStr(c.fixo),meta:c.meta?centsToStr(c.meta):'',novo:false,sel:sel,q:''};ui.confirm='';ui.sheet={kind:'vendedor',id:x.id};renderSheet()},
+    ui.vd={sal:c.sal?centsToStr(c.sal):'',id:x.id,nome:x.nome,email:x.email||'',pct:c.pct===undefined?'':String(c.pct),fixo:(c.fixo===undefined||c.fixo==='')?'':centsToStr(c.fixo),meta:c.meta?centsToStr(c.meta):'',novo:false,sel:sel,q:''};ui.confirm='';ui.sheet={kind:'vendedor',id:x.id};renderSheet()},
   vdsalvar(){
     const D=ui.vd;if(!D)return;const md=metaDoc();if(!md.vends)md.vends={};
     if(!D.nome.trim()){toast('Informe o nome do vendedor');return}
     const em=D.email.trim().toLowerCase();if(em&&Object.values(md.vends).some(x=>x.id!==D.id&&String(x.email||'').toLowerCase()===em)){toast('Já existe vendedor com este e-mail');return}
     md.vends[D.id]={id:D.id,nome:D.nome.trim(),email:em};
-    const r=md.vend[D.id]||(md.vend[D.id]={});r.pct=D.pct.trim();r.fixo=String(D.fixo||'').trim()===''?'':parseMoney(D.fixo);r.meta=parseMoney(D.meta);
+    const r=md.vend[D.id]||(md.vend[D.id]={});r.pct=D.pct.trim();r.fixo=String(D.fixo||'').trim()===''?'':parseMoney(D.fixo);r.meta=parseMoney(D.meta);r.sal=parseMoney(D.sal||'');
     const ch=[];Object.values(S.clientes).forEach(c=>{const quer=!!D.sel[c.id];if(quer&&c.vendedorId!==D.id){c.vendedorId=D.id;ch.push(c.id)}else if(!quer&&c.vendedorId===D.id){c.vendedorId='';ch.push(c.id)}});
     persist('config','metas');ch.forEach(id=>persist('clientes',id));
     premLog(D.novo?'Vendedor cadastrado':'Vendedor editado',D.nome.trim()+' · '+plural(Object.keys(D.sel).filter(k=>D.sel[k]).length,'cliente','clientes'));
@@ -2501,6 +2502,29 @@ Object.assign(A,{
   acpadrao(d){acSet(d.e,AC_DEF);render();toast('Acessos voltaram ao padrão')},
   actudo(d){acSet(d.e,TABS.map(x=>x[0]));render();toast('Todas as telas liberadas')}
 });
+
+/* vendedor: cliente cadastrado por ele já entra como dele; painel com salário e comissão */
+function premCliOrigem(c){
+  if(!OTICA||ROLE==='dono'||!modOn('metas'))return;
+  const e=meEmail();if(!e)return;c.por=e;
+  if(!c.vendedorId){const hit=vendList().find(x=>x.email&&String(x.email).toLowerCase()===e);if(hit)c.vendedorId=hit.id}
+}
+function premPainelVend(){
+  if(!OTICA||ROLE==='dono'||!modOn('metas'))return '';
+  const keys=meKeys(),m=todayStr().slice(0,7);
+  const r=metaLinhas(m).find(x=>keys.includes(x.k))||{k:keys[0],n:0,tot:0,com:0,vs:[],pct:0,fixo:0};
+  const c=(metaDoc().vend[r.k])||{};const sal=c.sal||0;
+  const sem=Math.round(sal*12/52);
+  const d=new Date(todayStr()+'T12:00:00');const dow=(d.getDay()+6)%7;const ini=addDays(todayStr(),-dow),fim=addDays(ini,6);
+  const comSem=(r.vs||[]).filter(v=>v.data>=ini&&v.data<=fim).reduce((a,v)=>a+comVenda(v,r),0);
+  const cell=(l,v,sub)=>'<div class="kpi"><small>'+l+'</small><b>'+v+'</b>'+(sub?'<span>'+sub+'</span>':'')+'</div>';
+  return '<div class="sh" style="margin-top:0"><h2>Meus ganhos</h2></div><div class="kpis" style="margin-bottom:16px">'+
+    cell('Salário por mês',sal?brl(sal):'Não informado',sal?'fixo':'peça ao dono')+
+    cell('Salário por semana',sal?brl(sem):'-',sal?'média da semana':'')+
+    cell('Comissão do mês',brl(r.com),plural(r.n,'venda','vendas')+(comTxt(r)?comTxt(r):''))+
+    cell('Comissão da semana',brl(comSem),'segunda a domingo')+
+    cell('Total previsto no mês',brl(sal+r.com),'salário + comissão')+'</div>';
+}
 /* ---------- PREMIUM-FIM ---------- */
 /* ---------- ADMIN-INICIO (somente sistema real) ---------- */
 const ADM={list:[],cob:[],cfg:{},loaded:false,busy:false,err:'',draft:null,logoB:null,logoW:null,saving:false,cred:null};

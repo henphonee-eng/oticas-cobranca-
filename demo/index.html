@@ -769,7 +769,7 @@ function computeAuth(){auth='ok'}
 function renderGate(){const g=$('#gate');g.classList.remove('on');g.innerHTML=''}
 const gateErr=()=>{};
 const hexRgb=h=>{const m=/^#?([0-9a-f]{6})$/i.exec(h||'');if(!m)return[4,134,222];const n=parseInt(m[1],16);return[n>>16&255,n>>8&255,n&255]};
-const modOn=()=>false;function premLock(){return ''}function premView(){return ''}function premCtx(){}function premFicha(){return ''}function premAjustes(){return ''}function premInit(){}function premLog(){}function premPix(){return ''}function premVendSale(){return ''}function premAcTabs(){return null}function premVendCli(){return ''}function sheetVend(){return null}function sheetFinPag(){return null}function sheetHist(){return null}
+const modOn=()=>false;function premLock(){return ''}function premView(){return ''}function premCtx(){}function premFicha(){return ''}function premAjustes(){return ''}function premInit(){}function premLog(){}function premPix(){return ''}function premVendSale(){return ''}function premAcTabs(){return null}function premCliOrigem(){}function premPainelVend(){return ''}function premVendCli(){return ''}function sheetVend(){return null}function sheetFinPag(){return null}function sheetHist(){return null}
 function brandAdm(){}function viewAdmin(){return ''}function equipeCard(){return ''}function eqLoad(){}function admLoad(){}function sheetAdm(){return null}function sheetAdmOk(){return null}
 async function logout(){}
 let DEMO_NOME='Sua Ótica Aqui',DEMO_PERSONAL=false;
@@ -786,7 +786,7 @@ const ctaHref=()=>'https://wa.me/'+CTA_NUM+'?text='+encodeURIComponent((DEMO_PER
 const demoNote=()=>(!ui.dhHide&&ui.tab==='painel')?'':'<div class="demo-note"><b>Demonstração</b><span>Você está vendo dados de exemplo. Pode clicar em tudo, cadastrar clientes e simular vendas. Nada fica salvo: ao recarregar a página, volta ao início.</span><a class="btn wa sm" target="_blank" rel="noopener" href="'+ctaHref()+'">Quero para minha ótica</a></div>';
 
 /* ---------- modelo ---------- */
-function makeCliente(o){return {receitas:(o.receitas||[]).filter(r=>!receitaVazia(r)),id:uid(),nome:String(o.nome||'').trim(),cpf:maskCpf(o.cpf),whatsapp:maskTel(o.whatsapp),endereco:String(o.endereco||'').trim(),vendedorId:o.vendedorId||'',nascimento:o.nascimento||'',obs:String(o.obs||'').trim(),criadoEm:Date.now(),bvEm:null}}
+function makeCliente(o){const c={receitas:(o.receitas||[]).filter(r=>!receitaVazia(r)),id:uid(),nome:String(o.nome||'').trim(),cpf:maskCpf(o.cpf),whatsapp:maskTel(o.whatsapp),endereco:String(o.endereco||'').trim(),vendedorId:o.vendedorId||'',nascimento:o.nascimento||'',obs:String(o.obs||'').trim(),criadoEm:Date.now(),bvEm:null};premCliOrigem(c);return c}
 const cpfDup=(cpf,exceptId)=>{const d=digits(cpf);if(d.length!==11)return null;return Object.values(S.clientes).find(c=>c.id!==exceptId&&digits(c.cpf)===d)||null};
 function makeVenda(clienteId,d){
   const c=calcVenda(d.itens,d.jurosVenda,d.entrada);
@@ -1032,7 +1032,7 @@ function viewPainel(){
   const ap=aniPend(),rvn=revisoes().filter(x=>!x.c.revEm).length;
   const HEART='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>';
   const rel=(ap.length||rvn)?'<button class="alert info" role="status" data-act="tab" data-t="relacao">'+HEART+'<div><b>Relacionamento: '+[ap.length?plural(ap.length,'aniversariante hoje','aniversariantes hoje'):'',rvn?plural(rvn,'cliente para revisar o grau','clientes para revisar o grau'):''].filter(Boolean).join(' · ')+'</b><span>'+(ap.length?esc(ap.slice(0,3).map(x=>firstName(x.c.nome)).join(', '))+' · ':'')+'toque para mandar a mensagem</span></div></button>':'';
-  return demoHero()+pageHead('Painel',dia,'<div class="acts" style="align-items:center">'+eyeBtn()+'<button class="btn primary" data-act="novavenda">Nova venda</button></div>')+
+  return demoHero()+pageHead('Painel',dia,'<div class="acts" style="align-items:center">'+eyeBtn()+'<button class="btn primary" data-act="novavenda">Nova venda</button></div>')+premPainelVend()+
   (noSales?'<div class="empty" style="margin-bottom:18px">'+GLASSES+'<h3>Nenhuma venda registrada ainda</h3><p>Registre a primeira venda parcelada. Os números do dia e os vencimentos aparecem aqui.</p><div class="acts" style="justify-content:center"><button class="btn primary" data-act="novavenda">Nova venda</button><button class="btn" data-act="demo">Ver com exemplos</button></div></div>':'')+
   '<div class="kpis">'+
   '<div class="kpi lead"><small>Entrou hoje</small><b>'+brl(sumV(recHoje))+'</b><span>'+plural(recHoje.length,'recebimento','recebimentos')+'</span></div>'+
@@ -1693,8 +1693,8 @@ function baixarPdf(id){
 }
 
 /* ---------- OS (ordem de serviço) ---------- */
-const rxNum=x=>{const n=parseFloat(String(x||'').replace(',','.'));return isNaN(n)?null:n};
-const rxFmt=n=>(n>0?'+':'')+n.toFixed(2).replace('.',',');
+const osNum=x=>{const n=parseFloat(String(x||'').replace(',','.'));return isNaN(n)?null:n};
+const osFmt=n=>(n>0?'+':'')+n.toFixed(2).replace('.',',');
 function osNumero(v){const ids=Object.values(S.vendas).sort((a,b)=>String(a.data||'').localeCompare(String(b.data||''))||(+a.criadoEm||0)-(+b.criadoEm||0)||a.id.localeCompare(b.id)).map(x=>x.id);return String(ids.indexOf(v.id)+1).padStart(4,'0')}
 function osBase(v){
   if(v.os)return JSON.parse(JSON.stringify(v.os));
@@ -1702,8 +1702,8 @@ function osBase(v){
   const e=()=>({esf:'',cil:'',eixo:''}),o={num:osNumero(v),longe:{od:e(),oe:e()},perto:{od:e(),oe:e()},dpL:'',altL:'',dpP:'',altP:'',tipo:'',cor:''};
   if(r){
     ['od','oe'].forEach(k=>{const l=r[k]||{};o.longe[k]={esf:l.esf||'',cil:l.cil||'',eixo:l.eixo||''};
-      const a=rxNum(r.adicao),en=rxNum(l.esf);
-      if(a!==null&&en!==null)o.perto[k]={esf:rxFmt(en+a),cil:l.cil||'',eixo:l.eixo||''}});
+      const a=osNum(r.adicao),en=osNum(l.esf);
+      if(a!==null&&en!==null)o.perto[k]={esf:osFmt(en+a),cil:l.cil||'',eixo:l.eixo||''}});
     if(r.dnp)o.dpL=r.dnp;
   }
   const ln=(v.itens||[]).filter(i=>i.tipo==='lente'||i.lenteId).map(i=>i.nome).filter(Boolean);
