@@ -1578,20 +1578,23 @@ async function admLoad(force){
     if(lr.error)throw lr.error;
     const extra={};((or&&or.data)||[]).forEach(o=>{extra[o.id]=o});
     ADM.list=(lr.data||[]).map(o=>Object.assign({},extra[o.id]||{},o));
-    ADM.cob=(cr&&cr.data)||[];ADM.cfg={};((gr&&gr.data)||[]).forEach(g=>{ADM.cfg[g.chave]=g.valor});
+    ADM.cob=((cr&&cr.data)||[]).filter(admVisivel);ADM.cfg={};((gr&&gr.data)||[]).forEach(g=>{ADM.cfg[g.chave]=g.valor});
     ADM.err=(cr&&cr.error)?'Não foi possível carregar as cobranças: '+errTxt(cr.error):'';
     await admGerar();
   }catch(e){ADM.err='Não foi possível carregar as óticas: '+errTxt(e)}
   ADM.busy=false;ADM.loaded=true;render();
 }
 /* cria as mensalidades que ainda não existem: a 1ª vence 30 dias após o pagamento da implantação, depois uma por mês */
+/* último dia do mês atual: mensalidades de meses futuros não aparecem */
+function admFimMes(){const t=todayStr();return addDays(addMonths(t.slice(0,7)+'-01',1),-1)}
+const admVisivel=c=>c.tipo!=='mensalidade'||c.pago||c.venc<=admFimMes();
 function admBase(o){
   const impl=ADM.cob.find(c=>c.otica_id===o.id&&c.tipo==='implementacao');
   if(impl)return impl.pago?String(impl.pago_em||impl.venc).slice(0,10):null;
   return String(o.impl_data||o.criada_em||'').slice(0,10)||null;
 }
 async function admGerar(){
-  const hoje=todayStr(),rows=[],fim=addMonths(hoje,1);
+  const hoje=todayStr(),rows=[],fim=admFimMes();
   ADM.list.forEach(o=>{
     if(!o.ativa||!(+o.mensalidade>0))return;
     const base=admBase(o);if(!base)return;
@@ -1607,7 +1610,7 @@ async function admGerar(){
   if(!rows.length)return;
   const r=await sb.from('adm_cobrancas').upsert(rows,{onConflict:'otica_id,tipo,parcela',ignoreDuplicates:true});
   if(r.error)throw r.error;
-  const c=await sb.from('adm_cobrancas').select('*');if(!c.error)ADM.cob=c.data||[];
+  const c=await sb.from('adm_cobrancas').select('*');if(!c.error)ADM.cob=(c.data||[]).filter(admVisivel);
 }
 const admLink=o=>(o.dominios&&o.dominios.length)?'https://'+o.dominios[0]+'/':location.origin+'/?o='+encodeURIComponent(o.slug);
 const admOtica=id=>ADM.list.find(o=>o.id===id)||{nome:'Ótica removida'};
@@ -1672,7 +1675,7 @@ function menRow(c){
   if(MEN.edit===c.id){
     return '<article class="row"><div class="row-main"><b>'+esc(o.nome)+'</b><div class="meta">'+esc(cap(admDesc(c)))+'</div>'+
       '<div class="grid2" style="margin-top:8px"><div class="field"><span>Vencimento</span><input type="date" id="men-venc" value="'+esc(c.venc)+'"></div><div class="field"><span>Valor (R$)</span><input type="text" inputmode="decimal" id="men-valor" value="'+esc(centsToStr(c.valor))+'"></div></div>'+
-      (c.tipo==='mensalidade'?'<label class="meta" style="display:flex;gap:8px;align-items:center;margin-top:6px"><input type="checkbox" id="men-seguintes" checked> Mover também as próximas mensalidades em aberto desta ótica</label>':'')+
+      (c.tipo==='mensalidade'?'<p class="meta" style="margin-top:6px">As próximas mensalidades desta ótica vão seguir o mesmo dia.</p>':'')+
       '</div><div class="row-side"><div class="acts"><button class="btn sm primary" data-act="mensave" data-id="'+c.id+'"'+(MEN.saving?' disabled':'')+'>Salvar</button><button class="btn sm ghost" data-act="menedit" data-id="">Cancelar</button></div></div></article>';
   }
   const html=admCobRow(c);
@@ -1694,7 +1697,7 @@ function viewMensal(){
     const nm=parseYmd(k+'-01').toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
     h+='<div class="sh"><h2>'+esc(cap(nm))+'</h2><span class="sub num">'+brl(sum(grp[k]))+'</span></div><div class="stack">'+grp[k].map(menRow).join('')+'</div>';
   });
-  return h+'<p class="sub" style="margin-top:14px">A 1ª mensalidade vence 30 dias depois do pagamento da implantação. As próximas são criadas sozinhas, uma por mês.</p>';
+  return h+'<p class="sub" style="margin-top:14px">A 1ª mensalidade vence 30 dias depois do pagamento da implantação. Cada mensalidade só aparece quando o mês dela começa, para as óticas ativas.</p>';
 }
 const menActs={
   menf(d){MEN.f=d.f;MEN.edit=null;render()},
@@ -1731,7 +1734,7 @@ function sheetAdm(){
     '<div class="grid2"><div class="field"><span>Nome do responsável</span><input type="text" data-abind="dono_nome" value="'+esc(D.dono_nome)+'"></div><div class="field"><span>WhatsApp do responsável</span><input type="text" inputmode="tel" data-mask="tel" data-abind="whatsapp_dono" value="'+esc(D.whatsapp_dono)+'"></div></div>'+
     '<div class="field"><span>Mensalidade (R$)</span><input type="text" inputmode="decimal" data-abind="mensalidade" value="'+esc(D.mensalidade)+'" placeholder="0,00"></div>'+
     '<div class="grid2"><div class="field"><span>Implantação (R$)</span><input type="text" inputmode="decimal" data-abind="impl_valor" value="'+esc(D.impl_valor)+'" placeholder="0,00"></div><div class="field"><span>Data da implantação</span><input type="date" data-abind="impl_data" value="'+esc(D.impl_data)+'"></div></div>'+
-    '<p class="sub" style="margin:0">A 1ª mensalidade vence 30 dias depois que a implantação for paga e as outras, uma por mês. Se precisar, ajuste qualquer data na aba Mensalidades.</p>'+
+    '<p class="sub" style="margin:0">A 1ª mensalidade vence 30 dias depois que a implantação for paga; as outras aparecem uma por mês, quando o mês começa. Se precisar, ajuste qualquer data na aba Mensalidades.</p>'+
     (novo?'<div class="field"><span>Identificador do link (letras minúsculas, números e hífen)</span><input type="text" data-abind="slug" value="'+esc(D.slug)+'" autocapitalize="none" placeholder="oticaexemplo"></div>':'<div class="field"><span>Identificador</span><input type="text" value="'+esc(D.slug)+'" disabled></div>')+
     '<div class="grid2"><div class="field"><span>Cor principal</span><input type="color" data-abind="cor1" value="'+esc(D.cor1)+'"></div><div class="field"><span>Cor do menu e botões</span><input type="color" data-abind="cor2" value="'+esc(D.cor2)+'"></div></div>'+
     '<div class="field"><span>Endereços próprios (opcional, separados por vírgula)</span><input type="text" data-abind="dominios" value="'+esc(D.dominios)+'" placeholder="cobranca.minhaotica.com.br" autocapitalize="none"></div>'+
