@@ -357,7 +357,7 @@ const $=s=>document.querySelector(s);
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 const cfg=()=>Object.assign({nome:(OTICA&&OTICA.nome)||'Ótica',whatsapp:'',endereco:'',pix:'',autolock:30,tpl:{}},S.config.otica||{});
 const tpl=k=>{const c=cfg();return (c.tpl&&c.tpl[k])||DEFAULT_TPL[k]};
-const isMobile=/Android|iPhone|iPad|iPod|Mobi/i.test(navigator.userAgent);
+const isMobile=/Android|iPhone|iPad|iPod|Mobi|CriOS|FxiOS/i.test(navigator.userAgent)||(navigator.maxTouchPoints>1&&/Macintosh/.test(navigator.userAgent))||(window.matchMedia&&window.matchMedia('(pointer:coarse)').matches&&!window.matchMedia('(hover:hover)').matches);
 const mqWide=window.matchMedia('(min-width:900px)');
 const waLink=(raw,text)=>{const n=waNumber(raw);return isMobile?'whatsapp://send?phone='+n+'&text='+encodeURIComponent(text):'https://web.whatsapp.com/send?phone='+n+'&text='+encodeURIComponent(text)};
 const WAT=isMobile?'':' target="_blank" rel="noopener"';
