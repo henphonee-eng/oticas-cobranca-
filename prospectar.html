@@ -140,20 +140,21 @@ async function upd(id,patch){
 function hist(l,txt){return [...(l.historico||[]),{em:new Date().toISOString(),txt}]}
 
 /* ---------- busca no Google ---------- */
+function noCrm(){const ids=new Set(),fones=new Set();st.leads.forEach(l=>{if(l.place_id)ids.add(l.place_id);[l.telefone,l.whatsapp].forEach(f=>{const d=brNumber(f);if(d)fones.add(d)})});return p=>ids.has(p.place_id)||(p.telefone&&fones.has(brNumber(p.telefone)))}
 async function buscar(more){
   if(st.busy)return;st.busy=true;st.serr='';if(!more){st.res=[];st.next=null;st.sel={}}render();
   try{
     const {data,error}=await sb.functions.invoke('places-search',{body:{query:st.q,pageToken:more?st.next:undefined}});
     if(error){let m=error.message;try{const b=await error.context.json();m=b.error||m}catch(e){}throw new Error(m)}
     st.noKey=false;st.res=st.res.concat(data.places||[]);st.next=data.nextPageToken;
-    const ids=new Set(st.leads.map(l=>l.place_id));
-    (data.places||[]).forEach(p=>{if(!ids.has(p.place_id)&&tipoFone(p.telefone)==='cel'&&!p.site)st.sel[p.place_id]=true});
+    const ja=noCrm();
+    (data.places||[]).forEach(p=>{if(!ja(p)&&tipoFone(p.telefone)==='cel'&&!p.site)st.sel[p.place_id]=true});
   }catch(e){if(/SEM_CHAVE/.test(e.message))st.noKey=true;else st.serr=e.message}
   st.busy=false;render();
 }
 async function addSel(){
-  const ids=new Set(st.leads.map(l=>l.place_id));
-  const rows=st.res.filter(p=>st.sel[p.place_id]&&!ids.has(p.place_id)).map(p=>({place_id:p.place_id,nome:p.nome,telefone:p.telefone,whatsapp:tipoFone(p.telefone)==='cel'?p.telefone:null,endereco:p.endereco,cidade:p.cidade,site:p.site||null,maps_url:p.maps_url,nota:p.nota,avaliacoes:p.avaliacoes,historico:[{em:new Date().toISOString(),txt:'Adicionada pela busca "'+st.q+'"'}]}));
+  const ja=noCrm();
+  const rows=st.res.filter(p=>st.sel[p.place_id]&&!ja(p)).map(p=>({place_id:p.place_id,nome:p.nome,telefone:p.telefone,whatsapp:tipoFone(p.telefone)==='cel'?p.telefone:null,endereco:p.endereco,cidade:p.cidade,site:p.site||null,maps_url:p.maps_url,nota:p.nota,avaliacoes:p.avaliacoes,historico:[{em:new Date().toISOString(),txt:'Adicionada pela busca "'+st.q+'"'}]}));
   if(!rows.length)return toast('Marque pelo menos uma ótica nova');
   const r=await sb.from('prosp_leads').upsert(rows,{onConflict:'place_id',ignoreDuplicates:true}).select();
   if(r.error)return toast('Erro: '+r.error.message);
@@ -191,18 +192,18 @@ function render(){
 function gate(){return '<div class="gate"><div class="card"><h1>Prospecção</h1><p class="muted small" style="margin:0">Entre com o mesmo e-mail e senha do painel administrativo.</p><input type="email" id="g-e" placeholder="E-mail" autocomplete="username"><input type="password" id="g-p" placeholder="Senha" autocomplete="current-password"><div class="err" id="g-err"></div><button class="btn pri" data-a="entrar">Entrar</button></div></div>'}
 
 function vBuscar(){
-  const ids=new Set(st.leads.map(l=>l.place_id));
+  const ja=noCrm(),novos=st.res.filter(p=>!ja(p)),ocultas=st.res.length-novos.length;
   let h='<div class="card"><div class="row"><input type="text" id="q" class="grow" value="'+esc(st.q)+'" placeholder="ex.: óticas em Olinda, óticas Boa Viagem Recife"><button class="btn pri" data-a="buscar" '+(st.busy?'disabled':'')+'>'+(st.busy?'Buscando…':'Buscar')+'</button></div>'+
     '<p class="muted small" style="margin:8px 0 0">Dica: busque por bairro ("óticas em Casa Amarela Recife") para achar lojas que a busca da cidade inteira não mostra.</p></div>';
   if(st.noKey)h+='<div class="note warn sec"><b>Falta a chave do Google.</b> Siga o passo a passo que te mandei no chat e depois busque de novo.</div>';
   if(st.serr)h+='<div class="note warn sec">'+esc(st.serr)+'</div>';
   if(st.res.length){
-    const n=Object.values(st.sel).filter(Boolean).length;
-    h+='<div class="row sec"><span class="grow muted small">'+st.res.length+' resultado(s). Marquei as que têm celular e não têm site.</span><button class="btn pri" data-a="add" '+(n?'':'disabled')+'>Adicionar '+n+' ao CRM</button></div><div class="list two">';
-    st.res.forEach(p=>{
-      const ja=ids.has(p.place_id),tf=tipoFone(p.telefone);
-      h+='<div class="card res"><input type="checkbox" data-sel="'+esc(p.place_id)+'" '+(st.sel[p.place_id]?'checked':'')+' '+(ja?'disabled':'')+'><div class="grow"><b>'+esc(p.nome)+'</b><div class="meta" style="display:flex;gap:6px;flex-wrap:wrap;margin:4px 0">'+
-        (ja?'<span class="tag ok">Já no CRM</span>':'')+
+    const n=novos.filter(p=>st.sel[p.place_id]).length;
+    h+='<div class="row sec"><span class="grow muted small">'+novos.length+' ótica(s) nova(s)'+(ocultas?' · '+ocultas+' já estão no CRM e não aparecem aqui':'')+'. Marquei as que têm celular e não têm site.</span><button class="btn pri" data-a="add" '+(n?'':'disabled')+'>Adicionar '+n+' ao CRM</button></div><div class="list two">';
+    if(!novos.length)h+='<div class="empty">Todas as óticas desta busca já estão no seu CRM.'+(st.next?' Toque em carregar mais ou busque outro bairro.':' Tente outro bairro ou cidade.')+'</div>';
+    novos.forEach(p=>{
+      const tf=tipoFone(p.telefone);
+      h+='<div class="card res"><input type="checkbox" data-sel="'+esc(p.place_id)+'" '+(st.sel[p.place_id]?'checked':'')+'><div class="grow"><b>'+esc(p.nome)+'</b><div class="meta" style="display:flex;gap:6px;flex-wrap:wrap;margin:4px 0">'+
         (tf==='cel'?'<span class="tag ok">Celular</span>':tf==='fixo'?'<span class="tag warn">Fixo</span>':'<span class="tag bad">Sem telefone</span>')+
         (p.site?'<span class="tag">Tem site</span>':'<span class="tag hot">Sem site</span>')+
         (p.nota?'<span class="tag">★ '+p.nota+' · '+p.avaliacoes+'</span>':'')+
