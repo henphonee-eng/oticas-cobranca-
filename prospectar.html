@@ -357,11 +357,14 @@ document.addEventListener('keydown',e=>{
 async function boot(){
   const {data}=await sb.auth.getSession();
   st.user=data.session?data.session.user:false;
-  if(st.user){const r=await sb.rpc('sou_admin');st.admin=r.data===true;if(st.admin)load()}
+  if(st.user){const r=await sb.rpc('sou_admin');st.admin=r.data===true;if(st.admin){load();aoVivo()}}
   render();
 }
 boot();
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&st.admin&&st.loaded)load()});
+/* aviso na hora quando uma ótica abre o demo */
+let vivo=null;
+function aoVivo(){if(vivo||!st.admin)return;vivo=sb.channel('crm-acessos').on('postgres_changes',{event:'INSERT',schema:'public',table:'prosp_acessos'},p=>{const l=st.leads.find(x=>x.id===p.new.lead_id);toast('👀 '+((l&&l.nome)||'Uma ótica')+' abriu o demo agora');load()}).subscribe()}
 </script>
 </body>
 </html>

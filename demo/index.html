@@ -1530,7 +1530,10 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&ui.sheet)closeSheet
   try{for(var i=0;i<localStorage.length;i++){if(/^sb-.*-auth-token$/.test(localStorage.key(i)))return}}catch(e){}
   var ua=navigator.userAgent,ap=/iPhone|iPad|iPod/.test(ua)?'Celular · iPhone':/Android/.test(ua)?'Celular · Android':/Mobi/.test(ua)?'Celular':/Mac/.test(ua)?'Computador · Mac':/Windows/.test(ua)?'Computador · Windows':'Computador';
   var k='demo-visto-'+l,now=Date.now();try{var t=+localStorage.getItem(k)||0;if(now-t<1800000)return;localStorage.setItem(k,String(now))}catch(e){}
-  fetch('https://ovynkeifzhavhjdkjjui.supabase.co/rest/v1/rpc/prosp_demo_aberto',{method:'POST',headers:{'Content-Type':'application/json',apikey:'sb_publishable_7RunIjZPQDCuWNSuPrD10w_Gy_lIUFl'},body:JSON.stringify({p_lead:l,p_aparelho:ap}),keepalive:true}).catch(function(){});
+  var SB='https://ovynkeifzhavhjdkjjui.supabase.co',KEY='sb_publishable_7RunIjZPQDCuWNSuPrD10w_Gy_lIUFl';
+  var antigo=function(){fetch(SB+'/rest/v1/rpc/prosp_demo_aberto',{method:'POST',headers:{'Content-Type':'application/json',apikey:KEY},body:JSON.stringify({p_lead:l,p_aparelho:ap}),keepalive:true}).catch(function(){})};
+  /* função nova: registra e avisa no seu celular; se falhar, usa o registro antigo */
+  fetch(SB+'/functions/v1/demo-aberto',{method:'POST',headers:{'Content-Type':'application/json',apikey:KEY},body:JSON.stringify({lead:l,aparelho:ap}),keepalive:true}).then(function(r){if(!r.ok)antigo()}).catch(antigo);
 }catch(e){}})();
 </script>
 </body>
