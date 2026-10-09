@@ -1253,7 +1253,7 @@ function aguardList(){
     const href=c.whatsapp?esc(waLink(c.whatsapp,fillTpl(tpl('orcamento'),ctx(v,null,c)))):'';
     const ent=v.parcelas.find(p=>p.tipo==='entrada');const par=v.parcelas.filter(p=>p.tipo==='parcela');
     const plano=(ent?'entrada '+brl(ent.valor):'sem entrada')+(par.length?' + '+par.length+'x de '+brl(par[0].valor):'');
-    return '<article class="row"><div class="row-main"><button class="link" data-act="openvenda" data-v="'+v.id+'">'+esc(c.nome)+demoTag(v)+'</button><div class="meta">'+esc(itensTxt(v))+' · '+fmtDate(v.data)+' · '+plano+'</div></div><div class="row-side"><div class="amt">'+brl(v.total)+'</div><div class="acts">'+(href?'<a class="btn sm wa" target="_blank" rel="noopener" href="'+href+'">Orçamento</a>':'')+'<button class="btn sm primary" data-act="confirmpag" data-v="'+v.id+'">Marcar como pago</button></div></div></article>';
+    return '<article class="row"><div class="row-main"><button class="link" data-act="openvenda" data-v="'+v.id+'">'+esc(c.nome)+demoTag(v)+'</button><div class="meta">'+esc(itensTxt(v))+' · '+fmtDate(v.data)+' · '+plano+'</div></div><div class="row-side"><div class="amt">'+brl(v.total)+'</div><div class="acts">'+(href?'<a class="btn sm wa" target="_blank" rel="noopener" href="'+href+'">Orçamento</a>':'')+'<button class="btn sm" data-act="editvenda" data-v="'+v.id+'">Editar</button><button class="btn sm primary" data-act="confirmpag" data-v="'+v.id+'">Marcar como pago</button></div></div></article>';
   }).join('')+'</div>';
 }
 function viewAguard(){
