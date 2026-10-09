@@ -121,7 +121,7 @@ button{cursor:pointer}
 .btn.danger{color:var(--bad);border-color:var(--bad)}
 .btn.danger.armed{background:var(--bad-solid);color:#fff;border-color:var(--bad-solid)}
 .btn[disabled]{opacity:.5;cursor:not-allowed}
-.link{background:none;border:0;padding:0;font-weight:600;font-size:15px;color:var(--fg);text-align:left;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
+.link{background:none;border:0;padding:4px 0;margin:-4px 0;font-weight:600;font-size:15px;color:var(--fg);text-align:left;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
 .chip{display:inline-flex;align-items:center;min-height:22px;padding:0 8px;border-radius:11px;font-size:12px;font-weight:600;background:var(--surface-2);color:var(--muted)}
 .chip.ok{background:var(--ok-bg);color:var(--ok)} .chip.warn{background:var(--warn-bg);color:var(--warn)} .chip.bad{background:var(--bad-bg);color:var(--bad)} .chip.acc{background:var(--accent-soft);color:var(--accent)}
 .demo{font-size:11px;font-weight:700;color:var(--warn);background:var(--warn-bg);border-radius:6px;padding:1px 6px;margin-left:6px;vertical-align:middle}
@@ -132,7 +132,11 @@ button{cursor:pointer}
 button.tile:hover{border-color:var(--accent)}
 .tile small{display:block;font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:600}
 .tile b{display:block;font-family:var(--f-display);font-size:23px;line-height:1.2;margin-top:3px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
-.tile span{font-size:12.5px;color:var(--muted)}
+.tile span{display:block;font-size:12.5px;color:var(--muted)}
+.tile .t2{margin-top:1px}
+.tiles4{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media (min-width:760px){.tiles4{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media (max-width:759px){.tiles>.tile:last-child:nth-child(odd){grid-column:1/-1}}
 .tile.t-ok b{color:var(--ok)} .tile.t-bad b{color:var(--bad)} .tile.t-acc b{color:var(--accent)}
 .tile.hero{background:linear-gradient(135deg,var(--brand-1),var(--brand-2));border-color:transparent}
 .tile.hero small,.tile.hero span{color:#fff;opacity:.88} .tile.hero b{color:#fff}
@@ -179,7 +183,7 @@ button.tile:hover{border-color:var(--accent)}
 .meta{font-size:13px;color:var(--muted);overflow-wrap:anywhere}
 .mini{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted);flex-wrap:wrap}
 .mini input,.mini select{min-height:34px;padding:0 8px;width:auto;font-size:14px}
-@media (max-width:460px){.row{flex-direction:column}.row-side{flex-direction:row;align-items:center;justify-content:space-between;width:100%}}
+@media (max-width:460px){.row{flex-direction:column}.row-side{flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:space-between;width:100%;row-gap:8px}.row-side .amt{flex:none}.row-side .acts{margin-left:auto}.row-side .acts:has(>:nth-child(3)){flex:1 1 100%}.row-side .acts:has(>:nth-child(3)) .btn{flex:1}}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:13px;display:flex;flex-direction:column;gap:8px;min-width:0}
 button.card{text-align:left;width:100%}
 button.card:hover{border-color:var(--accent)}
@@ -202,11 +206,13 @@ button.card:hover{border-color:var(--accent)}
 /* gráfico de meses */
 .months{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
 .mcol{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
-.mbars{height:150px;width:100%;display:flex;align-items:flex-end;justify-content:center;gap:5px;border-bottom:1px solid var(--line);background:repeating-linear-gradient(to top,var(--line) 0,var(--line) 1px,transparent 1px,transparent 50%)}
+.mbars{height:120px;width:100%;display:flex;align-items:flex-end;justify-content:center;gap:5px;border-bottom:1px solid var(--line);background:repeating-linear-gradient(to top,var(--line) 0,var(--line) 1px,transparent 1px,transparent 50%)}
 .mb{width:38%;max-width:26px;border-radius:4px 4px 0 0;min-height:0}
 .mb.a{background:var(--bar-a)} .mb.b{background:var(--bar-b)}
 .mlabel{font-size:12px;font-weight:600;text-transform:capitalize}
-.mval{font-size:11px;font-variant-numeric:tabular-nums;line-height:1.25;text-align:center}
+.mval{font-size:11px;font-variant-numeric:tabular-nums;line-height:1.25;text-align:center;min-height:2.5em}
+.mval .vz{display:block;color:var(--muted);font-size:10.5px;padding-top:2px}
+.mval .vz::before{display:none}
 .mval div{display:flex;align-items:center;justify-content:center;gap:4px}
 .mval .va::before,.mval .vb::before{content:'';width:7px;height:7px;border-radius:2px;flex:none}
 .mval .va::before{background:var(--bar-a)} .mval .vb::before{background:var(--bar-b)}
@@ -1052,16 +1058,18 @@ const none=t=>'<p class="sub">'+t+'</p>';
 
 /* ---------- painel ---------- */
 function chartMeses(){
-  const t=todayStr();const months=[];for(let i=5;i>=0;i--)months.push(addMonths(t.slice(0,7)+'-01',-i).slice(0,7));
+  const t=todayStr();let months=[];for(let i=5;i>=0;i--)months.push(addMonths(t.slice(0,7)+'-01',-i).slice(0,7));
   const vs=vendasOk(),ps=allP();
+  const ativo=m=>vs.some(v=>v.data.slice(0,7)===m)||ps.some(x=>x.p.pago&&x.p.pagoEm&&x.p.pagoEm.slice(0,7)===m);
+  const first=months.findIndex(ativo);months=months.slice(first<0?3:Math.min(first,months.length-3));
   const data=months.map(m=>({m:m,vend:sumT(vs.filter(v=>v.data.slice(0,7)===m)),rec:sumV(ps.filter(x=>x.p.pago&&x.p.pagoEm&&x.p.pagoEm.slice(0,7)===m))}));
   const max=Math.max(1,...data.map(d=>Math.max(d.vend,d.rec)));
   const h=v=>v>0?Math.max(2,Math.round(v/max*100)):0;
   const desc=data.map(d=>fmtShort(d.m+'-01')+': vendido '+brl(d.vend)+', recebido '+brl(d.rec)).join('; ');
   return '<div class="key"><span><i style="background:var(--bar-a)"></i>Vendido</span><span><i style="background:var(--bar-b)"></i>Recebido</span></div>'+
-  '<div class="months" role="img" aria-label="Vendido e recebido nos últimos 6 meses. '+esc(desc)+'">'+data.map(d=>{
+  '<div class="months" style="grid-template-columns:repeat('+data.length+',minmax(0,1fr))" role="img" aria-label="Vendido e recebido nos últimos '+data.length+' meses. '+esc(desc)+'">'+data.map(d=>{
     const lb=new Date(+d.m.slice(0,4),+d.m.slice(5,7)-1,1).toLocaleDateString('pt-BR',{month:'short'}).replace('.','');
-    return '<div class="mcol"><div class="mbars"><div class="mb a" style="height:'+h(d.vend)+'%"></div><div class="mb b" style="height:'+h(d.rec)+'%"></div></div><div class="mlabel">'+lb+'</div><div class="mval"><div class="va">'+(d.vend?short(d.vend):'-')+'</div><div class="vb">'+(d.rec?short(d.rec):'-')+'</div></div></div>';
+    return '<div class="mcol"><div class="mbars"><div class="mb a" style="height:'+h(d.vend)+'%"></div><div class="mb b" style="height:'+h(d.rec)+'%"></div></div><div class="mlabel">'+lb+'</div><div class="mval">'+(d.vend||d.rec?'<div class="va">'+(d.vend?short(d.vend):'0')+'</div><div class="vb">'+(d.rec?short(d.rec):'0')+'</div>':'<div class="vz">sem movimento</div>')+'</div></div>';
   }).join('')+'</div>';
 }
 function viewPainel(){
@@ -1100,11 +1108,12 @@ function viewPainel(){
   '<div class="sh"><h2>Atrasos mais antigos</h2><button class="btn sm" data-act="tab" data-t="cobrar">Ver todos</button></div><div class="stack">'+(late.length?late.slice(0,4).map(x=>pRow(x)).join(''):none('Nenhuma parcela em atraso.'))+'</div>'+
   '<div class="sh"><h2>Próximos 7 dias</h2></div><div class="stack">'+(prox.length?prox.slice(0,4).map(x=>pRow(x)).join(''):none('Nada vencendo nos próximos dias.'))+'</div>'+
   '</div></div>'+
-  '<div class="sh"><h2>Resumo do mês</h2></div>'+
-  '<div class="tiles"><div class="tile"><small>Vendido no mês</small><b>'+brl(sumT(vMes))+'</b><span>'+plural(vMes.length,'venda','vendas')+(vMes.length?' · ticket médio '+brl(Math.round(sumT(vMes)/vMes.length)):'')+'</span></div>'+
-  '<div class="tile t-ok"><small>Recebido no mês</small><b>'+brl(sumV(recMes))+'</b><span>'+plural(recMes.length,'recebimento','recebimentos')+'</span></div>'+
-  '<div class="tile t-acc"><small>A receber no mês</small><b>'+brl(sumV(aRecMes))+'</b><span>'+plural(aRecMes.length,'parcela','parcelas')+'</span></div></div>'+
-  '<div class="card" style="margin-top:12px"><h3 style="font-size:15px">Últimos 6 meses</h3>'+chartMeses()+'</div>';
+  '<div class="sh"><h2>Resumo do mês</h2><span class="sub">'+fmtMes(mk)+'</span></div>'+
+  '<div class="tiles tiles4"><div class="tile"><small>Vendido</small><b>'+brl(sumT(vMes))+'</b><span>'+plural(vMes.length,'venda','vendas')+'</span>'+(vMes.length?'<span class="t2">ticket médio '+brl(Math.round(sumT(vMes)/vMes.length))+'</span>':'')+'</div>'+
+  '<div class="tile t-ok"><small>Recebido</small><b>'+brl(sumV(recMes))+'</b><span>'+plural(recMes.length,'recebimento','recebimentos')+'</span></div>'+
+  '<div class="tile t-acc"><small>A receber</small><b>'+brl(sumV(aRecMes))+'</b><span>'+plural(aRecMes.length,'parcela','parcelas')+' até o fim do mês</span></div>'+
+  '<div class="tile"><small>Previsto no mês</small><b>'+brl(sumV(recMes)+sumV(aRecMes))+'</b><span>recebido + a receber</span></div></div>'+
+  '<div class="card" style="margin-top:12px"><div class="sh" style="margin:0 0 6px"><h3 style="font-size:15px;margin:0">Vendido e recebido por mês</h3></div>'+chartMeses()+'</div>';
 }
 
 /* ---------- agenda ---------- */
@@ -1130,8 +1139,8 @@ function viewAgenda(){
   const dRec=sumV(dayItems.filter(x=>!x.p.pago)),dPaid=sumV(dayItems.filter(x=>x.p.pago));
   const dtitle=cap(parseYmd(ui.sel).toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'}));
   return pageHead('Agenda','Vencimentos do mês, por data','<button class="btn primary" data-act="novavenda">Nova venda</button>')+
-  '<div class="kpis k3"><div class="kpi"><small>A receber no mês</small><b class="c-acc">'+brl(aRec)+'</b><span>'+plural(inM.filter(x=>!x.p.pago).length,'parcela','parcelas')+'</span></div>'+
-  '<div class="kpi"><small>Recebido no mês</small><b class="c-ok">'+brl(rec)+'</b><span>'+plural(inM.filter(x=>x.p.pago).length,'parcela','parcelas')+'</span></div>'+
+  '<div class="kpis k3"><div class="kpi"><small>A receber</small><b class="c-acc">'+brl(aRec)+'</b><span>'+plural(inM.filter(x=>!x.p.pago).length,'parcela','parcelas')+' no mês</span></div>'+
+  '<div class="kpi"><small>Recebido</small><b class="c-ok">'+brl(rec)+'</b><span>'+plural(inM.filter(x=>x.p.pago).length,'parcela','parcelas')+' no mês</span></div>'+
   '<button class="kpi'+(lateAll.length?' neg':'')+'" data-act="tab" data-t="cobrar"><small>Em atraso</small><b>'+brl(sumV(lateAll))+'</b><span>'+plural(lateAll.length,'parcela','parcelas')+(lateAll.length?' · cobrar':'')+'</span></button></div>'+
   '<div class="cols agenda" style="margin-top:22px"><div class="panel">'+
   '<div class="calhead"><button class="ib" data-act="mprev" aria-label="Mês anterior">&#8249;</button><h2>'+mname+'</h2><button class="btn sm" data-act="mtoday">Hoje</button><button class="ib" data-act="mnext" aria-label="Próximo mês">&#8250;</button></div>'+
