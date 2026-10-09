@@ -700,6 +700,7 @@ const ICON={
   ajustes:I('<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>'),
   relacao:I('<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>'),
   admin:I('<path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/>'),
+  mensal:I('<rect x="4" y="5" width="16" height="15" rx="2.5"/><path d="M4 10h16M9 3v4M15 3v4M8.5 14.5h3"/>'),
   prosp:I('<circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/>'),
   crm:I('<rect x="3.5" y="4.5" width="5" height="15" rx="1.5"/><rect x="9.5" y="4.5" width="5" height="10" rx="1.5"/><rect x="15.5" y="4.5" width="5" height="6" rx="1.5"/>'),
   menu:I('<path d="M4 6.5h16M4 12h16M4 17.5h16"/>'),
@@ -709,14 +710,15 @@ const ICON={
 const GLASSES='<svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11.5" cy="23" r="7"/><circle cx="28.5" cy="23" r="7"/><path d="M18.5 22c1-1.3 2-1.3 3 0M4.5 21 7 12M35.5 21 33 12"/></svg>';
 const TABS=[['painel','Painel'],['agenda','Agenda'],['vendas','Vendas'],['clientes','Clientes'],['cobrar','Cobrar'],['relacao','Relacionamento'],['caixa','Caixa'],['lentes','Lentes'],['ajustes','Ajustes']];
 const ADMTAB=['admin','Administração'];
+const MENSTAB=['mensal','Mensalidades'];
 const PROSPTABS=[['prosp','Prospecção'],['crm','CRM']];
 function tabsVis(){
-  if(!OTICA)return IS_ADMIN?[ADMTAB].concat(PROSPTABS):[];
+  if(!OTICA)return IS_ADMIN?[ADMTAB,MENSTAB].concat(PROSPTABS):[];
   let t=TABS.filter(x=>ROLE==='dono'||!['caixa','lentes','ajustes'].includes(x[0]));
-  if(IS_ADMIN)t=t.concat([ADMTAB],PROSPTABS);
+  if(IS_ADMIN)t=t.concat([ADMTAB,MENSTAB],PROSPTABS);
   return t;
 }
-function viewTab(){const k=ui.tab;return k==='painel'?viewPainel():k==='agenda'?viewAgenda():k==='vendas'?viewVendas():k==='clientes'?viewClientes():k==='cobrar'?viewCobrar():k==='relacao'?viewRelacao():k==='caixa'?viewCaixa():k==='lentes'?viewLentes():k==='admin'?viewAdmin():viewAjustes()}
+function viewTab(){const k=ui.tab;return k==='painel'?viewPainel():k==='agenda'?viewAgenda():k==='vendas'?viewVendas():k==='clientes'?viewClientes():k==='cobrar'?viewCobrar():k==='relacao'?viewRelacao():k==='caixa'?viewCaixa():k==='lentes'?viewLentes():k==='admin'?viewAdmin():k==='mensal'?viewMensal():viewAjustes()}
 let deferredInstall=null;
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;if(auth==='ok')render()});
 const demoTag=o=>o&&o.exemplo?'<span class="demo">exemplo</span>':'';
@@ -789,7 +791,7 @@ function render(){
   const v=$('#view');
   v.innerHTML=viewTab();
   if(ui.tab==='ajustes'&&ROLE==='dono')eqLoad();
-  if(ui.tab==='admin')admLoad();
+  if(ui.tab==='admin'||ui.tab==='mensal')admLoad();
   brandAdm();
 }
 mqWide.addEventListener('change',()=>render());
@@ -1582,26 +1584,34 @@ async function admLoad(force){
   }catch(e){ADM.err='Não foi possível carregar as óticas: '+errTxt(e)}
   ADM.busy=false;ADM.loaded=true;render();
 }
-/* cria as mensalidades que ainda não existem (mês atual e o próximo) */
+/* cria as mensalidades que ainda não existem: a 1ª vence 30 dias após o pagamento da implantação, depois uma por mês */
+function admBase(o){
+  const impl=ADM.cob.find(c=>c.otica_id===o.id&&c.tipo==='implementacao');
+  if(impl)return impl.pago?String(impl.pago_em||impl.venc).slice(0,10):null;
+  return String(o.impl_data||o.criada_em||'').slice(0,10)||null;
+}
 async function admGerar(){
-  const hoje=todayStr(),rows=[],fim=addMonths(hoje.slice(0,7)+'-01',1);
+  const hoje=todayStr(),rows=[],fim=addMonths(hoje,1);
   ADM.list.forEach(o=>{
     if(!o.ativa||!(+o.mensalidade>0))return;
-    const ini=String(o.impl_data||o.criada_em||hoje).slice(0,10);
-    for(let m=ini.slice(0,7)+'-01';m<=fim;m=addMonths(m,1)){
-      const venc=m.slice(0,7)+'-'+pad(Math.min(Math.max(+o.dia_venc||10,1),28));
-      if(venc<ini)continue;
-      if(!ADM.cob.some(c=>c.otica_id===o.id&&c.tipo==='mensalidade'&&c.venc===venc))rows.push({otica_id:o.id,tipo:'mensalidade',venc:venc,valor:+o.mensalidade});
+    const base=admBase(o);if(!base)return;
+    /* segue a última mensalidade existente, para respeitar datas editadas à mão */
+    const ex=ADM.cob.filter(c=>c.otica_id===o.id&&c.tipo==='mensalidade'&&c.parcela).sort((x,y)=>x.parcela-y.parcela);
+    const last=ex[ex.length-1];
+    const ref=last?{n:last.parcela,venc:last.venc}:{n:1,venc:addDays(base,30)};
+    for(let n=last?last.parcela+1:1;n<=240;n++){
+      const venc=addMonths(ref.venc,n-ref.n);if(venc>fim)break;
+      rows.push({otica_id:o.id,tipo:'mensalidade',parcela:n,venc:venc,valor:+o.mensalidade});
     }
   });
   if(!rows.length)return;
-  const r=await sb.from('adm_cobrancas').upsert(rows,{onConflict:'otica_id,tipo,venc',ignoreDuplicates:true});
+  const r=await sb.from('adm_cobrancas').upsert(rows,{onConflict:'otica_id,tipo,parcela',ignoreDuplicates:true});
   if(r.error)throw r.error;
   const c=await sb.from('adm_cobrancas').select('*');if(!c.error)ADM.cob=c.data||[];
 }
 const admLink=o=>(o.dominios&&o.dominios.length)?'https://'+o.dominios[0]+'/':location.origin+'/?o='+encodeURIComponent(o.slug);
 const admOtica=id=>ADM.list.find(o=>o.id===id)||{nome:'Ótica removida'};
-const admDesc=c=>c.tipo==='implementacao'?'implantação':'mensalidade de '+parseYmd(c.venc).toLocaleDateString('pt-BR',{month:'long'});
+const admDesc=c=>c.tipo==='implementacao'?'implantação':(c.parcela?c.parcela+'ª ':'')+'mensalidade ('+parseYmd(c.venc).toLocaleDateString('pt-BR',{month:'long'})+')';
 function admCtx(o,c,senha){
   const x={nome:firstName(o.dono_nome)||'tudo bem',otica:o.nome,link:admLink(o),email:o.email_dono||'o e-mail cadastrado',senha:senha?'\nSenha: '+senha:'',pix:(ADM.cfg.pix||'').trim()||'(informe a chave Pix)'};
   if(c){x.descricao=admDesc(c);x.valor=brl(c.valor);x.vencimento=fmtDate(c.venc);x.dias=plural(Math.max(0,diffDays(todayStr(),c.venc)),'dia','dias')}
@@ -1625,7 +1635,7 @@ function admCard(o){
   const bv=o.whatsapp_dono?'<a class="btn sm wa"'+WAT+' data-admc="bv" data-id="'+o.id+'" href="'+esc(admWa(o,fillTpl(admTpl('boasvindas'),admCtx(o,null,''))))+'">'+(o.boas_vindas_em?'Boas-vindas de novo':'Boas-vindas')+'</a>':'';
   return '<div class="card"><div class="adm-top"><div class="adm-logo" style="background:linear-gradient(135deg,'+esc(o.cor1)+','+esc(o.cor2)+')">'+(o.logo_escuro?'<img src="'+esc(o.logo_escuro)+'" alt="">':ini)+'</div><div style="min-width:0"><b>'+esc(o.nome)+'</b><div class="meta">'+esc(o.slug)+' · '+plural(+o.usuarios||0,'usuário','usuários')+'</div></div><span class="chip '+(o.ativa?'ok':'bad')+'" style="margin-left:auto">'+(o.ativa?'Ativa':'Desativada')+'</span></div>'+
     '<div class="chips">'+sit+(o.boas_vindas_em?'<span class="chip acc">Boas-vindas enviadas</span>':'')+'</div>'+
-    '<div class="meta num">Mensalidade '+(+o.mensalidade>0?brl(+o.mensalidade)+' · vence dia '+(o.dia_venc||10):'não definida')+(impl?' · Implantação '+brl(impl.valor)+(impl.pago?' (paga)':' (em aberto)'):'')+'</div>'+
+    '<div class="meta num">Mensalidade '+(+o.mensalidade>0?brl(+o.mensalidade)+(impl&&!impl.pago?' · começa 30 dias após pagar a implantação':''):'não definida')+(impl?' · Implantação '+brl(impl.valor)+(impl.pago?' (paga)':' (em aberto)'):'')+'</div>'+
     '<div class="meta">'+(o.dono_nome?esc(o.dono_nome)+' · ':'')+esc(o.whatsapp_dono||'sem WhatsApp do responsável')+'</div>'+
     '<div class="acts" style="justify-content:flex-start"><button class="btn sm primary" data-act="admedit" data-id="'+o.id+'">Editar</button>'+bv+'<button class="btn sm" data-act="admcopy" data-id="'+o.id+'">Copiar link</button></div></div>';
 }
@@ -1654,8 +1664,60 @@ function viewAdmin(){
   '<div class="sh"><h2>Óticas</h2></div>'+
   (!ADM.loaded?none('Carregando...'):ADM.list.length?'<div class="gridlist">'+ADM.list.map(admCard).join('')+'</div>':'<div class="empty">'+GLASSES+'<h3>Nenhuma ótica cadastrada</h3><p>Toque em Nova ótica para cadastrar a primeira.</p></div>')+(ADM.loaded?msgs:'');
 }
+
+/* ---------- aba Mensalidades ---------- */
+const MEN={f:'aberto',edit:null,saving:false};
+function menRow(c){
+  const o=admOtica(c.otica_id);
+  if(MEN.edit===c.id){
+    return '<article class="row"><div class="row-main"><b>'+esc(o.nome)+'</b><div class="meta">'+esc(cap(admDesc(c)))+'</div>'+
+      '<div class="grid2" style="margin-top:8px"><div class="field"><span>Vencimento</span><input type="date" id="men-venc" value="'+esc(c.venc)+'"></div><div class="field"><span>Valor (R$)</span><input type="text" inputmode="decimal" id="men-valor" value="'+esc(centsToStr(c.valor))+'"></div></div>'+
+      (c.tipo==='mensalidade'?'<label class="meta" style="display:flex;gap:8px;align-items:center;margin-top:6px"><input type="checkbox" id="men-seguintes" checked> Mover também as próximas mensalidades em aberto desta ótica</label>':'')+
+      '</div><div class="row-side"><div class="acts"><button class="btn sm primary" data-act="mensave" data-id="'+c.id+'"'+(MEN.saving?' disabled':'')+'>Salvar</button><button class="btn sm ghost" data-act="menedit" data-id="">Cancelar</button></div></div></article>';
+  }
+  const html=admCobRow(c);
+  return html.replace('<div class="acts">','<div class="acts"><button class="btn sm ghost" data-act="menedit" data-id="'+c.id+'">Editar data</button>');
+}
+function viewMensal(){
+  const t=todayStr(),C=ADM.cob.slice();
+  let L=MEN.f==='aberto'?C.filter(c=>!c.pago):MEN.f==='pagas'?C.filter(c=>c.pago):MEN.f==='atraso'?C.filter(c=>!c.pago&&c.venc<t):C;
+  L.sort((a,b)=>MEN.f==='pagas'?b.venc.localeCompare(a.venc):a.venc.localeCompare(b.venc));
+  const sum=a=>a.reduce((s,c)=>s+c.valor,0);
+  const chips=[['aberto','Em aberto'],['atraso','Em atraso'],['pagas','Pagas'],['todas','Todas']];
+  let h=pageHead('Mensalidades','Implantação e mensalidades de todas as óticas clientes')+
+    (ADM.err?'<p class="hint bad" role="alert">'+esc(ADM.err)+'</p>':'')+
+    '<div class="filters">'+chips.map(c=>'<button class="fchip" data-act="menf" data-f="'+c[0]+'" aria-pressed="'+(MEN.f===c[0])+'">'+c[1]+'</button>').join('')+'</div>';
+  if(!ADM.loaded)return h+none('Carregando...');
+  if(!L.length)return h+none(MEN.f==='atraso'?'Nenhuma mensalidade em atraso.':'Nada por aqui.');
+  const grp={};L.forEach(c=>{const k=c.venc.slice(0,7);(grp[k]=grp[k]||[]).push(c)});
+  Object.keys(grp).forEach(k=>{
+    const nm=parseYmd(k+'-01').toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+    h+='<div class="sh"><h2>'+esc(cap(nm))+'</h2><span class="sub num">'+brl(sum(grp[k]))+'</span></div><div class="stack">'+grp[k].map(menRow).join('')+'</div>';
+  });
+  return h+'<p class="sub" style="margin-top:14px">A 1ª mensalidade vence 30 dias depois do pagamento da implantação. As próximas são criadas sozinhas, uma por mês.</p>';
+}
+const menActs={
+  menf(d){MEN.f=d.f;MEN.edit=null;render()},
+  menedit(d){MEN.edit=d.id||null;render()},
+  async mensave(d){
+    const c=ADM.cob.find(x=>x.id===d.id);if(!c||MEN.saving)return;
+    const venc=($('#men-venc')||{}).value,valor=parseMoney(($('#men-valor')||{}).value||'');
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(venc||''))return toast('Escolha a data de vencimento');
+    if(!(valor>=0))return toast('Valor inválido');
+    const seg=c.tipo==='mensalidade'&&$('#men-seguintes')&&$('#men-seguintes').checked;
+    const up=[{id:c.id,venc:venc,valor:valor}];
+    if(seg&&c.parcela){ADM.cob.filter(x=>x.otica_id===c.otica_id&&x.tipo==='mensalidade'&&!x.pago&&x.parcela>c.parcela).forEach(x=>up.push({id:x.id,venc:addMonths(venc,x.parcela-c.parcela)}))}
+    MEN.saving=true;render();
+    try{
+      for(const u of up){const p=Object.assign({},u);delete p.id;const r=await sb.from('adm_cobrancas').update(p).eq('id',u.id);if(r.error)throw r.error;Object.assign(ADM.cob.find(x=>x.id===u.id),p)}
+      MEN.edit=null;toast(up.length>1?plural(up.length,'mensalidade atualizada','mensalidades atualizadas'):'Data atualizada');
+    }catch(e){toast('Não foi possível salvar: '+errTxt(e))}
+    MEN.saving=false;render();
+  }
+};
+Object.assign(A,menActs);
 function brandAdm(){
-  const adm=ui.tab==='admin';const bl=$('#brand-logo');if(!bl)return;
+  const adm=ui.tab==='admin'||ui.tab==='mensal';const bl=$('#brand-logo');if(!bl)return;
   let ab=$('#brand-adm');if(!ab){ab=document.createElement('div');ab.id='brand-adm';ab.className='brand-adm';ab.innerHTML='Adm Óticas<small>controle geral</small>';bl.parentNode.insertBefore(ab,bl.nextSibling)}
   ab.hidden=!adm;bl.hidden=adm||!LOGO_W;
   const bs=document.querySelector('.brand-sub');if(bs)bs.hidden=adm;
@@ -1667,9 +1729,9 @@ function sheetAdm(){
   const prevB=ADM.logoB?ADM.logoB.url:D.logo_claro,prevW=ADM.logoW?ADM.logoW.url:D.logo_escuro;
   const body='<div class="sec"><div class="field"><span>Nome da ótica</span><input type="text" data-abind="nome" value="'+esc(D.nome)+'"></div>'+
     '<div class="grid2"><div class="field"><span>Nome do responsável</span><input type="text" data-abind="dono_nome" value="'+esc(D.dono_nome)+'"></div><div class="field"><span>WhatsApp do responsável</span><input type="text" inputmode="tel" data-mask="tel" data-abind="whatsapp_dono" value="'+esc(D.whatsapp_dono)+'"></div></div>'+
-    '<div class="grid2"><div class="field"><span>Mensalidade (R$)</span><input type="text" inputmode="decimal" data-abind="mensalidade" value="'+esc(D.mensalidade)+'" placeholder="0,00"></div><div class="field"><span>Vence todo dia (1 a 28)</span><input type="text" inputmode="numeric" data-abind="dia_venc" value="'+esc(D.dia_venc)+'"></div></div>'+
+    '<div class="field"><span>Mensalidade (R$)</span><input type="text" inputmode="decimal" data-abind="mensalidade" value="'+esc(D.mensalidade)+'" placeholder="0,00"></div>'+
     '<div class="grid2"><div class="field"><span>Implantação (R$)</span><input type="text" inputmode="decimal" data-abind="impl_valor" value="'+esc(D.impl_valor)+'" placeholder="0,00"></div><div class="field"><span>Data da implantação</span><input type="date" data-abind="impl_data" value="'+esc(D.impl_data)+'"></div></div>'+
-    '<p class="sub" style="margin:0">As mensalidades são criadas sozinhas a cada mês, a partir da data da implantação.</p>'+
+    '<p class="sub" style="margin:0">A 1ª mensalidade vence 30 dias depois que a implantação for paga e as outras, uma por mês. Se precisar, ajuste qualquer data na aba Mensalidades.</p>'+
     (novo?'<div class="field"><span>Identificador do link (letras minúsculas, números e hífen)</span><input type="text" data-abind="slug" value="'+esc(D.slug)+'" autocapitalize="none" placeholder="oticaexemplo"></div>':'<div class="field"><span>Identificador</span><input type="text" value="'+esc(D.slug)+'" disabled></div>')+
     '<div class="grid2"><div class="field"><span>Cor principal</span><input type="color" data-abind="cor1" value="'+esc(D.cor1)+'"></div><div class="field"><span>Cor do menu e botões</span><input type="color" data-abind="cor2" value="'+esc(D.cor2)+'"></div></div>'+
     '<div class="field"><span>Endereços próprios (opcional, separados por vírgula)</span><input type="text" data-abind="dominios" value="'+esc(D.dominios)+'" placeholder="cobranca.minhaotica.com.br" autocapitalize="none"></div>'+
@@ -1774,7 +1836,7 @@ Object.assign(A,{
   admedit(d){const o=ADM.list.find(x=>x.id===d.id);if(!o)return;ADM.draft={dono_nome:o.dono_nome||'',whatsapp_dono:o.whatsapp_dono||'',mensalidade:+o.mensalidade>0?centsToStr(+o.mensalidade):'',dia_venc:String(o.dia_venc||10),impl_valor:+o.impl_valor>0?centsToStr(+o.impl_valor):'',impl_data:o.impl_data||todayStr(),id:o.id,slug:o.slug,nome:o.nome,cor1:o.cor1,cor2:o.cor2,dominios:(o.dominios||[]).join(', '),ativa:!!o.ativa,email:'',senha:'',logo_claro:o.logo_claro||'',logo_escuro:o.logo_escuro||'',err:''};ADM.logoB=null;ADM.logoW=null;ADM.logoWmanual=false;EQ.for='';ui.sheet={kind:'adm',id:o.id};renderSheet()},
   admcopy(d){const o=ADM.list.find(x=>x.id===d.id);if(o)copiar(admLink(o),'Link copiado')},
   admcopycred(){const c=ADM.cred;if(!c)return;const o=ADM.list.find(x=>x.id===c.id)||{nome:c.nome,dominios:[]};copiar(fillTpl(admTpl('boasvindas'),Object.assign(admCtx(o,null,c.senha),{link:c.link,email:c.email,otica:c.nome})),'Mensagem copiada')},
-  async admbaixa(d,b){const c=ADM.cob.find(x=>x.id===d.id);if(!c)return;const pago=!c.pago;if(pago)confeteDe(b);const r=await sb.from('adm_cobrancas').update({pago:pago,pago_em:pago?todayStr():null}).eq('id',c.id);if(r.error){toast('Não foi possível salvar: '+errTxt(r.error));return}c.pago=pago;c.pago_em=pago?todayStr():null;render();toast(pago?'Pagamento registrado':'Baixa desfeita')},
+  async admbaixa(d,b){const c=ADM.cob.find(x=>x.id===d.id);if(!c)return;const pago=!c.pago;if(pago)confeteDe(b);const r=await sb.from('adm_cobrancas').update({pago:pago,pago_em:pago?todayStr():null}).eq('id',c.id);if(r.error){toast('Não foi possível salvar: '+errTxt(r.error));return}c.pago=pago;c.pago_em=pago?todayStr():null;if(pago&&c.tipo==='implementacao'){try{await admGerar()}catch(e){toast('Não foi possível criar as mensalidades: '+errTxt(e))}}render();toast(pago?'Pagamento registrado':'Baixa desfeita')},
   async admtplreset(d){delete ADM.cfg[d.k];await sb.from('adm_config').upsert({chave:d.k,valor:''});render()},
   async admsalvar(){
     const D=ADM.draft;if(!D||ADM.saving)return;const novo=!D.id;const fail=m=>{D.err=m;renderSheet()};
