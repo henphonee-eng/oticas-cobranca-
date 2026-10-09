@@ -406,7 +406,7 @@ let PRE=null;
 function tenantSlug(){
   try{const q=new URLSearchParams(location.search).get('o');if(q){localStorage.setItem('otica-slug',q);return q.toLowerCase()}}catch(e){}
   try{const l=localStorage.getItem('otica-slug');if(l)return l}catch(e){}
-  const h=location.hostname.split('.');return h.length>=3&&h[0]!=='www'?h[0].toLowerCase():'';
+  return location.hostname.toLowerCase();
 }
 
 /* ---------- acesso (login) ---------- */
