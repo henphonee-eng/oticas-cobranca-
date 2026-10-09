@@ -268,6 +268,12 @@ details[open] summary{margin-bottom:10px}
 @media (min-width:900px){.brand-name{font-size:32px;margin-left:6px}.brand-name small{font-size:12px}}
 .demo-note{display:flex;flex-direction:column;gap:2px;background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn);border-radius:12px;padding:10px 14px;margin-bottom:14px;font-size:13.5px}
 .demo-note b{font-size:14px}
+.brand-name{overflow-wrap:anywhere;text-transform:uppercase}
+.brand-name.long{font-size:17px}
+@media (min-width:900px){.brand-name.long{font-size:24px}}
+.side-cta{display:none}
+@media (min-width:900px){.side-cta{display:inline-flex;justify-content:center}}
+.demo-note .btn{align-self:flex-start;margin-top:6px}
 </style>
 
 </head>
@@ -374,8 +380,11 @@ function computeAuth(){auth='ok'}
 function renderGate(){const g=$('#gate');g.classList.remove('on');g.innerHTML=''}
 const gateErr=()=>{};
 async function logout(){}
-const brandNome=()=>'Sua Ótica Aqui';
-const demoNote=()=>'<div class="demo-note"><b>Demonstração</b><span>Você está vendo dados de exemplo. Pode clicar em tudo, cadastrar clientes e simular vendas. Nada fica salvo: ao recarregar a página, volta ao início.</span></div>';
+let DEMO_NOME='Sua Ótica Aqui',DEMO_PERSONAL=false;
+const brandNome=()=>DEMO_NOME;
+const CTA_NUM='5581999707538';
+const ctaHref=()=>'https://wa.me/'+CTA_NUM+'?text='+encodeURIComponent((DEMO_PERSONAL?'Olá! Sou da '+DEMO_NOME+'. ':'Olá! ')+'Vi a demonstração do sistema de cobranças e quero para a minha ótica.');
+const demoNote=()=>'<div class="demo-note"><b>Demonstração</b><span>Você está vendo dados de exemplo. Pode clicar em tudo, cadastrar clientes e simular vendas. Nada fica salvo: ao recarregar a página, volta ao início.</span><a class="btn wa sm" target="_blank" rel="noopener" href="'+ctaHref()+'">Quero para minha ótica</a></div>';
 
 /* ---------- modelo ---------- */
 function makeCliente(o){return {id:uid(),nome:String(o.nome||'').trim(),cpf:maskCpf(o.cpf),whatsapp:maskTel(o.whatsapp),endereco:String(o.endereco||'').trim(),nascimento:o.nascimento||'',obs:String(o.obs||'').trim(),criadoEm:Date.now(),bvEm:null}}
@@ -1049,7 +1058,13 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&ui.sheet)closeSheet
 
 /* ---------- início ---------- */
 (function init(){
-  S.config.otica={id:'otica',nome:'Sua Ótica Aqui',whatsapp:'',endereco:'Rua Exemplo, 123 · Sua cidade',pix:'seu-pix@exemplo.com',autolock:0};
+  try{const q=new URLSearchParams(location.search).get('o');if(q&&q.trim()){DEMO_NOME=q.trim().slice(0,40);DEMO_PERSONAL=true}}catch(e){}
+  OTICA.nome=DEMO_NOME;document.title='Demonstração · '+DEMO_NOME;
+  const bl=document.getElementById('brand-logo');
+  if(DEMO_PERSONAL){bl.textContent='';const a=document.createElement('span');a.textContent=DEMO_NOME;const m=document.createElement('small');m.textContent='sistema de cobranças';bl.appendChild(a);bl.appendChild(m);if(DEMO_NOME.length>16)bl.classList.add('long')}
+  const sc=document.createElement('a');sc.className='btn wa side-cta';sc.target='_blank';sc.rel='noopener';sc.href=ctaHref();sc.textContent='Quero para minha ótica';
+  const sf=document.querySelector('.side-foot');if(sf)sf.insertBefore(sc,sf.firstChild);
+  S.config.otica={id:'otica',nome:DEMO_NOME,whatsapp:'',endereco:'Rua Exemplo, 123 · Sua cidade',pix:'seu-pix@exemplo.com',autolock:0};
   loadDemo();
 })();
 </script>

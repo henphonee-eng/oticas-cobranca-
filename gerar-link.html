@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><title>Gerar link de demonstração</title>
+<style>
+body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:#0a1a36;color:#fff;min-height:100vh;display:grid;place-items:center;padding:20px}
+.c{width:min(520px,100%);background:#10284f;border:1px solid #21427a;border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:12px}
+h1{font-size:20px;margin:0}label{font-size:13px;color:#9bb0d3}
+input{font:inherit;padding:12px;border-radius:10px;border:1px solid #21427a;background:#0a1a36;color:#fff;width:100%;box-sizing:border-box}
+button,a.b{font:inherit;font-weight:600;padding:12px 14px;border-radius:10px;border:0;cursor:pointer;background:#5ab4f7;color:#03173a;text-align:center;text-decoration:none}
+a.w{background:#3dbe78;color:#04210f}.o{word-break:break-all;background:#0a1a36;border:1px dashed #21427a;border-radius:10px;padding:10px;font-size:14px;min-height:20px}
+.s{font-size:13px;color:#9bb0d3}
+</style></head><body><div class="c">
+<h1>Gerar link de demonstração</h1>
+<label for="n">Nome da ótica do cliente</label>
+<input id="n" placeholder="Ex.: Ótica Visão Clara" autocomplete="off">
+<div class="o" id="o"></div>
+<button id="cp">Copiar link</button>
+<a class="b w" id="wa" target="_blank" rel="noopener">Enviar por WhatsApp</a>
+<span class="s" id="m"></span>
+<span class="s">Cada link mostra a demonstração com o nome da ótica do cliente no lugar da logo.</span>
+</div><script>
+var n=document.getElementById('n'),o=document.getElementById('o'),wa=document.getElementById('wa'),m=document.getElementById('m');
+function link(){var v=n.value.trim();var base=location.origin+'/demo/';return v?base+'?o='+encodeURIComponent(v):base}
+function up(){var l=link();o.textContent=l;var v=n.value.trim();wa.href='https://wa.me/?text='+encodeURIComponent('Olá'+(v?', '+v:'')+'! Preparei uma demonstração do sistema de cobranças e agendamento de parcelas para a sua ótica. Pode abrir e testar à vontade: '+l)}
+n.addEventListener('input',up);up();
+document.getElementById('cp').addEventListener('click',function(){var l=link();(navigator.clipboard?navigator.clipboard.writeText(l):Promise.reject()).then(function(){m.textContent='Link copiado.'},function(){m.textContent='Selecione o link acima e copie.'})});
+</script></body></html>
