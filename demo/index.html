@@ -625,6 +625,8 @@ html:not(.adm) .gate-card{border:0;border-radius:22px;box-shadow:0 30px 80px -24
 .eyebtn[aria-pressed=true]{background:var(--accent-soft);color:var(--accent);border-color:transparent}
 html.vh .kpi b,html.vh .tile b,html.vh .msum b,html.vh .row .amt,html.vh .sale-bot,html.vh .sum-row,html.vh .brk b,html.vh .mval,html.vh .mes-h span,html.vh .sh .sub.num,html.vh .item-bot b,html.vh .acc-i{filter:blur(9px);user-select:none;pointer-events:none}
 html.vh .mbars{filter:blur(6px)}
+
+.hint.warn-soft{color:var(--warn);background:var(--warn-bg);border-radius:8px;padding:8px 10px;font-weight:500}
 .brand-name{font-family:var(--f-display);font-weight:700;font-size:22px;line-height:1;letter-spacing:.04em;color:#fff;display:flex;flex-direction:column;gap:2px}
 .brand-name small{font-family:'IBM Plex Sans',sans-serif;font-weight:500;font-size:11px;letter-spacing:.22em;text-transform:uppercase;opacity:.8}
 @media (min-width:900px){.brand-name{font-size:32px;margin-left:6px}.brand-name small{font-size:12px}}
@@ -1308,7 +1310,10 @@ function sheetVenda(id){
 
 /* nova venda / editar venda */
 const newItem=tipo=>({tipo:tipo,nome:'',qtd:'1',valor:'',juros:'',lenteId:''});
-function newDraft(cid){return {editId:'',clienteId:cid||(Object.keys(S.clientes).length?'':'__novo'),novo:{nome:'',cpf:'',whatsapp:'',endereco:'',receitas:[blankReceita()]},itens:[newItem('produto')],jurosVenda:'',entrada:'',formaEntrada:'Pix',n:'3',primeira:addMonths(todayStr(),1),forma:'Pix',data:todayStr(),obs:'',aguardando:false}}
+const cliFalta=c=>{const f=[];if(digits(c.whatsapp||'').length<10)f.push('WhatsApp');if(digits(c.cpf||'').length<11)f.push('CPF');if(!String(c.endereco||'').trim())f.push('endereço');if(!String(c.nascimento||'').trim())f.push('data de nascimento');return f};
+const listaTxt=a=>a.length<2?a.join(''):a.slice(0,-1).join(', ')+' e '+a[a.length-1];
+const avisoFalta=c=>{const f=cliFalta(c);return f.length?'Falta preencher: '+listaTxt(f)+'. Você pode salvar assim e completar depois.':''};
+function newDraft(cid){return {editId:'',clienteId:cid||(Object.keys(S.clientes).length?'':'__novo'),novo:{nome:'',cpf:'',whatsapp:'',endereco:'',nascimento:'',receitas:[blankReceita()]},itens:[newItem('produto')],jurosVenda:'',entrada:'',formaEntrada:'Pix',n:'3',primeira:addMonths(todayStr(),1),forma:'Pix',data:todayStr(),obs:'',aguardando:false}}
 function editDraft(v){
   const par=v.parcelas.filter(p=>p.tipo==='parcela'&&p.parte!==2);const pct=x=>x?String(x).replace('.',','):'';const ent=v.parcelas.find(p=>p.tipo==='entrada');
   return {editId:v.id,clienteId:v.clienteId,novo:{nome:'',cpf:'',whatsapp:'',endereco:''},
@@ -1322,6 +1327,8 @@ function sheetNova(){
   '<div id="novo-cli" class="sec"'+(D.clienteId==='__novo'?'':' hidden')+'><div class="field"><span>Nome completo</span><input type="text" data-bind="novo.nome" value="'+esc(D.novo.nome)+'" autocomplete="off"></div>'+
   '<div class="grid2"><div class="field"><span>CPF</span><input type="text" inputmode="numeric" data-mask="cpf" data-bind="novo.cpf" value="'+esc(D.novo.cpf)+'" placeholder="000.000.000-00"><span class="hint"></span></div><div class="field"><span>WhatsApp com DDD</span><input type="text" inputmode="tel" data-mask="tel" data-bind="novo.whatsapp" value="'+esc(D.novo.whatsapp)+'" placeholder="(81) 99999-9999"></div></div>'+
   '<div class="field"><span>Endereço</span><input type="text" data-bind="novo.endereco" value="'+esc(D.novo.endereco)+'" placeholder="Rua, número, bairro, cidade"></div>'+
+  '<div class="field"><span>Data de nascimento</span><input type="date" data-bind="novo.nascimento" value="'+esc(D.novo.nascimento||'')+'"><span class="hint">Para avisar você no aniversário do cliente.</span></div>'+
+  '<p class="hint warn-soft" id="novo-aviso" style="margin:0" hidden></p>'+
   '<details><summary>Grau do cliente (opcional)</summary><div style="margin-top:10px">'+receitaForm((D.novo.receitas||(D.novo.receitas=[blankReceita()]))[0],0,'bind','novo.receitas.',false)+'</div></details></div></div>'+
   '<div class="sec"><h3>Itens da venda</h3><div id="items" class="stack"></div><div class="foot-row"><button class="btn" data-act="additem" data-t="produto">+ Produto</button><button class="btn" data-act="additem" data-t="lente">+ Lente</button></div>'+
   '<div class="field"><span>Juros sobre o total da venda (%), opcional</span><input type="text" inputmode="decimal" data-bind="jurosVenda" value="'+esc(D.jurosVenda)+'" placeholder="0"></div></div>'+
@@ -1347,7 +1354,7 @@ function renderItems(){
 }
 function draftState(){
   const D=ui.draft;const errs=[],targets=[];const E=(m,sel)=>{errs.push(m);targets.push(sel||'')};
-  if(D.clienteId==='__novo'){if(!D.novo.nome.trim())E('Informe o nome do cliente','[data-bind="novo.nome"]');else if(digits(D.novo.whatsapp).length<10)E('Informe o WhatsApp com DDD','[data-bind="novo.whatsapp"]');else if(cpfDup(D.novo.cpf))E('Já existe cliente com este CPF: '+cpfDup(D.novo.cpf).nome,'[data-bind="novo.cpf"]')}
+  if(D.clienteId==='__novo'){if(!D.novo.nome.trim())E('Informe o nome do cliente','[data-bind="novo.nome"]');else if(cpfDup(D.novo.cpf))E('Já existe cliente com este CPF: '+cpfDup(D.novo.cpf).nome,'[data-bind="novo.cpf"]')}
   else if(!D.clienteId)E('Escolha o cliente','#f-cli');
   const itens=D.itens.map(it=>({tipo:it.tipo,nome:(it.nome||'').trim(),qtd:Math.max(1,parseInt(it.qtd,10)||1),valor:parseMoney(it.valor),juros:parsePct(it.juros),lenteId:it.lenteId||''}));
   if(!itens.length)errs.push('Adicione ao menos um item');
@@ -1369,6 +1376,7 @@ function updateVenda(){
   h+='<div class="sum-row hl"><span>Saldo parcelado</span><span>'+(st.parc.length?st.parc.length+'x de '+brl(st.parc[0].valor):brl(c.saldo))+'</span></div>';
   if(st.parc.length){h+='<div class="meta">Vencimentos: '+st.parc.slice(0,4).map(p=>fmtShort(p.venc)).join(', ')+(st.parc.length>4?' ... '+fmtDate(st.parc[st.parc.length-1].venc):'')+'</div>';if(st.parc[st.parc.length-1].valor!==st.parc[0].valor)h+='<div class="meta">A última parcela leva a diferença dos centavos: '+brl(st.parc[st.parc.length-1].valor)+'</div>'}
   $('#sum').innerHTML=h;
+  const na=$('#novo-aviso');if(na){const tx=(ui.draft.clienteId==='__novo'&&ui.draft.novo.nome.trim())?avisoFalta(ui.draft.novo):'';na.textContent=tx;na.hidden=!tx}
   ui.vTarget=st.targets[0]||'';const vh=$('#vhint');vh.textContent=st.errs.length?'Falta preencher: '+st.errs[0]+(st.errs.length>1?' (e mais '+(st.errs.length-1)+')':''):'';vh.hidden=!st.errs.length;$('#vsave').disabled=st.errs.length>0;
   const lbl=ui.draft.editId?'Salvar alterações':ui.draft.aguardando?'Salvar orçamento':'Fechar venda';
   $('#vsave').textContent=st.errs.length?lbl:lbl+(ui.draft.aguardando?' de ':' de ')+brl(c.total);
@@ -1431,7 +1439,8 @@ function sheetCliente(id){
   const body='<div class="sec"><div class="field"><span>Nome completo</span><input type="text" data-cbind="nome" value="'+esc(D.nome)+'" autocomplete="off"></div>'+
   '<div class="grid2"><div class="field"><span>CPF</span><input type="text" inputmode="numeric" data-mask="cpf" data-cbind="cpf" value="'+esc(D.cpf)+'" placeholder="000.000.000-00"><span class="hint"></span></div><div class="field"><span>WhatsApp com DDD</span><input type="text" inputmode="tel" data-mask="tel" data-cbind="whatsapp" value="'+esc(D.whatsapp)+'" placeholder="(81) 99999-9999"></div></div>'+
   '<div class="field"><span>Endereço</span><input type="text" data-cbind="endereco" value="'+esc(D.endereco)+'" placeholder="Rua, número, bairro, cidade"></div>'+
-  '<div class="field"><span>Data de nascimento</span><input type="date" data-cbind="nascimento" value="'+esc(D.nascimento)+'"></div>'+
+  '<div class="field"><span>Data de nascimento</span><input type="date" data-cbind="nascimento" value="'+esc(D.nascimento)+'"><span class="hint">Para avisar você no aniversário do cliente.</span></div>'+
+  '<p class="hint warn-soft" id="cli-aviso" style="margin:0"'+(D.nome.trim()&&avisoFalta(D)?'':' hidden')+'>'+esc(D.nome.trim()?avisoFalta(D):'')+'</p>'+
   '<div class="field"><span>Observações</span><textarea data-cbind="obs" placeholder="Preferências, receita, combinados">'+esc(D.obs)+'</textarea></div></div>'+
   (editing?clienteBlocos(id,r,vs):'<div class="sec"><h3>Grau do cliente (opcional)</h3>'+receitasHtml(D)+'</div>');
   const foot='<button class="btn primary" data-act="salvarcliente">'+(editing?'Salvar alterações':'Cadastrar cliente')+'</button>'+(editing?'':'<button class="btn" data-act="salvarclientevenda">Cadastrar e registrar a venda</button>')+(editing?'<div class="foot-row"><button class="btn" data-act="novavenda" data-c="'+id+'">Nova venda</button>'+(vs.length?'':'<button class="btn danger'+(ui.confirm===id?' armed':'')+'" data-act="delcliente" data-c="'+id+'">'+(ui.confirm===id?'Toque de novo para excluir':'Excluir cliente')+'</button>')+'</div>'+(vs.length?'<p class="sub">Clientes com vendas não podem ser excluídos.</p>':''):'');
@@ -1472,6 +1481,8 @@ function sheetPagParc(s){
   const foot=par?'<button class="btn primary" data-act="parcialparc" data-v="'+v.id+'" data-p="'+s.i+'">Registrar pagamento parcial</button>':'<button class="btn primary" data-act="baixapc" data-v="'+v.id+'" data-p="'+s.i+'">Confirmar recebimento</button>';
   return sheetShell('Receber parcela',body,foot);
 }
+document.addEventListener('input',e=>{const t=e.target;if(!t||!t.dataset||!t.dataset.cbind||!ui.cdraft)return;const h=$('#cli-aviso');if(!h)return;
+  const D2=Object.assign({},ui.cdraft);D2[t.dataset.cbind]=t.value;const tx=D2.nome&&String(D2.nome).trim()?avisoFalta(D2):'';h.textContent=tx;h.hidden=!tx});
 function sheetRecibo(s){
   const r=reciboDados(s.id,s.i);if(!r)return null;const v=r.v,p=r.p,c=r.c;
   const href=c.whatsapp?esc(waLink(c.whatsapp,fillTpl(tpl('recibo'),ctx(v,p,c)))):'';
@@ -1483,7 +1494,7 @@ function sheetRecibo(s){
 }
 function sheetClienteOk(id){
   const c=S.clientes[id];if(!c)return null;
-  const body='<div class="empty" style="border:0;background:none">'+GLASSES+'<h3>'+esc(c.nome)+' foi cadastrado</h3><p>Se quiser, abra o WhatsApp com a mensagem de boas-vindas pronta.</p></div>';
+  const body='<div class="empty" style="border:0;background:none">'+GLASSES+'<h3>'+esc(c.nome)+' foi cadastrado</h3><p>'+(c.whatsapp?'Se quiser, abra o WhatsApp com a mensagem de boas-vindas pronta.':'Sem WhatsApp cadastrado, não dá para enviar mensagens. Complete a ficha quando tiver.')+'</p>'+(cliFalta(c).length?'<p class="hint" style="max-width:42ch">'+esc(avisoFalta(c))+'</p>':'')+'</div>';
   const foot=(c.whatsapp?'<a class="btn wa"'+WAT+' data-contact="bv" data-c="'+c.id+'" href="'+esc(waLink(c.whatsapp,fillTpl(tpl('cadastro'),ctx(null,null,c))))+'">Abrir WhatsApp</a>':'')+'<button class="btn primary" data-act="novavenda" data-c="'+c.id+'">Registrar uma venda</button><button class="btn" data-act="closesheet">Fechar</button>';
   return sheetShell('Cliente cadastrado',body,foot);
 }
@@ -1782,9 +1793,8 @@ const A={
   cacc(d){ui.cacc=Object.assign({},ui.cacc);ui.cacc[d.k]=!ui.cacc[d.k];renderSheet()},
   salvarcliente(){
     const D=ui.cdraft;if(!D.nome.trim()){toast('Informe o nome do cliente');return}
-    if(digits(D.whatsapp).length<10){toast('Informe o WhatsApp com DDD');return}
     const id=ui.sheet.id;const dup=cpfDup(D.cpf,id);if(dup){toast('Já existe cliente com este CPF: '+dup.nome);return}
-    if(id&&S.clientes[id]){Object.assign(S.clientes[id],{nome:D.nome.trim(),cpf:maskCpf(D.cpf),whatsapp:maskTel(D.whatsapp),endereco:D.endereco.trim(),nascimento:D.nascimento||'',obs:D.obs.trim(),receitas:(D.receitas||[]).filter(r=>!receitaVazia(r))});persist('clientes',id);premLog('Cliente editado',D.nome.trim());ui.sheet=null;ui.cdraft=null;renderSheet();refresh();toast('Cliente atualizado')}
+    if(id&&S.clientes[id]){Object.assign(S.clientes[id],{nome:D.nome.trim(),cpf:maskCpf(D.cpf),whatsapp:maskTel(D.whatsapp),endereco:D.endereco.trim(),nascimento:D.nascimento||'',obs:D.obs.trim(),receitas:(D.receitas||[]).filter(r=>!receitaVazia(r))});persist('clientes',id);premLog('Cliente editado',D.nome.trim());ui.sheet=null;ui.cdraft=null;renderSheet();refresh();const fl=cliFalta(S.clientes[id]);toast('Cliente atualizado'+(fl.length?'. Falta preencher: '+listaTxt(fl)+'.':''))}
     else{const c=makeCliente(D);S.clientes[c.id]=c;persist('clientes',c.id);premLog('Cliente cadastrado',c.nome);ui.cdraft=null;ui.sheet={kind:'cliente-ok',id:c.id};render();renderSheet()}
   },
   salvarclientevenda(){A.salvarcliente();if(ui.sheet&&ui.sheet.kind==='cliente-ok')openNova(ui.sheet.id)},
