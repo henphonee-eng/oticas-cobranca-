@@ -502,6 +502,20 @@ html.adm #toast{background:#191A23;color:var(--lime);border-radius:14px}
 /* entrada (login) */
 html.adm .gate{background:#191A23}
 html.adm .gate-card{border:1px solid #191A23;border-radius:28px;box-shadow:0 6px 0 var(--lime)}
+
+.funil{gap:10px}
+.fn-row{display:grid;grid-template-columns:150px minmax(0,1fr) 34px 40px;gap:10px;align-items:center;font-size:14px}
+.fn-bar{height:14px;background:var(--surface-2);border-radius:7px;overflow:hidden}
+.fn-bar i{display:block;height:100%;background:var(--accent);border-radius:7px}
+.fn-bar i.win{background:var(--ok)}
+html.adm .fn-bar i{background:#191A23}
+html.adm .fn-bar i.win{background:var(--lime);box-shadow:inset 0 0 0 1px #191A23}
+.fn-p{color:var(--muted);text-align:right;font-size:13px}
+.fn-row b{text-align:right}
+@media (max-width:520px){.fn-row{grid-template-columns:104px minmax(0,1fr) 28px 34px;font-size:12.5px;gap:6px}}
+html.adm .msum.rec .ms:first-child{background:#191A23;color:#F3F3F3}
+html.adm .msum.rec .ms:first-child small,html.adm .msum.rec .ms:first-child span{color:#C9CAD3;opacity:1}
+html.adm .msum.rec .ms:first-child b{color:var(--lime)}
 </style>
 <script>if(/^\/adm(\/|$)/.test(location.pathname)){document.documentElement.classList.add('adm');var f=document.createElement('link');f.rel='stylesheet';f.href='https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap';document.head.appendChild(f)}</script>
 
@@ -1740,17 +1754,32 @@ const ADM={list:[],cob:[],cfg:{},loaded:false,busy:false,err:'',draft:null,logoB
 const EQ={list:[],for:'',busy:false,err:'',pw:'',confirm:''};
 const hexOk=h=>/^#[0-9a-fA-F]{6}$/.test(h||'');
 const errTxt=e=>String((e&&e.message)||e||'Erro desconhecido').replace(/^.*?exception:?\s*/i,'');
+/* Pix copia-e-cola com valor (padrão BR Code do Banco Central) */
+function pixCRC(str){let c=0xFFFF;for(let i=0;i<str.length;i++){c^=str.charCodeAt(i)<<8;for(let j=0;j<8;j++)c=(c&0x8000)?((c<<1)^0x1021)&0xFFFF:(c<<1)&0xFFFF}return c.toString(16).toUpperCase().padStart(4,'0')}
+function pixLimpa(t,n){return String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Za-z0-9 .\-]/g,'').toUpperCase().trim().slice(0,n)}
+function pixChave(k){k=String(k||'').trim();if(/@/.test(k))return k.toLowerCase();if(/^[0-9a-f]{8}-[0-9a-f]{4}-/i.test(k))return k.toLowerCase();const d=k.replace(/\D/g,'');if(/^\+/.test(k))return '+'+d;if(/^\(?\d{2}\)?\s?9?\d{4}-?\d{4}$/.test(k)&&/[()\s-]/.test(k))return '+55'+d;if(d.length===11||d.length===14)return d;return k}
+function pixCopia(chave,nome,cidade,centavos,txid){
+  chave=pixChave(chave);if(!chave)return '';
+  const f=(id,v)=>id+String(v.length).padStart(2,'0')+v;
+  const mai=f('00','br.gov.bcb.pix')+f('01',chave);
+  let p=f('00','01')+f('26',mai)+f('52','0000')+f('53','986');
+  if(centavos>0)p+=f('54',(centavos/100).toFixed(2));
+  p+=f('58','BR')+f('59',pixLimpa(nome,25)||'RECEBEDOR')+f('60',pixLimpa(cidade,15)||'RECIFE')+f('62',f('05',(String(txid||'').replace(/[^A-Za-z0-9]/g,'').slice(0,25))||'***'))+'6304';
+  return p+pixCRC(p);
+}
+const admPix=c=>pixCopia(ADM.cfg.pix,ADM.cfg.pix_nome||'Eder Henrique',ADM.cfg.pix_cidade||'Recife',c?c.valor:0,c?('MENS'+String(c.id||'').replace(/-/g,'').slice(0,12)):'');
 const ADMDEF={
   boasvindas:'Olá, {nome}! Seja bem-vindo(a) ao sistema de cobranças da {otica}. O seu acesso já está pronto.\n\nLink: {link}\nE-mail: {email}{senha}\n\nQualquer dúvida, é só chamar por aqui.',
-  lembrete:'Olá, {nome}! Passando para lembrar que a {descricao} do sistema da {otica}, de {valor}, vence em {vencimento}. Pagamento via Pix: {pix}. Obrigado!',
-  atraso:'Olá, {nome}! A {descricao} do sistema da {otica}, de {valor}, venceu em {vencimento} e está em atraso há {dias}. Pagamento via Pix: {pix}. Se já pagou, é só enviar o comprovante. Obrigado!'
+  lembrete:'Olá, {nome}! Passando para lembrar que a {descricao} do sistema da {otica}, de {valor}, vence em {vencimento}.\n\nPix copia e cola (já com o valor):\n{pixcopia}\n\nObrigado!',
+  atraso:'Olá, {nome}! A {descricao} do sistema da {otica}, de {valor}, venceu em {vencimento} e está em atraso há {dias}.\n\nPix copia e cola (já com o valor):\n{pixcopia}\n\nSe já pagou, é só enviar o comprovante. Obrigado!'
 };
 const ADMLABEL={boasvindas:'Boas-vindas (ótica nova)',lembrete:'Parcela perto de vencer ou vencendo hoje',atraso:'Parcela vencida'};
 const admTpl=k=>(ADM.cfg[k]&&ADM.cfg[k].trim())?ADM.cfg[k]:ADMDEF[k];
 async function admLoad(force){
   if((ADM.loaded&&!force)||ADM.busy||!IS_ADMIN)return;ADM.busy=true;
   try{
-    const [lr,or,cr,gr]=await Promise.all([sb.rpc('admin_listar_oticas'),sb.from('oticas').select('*'),sb.from('adm_cobrancas').select('*'),sb.from('adm_config').select('*')]);
+    const [lr,or,cr,gr,pl]=await Promise.all([sb.rpc('admin_listar_oticas'),sb.from('oticas').select('*'),sb.from('adm_cobrancas').select('*'),sb.from('adm_config').select('*'),sb.from('prosp_leads').select('status,enviado_em,demo_aberturas,historico,criado_em')]);
+    ADM.leads=(pl&&!pl.error&&pl.data)||[];
     if(lr.error)throw lr.error;
     const extra={};((or&&or.data)||[]).forEach(o=>{extra[o.id]=o});
     ADM.list=(lr.data||[]).map(o=>Object.assign({},extra[o.id]||{},o));
@@ -1758,7 +1787,7 @@ async function admLoad(force){
     ADM.err=(cr&&cr.error)?'Não foi possível carregar as cobranças: '+errTxt(cr.error):'';
     await admGerar();
   }catch(e){ADM.err='Não foi possível carregar as óticas: '+errTxt(e)}
-  ADM.busy=false;ADM.loaded=true;render();
+  ADM.busy=false;ADM.loaded=true;render();admNovaDoCrm();
 }
 /* cria as mensalidades que ainda não existem: a 1ª vence 30 dias após o pagamento da implantação, depois uma por mês */
 /* último dia do mês atual: mensalidades de meses futuros não aparecem */
@@ -1793,10 +1822,43 @@ const admOtica=id=>ADM.list.find(o=>o.id===id)||{nome:'Ótica removida'};
 const admDesc=c=>c.tipo==='implementacao'?'implantação':(c.parcela?c.parcela+'ª ':'')+'mensalidade ('+parseYmd(c.venc).toLocaleDateString('pt-BR',{month:'long'})+')';
 function admCtx(o,c,senha){
   const x={nome:firstName(o.dono_nome)||'tudo bem',otica:o.nome,link:admLink(o),email:o.email_dono||'o e-mail cadastrado',senha:senha?'\nSenha: '+senha:'',pix:(ADM.cfg.pix||'').trim()||'(informe a chave Pix)'};
+  x.pixcopia=c?(admPix(c)||x.pix):x.pix;
   if(c){x.descricao=admDesc(c);x.valor=brl(c.valor);x.vencimento=fmtDate(c.venc);x.dias=plural(Math.max(0,diffDays(todayStr(),c.venc)),'dia','dias')}
   return x;
 }
 const admWa=(o,txt)=>o.whatsapp_dono?waLink(o.whatsapp_dono,txt):'';
+
+/* receita recorrente: soma das mensalidades das óticas ativas que já começaram a pagar */
+function admRecorrente(){
+  const at=ADM.list.filter(o=>o.ativa&&+o.mensalidade>0);
+  const rodando=at.filter(o=>admBase(o)),aguard=at.filter(o=>!admBase(o));
+  const mrr=rodando.reduce((s,o)=>s+(+o.mensalidade),0),pend=aguard.reduce((s,o)=>s+(+o.mensalidade),0);
+  const t=todayStr();let prox=0;for(let k=1;k<=3;k++){const m=addMonths(t.slice(0,7)+'-01',k).slice(0,7);prox+=menDoMes(m).filter(c=>c.tipo==='mensalidade').reduce((s,c)=>s+c.valor,0)}
+  return '<div class="sh"><h2>Receita recorrente</h2></div><div class="msum rec"><div class="ms"><small>Por mês</small><b>'+brl(mrr)+'</b><span>'+plural(rodando.length,'ótica pagando','óticas pagando')+'</span></div>'+
+    '<div class="ms"><small>Em 12 meses</small><b>'+brl((mrr+pend)*12)+'</b><span>'+(pend?'contando '+plural(aguard.length,'ótica que vai começar','óticas que vão começar'):'se todas continuarem')+'</span></div>'+
+    '<div class="ms"><small>Próximos 3 meses</small><b>'+brl(prox)+'</b><span>mensalidades previstas</span></div></div>';
+}
+/* funil de vendas, a partir do CRM */
+function admFunil(){
+  const L=ADM.leads||[];if(!L.length)return '<div class="sh"><h2>Funil de vendas</h2></div>'+none('Quando você começar a prospectar no CRM, o funil aparece aqui.');
+  const resp=l=>['respondeu','interessada','fechou'].includes(l.status)||(l.historico||[]).some(h=>/Respondeu|Interessada/.test(h.txt||''));
+  const ab=L.filter(l=>l.enviado_em),dm=ab.filter(l=>+l.demo_aberturas>0),rs=ab.filter(resp),fc=L.filter(l=>l.status==='fechou');
+  const base=ab.length||1;
+  const et=[['Na sua base',L.length,null],['Receberam a abordagem',ab.length,null],['Abriram o demo',dm.length,dm.length/base],['Responderam',rs.length,rs.length/base],['Fecharam',fc.length,fc.length/base]];
+  const max=Math.max(1,L.length);
+  return '<div class="sh"><h2>Funil de vendas</h2><span class="sub">'+(ab.length?'taxas sobre quem recebeu a abordagem':'')+'</span></div><div class="card funil">'+
+    et.map((e,i)=>'<div class="fn-row"><span class="fn-l">'+e[0]+'</span><div class="fn-bar"><i style="width:'+Math.max(4,Math.round(e[1]/max*100))+'%"'+(i===4?' class="win"':'')+'></i></div><b class="num">'+e[1]+'</b><span class="fn-p num">'+(e[2]==null?'':Math.round(e[2]*100)+'%')+'</span></div>').join('')+
+    (ab.length>=10?'<p class="sub" style="margin:4px 0 0">'+(dm.length/base<.3?'Poucas óticas abrem o demo: teste outra primeira frase da mensagem.':rs.length/base<.15?'Abrem o demo mas não respondem: mande o follow-up 2 ou 3 dias depois.':'Bom ritmo. Continue com o follow-up de quem abriu o demo.')+'</p>':'')+'</div>';
+}
+/* abre "Nova ótica" já preenchida quando vem do CRM (/adm?nova=1&nome=...) */
+function admNovaDoCrm(){
+  const q=new URLSearchParams(location.search);if(!q.get('nova')||!IS_ADMIN)return;
+  history.replaceState(null,'',location.pathname);
+  A.admnova();const D=ADM.draft;if(!D)return;
+  D.nome=q.get('nome')||'';D.whatsapp_dono=q.get('whats')||'';D.dono_nome=q.get('dono')||'';
+  D.slug=String(D.nome).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/^oticas?\s+/,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40);
+  renderSheet();toast('Dados trazidos do CRM. Complete e cadastre.');
+}
 function admCobRow(c){
   const o=admOtica(c.otica_id),st=pStatus(c),t=todayStr();
   const chip=st==='pago'?'<span class="chip ok">Recebido em '+fmtShort(c.pago_em)+'</span>':st==='atraso'?'<span class="chip bad">'+plural(diffDays(t,c.venc),'dia','dias')+' em atraso</span>':st==='hoje'?'<span class="chip warn">Vence hoje</span>':'<span class="chip">Vence em '+plural(diffDays(c.venc,t),'dia','dias')+'</span>';
@@ -1804,6 +1866,7 @@ function admCobRow(c){
   const href=(!c.pago&&o.whatsapp_dono)?admWa(o,fillTpl(admTpl(st==='atraso'?'atraso':'lembrete'),admCtx(o,c))):'';
   return '<article class="row"><div class="row-main"><b>'+esc(o.nome)+'</b><div class="meta">'+esc(cap(admDesc(c)))+' · '+fmtDate(c.venc)+'</div><div class="chips">'+chip+ct+'</div></div><div class="row-side"><div class="amt">'+brl(c.valor)+'</div><div class="acts">'+
     (href?'<a class="btn sm wa"'+WAT+' data-admc="cob" data-id="'+c.id+'" href="'+esc(href)+'">WhatsApp</a>':(!c.pago?'<span class="meta">sem WhatsApp</span>':''))+
+    ((!c.pago&&ADM.cfg.pix)?'<button class="btn sm" data-act="admcopypix" data-id="'+c.id+'">Copiar Pix</button>':'')+
     '<button class="btn sm '+(c.pago?'ghost':'ok')+'" data-act="admbaixa" data-id="'+c.id+'">'+(c.pago?'Desfazer':'Recebido')+'</button></div></div></article>';
 }
 function admCard(o){
@@ -1833,13 +1896,16 @@ function viewAdmin(){
     '<div class="kpi"><small>Implantações do mês</small><b>'+brl(sum(impl))+'</b><span>'+brl(sum(impl.filter(c=>c.pago)))+' recebido</span></div>'+
     '<div class="kpi'+(late.length?' neg':'')+'"><small>Em atraso</small><b>'+brl(sum(late))+'</b><span>'+plural(late.length,'cobrança','cobranças')+'</span></div>'+
     '<div class="kpi total"><small>Recebido no mês</small><b>'+brl(sum(recMes))+'</b><span>'+plural(recMes.length,'pagamento','pagamentos')+'</span></div></div>':'';
-  const msgs='<details style="margin-top:18px"><summary>Mensagens de WhatsApp e chave Pix</summary><div class="stack" style="margin-top:10px"><div class="card"><div class="field"><span>Sua chave Pix (vai nas cobranças)</span><input type="text" data-admcfg="pix" value="'+esc(ADM.cfg.pix||'')+'"></div></div>'+
-    '<p class="sub" style="margin:0">Pode usar: {nome} {otica} {descricao} {valor} {vencimento} {dias} {pix} {link} {email} {senha}</p>'+
+  const msgs='<details style="margin-top:18px"><summary>Mensagens de WhatsApp e chave Pix</summary><div class="stack" style="margin-top:10px"><div class="card"><div class="field"><span>Sua chave Pix (vai nas cobranças)</span><input type="text" data-admcfg="pix" value="'+esc(ADM.cfg.pix||'')+'" placeholder="CPF, e-mail, chave aleatória ou +5581999999999"></div>'+
+    '<div class="grid2"><div class="field"><span>Nome do recebedor (como está no banco)</span><input type="text" data-admcfg="pix_nome" value="'+esc(ADM.cfg.pix_nome||'')+'" placeholder="Eder Henrique"></div><div class="field"><span>Cidade</span><input type="text" data-admcfg="pix_cidade" value="'+esc(ADM.cfg.pix_cidade||'')+'" placeholder="Recife"></div></div>'+
+    '<p class="sub" style="margin:0">Com a chave preenchida, as cobranças levam o Pix copia e cola já com o valor de cada mensalidade.</p></div>'+
+    '<p class="sub" style="margin:0">Pode usar: {nome} {otica} {descricao} {valor} {vencimento} {dias} {pix} {pixcopia} {link} {email} {senha}</p>'+
     Object.keys(ADMDEF).map(k=>'<div class="card"><div class="field"><span>'+ADMLABEL[k]+'</span><textarea data-admcfg="'+k+'">'+esc(admTpl(k))+'</textarea></div><div><button class="btn sm ghost" data-act="admtplreset" data-k="'+k+'">Restaurar texto padrão</button></div></div>').join('')+'</div></details>';
   return pageHead('Adm Óticas','Controle geral das óticas clientes','<button class="btn primary" data-act="admnova">Nova ótica</button>')+
   (ADM.err?'<p class="hint bad" role="alert">'+esc(ADM.err)+'</p>':'')+kp+
   (ADM.loaded?'<div class="cols"><div class="panel"><div class="sh"><h2>Cobranças em atraso</h2><span class="sub num">'+brl(sum(late))+'</span></div><div class="stack">'+(late.length?late.map(admCobRow).join(''):none('Nenhuma ótica em atraso.'))+'</div></div>'+
     '<div class="panel"><div class="sh"><h2>Vencem em até 7 dias</h2><span class="sub num">'+brl(sum(prox))+'</span></div><div class="stack">'+(prox.length?prox.map(admCobRow).join(''):none('Nada vencendo nos próximos dias.'))+'</div></div></div>':'')+
+  (ADM.loaded?admRecorrente()+admFunil():'')+
   '<div class="sh"><h2>Óticas</h2></div>'+
   (!ADM.loaded?none('Carregando...'):ADM.list.length?'<div class="gridlist">'+ADM.list.map(admCard).join('')+'</div>':'<div class="empty">'+GLASSES+'<h3>Nenhuma ótica cadastrada</h3><p>Toque em Nova ótica para cadastrar a primeira.</p></div>')+(ADM.loaded?msgs:'');
 }
@@ -2057,6 +2123,7 @@ Object.assign(A,{
   admcopy(d){const o=ADM.list.find(x=>x.id===d.id);if(o)copiar(admLink(o),'Link copiado')},
   admcopycred(){const c=ADM.cred;if(!c)return;const o=ADM.list.find(x=>x.id===c.id)||{nome:c.nome,dominios:[]};copiar(fillTpl(admTpl('boasvindas'),Object.assign(admCtx(o,null,c.senha),{link:c.link,email:c.email,otica:c.nome})),'Mensagem copiada')},
   async admbaixa(d,b){const c=(ADM.cobAll||ADM.cob).find(x=>x.id===d.id);if(!c)return;const pago=!c.pago;if(pago)confeteDe(b);const r=await sb.from('adm_cobrancas').update({pago:pago,pago_em:pago?todayStr():null}).eq('id',c.id);if(r.error){toast('Não foi possível salvar: '+errTxt(r.error));return}c.pago=pago;c.pago_em=pago?todayStr():null;if(pago&&c.tipo==='implementacao'){try{await admGerar()}catch(e){toast('Não foi possível criar as mensalidades: '+errTxt(e))}}render();toast(pago?'Pagamento registrado':'Baixa desfeita')},
+  async admcopypix(d){const c=(ADM.cobAll||ADM.cob).find(x=>x.id===d.id);if(!c)return;const code=admPix(c);try{await navigator.clipboard.writeText(code);toast('Pix copia e cola copiado ('+brl(c.valor)+')')}catch(e){prompt('Copie o Pix:',code)}},
   async admtplreset(d){delete ADM.cfg[d.k];await sb.from('adm_config').upsert({chave:d.k,valor:''});render()},
   async admsalvar(){
     const D=ADM.draft;if(!D||ADM.saving)return;const novo=!D.id;const fail=m=>{D.err=m;renderSheet()};

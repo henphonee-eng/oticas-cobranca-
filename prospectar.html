@@ -294,6 +294,7 @@ function cardLead(l){
   if(l.status==='enviado')h+='<button class="btn sm" data-st="'+l.id+'" data-v="respondeu">Respondeu</button>';
   if(l.status==='respondeu')h+='<button class="btn sm" data-st="'+l.id+'" data-v="interessada">Interessada</button>';
   if(l.status==='interessada')h+='<button class="btn sm" data-st="'+l.id+'" data-v="fechou">Fechou</button>';
+  if(l.status==='fechou')h+='<a class="btn pri sm" href="/adm?nova=1&nome='+encodeURIComponent(l.nome)+'&whats='+encodeURIComponent(fmtFone(foneDe(l))||'')+'">Cadastrar como cliente</a>';
   h+='<button class="btn sm" data-open="'+l.id+'">'+(op?'Fechar':'Detalhes')+'</button></div>';
   if(op){
     h+='<div class="more">'+
