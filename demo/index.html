@@ -151,6 +151,20 @@ button.tile:hover{border-color:var(--accent)}
 .day.paid{background:var(--ok-bg);border-color:transparent;color:var(--ok)}
 .day.today .n{background:var(--accent);color:var(--accent-fg);border-radius:9px;min-width:22px;text-align:center;padding:0 4px}
 .day.sel{outline:2px solid var(--accent);outline-offset:1px}
+.day .a.nm{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 3px;font-weight:600}
+.day.prev{background:var(--surface-2);border-style:dashed;color:var(--muted)}
+.msum{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.msum .ms{padding:12px 14px;min-width:0;border-left:1px solid var(--line)}
+.msum .ms:first-child{border-left:0}
+.msum small{display:block;font-size:12px;color:var(--muted);font-weight:600}
+.msum b{display:block;font-family:var(--f-display);font-size:22px;line-height:1.25;margin-top:2px;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.msum span{font-size:12px;color:var(--muted)}
+.msum .ok b{color:var(--ok)}.msum .bad b{color:var(--bad)}
+@media (max-width:520px){.msum .ms{padding:10px 8px;text-align:center}.msum b{font-size:16px}.msum small,.msum span{font-size:11px}}
+.legend+.sh,.panel .legend{margin-bottom:6px}
+.menlist .row{flex-direction:column;gap:8px}
+.menlist .row-side{width:100%;display:flex;flex-direction:row-reverse;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.menlist .row-side .acts{justify-content:flex-start}
 .legend{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center}
 
 /* linhas e cartões */
@@ -571,6 +585,9 @@ const ICON={
   ajustes:I('<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>'),
   relacao:I('<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>'),
   admin:I('<path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/>'),
+  mensal:I('<rect x="4" y="5" width="16" height="15" rx="2.5"/><path d="M4 10h16M9 3v4M15 3v4M8.5 14.5h3"/>'),
+  prosp:I('<circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/>'),
+  crm:I('<rect x="3.5" y="4.5" width="5" height="15" rx="1.5"/><rect x="9.5" y="4.5" width="5" height="10" rx="1.5"/><rect x="15.5" y="4.5" width="5" height="6" rx="1.5"/>'),
   menu:I('<path d="M4 6.5h16M4 12h16M4 17.5h16"/>'),
   mais:I('<circle cx="5.5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="18.5" cy="12" r="1.3"/>'),
   sair:I('<path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4M15 8l4 4-4 4M19 12H9"/>')
@@ -578,13 +595,15 @@ const ICON={
 const GLASSES='<svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11.5" cy="23" r="7"/><circle cx="28.5" cy="23" r="7"/><path d="M18.5 22c1-1.3 2-1.3 3 0M4.5 21 7 12M35.5 21 33 12"/></svg>';
 const TABS=[['painel','Painel'],['agenda','Agenda'],['vendas','Vendas'],['clientes','Clientes'],['cobrar','Cobrar'],['relacao','Relacionamento'],['caixa','Caixa'],['lentes','Lentes'],['ajustes','Ajustes']];
 const ADMTAB=['admin','Administração'];
+const MENSTAB=['mensal','Mensalidades'];
+const PROSPTABS=[['prosp','Prospecção'],['crm','CRM']];
 function tabsVis(){
-  if(!OTICA)return IS_ADMIN?[ADMTAB]:[];
+  if(!OTICA)return IS_ADMIN?[ADMTAB,MENSTAB].concat(PROSPTABS):[];
   let t=TABS.filter(x=>ROLE==='dono'||!['caixa','lentes','ajustes'].includes(x[0]));
-  if(IS_ADMIN)t=t.concat([ADMTAB]);
+  if(IS_ADMIN)t=t.concat([ADMTAB,MENSTAB],PROSPTABS);
   return t;
 }
-function viewTab(){const k=ui.tab;return k==='painel'?viewPainel():k==='agenda'?viewAgenda():k==='vendas'?viewVendas():k==='clientes'?viewClientes():k==='cobrar'?viewCobrar():k==='relacao'?viewRelacao():k==='caixa'?viewCaixa():k==='lentes'?viewLentes():k==='admin'?viewAdmin():viewAjustes()}
+function viewTab(){const k=ui.tab;return k==='painel'?viewPainel():k==='agenda'?viewAgenda():k==='vendas'?viewVendas():k==='clientes'?viewClientes():k==='cobrar'?viewCobrar():k==='relacao'?viewRelacao():k==='caixa'?viewCaixa():k==='lentes'?viewLentes():k==='admin'?viewAdmin():k==='mensal'?viewMensal():viewAjustes()}
 let deferredInstall=null;
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;if(auth==='ok')render()});
 const demoTag=o=>o&&o.exemplo?'<span class="demo">exemplo</span>':'';
@@ -657,7 +676,7 @@ function render(){
   const v=$('#view');
   v.innerHTML=demoNote()+viewTab();
   if(ui.tab==='ajustes'&&ROLE==='dono')eqLoad();
-  if(ui.tab==='admin')admLoad();
+  if(ui.tab==='admin'||ui.tab==='mensal')admLoad();
   brandAdm();
 }
 mqWide.addEventListener('change',()=>render());
@@ -1340,7 +1359,7 @@ const A={
   bell(){if(ADM_MODE){ui.tab='admin';render();window.scrollTo(0,0)}else A.tab({t:'cobrar'})},
   popgo(d){const p=document.getElementById('popup');if(p)p.classList.remove('on');A.tab({t:d.t})},
   popx(){const p=document.getElementById('popup');if(p)p.classList.remove('on')},
-  tab(d){ui.tab=d.t;if(ui.sheet&&ui.sheet.kind==='mais'){ui.sheet=null;renderSheet()}render();window.scrollTo(0,0)},
+  tab(d){if(d.t==='prosp'||d.t==='crm'){location.href='/prospectar?tab='+(d.t==='prosp'?'buscar':'crm');return}ui.tab=d.t;if(ui.sheet&&ui.sheet.kind==='mais'){ui.sheet=null;renderSheet()}render();window.scrollTo(0,0)},
   mais(){ui.sheet={kind:'mais'};renderSheet()},
   logout(){logout()},
   reload(){location.reload()},
