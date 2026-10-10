@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="pt-BR" class="adm">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0A2A31">
+<meta name="theme-color" content="#191A23">
 <link rel="manifest" href="/demo/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/demo/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-title" content="Demo">
@@ -627,6 +627,28 @@ html.vh .kpi b,html.vh .tile b,html.vh .msum b,html.vh .row .amt,html.vh .sale-b
 html.vh .mbars{filter:blur(6px)}
 
 .hint.warn-soft{color:var(--warn);background:var(--warn-bg);border-radius:8px;padding:8px 10px;font-weight:500}
+
+.movs{gap:0;padding:6px 16px}
+.mv{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--line);font-size:14px}
+.mv:first-child{border-top:0}
+.mv-d{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mv-q{font-size:12.5px;white-space:nowrap}
+.aovivo{color:var(--ok);font-weight:600;font-size:12.5px}
+html.adm .aovivo{color:#2E7D1E}
+@media (max-width:520px){.mv{grid-template-columns:minmax(0,1fr) auto;gap:4px 10px}.mv-t{grid-column:1;grid-row:1;justify-self:start}.mv-q{grid-column:2;grid-row:1;justify-self:end}.mv-d{grid-column:1;grid-row:2}.mv-v{grid-column:2;grid-row:2;justify-self:end}}
+
+.secs{display:flex;flex-direction:column;gap:12px;margin-top:22px}
+.sec-h{display:flex;align-items:center;gap:12px;width:100%;padding:14px 18px;background:var(--surface);border:1px solid var(--line);border-radius:14px;text-align:left;cursor:pointer;min-height:56px;color:var(--fg);font:inherit}
+.sec-t{font-weight:600;font-size:16px;flex:1;min-width:0}
+.sec-i{color:var(--muted);font-size:13.5px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.sec-h svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none;transition:transform .15s;color:var(--muted)}
+.sec-h.on svg{transform:rotate(180deg)}
+.sec-h.alerta .sec-i{color:var(--bad);font-weight:600}
+.sec-b{margin-top:10px}
+html.adm .sec-h{border:1px solid var(--edge);box-shadow:var(--drop);border-radius:22px}
+html.adm .sec-h.on{background:var(--lime);color:#191A23}
+html.adm .sec-h.on .sec-i,html.adm .sec-h.on svg{color:#191A23}
+html.adm .sec-h.alerta:not(.on){box-shadow:0 5px 0 var(--bad)}
 .brand-name{font-family:var(--f-display);font-weight:700;font-size:22px;line-height:1;letter-spacing:.04em;color:#fff;display:flex;flex-direction:column;gap:2px}
 .brand-name small{font-family:'IBM Plex Sans',sans-serif;font-weight:500;font-size:11px;letter-spacing:.22em;text-transform:uppercase;opacity:.8}
 @media (min-width:900px){.brand-name{font-size:32px;margin-left:6px}.brand-name small{font-size:12px}}
@@ -638,26 +660,21 @@ html.vh .mbars{filter:blur(6px)}
 .side-cta{display:none}
 @media (min-width:900px){.side-cta{display:inline-flex;justify-content:center}}
 .demo-note .btn{align-self:flex-start;margin-top:6px}
-.dhero{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px;border-radius:14px;padding:10px 12px 10px 16px;color:#F3F7F7;background:linear-gradient(120deg,#0A2A31,#0F4A52 70%,#14656B);box-shadow:0 1px 2px rgba(10,42,49,.2),0 14px 28px -18px rgba(10,42,49,.6);border-left:4px solid #C9A25A}
+.dhero{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px;border-radius:18px;padding:10px 12px 10px 16px;color:#F3F3F3;background:#191A23;box-shadow:0 4px 0 #000;border-left:5px solid #B9FF66}
 .brand-name small{display:none}
 @media (max-width:899px){.brand-name small{display:block}}
 .dh-main{display:flex;flex-direction:column;gap:1px;min-width:0;flex:1 1 220px}
 .dh-main b{font-size:14.5px;color:#fff}
 .dh-main span{font-size:12.5px;color:rgba(243,247,247,.75);line-height:1.35}
 .dh-acts{display:flex;align-items:center;gap:6px;flex:none}
-.btn.gold{background:linear-gradient(180deg,#E3C27F,#C9A25A);border-color:transparent;color:#2A1D05;font-weight:700;box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 8px 16px -10px rgba(201,162,90,.8)}
+html.adm .btn.gold{background:#B9FF66;border-color:#B9FF66;color:#191A23;font-weight:700;box-shadow:none}
 .dh-x{width:34px;height:34px;border-radius:8px;border:0;background:transparent;color:rgba(255,255,255,.7);font-size:22px;line-height:1;display:grid;place-items:center;padding:0}
 .dh-x:hover{background:rgba(255,255,255,.1);color:#fff}
 
-/* Paleta da demonstração: petróleo e dourado */
-:root{--bg:#F1F5F4;--surface:#FFFFFF;--surface-2:#E6EDEC;--fg:#0E1F22;--muted:#587074;--line:#D7E1E0;--accent:#0B6A72;--accent-fg:#FFFFFF;--accent-soft:#DDF0F0;--brand-1:#14656B;--brand-2:#0A2A31;--bar-a:#0B6A72;--bar-b:#C9A25A}
-:root[data-theme="light"]{--bg:#F1F5F4;--surface:#FFFFFF;--surface-2:#E6EDEC;--fg:#0E1F22;--muted:#587074;--line:#D7E1E0;--accent:#0B6A72;--accent-fg:#FFFFFF;--accent-soft:#DDF0F0;--brand-1:#14656B;--brand-2:#0A2A31;--bar-a:#0B6A72;--bar-b:#C9A25A}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0A1517;--surface:#112326;--surface-2:#183136;--fg:#E8F1F1;--muted:#93AEB1;--line:#24434A;--accent:#5CC9CF;--accent-fg:#06191B;--accent-soft:#143A3F;--brand-1:#14656B;--brand-2:#0A2A31;--bar-a:#3DB5BC;--bar-b:#D9B56C}}
-:root[data-theme="dark"]{--bg:#0A1517;--surface:#112326;--surface-2:#183136;--fg:#E8F1F1;--muted:#93AEB1;--line:#24434A;--accent:#5CC9CF;--accent-fg:#06191B;--accent-soft:#143A3F;--brand-1:#14656B;--brand-2:#0A2A31;--bar-a:#3DB5BC;--bar-b:#D9B56C}
 </style>
 <script>if(/^\/adm(\/|$)/.test(location.pathname)){document.documentElement.classList.add('adm');var q=function(x){return document.querySelector(x)};if(q('link[rel=manifest]'))q('link[rel=manifest]').href='/adm.webmanifest';if(q('link[rel=apple-touch-icon]'))q('link[rel=apple-touch-icon]').href='/icons/adm-apple-touch-icon.png';if(q('meta[name=apple-mobile-web-app-title]'))q('meta[name=apple-mobile-web-app-title]').content='Adm Óticas';if(q('meta[name=theme-color]'))q('meta[name=theme-color]').content='#191A23';document.title='Adm Óticas';var f=document.createElement('link');f.rel='stylesheet';f.href='https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap';document.head.appendChild(f)}</script>
 
-</head>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"></head>
 <body>
 <div id="app" class="shell" hidden>
   <aside class="side">
@@ -873,6 +890,7 @@ const ICON={
 };
 const GLASSES='<svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11.5" cy="23" r="7"/><circle cx="28.5" cy="23" r="7"/><path d="M18.5 22c1-1.3 2-1.3 3 0M4.5 21 7 12M35.5 21 33 12"/></svg>';
 const TABS=[['painel','Painel'],['agenda','Agenda'],['vendas','Vendas'],['clientes','Clientes'],['cobrar','Cobrar'],['aguard','Aguardando'],['entregas','Follow-up'],['os','Ordens de serviço'],['relacao','Relacionamento'],['caixa','Caixa'],['lentes','Lentes'],['ajustes','Ajustes']];
+function admTabInicial(){const q=new URLSearchParams(location.search),t=q.get('tab');if(t){q.delete('tab');history.replaceState(null,'',location.pathname+(q.toString()?'?'+q:''))}return t==='mensal'?'mensal':'admin'}
 const ADMTAB=['admin','Administração'];
 const MENSTAB=['mensal','Mensalidades'];
 const PROSPTABS=[['prosp','Prospecção'],['crm','CRM']];
@@ -2100,6 +2118,28 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&ui.sheet)closeSheet
   const sf=document.querySelector('.side-foot');if(sf)sf.insertBefore(sc,sf.firstChild);
   S.config.otica={id:'otica',nome:DEMO_NOME,whatsapp:'',endereco:'Rua Exemplo, 123 · Sua cidade',pix:'seu-pix@exemplo.com',autolock:0};
   loadDemo();
+})();
+</script>
+<script>
+/* avisa quando há uma versão nova do sistema publicada (o app da tela de início fica aberto por dias) */
+(function(){
+  var base=null,ult=0,avisado=false;
+  function hash(t){var h=0;for(var i=0;i<t.length;i++){h=(h*31+t.charCodeAt(i))|0}return h}
+  function pegar(){return fetch(location.pathname+'?v='+Date.now(),{cache:'no-store'}).then(function(r){return r.ok?r.text():null}).then(function(t){return t?hash(t):null}).catch(function(){return null})}
+  function aviso(){
+    if(avisado)return;avisado=true;
+    var b=document.createElement('button');b.type='button';b.id='nova-versao';
+    b.textContent='Nova versão do sistema disponível · toque para atualizar';
+    b.style.cssText='position:fixed;left:50%;transform:translateX(-50%);top:calc(10px + env(safe-area-inset-top,0px));z-index:200;background:#191A23;color:#B9FF66;border:0;border-radius:14px;padding:12px 16px;font:600 14px system-ui,sans-serif;box-shadow:0 4px 0 #B9FF66;max-width:calc(100% - 32px)';
+    b.onclick=function(){location.reload()};document.body.appendChild(b);
+  }
+  function checar(){
+    var agora=Date.now();if(agora-ult<5*60*1000)return;ult=agora;
+    pegar().then(function(h){if(h==null)return;if(base==null){base=h;return}if(h!==base)aviso()});
+  }
+  window.addEventListener('load',function(){setTimeout(function(){ult=0;checar()},4000)});
+  document.addEventListener('visibilitychange',function(){if(!document.hidden)checar()});
+  setInterval(function(){if(!document.hidden)checar()},10*60*1000);
 })();
 </script>
 <script>
