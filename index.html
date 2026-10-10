@@ -1531,7 +1531,7 @@ function viewFollow(){
   const ps=allP().filter(x=>!x.p.pago);
   const late=ps.filter(x=>x.p.venc<t).sort((a,b)=>a.p.venc.localeCompare(b.p.venc));
   const soon=ps.filter(x=>x.p.venc>=t&&diffDays(x.p.venc,t)<=3).sort((a,b)=>a.p.venc.localeCompare(b.p.venc));
-  const an=aniversariantes(7),rv=revisoes(),bv=bvPend(),mp=fupPend(),mf=Object.values(fupDoc().itens).filter(x=>x.feitoEm).sort((a,b)=>b.feitoEm.localeCompare(a.feitoEm)).slice(0,5);
+  const an=aniversariantes(7),rv=revisoes(),bv=premBvFiltro(bvPend()),mp=fupPend(),mf=Object.values(fupDoc().itens).filter(x=>x.feitoEm).sort((a,b)=>b.feitoEm.localeCompare(a.feitoEm)).slice(0,5);
   const bvRow=c=>'<article class="row"><div class="row-main"><button class="link" data-act="editcliente" data-c="'+c.id+'">'+esc(c.nome)+demoTag(c)+'</button><div class="meta">Cadastrado em '+fmtDate(new Date(c.criadoEm).toISOString().slice(0,10))+'</div><div class="chips"><span class="chip warn">Boas-vindas pendente</span></div></div><div class="row-side"><div class="acts"><a class="btn sm wa"'+WAT+' data-contact="bv" data-c="'+c.id+'" href="'+esc(waLink(c.whatsapp,fillTpl(tpl('cadastro'),ctx(null,null,c))))+'">Enviar boas-vindas</a></div></div></article>';
   const S_=[
    ['boasvindas','Boas-vindas',bv.length,'<p class="sub" style="margin:0 0 8px">Clientes cadastrados nos últimos 30 dias que ainda não receberam a mensagem de boas-vindas.</p><div class="stack">'+(bv.length?bv.map(bvRow).join(''):none('Nenhuma boas-vindas pendente.'))+'</div>'],
@@ -1545,7 +1545,7 @@ function viewFollow(){
   const chips=[['todos','Todos']].concat(S_.map(x=>[x[0],x[1]+(x[2]?' ('+x[2]+')':'')]));
   return pageHead('Follow-up','Na ordem do atendimento: boas-vindas, entrega, avaliação, cobrança e relacionamento','<button class="btn primary" data-act="fupnovo">Novo follow-up</button>')+
   '<div class="filters">'+chips.map(c=>'<button class="fchip" data-act="fusec" data-f="'+c[0]+'" aria-pressed="'+(sec===c[0])+'">'+esc(c[1])+'</button>').join('')+'</div>'+
-  S_.filter(x=>sec==='todos'||sec===x[0]).map(x=>'<div class="panel" style="margin-bottom:16px"><div class="sh" style="margin-top:0"><h2>'+x[1]+'</h2><span class="sub num">'+x[2]+'</span></div>'+x[3]+'</div>').join('');
+  S_.filter(x=>sec==='todos'||sec===x[0]).map(x=>'<div class="panel" style="margin-bottom:16px"><div class="sh" style="margin-top:0"><h2>'+x[1]+'</h2><span class="sub num">'+x[2]+'</span></div>'+premFuAuto(x[0],x[3])+'</div>').join('');
 }
 function viewEntregas(){
   const pend=entPend();
@@ -2650,7 +2650,7 @@ const WA={st:null,fila:null,busy:false,token:'',err:'',t:0};
 async function waLoad(){
   if(WA.busy||!OTICA||!modOn('wa'))return;WA.busy=true;
   try{
-    const r=await Promise.all([sb.rpc('wa_status',{p_otica:OTICA.id}),sb.from('wa_fila').select('id,cliente_nome,tipo,telefone,texto,status,enviar_apos,expira_em,erro,enviado_em,criado_em').eq('otica_id',OTICA.id).order('criado_em',{ascending:false}).limit(80)]);
+    const r=await Promise.all([sb.rpc('wa_status',{p_otica:OTICA.id}),sb.from('wa_fila').select('id,cliente_id,cliente_nome,tipo,telefone,texto,status,enviar_apos,expira_em,erro,enviado_em,criado_em').eq('otica_id',OTICA.id).order('criado_em',{ascending:false}).limit(80)]);
     WA.st=(r[0]&&r[0].data)||null;WA.fila=(r[1]&&r[1].data)||[];
   }catch(e){WA.fila=WA.fila||[]}
   WA.busy=false;WA.t=Date.now();
@@ -2693,6 +2693,17 @@ function premFuWa(){
    '<div class="acts" style="margin-bottom:10px">'+(dono&&n?'<button class="btn primary sm" data-act="waaprovtodas">Aprovar todas ('+n+')</button>':'')+'<button class="btn sm" data-act="waatualizar">Atualizar</button></div>'+
    '<p class="sub" style="margin:0 0 8px">Se o computador da loja estiver desligado, as mensagens ficam guardadas aqui e saem quando ele ligar, dentro do prazo de cada aviso.</p>'+
    '<div class="stack">'+(WA.fila===null?none('Carregando...'):fila.length?fila.map(linha).join(''):none('Nenhuma mensagem na fila ainda.'))+'</div>'};
+}
+const WA_SEC={boasvindas:['boasvindas'],cobrar:['lembrete','atraso'],aniversarios:['aniversario'],revisao:['revisao']};
+const waQ=(tipos,cid)=>(WA.fila||[]).filter(m=>tipos.includes(m.tipo)&&['aprovar','aguardando','enviando','enviada'].includes(m.status)&&(!cid||m.cliente_id===cid));
+function premBvFiltro(l){if(!waOn()||waModo('boasvindas')==='off')return l;return l.filter(c=>!waQ(['boasvindas'],c.id).length)}
+function premFuAuto(k,html){
+  const tp=WA_SEC[k];if(!tp||!waOn()||tp.every(t=>waModo(t)==='off'))return html;
+  const q=waQ(tp),env=q.filter(m=>m.status==='enviada').length,esp=q.filter(m=>m.status==='aprovar').length,fila=q.length-env-esp;
+  const modos=tp.map(t=>waModo(t)==='auto'?'sai sozinho':'espera a sua aprovação');
+  const txt='<p class="sub" style="margin:0 0 8px"><b>Automático:</b> '+(k==='cobrar'?'lembrete na véspera e atraso com 1, 7 e 15 dias':k==='boasvindas'?'a mensagem sai ao cadastrar o cliente':k==='aniversarios'?'o parabéns sai no dia':'o convite sai quando completa 11 meses')+' ('+modos[0]+'). '+env+' enviadas, '+fila+' na fila, '+esp+' esperando aprovação. <button class="btn sm" data-act="premopen" data-k="wa">Ver a fila</button></p>';
+  if(k==='boasvindas')return txt+(html.indexOf('class="row"')>=0?'<p class="sub" style="margin:0 0 6px">Ainda sem mensagem automática (cadastrados antes de ligar):</p>'+html:'');
+  return txt+'<details><summary class="sub" style="cursor:pointer">Ver a lista e chamar manualmente</summary><div style="margin-top:8px">'+html+'</div></details>';
 }
 function viewWa(){
   waGarante();const f=premFuWa();

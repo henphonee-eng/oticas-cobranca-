@@ -786,7 +786,12 @@ function computeAuth(){auth='ok'}
 function renderGate(){const g=$('#gate');g.classList.remove('on');g.innerHTML=''}
 const gateErr=()=>{};
 const hexRgb=h=>{const m=/^#?([0-9a-f]{6})$/i.exec(h||'');if(!m)return[4,134,222];const n=parseInt(m[1],16);return[n>>16&255,n>>8&255,n&255]};
-const modOn=()=>false;function premLock(){return ''}function premView(){return ''}function premCtx(){}function premFicha(){return ''}function premAjustes(){return ''}function premInit(){}function premLog(){}function premPix(){return ''}function premVendSale(){return ''}function premAcTabs(){return null}function premCliOrigem(){}function premPainelVend(){return ''}function premFuPesq(){return null}function premFuWa(){return null}function premWaHook(){}function premWaBtns(){return ''}function premVendCli(){return ''}function sheetVend(){return null}function sheetFinPag(){return null}function sheetHist(){return null}
+const modOn=()=>false;function premLock(){return ''}function premView(k){
+  const L=['WhatsApp Automático: avisos que saem sozinhos pelo WhatsApp da ótica','Contas a pagar e lucro do mês','Metas e comissão dos vendedores','Acesso da equipe com permissões','Pix copia e cola nas cobranças','Ficha completa do cliente','Campanhas por grupo de clientes','Pesquisa de satisfação e avaliação no Google','Histórico de alterações e backup automático'];
+  return pageHead('WhatsApp Automático','Função do plano Premium')+'<div class="cols"><div class="panel"><div class="card" style="gap:12px"><div><span class="chip acc">Plano Premium</span></div><h2 style="margin:0">Esta função é do plano Premium</h2><p class="sub" style="margin:0">Com o WhatsApp Automático, o sistema manda sozinho, pelo WhatsApp da ótica: boas-vindas ao cadastrar, recibo ao receber a parcela, aviso de que o óculos chegou, agradecimento, lembrete de vencimento, atraso e aniversário. Você escolhe o que sai sozinho e o que espera a sua aprovação. Se o computador da loja estiver desligado, nada se perde.</p><p class="sub" style="margin:0">Nesta demonstração a função não funciona. No sistema real, ela fica no menu e é liberada no Premium.</p></div></div>'+
+  '<div class="panel"><div class="card" style="gap:10px"><div class="sh" style="margin:0"><h2>Planos</h2></div><div class="row"><div class="row-main"><b>Básico</b><div class="meta">O que você está vendo agora: clientes, vendas parceladas, cobranças, Follow-up, ordens de serviço e relatórios</div></div><div class="row-side"><span class="chip ok">Plano atual</span><div class="amt">R$ 47,00<small>/mês</small></div></div></div><div class="row"><div class="row-main"><b>Premium</b><div class="meta">Tudo do Básico, mais as funções abaixo e as novidades que chegarem</div></div><div class="row-side"><div class="amt">R$ 67,00<small>/mês</small></div></div></div><div><a class="btn wa primary" href="'+esc(ctaHref())+'" target="_blank" rel="noopener">Quero o Premium no WhatsApp</a></div>'+
+  '<div class="sh"><h2>O que o Premium inclui</h2></div><div class="stack">'+L.map(x=>'<div class="row"><div class="row-main"><b>'+x+'</b></div></div>').join('')+'</div></div></div></div>';
+}function premCtx(){}function premFicha(){return ''}function premAjustes(){return ''}function premInit(){}function premLog(){}function premPix(){return ''}function premVendSale(){return ''}function premAcTabs(){return null}function premCliOrigem(){}function premPainelVend(){return ''}function premFuPesq(){return null}function premFuWa(){return null}function premWaHook(){}function premWaBtns(){return ''}function premBvFiltro(l){return l}function premFuAuto(k,h){return h}function premVendCli(){return ''}function sheetVend(){return null}function sheetFinPag(){return null}function sheetHist(){return null}
 function brandAdm(){}function viewAdmin(){return ''}function equipeCard(){return ''}function eqLoad(){}function admLoad(){}function sheetAdm(){return null}function sheetAdmOk(){return null}
 async function logout(){}
 let DEMO_NOME='Sua Ótica Aqui',DEMO_PERSONAL=false;
@@ -897,7 +902,7 @@ const MENSTAB=['mensal','Mensalidades'];
 const PROSPTABS=[['prosp','Prospecção'],['crm','CRM']];
 function tabsVis(){
   if(!OTICA)return IS_ADMIN?[ADMTAB,MENSTAB].concat(PROSPTABS):[];
-  let t=TABS.filter(x=>x[0]!=='whatsapp'||(ROLE==='dono'&&modOn('wa')));
+  let t=TABS.filter(x=>x[0]!=='whatsapp'||true);
   t=t.filter(x=>ROLE==='dono'||!['caixa','lentes','ajustes','financeiro','campanhas'].includes(x[0]));
   if(ROLE!=='dono'){const ac=premAcTabs();if(ac){t=TABS.filter(x=>x[0]!=='ajustes'&&x[0]!=='whatsapp'&&ac.includes(x[0]));if(!t.length)t=TABS.filter(x=>x[0]==='painel')}}
   if(IS_ADMIN)t=t.concat([ADMTAB,MENSTAB],PROSPTABS);
@@ -1370,7 +1375,7 @@ function viewFollow(){
   const ps=allP().filter(x=>!x.p.pago);
   const late=ps.filter(x=>x.p.venc<t).sort((a,b)=>a.p.venc.localeCompare(b.p.venc));
   const soon=ps.filter(x=>x.p.venc>=t&&diffDays(x.p.venc,t)<=3).sort((a,b)=>a.p.venc.localeCompare(b.p.venc));
-  const an=aniversariantes(7),rv=revisoes(),bv=bvPend(),mp=fupPend(),mf=Object.values(fupDoc().itens).filter(x=>x.feitoEm).sort((a,b)=>b.feitoEm.localeCompare(a.feitoEm)).slice(0,5);
+  const an=aniversariantes(7),rv=revisoes(),bv=premBvFiltro(bvPend()),mp=fupPend(),mf=Object.values(fupDoc().itens).filter(x=>x.feitoEm).sort((a,b)=>b.feitoEm.localeCompare(a.feitoEm)).slice(0,5);
   const bvRow=c=>'<article class="row"><div class="row-main"><button class="link" data-act="editcliente" data-c="'+c.id+'">'+esc(c.nome)+demoTag(c)+'</button><div class="meta">Cadastrado em '+fmtDate(new Date(c.criadoEm).toISOString().slice(0,10))+'</div><div class="chips"><span class="chip warn">Boas-vindas pendente</span></div></div><div class="row-side"><div class="acts"><a class="btn sm wa"'+WAT+' data-contact="bv" data-c="'+c.id+'" href="'+esc(waLink(c.whatsapp,fillTpl(tpl('cadastro'),ctx(null,null,c))))+'">Enviar boas-vindas</a></div></div></article>';
   const S_=[
    ['boasvindas','Boas-vindas',bv.length,'<p class="sub" style="margin:0 0 8px">Clientes cadastrados nos últimos 30 dias que ainda não receberam a mensagem de boas-vindas.</p><div class="stack">'+(bv.length?bv.map(bvRow).join(''):none('Nenhuma boas-vindas pendente.'))+'</div>'],
@@ -1384,7 +1389,7 @@ function viewFollow(){
   const chips=[['todos','Todos']].concat(S_.map(x=>[x[0],x[1]+(x[2]?' ('+x[2]+')':'')]));
   return pageHead('Follow-up','Na ordem do atendimento: boas-vindas, entrega, avaliação, cobrança e relacionamento','<button class="btn primary" data-act="fupnovo">Novo follow-up</button>')+
   '<div class="filters">'+chips.map(c=>'<button class="fchip" data-act="fusec" data-f="'+c[0]+'" aria-pressed="'+(sec===c[0])+'">'+esc(c[1])+'</button>').join('')+'</div>'+
-  S_.filter(x=>sec==='todos'||sec===x[0]).map(x=>'<div class="panel" style="margin-bottom:16px"><div class="sh" style="margin-top:0"><h2>'+x[1]+'</h2><span class="sub num">'+x[2]+'</span></div>'+x[3]+'</div>').join('');
+  S_.filter(x=>sec==='todos'||sec===x[0]).map(x=>'<div class="panel" style="margin-bottom:16px"><div class="sh" style="margin-top:0"><h2>'+x[1]+'</h2><span class="sub num">'+x[2]+'</span></div>'+premFuAuto(x[0],x[3])+'</div>').join('');
 }
 function viewEntregas(){
   const pend=entPend();
