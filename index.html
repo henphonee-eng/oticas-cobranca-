@@ -1015,19 +1015,20 @@ const ICON={
   sair:I('<path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4M15 8l4 4-4 4M19 12H9"/>')
 };
 const GLASSES='<svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11.5" cy="23" r="7"/><circle cx="28.5" cy="23" r="7"/><path d="M18.5 22c1-1.3 2-1.3 3 0M4.5 21 7 12M35.5 21 33 12"/></svg>';
-const TABS=[['painel','Painel'],['agenda','Agenda'],['vendas','Vendas'],['clientes','Clientes'],['cobrar','Cobrar'],['aguard','Aguardando'],['entregas','Follow-up'],['os','Ordens de serviço'],['relacao','Relacionamento'],['caixa','Caixa'],['financeiro','Financeiro'],['metas','Metas'],['campanhas','Campanhas'],['lentes','Lentes'],['ajustes','Ajustes']];
+const TABS=[['painel','Painel'],['agenda','Agenda'],['vendas','Vendas'],['clientes','Clientes'],['cobrar','Cobrar'],['aguard','Aguardando'],['entregas','Follow-up'],['os','Ordens de serviço'],['relacao','Relacionamento'],['caixa','Caixa'],['financeiro','Financeiro'],['metas','Metas'],['campanhas','Campanhas'],['lentes','Lentes'],['whatsapp','WhatsApp automático'],['ajustes','Ajustes']];
 function admTabInicial(){const q=new URLSearchParams(location.search),t=q.get('tab');if(t){q.delete('tab');history.replaceState(null,'',location.pathname+(q.toString()?'?'+q:''))}return t==='mensal'?'mensal':'admin'}
 const ADMTAB=['admin','Administração'];
 const MENSTAB=['mensal','Mensalidades'];
 const PROSPTABS=[['prosp','Prospecção'],['crm','CRM']];
 function tabsVis(){
   if(!OTICA)return IS_ADMIN?[ADMTAB,MENSTAB].concat(PROSPTABS):[];
-  let t=TABS.filter(x=>ROLE==='dono'||!['caixa','lentes','ajustes','financeiro','campanhas'].includes(x[0]));
-  if(ROLE!=='dono'){const ac=premAcTabs();if(ac){t=TABS.filter(x=>x[0]!=='ajustes'&&ac.includes(x[0]));if(!t.length)t=TABS.filter(x=>x[0]==='painel')}}
+  let t=TABS.filter(x=>x[0]!=='whatsapp'||(ROLE==='dono'&&modOn('wa')));
+  t=t.filter(x=>ROLE==='dono'||!['caixa','lentes','ajustes','financeiro','campanhas'].includes(x[0]));
+  if(ROLE!=='dono'){const ac=premAcTabs();if(ac){t=TABS.filter(x=>x[0]!=='ajustes'&&x[0]!=='whatsapp'&&ac.includes(x[0]));if(!t.length)t=TABS.filter(x=>x[0]==='painel')}}
   if(IS_ADMIN)t=t.concat([ADMTAB,MENSTAB],PROSPTABS);
   return t;
 }
-function viewTab(){const k=ui.tab;return k==='painel'?viewPainel():k==='agenda'?viewAgenda():k==='vendas'?viewVendas():k==='aguard'?viewAguard():k==='entregas'?viewFollow():k==='os'?viewOS():k==='clientes'?viewClientes():k==='cobrar'?viewCobrar():k==='relacao'?viewRelacao():k==='caixa'?viewCaixa():k==='lentes'?viewLentes():k==='admin'?viewAdmin():k==='mensal'?viewMensal():(k==='financeiro'||k==='metas'||k==='campanhas'||k==='premium')?premView(k):viewAjustes()}
+function viewTab(){const k=ui.tab;return k==='painel'?viewPainel():k==='agenda'?viewAgenda():k==='vendas'?viewVendas():k==='aguard'?viewAguard():k==='entregas'?viewFollow():k==='os'?viewOS():k==='clientes'?viewClientes():k==='cobrar'?viewCobrar():k==='relacao'?viewRelacao():k==='caixa'?viewCaixa():k==='lentes'?viewLentes():k==='admin'?viewAdmin():k==='mensal'?viewMensal():(k==='financeiro'||k==='metas'||k==='campanhas'||k==='premium'||k==='whatsapp')?premView(k):viewAjustes()}
 let deferredInstall=null;
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;if(auth==='ok')render()});
 const demoTag=o=>o&&o.exemplo?'<span class="demo">exemplo</span>':'';
@@ -1540,7 +1541,6 @@ function viewFollow(){
    ['manual','Meus follow-ups',mp.length,'<div class="stack">'+(mp.length?mp.map(fupRow).join(''):none('Nenhum follow-up manual pendente. Use o botão Novo follow-up para anotar o que não pode esquecer.'))+(mf.length?'<p class="sub" style="margin:10px 0 4px">Feitos recentemente</p>'+mf.map(fupRow).join(''):'')+'</div>']
   ];
   const pesq=premFuPesq();if(pesq)S_.splice(2,0,['pesquisa','Avaliação do cliente',pesq.n,pesq.html]);
-  const wsec=premFuWa();if(wsec)S_.unshift(['whatsapp','WhatsApp automático',wsec.n,wsec.html]);
   const chips=[['todos','Todos']].concat(S_.map(x=>[x[0],x[1]+(x[2]?' ('+x[2]+')':'')]));
   return pageHead('Follow-up','Na ordem do atendimento: boas-vindas, entrega, avaliação, cobrança e relacionamento','<button class="btn primary" data-act="fupnovo">Novo follow-up</button>')+
   '<div class="filters">'+chips.map(c=>'<button class="fchip" data-act="fusec" data-f="'+c[0]+'" aria-pressed="'+(sec===c[0])+'">'+esc(c[1])+'</button>').join('')+'</div>'+
@@ -2255,6 +2255,7 @@ function viewUpsell(k){
 function premView(k){
   if(k==='premium')return viewUpsell(ui.upk||'');
   if(k==='campanhas'){if(!modOn('campanhas')&&!modOn('pesquisa'))return viewUpsell('campanhas');return viewCamp()}
+  if(k==='whatsapp')return modOn('wa')&&ROLE==='dono'?viewWa():viewUpsell('wa');
   if(!modOn(k))return viewUpsell(k);
   return k==='financeiro'?viewFin():viewMetas();
 }
@@ -2504,12 +2505,12 @@ function premAjustes(){
   const status=MODS.map(x=>'<div class="sum-row"><span>'+esc(x.n)+'</span>'+(modOn(x.k)?'<span class="chip ok">Ativo</span>':'<button class="btn sm" data-act="premopen" data-k="'+x.k+'">'+LOCK+' Premium</button>')+'</div>').join('');
   const pix=modOn('pixcobr')?'<div class="card" style="gap:12px"><b>Pix copia e cola nas cobranças</b><div class="field"><span>Cidade do recebedor (aparece no Pix)</span><input type="text" data-cfg="cidade" value="'+esc(cfg().cidade||'')+'" placeholder="Recife" maxlength="15"></div><p class="sub" style="margin:0">As mensagens de cobrança e atraso passam a levar o código Pix com o valor da parcela. Use a chave Pix em Dados da ótica.</p></div>':'';
   const hist=modOn('historico')?'<div class="card" style="gap:10px"><b>Histórico e backup automático</b><p class="sub" style="margin:0">Último backup automático: '+(pm().backupEm?fmtDate(pm().backupEm):'ainda não feito')+'. Um novo arquivo é baixado sozinho a cada 7 dias, quando você abre o sistema.</p><div><button class="btn" data-act="histopen">Ver histórico de alterações</button></div></div>':'';
-  return '<div class="sh"><h2>Plano '+(jaPrem?'Premium':'Básico')+'</h2></div><div class="card" style="gap:6px">'+status+'</div>'+pix+hist+premWaAjustes();
+  return '<div class="sh"><h2>Plano '+(jaPrem?'Premium':'Básico')+'</h2></div><div class="card" style="gap:6px">'+status+'</div>'+pix+hist;
 }
 
 /* ----- ações ----- */
 Object.assign(A,{
-  premopen(d){const k=d.k||'';if(k==='wa_cfg'){ui.tab='ajustes';render();return}ui.upk=k;if(ui.sheet)closeSheet();if(k==='pesquisa'&&modOn(k)){ui.cs='pesq';ui.tab='campanhas'}else if(PREMTAB[k]&&modOn(k))ui.tab=k;else ui.tab='premium';render()},
+  premopen(d){const k=d.k||'';if(k==='wa'&&modOn('wa')){ui.tab='whatsapp';render();return}ui.upk=k;if(ui.sheet)closeSheet();if(k==='pesquisa'&&modOn(k)){ui.cs='pesq';ui.tab='campanhas'}else if(PREMTAB[k]&&modOn(k))ui.tab=k;else ui.tab='premium';render()},
   finprev(){ui.fm=addMonths((ui.fm||todayStr().slice(0,7))+'-01',-1).slice(0,7);render()},
   finnext(){ui.fm=addMonths((ui.fm||todayStr().slice(0,7))+'-01',1).slice(0,7);render()},
   finnova(){ui.fd=finBlank();ui.ferr='';ui.fform=true;render()},
@@ -2652,13 +2653,13 @@ async function waLoad(){
     WA.st=(r[0]&&r[0].data)||null;WA.fila=(r[1]&&r[1].data)||[];
   }catch(e){WA.fila=WA.fila||[]}
   WA.busy=false;WA.t=Date.now();
-  if((ui.tab==='entregas'||ui.tab==='ajustes')&&!fieldsOn()&&!ui.sheet)render();
+  if(ui.tab==='whatsapp'&&!fieldsOn()&&!ui.sheet)render();
 }
 function waGarante(){if(WA.fila===null&&!WA.busy)setTimeout(waLoad,0)}
-setInterval(()=>{if(auth==='ok'&&modOn('wa')&&(ui.tab==='entregas'||ui.tab==='ajustes')&&!document.hidden)waLoad()},30000);
+setInterval(()=>{if(auth==='ok'&&modOn('wa')&&ui.tab==='whatsapp'&&!document.hidden)waLoad()},30000);
 function waEnq(tipo,c,texto,ref){
   if(!waOn()||!c||!c.whatsapp||!OTICA)return false;
-  sb.rpc('wa_enfileirar',{p_otica:OTICA.id,p_cliente:c.id||'',p_nome:c.nome||'',p_tipo:tipo,p_tel:c.whatsapp,p_texto:texto,p_ref:ref}).then(r=>{if(r&&!r.error){WA.fila=null;if(r.data==='ok')toast(waModo(tipo)==='auto'?'Mensagem na fila do WhatsApp':'Mensagem esperando sua aprovação em Follow-up')}}).catch(()=>{});
+  sb.rpc('wa_enfileirar',{p_otica:OTICA.id,p_cliente:c.id||'',p_nome:c.nome||'',p_tipo:tipo,p_tel:c.whatsapp,p_texto:texto,p_ref:ref}).then(r=>{if(r&&!r.error){WA.fila=null;if(r.data==='ok')toast(waModo(tipo)==='auto'?'Mensagem na fila do WhatsApp':'Mensagem esperando sua aprovação no menu WhatsApp automático')}}).catch(()=>{});
   return true;
 }
 const waModo=t=>waDoc().modo[t]||'aprovar';
@@ -2681,7 +2682,7 @@ function waEstado(){
 }
 function premFuWa(){
   if(!modOn('wa'))return null;waGarante();
-  if(!waDoc().on)return {n:0,html:'<p class="sub" style="margin:0 0 8px">O envio automático está desligado. Ligue em Ajustes, no bloco WhatsApp automático.</p><div><button class="btn sm" data-act="premopen" data-k="wa_cfg">Abrir ajustes</button></div>'};
+  if(!waDoc().on)return {n:0,html:'<p class="sub" style="margin:0">O envio automático está desligado. Marque a opção "Enviar avisos automáticos pelo WhatsApp" acima para começar.</p>'};
   const st=WA.st||{},e=waEstado(),dono=ROLE==='dono',fila=WA.fila||[];
   const linha=m=>{const sp=WA_ST[m.status]||['',m.status];
     const pode=dono&&['aprovar','falhou','cancelada','expirada'].includes(m.status),canc=dono&&['aprovar','aguardando','falhou'].includes(m.status);
@@ -2691,6 +2692,10 @@ function premFuWa(){
    '<div class="acts" style="margin-bottom:10px">'+(dono&&n?'<button class="btn primary sm" data-act="waaprovtodas">Aprovar todas ('+n+')</button>':'')+'<button class="btn sm" data-act="waatualizar">Atualizar</button></div>'+
    '<p class="sub" style="margin:0 0 8px">Se o computador da loja estiver desligado, as mensagens ficam guardadas aqui e saem quando ele ligar, dentro do prazo de cada aviso.</p>'+
    '<div class="stack">'+(WA.fila===null?none('Carregando...'):fila.length?fila.map(linha).join(''):none('Nenhuma mensagem na fila ainda.'))+'</div>'};
+}
+function viewWa(){
+  waGarante();const f=premFuWa();
+  return pageHead('WhatsApp automático','Mensagens que saem sozinhas pelo WhatsApp da ótica, de um programa no computador da loja')+premWaAjustes()+'<div class="panel" style="margin-top:16px"><div class="sh" style="margin-top:0"><h2>Fila de mensagens</h2><span class="sub num">'+(f?f.n:0)+'</span></div>'+(f?f.html:'')+'</div>';
 }
 function premWaAjustes(){
   if(!modOn('wa'))return '';waGarante();if(ROLE!=='dono')return '';

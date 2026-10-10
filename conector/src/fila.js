@@ -32,7 +32,7 @@ function criarRobo(api, wa, log, opc) {
     if (!wa.conectado()) return 'desconectado';
     const r = await api.puxar();
     if (!r || r.ok === false) {
-      if (r && r.erro === 'token_invalido') throw Object.assign(new Error('Código inválido. Gere um novo no sistema (Ajustes > WhatsApp automático).'), { fatal: true });
+      if (r && r.erro === 'token_invalido') throw Object.assign(new Error('Código inválido. Gere um novo no sistema (menu WhatsApp automático).'), { fatal: true });
       return 'erro';
     }
     if (!r.msg) { ultimoMotivo = r.motivo || ''; return 'vazio'; }

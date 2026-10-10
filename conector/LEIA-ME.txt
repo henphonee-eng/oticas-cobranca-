@@ -18,7 +18,7 @@ Instalação (uma vez só, uns 10 minutos)
 1. Instale o Node.js (versão LTS) em https://nodejs.org . É só ir clicando em "Próximo".
 2. Descompacte esta pasta em um lugar fixo, por exemplo C:\conector-whatsapp (não mude de lugar depois).
 3. Dê dois cliques em  instalar.bat  e espere terminar.
-4. No sistema da ótica, vá em Ajustes > WhatsApp automático e clique em "Gerar código do conector". Copie o código.
+4. No sistema da ótica, vá no menu WhatsApp automático e clique em "Gerar código do conector". Copie o código.
 5. Dê dois cliques em  iniciar.bat . Na primeira vez ele pede o código: cole e aperte Enter.
 6. Abra no navegador do computador:  http://localhost:3939
 7. No celular da ótica: WhatsApp > Configurações > Aparelhos conectados > Conectar um aparelho, e leia o QR Code da tela.
@@ -27,13 +27,13 @@ Instalação (uma vez só, uns 10 minutos)
 
 Primeiro teste (recomendado)
 ----------------------------
-Cadastre um cliente de teste com o SEU número, deixe o modo "Aprovar antes", vá em Follow-up > WhatsApp automático, aprove a mensagem e veja se chega no seu celular.
+Cadastre um cliente de teste com o SEU número, deixe o modo "Aprovar antes", vá no menu WhatsApp automático, aprove a mensagem e veja se chega no seu celular.
 
 Uso no dia a dia
 ----------------
 - O computador precisa estar ligado e com internet para as mensagens saírem. O celular da ótica não precisa ficar perto, mas abra o WhatsApp nele de vez em quando.
-- No sistema, em Follow-up > WhatsApp automático, você aprova, cancela e acompanha o que saiu.
-- Para parar tudo na hora: Ajustes > WhatsApp automático > "Pausar todos os envios agora".
+- No sistema, no menu WhatsApp automático, você aprova, cancela e acompanha o que saiu.
+- Para parar tudo na hora: menu WhatsApp automático > "Pausar todos os envios agora".
 
 Problemas comuns
 ----------------

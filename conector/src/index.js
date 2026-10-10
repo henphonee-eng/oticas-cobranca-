@@ -22,7 +22,7 @@ async function lerConfig() {
   if (fs.existsSync(ARQ_CFG)) cfg = JSON.parse(fs.readFileSync(ARQ_CFG, 'utf8'));
   else cfg = JSON.parse(fs.readFileSync(path.join(RAIZ, 'config.exemplo.json'), 'utf8'));
   if (!cfg.token) {
-    cfg.token = await perguntar('Cole aqui o código do conector (gerado no sistema, em Ajustes > WhatsApp automático): ');
+    cfg.token = await perguntar('Cole aqui o código do conector (gerado no sistema, em menu WhatsApp automático): ');
     fs.writeFileSync(ARQ_CFG, JSON.stringify(cfg, null, 2));
   }
   return cfg;
