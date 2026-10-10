@@ -100,13 +100,27 @@ async function main() {
     });
   }
 
+  // O WhatsApp pode ter o número com ou sem o 9 (ex.: 5581987658981 x 558187658981).
+  // Mandar para o formato errado faz a mensagem ser aceita e nunca chegar, então usamos
+  // o endereço exato que o WhatsApp devolve e, se ele não achar, tentamos o outro formato.
   const jids = {};
+  async function acharJid(tel) {
+    if (jids[tel]) return jids[tel];
+    const formatos = [tel];
+    if (/^55\d{2}9\d{8}$/.test(tel)) formatos.push(tel.slice(0, 4) + tel.slice(5)); // sem o 9
+    else if (/^55\d{2}[6-9]\d{7}$/.test(tel)) formatos.push(tel.slice(0, 4) + '9' + tel.slice(4)); // com o 9
+    for (const t of formatos) {
+      const r = await sock.onWhatsApp(t + '@s.whatsapp.net');
+      const achado = r && r.find((x) => x && x.exists);
+      if (achado) { jids[tel] = achado.jid || (t + '@s.whatsapp.net'); return jids[tel]; }
+    }
+    return null;
+  }
   const wa = {
     conectado: () => aberto,
-    // usa o endereço que o próprio WhatsApp devolve (resolve o 9 a mais ou a menos nos números do Brasil)
-    existe: async (tel) => { const r = await sock.onWhatsApp(tel + '@s.whatsapp.net'); const ok = !!(r && r[0] && r[0].exists); if (ok) jids[tel] = r[0].jid; return ok; },
+    existe: async (tel) => !!(await acharJid(tel)),
     enviar: async (tel, texto) => {
-      const jid = jids[tel] || (tel + '@s.whatsapp.net');
+      const jid = (await acharJid(tel)) || (tel + '@s.whatsapp.net');
       try { await sock.presenceSubscribe(jid); await sock.sendPresenceUpdate('composing', jid); } catch (e) { /* ignora */ }
       const r = await sock.sendMessage(jid, { text: texto });
       log('Entregue ao WhatsApp: ' + jid + ' (id ' + ((r && r.key && r.key.id) || '?') + ')');
