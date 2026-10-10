@@ -21,9 +21,11 @@ async function lerConfig() {
   let cfg = {};
   if (fs.existsSync(ARQ_CFG)) cfg = JSON.parse(fs.readFileSync(ARQ_CFG, 'utf8'));
   else cfg = JSON.parse(fs.readFileSync(path.join(RAIZ, 'config.exemplo.json'), 'utf8'));
-  if (!cfg.token) {
-    cfg.token = await perguntar('Cole aqui o código do conector (gerado no sistema, em menu WhatsApp automático): ');
-    fs.writeFileSync(ARQ_CFG, JSON.stringify(cfg, null, 2));
+  cfg.token = String(cfg.token || '').replace(/\s+/g, '');
+  while (!/^wa_[0-9a-f]{48}$/.test(cfg.token)) {
+    if (cfg.token) console.log('O código está incompleto ou errado (precisa ter 51 caracteres e começar com wa_). Copie de novo, inteiro.');
+    cfg.token = (await perguntar('Cole aqui o código do conector (gerado no sistema, no menu WhatsApp automático): ')).replace(/\s+/g, '');
+    if (/^wa_[0-9a-f]{48}$/.test(cfg.token)) fs.writeFileSync(ARQ_CFG, JSON.stringify(cfg, null, 2));
   }
   return cfg;
 }

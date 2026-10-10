@@ -2713,7 +2713,7 @@ function premWaAjustes(){
   if(!modOn('wa'))return '';waGarante();if(ROLE!=='dono')return '';
   const D=waDoc(),e=waEstado(),st=WA.st||{};
   const sel=x=>'<div class="sum-row"><span>'+esc(x[1])+'</span><select data-wamodo="'+x[0]+'" aria-label="'+esc(x[1])+'"><option value="aprovar"'+(waModo(x[0])==='aprovar'?' selected':'')+'>Aprovar antes</option><option value="auto"'+(waModo(x[0])==='auto'?' selected':'')+'>Enviar sozinho</option><option value="off"'+(waModo(x[0])==='off'?' selected':'')+'>Desligado</option></select></div>';
-  const tk=WA.token?'<div class="card" style="gap:8px;background:var(--bg2,transparent)"><b>Seu código do conector</b><p class="sub" style="margin:0">Copie agora. Por segurança ele aparece só desta vez. Cole no programa do computador da loja.</p><input type="text" readonly value="'+esc(WA.token)+'" onclick="this.select()" style="font-family:monospace"><div><button class="btn sm" data-act="wacopiar">Copiar código</button></div></div>':'';
+  const tk=WA.token?'<div class="card" style="gap:8px;background:var(--bg2,transparent)"><b>Seu código do conector</b><p class="sub" style="margin:0">Copie agora. Por segurança ele aparece só desta vez. Cole no programa do computador da loja.</p><input type="text" readonly value="'+esc(WA.token)+'" onclick="this.select()" style="font-family:monospace"><div class="foot-row"><button class="btn sm primary" data-act="wacfgbaixar">Baixar arquivo de configuração</button><button class="btn sm" data-act="wacopiar">Copiar código</button></div><p class="sub" style="margin:0">Mais seguro: baixe o arquivo e coloque dentro da pasta conector-whatsapp, sem precisar colar o código.</p></div>':'';
   return '<div class="card" style="gap:12px"><b>WhatsApp Automático</b>'+
    '<div class="chips"><span class="chip '+e[0]+'">'+e[1]+'</span><span class="chip">Enviadas hoje: '+(+st.enviadas_hoje||0)+'</span><span class="chip">Na fila: '+(+st.na_fila||0)+'</span></div>'+
    '<label class="aguard-box" style="margin:0"><input type="checkbox" data-wacfg="on"'+(D.on?' checked':'')+'> Enviar avisos automáticos pelo WhatsApp</label>'+
@@ -2734,6 +2734,7 @@ Object.assign(A,{
   async waaprovtodas(){const r=await sb.rpc('wa_aprovar_todas',{p_otica:OTICA.id});if(r.error)toast('Não foi possível aprovar');else toast((r.data||0)+' mensagens aprovadas');waLoad()},
   waatualizar(){waLoad()},
   async wagerar(){if(WA.st&&WA.st.tem_token&&!confirm('Gerar um novo código desconecta o programa atual até você colar o novo código. Continuar?'))return;const r=await sb.rpc('wa_gerar_token',{p_otica:OTICA.id});if(r.error){toast('Não foi possível gerar o código');return}WA.token=r.data;waLoad();render()},
+  wacfgbaixar(){if(!WA.token)return;const b=new Blob([JSON.stringify({supabaseUrl:SB_URL,supabaseKey:SB_KEY,token:WA.token},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='config.json';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);toast('Arquivo baixado: coloque na pasta do conector')},
   async wacopiar(){try{await navigator.clipboard.writeText(WA.token);toast('Código copiado')}catch(e){toast('Selecione o código e copie')}}
 });
 document.addEventListener('change',e=>{
