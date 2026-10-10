@@ -15,9 +15,9 @@ Se o computador estiver desligado, nada se perde: as mensagens ficam guardadas n
 
 Instalação (uma vez só, uns 10 minutos)
 ---------------------------------------
-1. Instale o Node.js (versão LTS) em https://nodejs.org . É só ir clicando em "Próximo".
-2. Descompacte esta pasta em um lugar fixo, por exemplo C:\conector-whatsapp (não mude de lugar depois).
-3. Dê dois cliques em  instalar.bat  e espere terminar.
+1. Instale o Node.js (versão LTS) e o Git (winget install --id Git.Git -e). Reinicie o computador depois.
+2. Descompacte esta pasta em um lugar fixo, por exemplo C:\conector-whatsapp (NÃO use Área de Trabalho nem OneDrive; não mude de lugar depois).
+3. Dê dois cliques em  instalar.bat  e espere terminar. Se ele pedir o Git, instale com o comando que ele mostrar e reinicie o computador.
 4. No sistema da ótica, vá no menu WhatsApp automático e clique em "Gerar código do conector". Copie o código.
 5. Dê dois cliques em  iniciar.bat . Na primeira vez ele pede o código: cole e aperte Enter.
 6. Abra no navegador do computador:  http://localhost:3939
