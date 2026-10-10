@@ -100,13 +100,16 @@ async function main() {
     });
   }
 
+  const jids = {};
   const wa = {
     conectado: () => aberto,
-    existe: async (tel) => { const r = await sock.onWhatsApp(tel + '@s.whatsapp.net'); return !!(r && r[0] && r[0].exists); },
+    // usa o endereço que o próprio WhatsApp devolve (resolve o 9 a mais ou a menos nos números do Brasil)
+    existe: async (tel) => { const r = await sock.onWhatsApp(tel + '@s.whatsapp.net'); const ok = !!(r && r[0] && r[0].exists); if (ok) jids[tel] = r[0].jid; return ok; },
     enviar: async (tel, texto) => {
-      const jid = tel + '@s.whatsapp.net';
+      const jid = jids[tel] || (tel + '@s.whatsapp.net');
       try { await sock.presenceSubscribe(jid); await sock.sendPresenceUpdate('composing', jid); } catch (e) { /* ignora */ }
-      await sock.sendMessage(jid, { text: texto });
+      const r = await sock.sendMessage(jid, { text: texto });
+      log('Entregue ao WhatsApp: ' + jid + ' (id ' + ((r && r.key && r.key.id) || '?') + ')');
       try { await sock.sendPresenceUpdate('paused', jid); } catch (e) { /* ignora */ }
     },
   };
