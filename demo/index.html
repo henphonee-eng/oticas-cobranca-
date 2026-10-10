@@ -872,6 +872,7 @@ const ICON={
   cobrar:I('<path d="M6 16v-5a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 21h4"/>'),
   caixa:I('<rect x="3.5" y="6" width="17" height="13" rx="2.5"/><path d="M3.5 10h17M16 14.5h1.5"/>'),
   lentes:I('<circle cx="12" cy="12" r="7.5"/><path d="M8.5 10.5a4 4 0 0 1 3-2.6"/>'),
+  whatsapp:I('<path d="M5 19l1.2-3.6A7.5 7.5 0 1 1 9 18z"/><path d="M9.5 9.5c.3 2 2 3.7 4 4l1-1-1.6-1-.8.6a3 3 0 0 1-1.3-1.3l.6-.8-1-1.6z"/>'),
   ajustes:I('<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>'),
   relacao:I('<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>'),
   admin:I('<path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/>'),
@@ -889,7 +890,7 @@ const ICON={
   sair:I('<path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4M15 8l4 4-4 4M19 12H9"/>')
 };
 const GLASSES='<svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11.5" cy="23" r="7"/><circle cx="28.5" cy="23" r="7"/><path d="M18.5 22c1-1.3 2-1.3 3 0M4.5 21 7 12M35.5 21 33 12"/></svg>';
-const TABS=[['painel','Painel'],['agenda','Agenda'],['vendas','Vendas'],['clientes','Clientes'],['cobrar','Cobrar'],['aguard','Aguardando'],['entregas','Follow-up'],['os','Ordens de serviço'],['relacao','Relacionamento'],['caixa','Caixa'],['lentes','Lentes'],['whatsapp','WhatsApp automático'],['ajustes','Ajustes']];
+const TABS=[['painel','Painel'],['agenda','Agenda'],['vendas','Vendas'],['clientes','Clientes'],['cobrar','Cobrar'],['aguard','Aguardando'],['entregas','Follow-up'],['os','Ordens de serviço'],['relacao','Relacionamento'],['caixa','Caixa'],['lentes','Lentes'],['whatsapp','WhatsApp Automático'],['ajustes','Ajustes']];
 function admTabInicial(){const q=new URLSearchParams(location.search),t=q.get('tab');if(t){q.delete('tab');history.replaceState(null,'',location.pathname+(q.toString()?'?'+q:''))}return t==='mensal'?'mensal':'admin'}
 const ADMTAB=['admin','Administração'];
 const MENSTAB=['mensal','Mensalidades'];
