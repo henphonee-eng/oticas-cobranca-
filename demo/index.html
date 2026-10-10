@@ -786,7 +786,7 @@ function computeAuth(){auth='ok'}
 function renderGate(){const g=$('#gate');g.classList.remove('on');g.innerHTML=''}
 const gateErr=()=>{};
 const hexRgb=h=>{const m=/^#?([0-9a-f]{6})$/i.exec(h||'');if(!m)return[4,134,222];const n=parseInt(m[1],16);return[n>>16&255,n>>8&255,n&255]};
-const modOn=()=>false;function premLock(){return ''}function premView(){return ''}function premCtx(){}function premFicha(){return ''}function premAjustes(){return ''}function premInit(){}function premLog(){}function premPix(){return ''}function premVendSale(){return ''}function premAcTabs(){return null}function premCliOrigem(){}function premPainelVend(){return ''}function premFuPesq(){return null}function premVendCli(){return ''}function sheetVend(){return null}function sheetFinPag(){return null}function sheetHist(){return null}
+const modOn=()=>false;function premLock(){return ''}function premView(){return ''}function premCtx(){}function premFicha(){return ''}function premAjustes(){return ''}function premInit(){}function premLog(){}function premPix(){return ''}function premVendSale(){return ''}function premAcTabs(){return null}function premCliOrigem(){}function premPainelVend(){return ''}function premFuPesq(){return null}function premFuWa(){return null}function premWaHook(){}function premWaBtns(){return ''}function premVendCli(){return ''}function sheetVend(){return null}function sheetFinPag(){return null}function sheetHist(){return null}
 function brandAdm(){}function viewAdmin(){return ''}function equipeCard(){return ''}function eqLoad(){}function admLoad(){}function sheetAdm(){return null}function sheetAdmOk(){return null}
 async function logout(){}
 let DEMO_NOME='Sua Ótica Aqui',DEMO_PERSONAL=false;
@@ -1321,8 +1321,9 @@ function entRow(v,feito){
   else if(v.entregaPrev===t)chip='<span class="chip warn">Entregar hoje</span>';
   else chip='<span class="chip">Em '+plural(diffDays(v.entregaPrev,t),'dia','dias')+'</span>';
   if(!feito)chip+=v.chegouEm?'<span class="chip acc">Cliente avisado que chegou</span>':'';
-  const acts=feito?((href&&!v.agradEm)?'<a class="btn sm wa"'+WAT+' data-contact="ent" data-v="'+v.id+'" href="'+href+'">Agradecer</a>':'')+'<button class="btn sm ghost" data-act="desentregar" data-v="'+v.id+'">Desfazer</button>'
+  const acts0=feito?((href&&!v.agradEm)?'<a class="btn sm wa"'+WAT+' data-contact="ent" data-v="'+v.id+'" href="'+href+'">Agradecer</a>':'')+'<button class="btn sm ghost" data-act="desentregar" data-v="'+v.id+'">Desfazer</button>'
     :(hrefC?'<a class="btn sm wa"'+WAT+' data-contact="cheg" data-v="'+v.id+'" href="'+hrefC+'">'+(v.chegouEm?'Avisar de novo':'Avisar que chegou')+'</a>':'')+(href?'<a class="btn sm wa"'+WAT+' data-contact="ent" data-v="'+v.id+'" href="'+href+'">Entregue e agradecer</a>':'')+'<button class="btn sm ok" data-act="entregar" data-v="'+v.id+'">Dar baixa</button>';
+  const wbt=premWaBtns(v,feito);const acts=wbt?wbt+(feito?'<button class="btn sm ghost" data-act="desentregar" data-v="'+v.id+'">Desfazer</button>':'<button class="btn sm ok" data-act="entregar" data-v="'+v.id+'">Dar baixa</button>'):acts0;
   return '<article class="row"><div class="row-main"><button class="link" data-act="openvenda" data-v="'+v.id+'">'+esc(c.nome)+demoTag(v)+'</button><div class="meta">'+esc(itensTxt(v))+' · entrega '+fmtDate(v.entregaPrev||v.entregueEm)+'</div><div class="chips">'+chip+'</div></div><div class="row-side"><div class="acts">'+acts+'</div></div></article>';
 }
 
@@ -1378,6 +1379,7 @@ function viewFollow(){
    ['manual','Meus follow-ups',mp.length,'<div class="stack">'+(mp.length?mp.map(fupRow).join(''):none('Nenhum follow-up manual pendente. Use o botão Novo follow-up para anotar o que não pode esquecer.'))+(mf.length?'<p class="sub" style="margin:10px 0 4px">Feitos recentemente</p>'+mf.map(fupRow).join(''):'')+'</div>']
   ];
   const pesq=premFuPesq();if(pesq)S_.splice(2,0,['pesquisa','Avaliação do cliente',pesq.n,pesq.html]);
+  const wsec=premFuWa();if(wsec)S_.unshift(['whatsapp','WhatsApp automático',wsec.n,wsec.html]);
   const chips=[['todos','Todos']].concat(S_.map(x=>[x[0],x[1]+(x[2]?' ('+x[2]+')':'')]));
   return pageHead('Follow-up','Na ordem do atendimento: boas-vindas, entrega, avaliação, cobrança e relacionamento','<button class="btn primary" data-act="fupnovo">Novo follow-up</button>')+
   '<div class="filters">'+chips.map(c=>'<button class="fchip" data-act="fusec" data-f="'+c[0]+'" aria-pressed="'+(sec===c[0])+'">'+esc(c[1])+'</button>').join('')+'</div>'+
@@ -1502,7 +1504,7 @@ function updateVenda(){
 function salvarVenda(){
   if(!ui.draft)return;const st=draftState();if(st.errs.length){toast(st.errs[0]);return}
   const D=ui.draft;let cid=D.clienteId;
-  if(cid==='__novo'){const cl=makeCliente(D.novo);cid=cl.id;S.clientes[cid]=cl;persist('clientes',cid)}
+  if(cid==='__novo'){const cl=makeCliente(D.novo);cid=cl.id;S.clientes[cid]=cl;persist('clientes',cid);premWaHook('bv',null,null,cl)}
   const v=makeVenda(cid,{itens:st.itens,jurosVenda:parsePct(D.jurosVenda),entrada:parseMoney(D.entrada),formaEntrada:D.formaEntrada,n:st.n,primeira:D.primeira,forma:D.forma,data:D.data,obs:D.obs});
   const old=D.editId?S.vendas[D.editId]:null;
   if(D.aguardando&&(!old||old.aguardando)){v.aguardando=true;v.parcelas.forEach(p=>{if(p.tipo==='entrada'){p.pago=false;p.pagoEm=null;p.forma=null}})}
@@ -1936,7 +1938,7 @@ const A={
       if(e.total>p.valor){p.recebido=e.total;p.multaAtraso=e.multa;p.jurosAtraso=e.juros}else{delete p.recebido;delete p.multaAtraso;delete p.jurosAtraso}}
     else{p.pago=false;p.pagoEm=null;if(p.tipo!=='entrada')p.forma=null;delete p.recebido;delete p.multaAtraso;delete p.jurosAtraso}
     premLog(p.pago?'Recebimento':'Recebimento desfeito',((S.clientes[v.clienteId]||{}).nome||'')+' · '+pLabel(v,p)+' · '+brl(recv(p)));
-    persist('vendas',v.id);refresh();toast(p.pago?(p.recebido?'Pagamento registrado com multa e juros: '+brl(p.recebido):'Pagamento registrado'):'Baixa desfeita')},
+    if(p.pago&&!era)premWaHook('recibo',v,p);persist('vendas',v.id);refresh();toast(p.pago?(p.recebido?'Pagamento registrado com multa e juros: '+brl(p.recebido):'Pagamento registrado'):'Baixa desfeita')},
   relatorio(){ui.rmes=ui.rmes||todayStr().slice(0,7);ui.sheet={kind:'relatorio'};renderSheet()},
   relpdf(){if(!window.jspdf){toast('O gerador de PDF não carregou. Recarregue a página.');return}saveFile('relatorio-'+slug(cfg().nome)+'-'+ui.rmes+'.pdf',relPdf(ui.rmes),'Relatório pronto')},
   relcsv(){saveFile('relatorio-'+slug(cfg().nome)+'-'+ui.rmes+'.csv',relCsv(ui.rmes),'Planilha pronta')},
@@ -2008,7 +2010,7 @@ const A={
     const D=ui.cdraft;if(!D.nome.trim()){toast('Informe o nome do cliente');return}
     const id=ui.sheet.id;const dup=cpfDup(D.cpf,id);if(dup){toast('Já existe cliente com este CPF: '+dup.nome);return}
     if(id&&S.clientes[id]){Object.assign(S.clientes[id],{nome:D.nome.trim(),cpf:maskCpf(D.cpf),whatsapp:maskTel(D.whatsapp),endereco:D.endereco.trim(),nascimento:D.nascimento||'',vendedorId:D.vendedorId||'',obs:D.obs.trim(),receitas:(D.receitas||[]).filter(r=>!receitaVazia(r))});persist('clientes',id);premLog('Cliente editado',D.nome.trim());ui.sheet=null;ui.cdraft=null;renderSheet();refresh();const fl=cliFalta(S.clientes[id]);toast('Cliente atualizado'+(fl.length?'. Falta preencher: '+listaTxt(fl)+'.':''))}
-    else{const c=makeCliente(D);S.clientes[c.id]=c;persist('clientes',c.id);premLog('Cliente cadastrado',c.nome);ui.cdraft=null;ui.sheet={kind:'cliente-ok',id:c.id};render();renderSheet()}
+    else{const c=makeCliente(D);S.clientes[c.id]=c;persist('clientes',c.id);premLog('Cliente cadastrado',c.nome);premWaHook('bv',null,null,c);ui.cdraft=null;ui.sheet={kind:'cliente-ok',id:c.id};render();renderSheet()}
   },
   salvarclientevenda(){A.salvarcliente();if(ui.sheet&&ui.sheet.kind==='cliente-ok')openNova(ui.sheet.id)},
   delcliente(d){if(ui.confirm!==d.c){ui.confirm=d.c;renderSheet();return}if(S.clientes[d.c])premLog('Cliente excluído',S.clientes[d.c].nome);delete S.clientes[d.c];persist('clientes',d.c);ui.confirm='';closeSheet();refresh();toast('Cliente excluído')},

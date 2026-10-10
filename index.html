@@ -1482,8 +1482,9 @@ function entRow(v,feito){
   else if(v.entregaPrev===t)chip='<span class="chip warn">Entregar hoje</span>';
   else chip='<span class="chip">Em '+plural(diffDays(v.entregaPrev,t),'dia','dias')+'</span>';
   if(!feito)chip+=v.chegouEm?'<span class="chip acc">Cliente avisado que chegou</span>':'';
-  const acts=feito?((href&&!v.agradEm)?'<a class="btn sm wa"'+WAT+' data-contact="ent" data-v="'+v.id+'" href="'+href+'">Agradecer</a>':'')+'<button class="btn sm ghost" data-act="desentregar" data-v="'+v.id+'">Desfazer</button>'
+  const acts0=feito?((href&&!v.agradEm)?'<a class="btn sm wa"'+WAT+' data-contact="ent" data-v="'+v.id+'" href="'+href+'">Agradecer</a>':'')+'<button class="btn sm ghost" data-act="desentregar" data-v="'+v.id+'">Desfazer</button>'
     :(hrefC?'<a class="btn sm wa"'+WAT+' data-contact="cheg" data-v="'+v.id+'" href="'+hrefC+'">'+(v.chegouEm?'Avisar de novo':'Avisar que chegou')+'</a>':'')+(href?'<a class="btn sm wa"'+WAT+' data-contact="ent" data-v="'+v.id+'" href="'+href+'">Entregue e agradecer</a>':'')+'<button class="btn sm ok" data-act="entregar" data-v="'+v.id+'">Dar baixa</button>';
+  const wbt=premWaBtns(v,feito);const acts=wbt?wbt+(feito?'<button class="btn sm ghost" data-act="desentregar" data-v="'+v.id+'">Desfazer</button>':'<button class="btn sm ok" data-act="entregar" data-v="'+v.id+'">Dar baixa</button>'):acts0;
   return '<article class="row"><div class="row-main"><button class="link" data-act="openvenda" data-v="'+v.id+'">'+esc(c.nome)+demoTag(v)+'</button><div class="meta">'+esc(itensTxt(v))+' · entrega '+fmtDate(v.entregaPrev||v.entregueEm)+'</div><div class="chips">'+chip+'</div></div><div class="row-side"><div class="acts">'+acts+'</div></div></article>';
 }
 
@@ -1539,6 +1540,7 @@ function viewFollow(){
    ['manual','Meus follow-ups',mp.length,'<div class="stack">'+(mp.length?mp.map(fupRow).join(''):none('Nenhum follow-up manual pendente. Use o botão Novo follow-up para anotar o que não pode esquecer.'))+(mf.length?'<p class="sub" style="margin:10px 0 4px">Feitos recentemente</p>'+mf.map(fupRow).join(''):'')+'</div>']
   ];
   const pesq=premFuPesq();if(pesq)S_.splice(2,0,['pesquisa','Avaliação do cliente',pesq.n,pesq.html]);
+  const wsec=premFuWa();if(wsec)S_.unshift(['whatsapp','WhatsApp automático',wsec.n,wsec.html]);
   const chips=[['todos','Todos']].concat(S_.map(x=>[x[0],x[1]+(x[2]?' ('+x[2]+')':'')]));
   return pageHead('Follow-up','Na ordem do atendimento: boas-vindas, entrega, avaliação, cobrança e relacionamento','<button class="btn primary" data-act="fupnovo">Novo follow-up</button>')+
   '<div class="filters">'+chips.map(c=>'<button class="fchip" data-act="fusec" data-f="'+c[0]+'" aria-pressed="'+(sec===c[0])+'">'+esc(c[1])+'</button>').join('')+'</div>'+
@@ -1663,7 +1665,7 @@ function updateVenda(){
 function salvarVenda(){
   if(!ui.draft)return;const st=draftState();if(st.errs.length){toast(st.errs[0]);return}
   const D=ui.draft;let cid=D.clienteId;
-  if(cid==='__novo'){const cl=makeCliente(D.novo);cid=cl.id;S.clientes[cid]=cl;persist('clientes',cid)}
+  if(cid==='__novo'){const cl=makeCliente(D.novo);cid=cl.id;S.clientes[cid]=cl;persist('clientes',cid);premWaHook('bv',null,null,cl)}
   const v=makeVenda(cid,{itens:st.itens,jurosVenda:parsePct(D.jurosVenda),entrada:parseMoney(D.entrada),formaEntrada:D.formaEntrada,n:st.n,primeira:D.primeira,forma:D.forma,data:D.data,obs:D.obs});
   const old=D.editId?S.vendas[D.editId]:null;
   if(D.aguardando&&(!old||old.aguardando)){v.aguardando=true;v.parcelas.forEach(p=>{if(p.tipo==='entrada'){p.pago=false;p.pagoEm=null;p.forma=null}})}
@@ -2096,7 +2098,7 @@ const A={
       if(e.total>p.valor){p.recebido=e.total;p.multaAtraso=e.multa;p.jurosAtraso=e.juros}else{delete p.recebido;delete p.multaAtraso;delete p.jurosAtraso}}
     else{p.pago=false;p.pagoEm=null;if(p.tipo!=='entrada')p.forma=null;delete p.recebido;delete p.multaAtraso;delete p.jurosAtraso}
     premLog(p.pago?'Recebimento':'Recebimento desfeito',((S.clientes[v.clienteId]||{}).nome||'')+' · '+pLabel(v,p)+' · '+brl(recv(p)));
-    persist('vendas',v.id);refresh();toast(p.pago?(p.recebido?'Pagamento registrado com multa e juros: '+brl(p.recebido):'Pagamento registrado'):'Baixa desfeita')},
+    if(p.pago&&!era)premWaHook('recibo',v,p);persist('vendas',v.id);refresh();toast(p.pago?(p.recebido?'Pagamento registrado com multa e juros: '+brl(p.recebido):'Pagamento registrado'):'Baixa desfeita')},
   relatorio(){ui.rmes=ui.rmes||todayStr().slice(0,7);ui.sheet={kind:'relatorio'};renderSheet()},
   relpdf(){if(!window.jspdf){toast('O gerador de PDF não carregou. Recarregue a página.');return}saveFile('relatorio-'+slug(cfg().nome)+'-'+ui.rmes+'.pdf',relPdf(ui.rmes),'Relatório pronto')},
   relcsv(){saveFile('relatorio-'+slug(cfg().nome)+'-'+ui.rmes+'.csv',relCsv(ui.rmes),'Planilha pronta')},
@@ -2168,7 +2170,7 @@ const A={
     const D=ui.cdraft;if(!D.nome.trim()){toast('Informe o nome do cliente');return}
     const id=ui.sheet.id;const dup=cpfDup(D.cpf,id);if(dup){toast('Já existe cliente com este CPF: '+dup.nome);return}
     if(id&&S.clientes[id]){Object.assign(S.clientes[id],{nome:D.nome.trim(),cpf:maskCpf(D.cpf),whatsapp:maskTel(D.whatsapp),endereco:D.endereco.trim(),nascimento:D.nascimento||'',vendedorId:D.vendedorId||'',obs:D.obs.trim(),receitas:(D.receitas||[]).filter(r=>!receitaVazia(r))});persist('clientes',id);premLog('Cliente editado',D.nome.trim());ui.sheet=null;ui.cdraft=null;renderSheet();refresh();const fl=cliFalta(S.clientes[id]);toast('Cliente atualizado'+(fl.length?'. Falta preencher: '+listaTxt(fl)+'.':''))}
-    else{const c=makeCliente(D);S.clientes[c.id]=c;persist('clientes',c.id);premLog('Cliente cadastrado',c.nome);ui.cdraft=null;ui.sheet={kind:'cliente-ok',id:c.id};render();renderSheet()}
+    else{const c=makeCliente(D);S.clientes[c.id]=c;persist('clientes',c.id);premLog('Cliente cadastrado',c.nome);premWaHook('bv',null,null,c);ui.cdraft=null;ui.sheet={kind:'cliente-ok',id:c.id};render();renderSheet()}
   },
   salvarclientevenda(){A.salvarcliente();if(ui.sheet&&ui.sheet.kind==='cliente-ok')openNova(ui.sheet.id)},
   delcliente(d){if(ui.confirm!==d.c){ui.confirm=d.c;renderSheet();return}if(S.clientes[d.c])premLog('Cliente excluído',S.clientes[d.c].nome);delete S.clientes[d.c];persist('clientes',d.c);ui.confirm='';closeSheet();refresh();toast('Cliente excluído')},
@@ -2219,6 +2221,7 @@ const MODS=[
  {k:'ficha',n:'Ficha completa do cliente',d:'Tudo do cliente em um lugar só: evolução do grau, fotos e anotações dos atendimentos.',b:['Histórico do grau com gráfico da evolução','Fotos da armação e da receita em papel','Anotações com data e quem escreveu']},
  {k:'campanhas',n:'Campanhas por grupo de clientes',d:'Escolha um grupo e envie a mensagem pelo WhatsApp com poucos toques, sem digitar o nome de ninguém.',b:['Grupos prontos: sem comprar há 1 ano, grau antigo, em atraso, aniversariantes','Mensagem editável com o nome do cliente já preenchido','Marca quem já recebeu para não repetir']},
  {k:'pesquisa',n:'Pesquisa de satisfação e avaliação no Google',d:'Alguns dias depois da compra, peça ao cliente uma avaliação com o link da sua ótica no Google.',b:['Lista de quem comprou há alguns dias e ainda não foi chamado','Mensagem pronta com o seu link de avaliação','Marca quem já foi chamado']},
+ {k:'wa',n:'WhatsApp automático',d:'Os avisos de boas-vindas, recibo, óculos chegou, agradecimento, lembrete e atraso saem sozinhos pelo WhatsApp da ótica, de um programa no computador da loja.',b:['Você escolhe, aviso por aviso, se sai sozinho ou se espera a sua aprovação','Fila guardada na nuvem: se o computador estiver desligado, nada se perde','Limite por dia, horário comercial e pausa com um clique','Quem responder SAIR não recebe mais avisos']},
  {k:'historico',n:'Histórico de alterações e backup automático',d:'Saiba quem fez o quê no sistema e tenha uma cópia de segurança toda semana.',b:['Registro de vendas, recebimentos, edições e exclusões com data e usuário','Backup semanal baixado sozinho no aparelho','Mais segurança quando há equipe usando o sistema']}
 ];
 const MOD=k=>MODS.find(m=>m.k===k)||{};
@@ -2501,12 +2504,12 @@ function premAjustes(){
   const status=MODS.map(x=>'<div class="sum-row"><span>'+esc(x.n)+'</span>'+(modOn(x.k)?'<span class="chip ok">Ativo</span>':'<button class="btn sm" data-act="premopen" data-k="'+x.k+'">'+LOCK+' Premium</button>')+'</div>').join('');
   const pix=modOn('pixcobr')?'<div class="card" style="gap:12px"><b>Pix copia e cola nas cobranças</b><div class="field"><span>Cidade do recebedor (aparece no Pix)</span><input type="text" data-cfg="cidade" value="'+esc(cfg().cidade||'')+'" placeholder="Recife" maxlength="15"></div><p class="sub" style="margin:0">As mensagens de cobrança e atraso passam a levar o código Pix com o valor da parcela. Use a chave Pix em Dados da ótica.</p></div>':'';
   const hist=modOn('historico')?'<div class="card" style="gap:10px"><b>Histórico e backup automático</b><p class="sub" style="margin:0">Último backup automático: '+(pm().backupEm?fmtDate(pm().backupEm):'ainda não feito')+'. Um novo arquivo é baixado sozinho a cada 7 dias, quando você abre o sistema.</p><div><button class="btn" data-act="histopen">Ver histórico de alterações</button></div></div>':'';
-  return '<div class="sh"><h2>Plano '+(jaPrem?'Premium':'Básico')+'</h2></div><div class="card" style="gap:6px">'+status+'</div>'+pix+hist;
+  return '<div class="sh"><h2>Plano '+(jaPrem?'Premium':'Básico')+'</h2></div><div class="card" style="gap:6px">'+status+'</div>'+pix+hist+premWaAjustes();
 }
 
 /* ----- ações ----- */
 Object.assign(A,{
-  premopen(d){const k=d.k||'';ui.upk=k;if(ui.sheet)closeSheet();if(k==='pesquisa'&&modOn(k)){ui.cs='pesq';ui.tab='campanhas'}else if(PREMTAB[k]&&modOn(k))ui.tab=k;else ui.tab='premium';render()},
+  premopen(d){const k=d.k||'';if(k==='wa_cfg'){ui.tab='ajustes';render();return}ui.upk=k;if(ui.sheet)closeSheet();if(k==='pesquisa'&&modOn(k)){ui.cs='pesq';ui.tab='campanhas'}else if(PREMTAB[k]&&modOn(k))ui.tab=k;else ui.tab='premium';render()},
   finprev(){ui.fm=addMonths((ui.fm||todayStr().slice(0,7))+'-01',-1).slice(0,7);render()},
   finnext(){ui.fm=addMonths((ui.fm||todayStr().slice(0,7))+'-01',1).slice(0,7);render()},
   finnova(){ui.fd=finBlank();ui.ferr='';ui.fform=true;render()},
@@ -2635,6 +2638,97 @@ function premFuPesq(){
   return {n:n,html:'<p class="sub" style="margin:0 0 8px">'+(n?plural(n,'cliente pode receber','clientes podem receber')+' o pedido de avaliação (compras de '+dias+' dias ou mais).':'Nenhum cliente para pedir avaliação agora.')+'</p><div><button class="btn sm" data-act="fupesq">Abrir avaliações do cliente</button></div>'};
 }
 Object.assign(A,{fupesq(){ui.cs='pesq';ui.tab='campanhas';render()}});
+/* ----- WhatsApp automático (conector no computador da loja) ----- */
+const WA_TIPOS=[['boasvindas','Boas-vindas ao cadastrar o cliente'],['recibo','Recibo quando a parcela é recebida'],['chegou','Aviso: seu óculos chegou'],['agradecimento','Agradecimento ao entregar'],['lembrete','Lembrete na véspera do vencimento'],['atraso','Parcela em atraso (1, 7 e 15 dias)'],['aniversario','Feliz aniversário'],['revisao','Revisão do grau (11 meses)']];
+const WA_NOME={};WA_TIPOS.forEach(x=>WA_NOME[x[0]]=x[1]);
+const WA_ST={aprovar:['warn','Espera sua aprovação'],aguardando:['acc','Na fila'],enviando:['acc','Enviando'],enviada:['ok','Enviada'],falhou:['bad','Falhou'],cancelada:['','Cancelada'],expirada:['','Venceu o prazo']};
+const waDoc=()=>{if(!S.config.wa)S.config.wa={id:'wa',on:false,pausa:false,ini:'08:00',fim:'18:30',limite:30,modo:{}};if(!S.config.wa.modo)S.config.wa.modo={};return S.config.wa};
+const waOn=()=>modOn('wa')&&!!waDoc().on;
+const WA={st:null,fila:null,busy:false,token:'',err:'',t:0};
+async function waLoad(){
+  if(WA.busy||!OTICA||!modOn('wa'))return;WA.busy=true;
+  try{
+    const r=await Promise.all([sb.rpc('wa_status',{p_otica:OTICA.id}),sb.from('wa_fila').select('id,cliente_nome,tipo,telefone,texto,status,enviar_apos,expira_em,erro,enviado_em,criado_em').eq('otica_id',OTICA.id).order('criado_em',{ascending:false}).limit(80)]);
+    WA.st=(r[0]&&r[0].data)||null;WA.fila=(r[1]&&r[1].data)||[];
+  }catch(e){WA.fila=WA.fila||[]}
+  WA.busy=false;WA.t=Date.now();
+  if((ui.tab==='entregas'||ui.tab==='ajustes')&&!fieldsOn()&&!ui.sheet)render();
+}
+function waGarante(){if(WA.fila===null&&!WA.busy)setTimeout(waLoad,0)}
+setInterval(()=>{if(auth==='ok'&&modOn('wa')&&(ui.tab==='entregas'||ui.tab==='ajustes')&&!document.hidden)waLoad()},30000);
+function waEnq(tipo,c,texto,ref){
+  if(!waOn()||!c||!c.whatsapp||!OTICA)return false;
+  sb.rpc('wa_enfileirar',{p_otica:OTICA.id,p_cliente:c.id||'',p_nome:c.nome||'',p_tipo:tipo,p_tel:c.whatsapp,p_texto:texto,p_ref:ref}).then(r=>{if(r&&!r.error){WA.fila=null;if(r.data==='ok')toast(waModo(tipo)==='auto'?'Mensagem na fila do WhatsApp':'Mensagem esperando sua aprovação em Follow-up')}}).catch(()=>{});
+  return true;
+}
+const waModo=t=>waDoc().modo[t]||'aprovar';
+function premWaHook(ev,v,p,c){
+  if(!waOn())return;
+  if(ev==='bv'&&c)waEnq('boasvindas',c,fillTpl(tpl('cadastro'),ctx(null,null,c)),'bv:'+c.id);
+  else if(ev==='recibo'&&v&&p){const cl=S.clientes[v.clienteId];if(cl)waEnq('recibo',cl,fillTpl(tpl('recibo'),ctx(v,p,cl)),'rec:'+v.id+':'+v.parcelas.indexOf(p)+':'+p.pagoEm)}
+}
+function premWaBtns(v,feito){
+  if(!waOn())return '';const c=S.clientes[v.clienteId];if(!c||!c.whatsapp)return '';
+  if(feito)return v.agradEm?'':'<button class="btn sm wa" data-act="waent" data-t="ent" data-v="'+v.id+'">Agradecer</button>';
+  return '<button class="btn sm wa" data-act="waent" data-t="cheg" data-v="'+v.id+'">'+(v.chegouEm?'Avisar de novo':'Avisar que chegou')+'</button><button class="btn sm wa" data-act="waent" data-t="ent" data-v="'+v.id+'">Entregue e agradecer</button>';
+}
+function waEstado(){
+  const st=WA.st;if(!st)return ['','Carregando...'];
+  if(!st.tem_token)return ['warn','Conector não instalado'];
+  if(st.estado==='conectado')return ['ok','Conectado'+(st.numero?' ('+esc(maskTel(String(st.numero).replace(/^55/,''))) +')':'')];
+  if(st.estado==='qr')return ['warn','Esperando ler o QR Code'];
+  return ['bad','Computador da loja desligado ou programa fechado'];
+}
+function premFuWa(){
+  if(!modOn('wa'))return null;waGarante();
+  if(!waDoc().on)return {n:0,html:'<p class="sub" style="margin:0 0 8px">O envio automático está desligado. Ligue em Ajustes, no bloco WhatsApp automático.</p><div><button class="btn sm" data-act="premopen" data-k="wa_cfg">Abrir ajustes</button></div>'};
+  const st=WA.st||{},e=waEstado(),dono=ROLE==='dono',fila=WA.fila||[];
+  const linha=m=>{const sp=WA_ST[m.status]||['',m.status];
+    const pode=dono&&['aprovar','falhou','cancelada','expirada'].includes(m.status),canc=dono&&['aprovar','aguardando','falhou'].includes(m.status);
+    return '<article class="row"><div class="row-main"><b>'+esc(m.cliente_nome||m.telefone)+'</b><div class="meta">'+esc(WA_NOME[m.tipo]||m.tipo)+' · '+fmtDate(String(m.criado_em).slice(0,10))+'</div><div class="meta" style="white-space:pre-line">'+esc(String(m.texto||'').replace(/\n\nPara não receber mais avisos, responda SAIR\.$/,'').slice(0,160))+'</div><div class="chips"><span class="chip '+sp[0]+'">'+sp[1]+'</span>'+(m.erro&&m.status!=='enviada'?'<span class="chip">'+esc(m.erro)+'</span>':'')+'</div></div><div class="row-side"><div class="acts">'+(pode?'<button class="btn sm ok" data-act="waaprovar" data-id="'+m.id+'">'+(m.status==='aprovar'?'Aprovar':'Enviar')+'</button>':'')+(canc?'<button class="btn sm ghost" data-act="wacancelar" data-id="'+m.id+'">Cancelar</button>':'')+'</div></div></article>'};
+  const n=+st.aprovar||0;
+  return {n:n,html:'<div class="chips" style="margin-bottom:8px"><span class="chip '+e[0]+'">'+e[1]+'</span><span class="chip">Enviadas hoje: '+(+st.enviadas_hoje||0)+'</span><span class="chip">Na fila: '+(+st.na_fila||0)+'</span>'+(+st.falhas?'<span class="chip bad">Falhas: '+st.falhas+'</span>':'')+(waDoc().pausa?'<span class="chip warn">Envios pausados</span>':'')+'</div>'+
+   '<div class="acts" style="margin-bottom:10px">'+(dono&&n?'<button class="btn primary sm" data-act="waaprovtodas">Aprovar todas ('+n+')</button>':'')+'<button class="btn sm" data-act="waatualizar">Atualizar</button></div>'+
+   '<p class="sub" style="margin:0 0 8px">Se o computador da loja estiver desligado, as mensagens ficam guardadas aqui e saem quando ele ligar, dentro do prazo de cada aviso.</p>'+
+   '<div class="stack">'+(WA.fila===null?none('Carregando...'):fila.length?fila.map(linha).join(''):none('Nenhuma mensagem na fila ainda.'))+'</div>'};
+}
+function premWaAjustes(){
+  if(!modOn('wa'))return '';waGarante();if(ROLE!=='dono')return '';
+  const D=waDoc(),e=waEstado(),st=WA.st||{};
+  const sel=x=>'<div class="sum-row"><span>'+esc(x[1])+'</span><select data-wamodo="'+x[0]+'" aria-label="'+esc(x[1])+'"><option value="aprovar"'+(waModo(x[0])==='aprovar'?' selected':'')+'>Aprovar antes</option><option value="auto"'+(waModo(x[0])==='auto'?' selected':'')+'>Enviar sozinho</option><option value="off"'+(waModo(x[0])==='off'?' selected':'')+'>Desligado</option></select></div>';
+  const tk=WA.token?'<div class="card" style="gap:8px;background:var(--bg2,transparent)"><b>Seu código do conector</b><p class="sub" style="margin:0">Copie agora. Por segurança ele aparece só desta vez. Cole no programa do computador da loja.</p><input type="text" readonly value="'+esc(WA.token)+'" onclick="this.select()" style="font-family:monospace"><div><button class="btn sm" data-act="wacopiar">Copiar código</button></div></div>':'';
+  return '<div class="card" style="gap:12px"><b>WhatsApp automático</b>'+
+   '<div class="chips"><span class="chip '+e[0]+'">'+e[1]+'</span><span class="chip">Enviadas hoje: '+(+st.enviadas_hoje||0)+'</span><span class="chip">Na fila: '+(+st.na_fila||0)+'</span></div>'+
+   '<label class="aguard-box" style="margin:0"><input type="checkbox" data-wacfg="on"'+(D.on?' checked':'')+'> Enviar avisos automáticos pelo WhatsApp</label>'+
+   '<label class="aguard-box" style="margin:0"><input type="checkbox" data-wacfg="pausa"'+(D.pausa?' checked':'')+'> Pausar todos os envios agora</label>'+
+   '<div class="sub" style="margin:0">Para cada aviso, escolha se espera a sua aprovação ou sai sozinho. Comece com "Aprovar antes" até confiar nas mensagens. Parcelas com 15 dias ou mais de atraso sempre esperam aprovação.</div>'+
+   WA_TIPOS.map(sel).join('')+
+   '<div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(120px,1fr))"><div class="field"><span>Enviar a partir de</span><input type="time" data-wacfg="ini" value="'+esc(D.ini||'08:00')+'"></div><div class="field"><span>Até</span><input type="time" data-wacfg="fim" value="'+esc(D.fim||'18:30')+'"></div><div class="field"><span>Limite por dia</span><input type="number" min="1" max="80" data-wacfg="limite" value="'+(+D.limite||30)+'"></div></div>'+
+   '<div class="foot-row"><button class="btn" data-act="wagerar">'+(st.tem_token?'Gerar novo código':'Gerar código do conector')+'</button><a class="btn" href="conector.zip" download>Baixar o programa do computador</a></div>'+
+   '<p class="sub" style="margin:0">Programa gratuito e não oficial. Use um número só da ótica, com poucas mensagens por dia e sem texto igual para muita gente. Existe risco de o WhatsApp bloquear o número, por isso os envios têm intervalo, limite diário e a opção SAIR.</p></div>'+tk;
+}
+Object.assign(A,{
+  waent(d){const v=S.vendas[d.v];if(!v)return;const c=S.clientes[v.clienteId];if(!c||!c.whatsapp)return toast('Cliente sem WhatsApp');const t=todayStr();
+    if(d.t==='cheg'){v.chegouEm=t;waEnq('chegou',c,fillTpl(tpl('chegou'),ctx(v,null,c)),'cheg:'+v.id+':'+t)}
+    else{if(!v.entregueEm)v.entregueEm=t;v.agradEm=t;waEnq('agradecimento',c,fillTpl(tpl('entrega'),ctx(v,null,c)),'agr:'+v.id)}
+    persist('vendas',v.id);refresh()},
+  async waaprovar(d){const r=await sb.rpc('wa_decidir',{p_id:d.id,p_acao:'aprovar'});if(r.error)toast('Não foi possível aprovar');else toast('Aprovada: sai quando o computador da loja estiver ligado');waLoad()},
+  async wacancelar(d){const r=await sb.rpc('wa_decidir',{p_id:d.id,p_acao:'cancelar'});if(r.error)toast('Não foi possível cancelar');waLoad()},
+  async waaprovtodas(){const r=await sb.rpc('wa_aprovar_todas',{p_otica:OTICA.id});if(r.error)toast('Não foi possível aprovar');else toast((r.data||0)+' mensagens aprovadas');waLoad()},
+  waatualizar(){waLoad()},
+  async wagerar(){if(WA.st&&WA.st.tem_token&&!confirm('Gerar um novo código desconecta o programa atual até você colar o novo código. Continuar?'))return;const r=await sb.rpc('wa_gerar_token',{p_otica:OTICA.id});if(r.error){toast('Não foi possível gerar o código');return}WA.token=r.data;waLoad();render()},
+  async wacopiar(){try{await navigator.clipboard.writeText(WA.token);toast('Código copiado')}catch(e){toast('Selecione o código e copie')}}
+});
+document.addEventListener('change',e=>{
+  const t=e.target;if(!(t instanceof HTMLElement))return;
+  if(t.dataset.wamodo){waDoc().modo[t.dataset.wamodo]=t.value;persist('config','wa');toast('Salvo');return}
+  if(t.dataset.wacfg){const D=waDoc(),k=t.dataset.wacfg;
+    if(k==='on'||k==='pausa')D[k]=t.checked;
+    else if(k==='limite')D[k]=Math.max(1,Math.min(80,+t.value||30));
+    else D[k]=t.value||(k==='ini'?'08:00':'18:30');
+    persist('config','wa');toast('Salvo');if(k==='on'||k==='pausa')render()}
+});
+
 /* ---------- PREMIUM-FIM ---------- */
 /* ---------- ADMIN-INICIO (somente sistema real) ---------- */
 const ADM={list:[],cob:[],cfg:{},loaded:false,busy:false,err:'',draft:null,logoB:null,logoW:null,saving:false,cred:null};

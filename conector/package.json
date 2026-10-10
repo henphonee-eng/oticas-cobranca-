@@ -1,0 +1,14 @@
+{
+  "name": "conector-whatsapp-otica",
+  "version": "1.0.0",
+  "description": "Envia os avisos da fila do sistema da ótica pelo WhatsApp do computador da loja",
+  "private": true,
+  "main": "src/index.js",
+  "scripts": { "start": "node src/index.js", "test": "node src/teste.js" },
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "@whiskeysockets/baileys": "^6.7.18",
+    "pino": "^9.5.0",
+    "qrcode": "^1.5.4"
+  }
+}

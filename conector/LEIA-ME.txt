@@ -1,0 +1,43 @@
+CONECTOR DO WHATSAPP DA ÓTICA
+=============================
+
+O que é
+-------
+Um programa que fica ligado no computador da loja e envia, pelo WhatsApp da ótica, as mensagens que o sistema coloca na fila (boas-vindas, recibo, "seu óculos chegou", agradecimento, lembrete de vencimento, atraso, aniversário e revisão do grau).
+Ele é gratuito, mas NÃO é oficial do WhatsApp. Existe risco de o WhatsApp bloquear o número. Para reduzir esse risco:
+  - use um número só da ótica (não o seu pessoal);
+  - deixe poucas mensagens por dia (o limite padrão é 30);
+  - o programa espera de 30 a 90 segundos entre uma mensagem e outra e só envia no horário comercial;
+  - cada mensagem termina com "responda SAIR", e quem responder deixa de receber.
+Comece sempre com o modo "Aprovar antes" no sistema.
+
+Se o computador estiver desligado, nada se perde: as mensagens ficam guardadas na nuvem e saem quando ele ligar (cada aviso tem um prazo; lembretes velhos vencem sozinhos).
+
+Instalação (uma vez só, uns 10 minutos)
+---------------------------------------
+1. Instale o Node.js (versão LTS) em https://nodejs.org . É só ir clicando em "Próximo".
+2. Descompacte esta pasta em um lugar fixo, por exemplo C:\conector-whatsapp (não mude de lugar depois).
+3. Dê dois cliques em  instalar.bat  e espere terminar.
+4. No sistema da ótica, vá em Ajustes > WhatsApp automático e clique em "Gerar código do conector". Copie o código.
+5. Dê dois cliques em  iniciar.bat . Na primeira vez ele pede o código: cole e aperte Enter.
+6. Abra no navegador do computador:  http://localhost:3939
+7. No celular da ótica: WhatsApp > Configurações > Aparelhos conectados > Conectar um aparelho, e leia o QR Code da tela.
+8. Quando aparecer "Conectado", pode minimizar a janela preta. No sistema, o status vira "Conectado".
+9. Para o programa abrir sozinho quando o Windows ligar, dê dois cliques em  ligar-com-o-windows.bat .
+
+Primeiro teste (recomendado)
+----------------------------
+Cadastre um cliente de teste com o SEU número, deixe o modo "Aprovar antes", vá em Follow-up > WhatsApp automático, aprove a mensagem e veja se chega no seu celular.
+
+Uso no dia a dia
+----------------
+- O computador precisa estar ligado e com internet para as mensagens saírem. O celular da ótica não precisa ficar perto, mas abra o WhatsApp nele de vez em quando.
+- No sistema, em Follow-up > WhatsApp automático, você aprova, cancela e acompanha o que saiu.
+- Para parar tudo na hora: Ajustes > WhatsApp automático > "Pausar todos os envios agora".
+
+Problemas comuns
+----------------
+- "Computador da loja desligado" no sistema: o programa está fechado. Abra o iniciar.bat.
+- Pediu QR Code de novo: o WhatsApp foi desconectado pelo celular. Leia o QR de novo em http://localhost:3939 .
+- "Código inválido": gere um novo código no sistema e apague o arquivo config.json desta pasta.
+- Registro do que aconteceu: arquivo conector.log nesta pasta.
