@@ -732,16 +732,16 @@ let LOGO_W='',LOGO_B='',LOGO_R=3.18;
 const FORMAS=['Pix','Dinheiro','Cartão de débito','Cartão de crédito','Boleto'];
 const TIPOS=['Visão simples','Bifocal','Multifocal','Ocupacional','Fotossensível','Solar','Outra'];
 const DEFAULT_TPL={
-  cadastro:'Olá, {cliente}! Aqui é da {otica}. Seu cadastro foi feito com sucesso. Qualquer dúvida, é só chamar por aqui.',
-  venda:'Olá, {cliente}! Obrigado pela compra na {otica}.\n\nTotal: {total}\nEntrada: {entrada}\n\nParcelas:\n{resumo}\n\n{pagamento}',
-  lembrete:'Olá, {cliente}! Passando para lembrar que a parcela {parcela}, de {valor}, vence em {vencimento}. {pagamento} Obrigado!',
-  recibo:'Olá, {cliente}! Recebemos o pagamento da parcela {parcela}, no valor de {recebido}, em {datapago}. Obrigado pela confiança! {otica}',
-  aniversario:'Olá, {cliente}! A equipe da {otica} deseja a você um feliz aniversário, com muita saúde, alegria e um ano cheio de boas imagens. Um grande abraço!',
-  revisao:'Olá, {cliente}! Aqui é da {otica}. Já faz {tempo} desde a sua última visita. Que tal revisar o seu grau e dar uma conferida nos seus óculos? É rápido e a gente cuida de você. Posso reservar um horário?',
-  orcamento:'Olá, {cliente}! Aqui é da {otica}. Segue o orçamento que combinamos:\n\n{itens}\n\nTotal: {total}\nEntrada: {entrada}\n\nParcelas:\n{resumo}\n\n{pagamento}\nAssim que o pagamento for confirmado, fechamos a sua venda. Qualquer dúvida, é só chamar!',
-  chegou:'Olá, {cliente}! Aqui é da {otica}. Boa notícia: o seu óculos chegou! Já pode passar aqui na loja para retirar. Qualquer dúvida, é só chamar por aqui.',
-  entrega:'Olá, {cliente}! Aqui é da {otica}. Passando para agradecer pela sua compra e avisar que o seu pedido já foi entregue. Esperamos que você goste! Se precisar de qualquer ajuste ou tiver alguma dúvida, é só chamar por aqui. Foi um prazer atender você!',
-  atraso:'Olá, {cliente}! Tudo bem? Aqui é da {otica}. A parcela {parcela}, de {valor}, venceu em {vencimento} e está em atraso há {dias}.{encargos} {pagamento} Se já pagou, pode nos enviar o comprovante. Obrigado!'
+  cadastro:'Olá, {cliente}! 👋 Aqui é da {otica}.\n\nSeu cadastro foi feito com sucesso! ✅ Qualquer dúvida, é só chamar por aqui. 😊',
+  venda:'Olá, {cliente}! 😊 Obrigado pela compra na {otica}! 🕶️\n\n💰 Total: {total}\n💵 Entrada: {entrada}\n\n📅 Parcelas:\n{resumo}\n\n{pagamento}',
+  lembrete:'Olá, {cliente}! 👋 Passando para lembrar que a parcela {parcela}, de {valor}, vence em {vencimento}. 🗓️\n\n{pagamento}\n\nObrigado! 🙏',
+  recibo:'Olá, {cliente}! ✅ Recebemos o pagamento da parcela {parcela}, no valor de {recebido}, em {datapago}.\n\nObrigado pela confiança! 🙏\n{otica}',
+  aniversario:'🎉 Parabéns, {cliente}! 🎂\n\nA equipe da {otica} deseja a você um feliz aniversário, com muita saúde, alegria e um ano cheio de boas imagens! 👓✨\n\nUm grande abraço! 🤗',
+  revisao:'Olá, {cliente}! 👋 Aqui é da {otica}.\n\nJá faz {tempo} desde a sua última visita. 👓 Que tal revisar o seu grau e dar uma conferida nos seus óculos? É rápido e a gente cuida de você! 💙\n\nPosso reservar um horário? 🗓️',
+  orcamento:'Olá, {cliente}! 👋 Aqui é da {otica}. Segue o orçamento que combinamos: 📝\n\n{itens}\n\n💰 Total: {total}\n💵 Entrada: {entrada}\n\n📅 Parcelas:\n{resumo}\n\n{pagamento}\nAssim que o pagamento for confirmado, fechamos a sua venda. ✅ Qualquer dúvida, é só chamar! 😊',
+  chegou:'Olá, {cliente}! 🎉 Aqui é da {otica}.\n\nBoa notícia: o seu óculos chegou! 🕶️✨ Já pode passar aqui na loja para retirar. 🏬\n\nQualquer dúvida, é só chamar por aqui. 😊',
+  entrega:'Olá, {cliente}! 😊 Aqui é da {otica}.\n\nPassando para agradecer pela sua compra e avisar que o seu pedido já foi entregue! 📦✅ Esperamos que você goste! 🕶️\n\nSe precisar de qualquer ajuste ou tiver alguma dúvida, é só chamar por aqui. Foi um prazer atender você! 💙',
+  atraso:'Olá, {cliente}! Tudo bem? 😊 Aqui é da {otica}.\n\nA parcela {parcela}, de {valor}, venceu em {vencimento} e está em atraso há {dias}. ⚠️{encargos}\n\n{pagamento}\n\nSe já pagou, pode nos enviar o comprovante. 🧾 Obrigado! 🙏'
 };
 const TPL_LABEL={chegou:'Aviso: seu óculos chegou',cadastro:'Boas-vindas ao cadastrar',venda:'Resumo da venda',orcamento:'Orçamento (aguardando pagamento)',lembrete:'Lembrete de vencimento',atraso:'Parcela em atraso',recibo:'Recibo de pagamento',aniversario:'Feliz aniversário',revisao:'Revisão do grau (1 ano depois)',entrega:'Agradecimento pela compra (ao entregar)'};
 const S={clientes:{},vendas:{},lentes:{},config:{}};

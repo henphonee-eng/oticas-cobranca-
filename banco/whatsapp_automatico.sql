@@ -234,10 +234,24 @@ grant execute on function public.wa_sair(text,text) to anon, authenticated;
 create or replace function public.wa_gerar_fila() returns void language plpgsql security definer set search_path=public as $$
 declare o record; v record; c record; p jsonb; i int; hoje date := (now() at time zone 'America/Recife')::date;
   nome_o text; cfg jsonb; venc date; dias int; tp text; tpl text; txt text; vars jsonb; ref date; cli jsonb; nrev int; ult date; rc date;
-  def_lem text := 'Olá, {cliente}! Aqui é da {otica}. Passando para lembrar que a parcela {parcela}, de {valor}, vence amanhã ({vencimento}). Qualquer dúvida é só responder por aqui.';
-  def_atr text := 'Olá, {cliente}! Tudo bem? Aqui é da {otica}. A parcela {parcela}, de {valor}, venceu em {vencimento} e ainda está em aberto. Se já pagou, pode desconsiderar e nos enviar o comprovante. Se precisar combinar, é só responder por aqui.';
-  def_ani text := 'Olá, {cliente}! A equipe da {otica} deseja a você um feliz aniversário, com muita saúde, alegria e um ano cheio de boas imagens. Um grande abraço!';
-  def_rev text := 'Olá, {cliente}! Aqui é da {otica}. Já faz um bom tempo desde a sua última visita. Que tal revisar o seu grau e dar uma conferida nos seus óculos? É rápido e a gente cuida de você. Posso agendar um horário?';
+  def_lem text := 'Olá, {cliente}! 👋 Aqui é da {otica}.
+
+Passando para lembrar que a parcela {parcela}, de {valor}, vence amanhã ({vencimento}). 🗓️ Qualquer dúvida é só responder por aqui. 😊';
+  def_atr text := 'Olá, {cliente}! Tudo bem? 😊 Aqui é da {otica}.
+
+A parcela {parcela}, de {valor}, venceu em {vencimento} e ainda está em aberto. ⚠️ Se já pagou, pode desconsiderar e nos enviar o comprovante. 🧾
+
+Se precisar combinar, é só responder por aqui. 🙏';
+  def_ani text := '🎉 Parabéns, {cliente}! 🎂
+
+A equipe da {otica} deseja a você um feliz aniversário, com muita saúde, alegria e um ano cheio de boas imagens! 👓✨
+
+Um grande abraço! 🤗';
+  def_rev text := 'Olá, {cliente}! 👋 Aqui é da {otica}.
+
+Já faz um bom tempo desde a sua última visita. 👓 Que tal revisar o seu grau e dar uma conferida nos seus óculos? É rápido e a gente cuida de você! 💙
+
+Posso agendar um horário? 🗓️';
 begin
   for o in select ot.id, ot.nome from oticas ot where exists (select 1 from docs d where d.otica_id=ot.id and d.col='config' and d.id='wa' and d.data->>'on'='true') loop
     select data into cfg from docs where otica_id=o.id and col='config' and id='wa';
