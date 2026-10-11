@@ -268,6 +268,28 @@ details[open] summary{margin-bottom:10px}
 
 /* sheets */
 .scrim{position:fixed;inset:0;background:rgba(8,20,24,.52);z-index:40}
+.dlg{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+.dlc{display:flex;flex-direction:column;align-items:stretch;padding:0;border:1px solid var(--line);border-radius:14px;background:var(--surface);overflow:hidden;text-align:left;font:inherit;color:var(--fg);cursor:pointer}
+.dlc img{display:block;width:100%;aspect-ratio:16/11;object-fit:cover;background:var(--surface-2)}
+.dlc span{padding:12px 14px;font-weight:700;font-size:15px}
+.dlc:active{transform:scale(.985)}
+.dl{position:fixed;inset:0;z-index:80;display:flex;flex-direction:column;background:#070C18;color:#fff;font-family:var(--f-body);user-select:none;-webkit-user-select:none}
+.dl-top{display:flex;align-items:center;gap:12px;padding:calc(10px + env(safe-area-inset-top,0px)) 14px 10px}
+.dl-x{flex:none;width:44px;height:44px;border-radius:50%;border:0;background:rgba(255,255,255,.12);color:#fff;font-size:26px;line-height:1;cursor:pointer}
+.dl-ti{min-width:0;flex:1;font-family:var(--f-display);font-size:21px;font-weight:700;line-height:1.15;overflow-wrap:anywhere}
+.dl-sw{display:flex;gap:6px;padding:0 14px 10px}
+.dl-sw button{flex:1;min-height:46px;border-radius:12px;border:0;background:rgba(255,255,255,.12);color:#fff;font:inherit;font-weight:700;font-size:16px;cursor:pointer;transition:background .15s,color .15s}
+.dl-sw button.on{background:#fff;color:#0A1D3C}
+.dl-sw button.on.com{background:#4AB0F5;color:#03173A}
+.dl-track{flex:1;min-height:0;display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none;touch-action:pan-x;cursor:grab}
+.dl-track::-webkit-scrollbar{display:none}
+.dl-track.drag{scroll-snap-type:none;cursor:grabbing}
+.dl-sl{flex:0 0 100%;width:100%;height:100%;scroll-snap-align:center;scroll-snap-stop:always;display:flex;align-items:center;justify-content:center}
+.dl-sl img{display:block;max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;-webkit-user-drag:none;pointer-events:none}
+.dl-nav{display:flex;gap:8px;overflow-x:auto;padding:10px 14px calc(12px + env(safe-area-inset-bottom,0px));scrollbar-width:none}
+.dl-nav::-webkit-scrollbar{display:none}
+.dl-nav button{flex:none;min-height:42px;padding:0 16px;border-radius:999px;border:1px solid rgba(255,255,255,.25);background:transparent;color:#fff;font:inherit;font-weight:600;font-size:14px;cursor:pointer}
+.dl-nav button.on{background:#fff;color:#0A1D3C;border-color:#fff}
 .sheet{position:fixed;z-index:41;left:0;right:0;bottom:0;max-height:94%;background:var(--bg);border-radius:18px 18px 0 0;display:flex;flex-direction:column;box-shadow:var(--shadow);outline:none}
 .sheet-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px 10px;border-bottom:1px solid var(--line)}
 .sheet-head h2{font-size:20px;min-width:0;overflow-wrap:anywhere}
@@ -991,6 +1013,7 @@ let raf=0;function scheduleRender(){cancelAnimationFrame(raf);raf=requestAnimati
 function refresh(){render();if(auth==='ok'&&ui.sheet&&(ui.sheet.kind==='venda'||ui.sheet.kind==='cliente'))renderSheet()}
 const I=p=>'<svg viewBox="0 0 24 24">'+p+'</svg>';
 const ICON={
+  demolentes:I('<circle cx="12" cy="12" r="3"/><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/>'),
   painel:I('<rect x="3.5" y="3.5" width="7" height="8" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="5" rx="1.5"/><rect x="13.5" y="11.5" width="7" height="9" rx="1.5"/><rect x="3.5" y="14.5" width="7" height="6" rx="1.5"/>'),
   agenda:I('<rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/>'),
   vendas:I('<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>'),
@@ -1016,7 +1039,7 @@ const ICON={
   sair:I('<path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4M15 8l4 4-4 4M19 12H9"/>')
 };
 const GLASSES='<svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11.5" cy="23" r="7"/><circle cx="28.5" cy="23" r="7"/><path d="M18.5 22c1-1.3 2-1.3 3 0M4.5 21 7 12M35.5 21 33 12"/></svg>';
-const TABS=[['painel','Painel'],['agenda','Agenda'],['vendas','Vendas'],['clientes','Clientes'],['cobrar','Cobrar'],['aguard','Aguardando'],['entregas','Follow-up'],['os','Ordens de serviço'],['relacao','Relacionamento'],['caixa','Caixa'],['financeiro','Financeiro'],['metas','Metas'],['campanhas','Campanhas'],['lentes','Lentes'],['whatsapp','WhatsApp Automático'],['ajustes','Ajustes']];
+const TABS=[['painel','Painel'],['agenda','Agenda'],['vendas','Vendas'],['clientes','Clientes'],['cobrar','Cobrar'],['aguard','Aguardando'],['entregas','Follow-up'],['os','Ordens de serviço'],['relacao','Relacionamento'],['caixa','Caixa'],['financeiro','Financeiro'],['metas','Metas'],['campanhas','Campanhas'],['lentes','Lentes'],['demolentes','Demonstração de lentes'],['whatsapp','WhatsApp Automático'],['ajustes','Ajustes']];
 function admTabInicial(){const q=new URLSearchParams(location.search),t=q.get('tab');if(t){q.delete('tab');history.replaceState(null,'',location.pathname+(q.toString()?'?'+q:''))}return t==='mensal'?'mensal':'admin'}
 const ADMTAB=['admin','Administração'];
 const MENSTAB=['mensal','Mensalidades'];
@@ -1025,11 +1048,11 @@ function tabsVis(){
   if(!OTICA)return IS_ADMIN?[ADMTAB,MENSTAB].concat(PROSPTABS):[];
   let t=TABS.filter(x=>x[0]!=='whatsapp'||(ROLE==='dono'&&modOn('wa')));
   t=t.filter(x=>ROLE==='dono'||!['caixa','lentes','ajustes','financeiro','campanhas'].includes(x[0]));
-  if(ROLE!=='dono'){const ac=premAcTabs();if(ac){t=TABS.filter(x=>x[0]!=='ajustes'&&x[0]!=='whatsapp'&&ac.includes(x[0]));if(!t.length)t=TABS.filter(x=>x[0]==='painel')}}
+  if(ROLE!=='dono'){const ac=premAcTabs();if(ac){t=TABS.filter(x=>x[0]!=='ajustes'&&x[0]!=='whatsapp'&&(ac.includes(x[0])||x[0]==='demolentes'));if(!t.length)t=TABS.filter(x=>x[0]==='painel')}}
   if(IS_ADMIN)t=t.concat([ADMTAB,MENSTAB],PROSPTABS);
   return t;
 }
-function viewTab(){const k=ui.tab;return k==='painel'?viewPainel():k==='agenda'?viewAgenda():k==='vendas'?viewVendas():k==='aguard'?viewAguard():k==='entregas'?viewFollow():k==='os'?viewOS():k==='clientes'?viewClientes():k==='cobrar'?viewCobrar():k==='relacao'?viewRelacao():k==='caixa'?viewCaixa():k==='lentes'?viewLentes():k==='admin'?viewAdmin():k==='mensal'?viewMensal():(k==='financeiro'||k==='metas'||k==='campanhas'||k==='premium'||k==='whatsapp')?premView(k):viewAjustes()}
+function viewTab(){const k=ui.tab;return k==='painel'?viewPainel():k==='agenda'?viewAgenda():k==='vendas'?viewVendas():k==='aguard'?viewAguard():k==='entregas'?viewFollow():k==='os'?viewOS():k==='clientes'?viewClientes():k==='cobrar'?viewCobrar():k==='relacao'?viewRelacao():k==='caixa'?viewCaixa():k==='lentes'?viewLentes():k==='demolentes'?viewDemoLentes():k==='admin'?viewAdmin():k==='mensal'?viewMensal():(k==='financeiro'||k==='metas'||k==='campanhas'||k==='premium'||k==='whatsapp')?premView(k):viewAjustes()}
 let deferredInstall=null;
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;if(auth==='ok')render()});
 const demoTag=o=>o&&o.exemplo?'<span class="demo">exemplo</span>':'';
@@ -1394,6 +1417,70 @@ function viewCaixa(){
 
 /* ---------- lentes ---------- */
 const sortedLentes=()=>Object.values(S.lentes).sort((a,b)=>a.nome.localeCompare(b.nome));
+const DL=[
+  {k:'foto',n:'Fotocromática',pos:'50% 30%'},
+  {k:'azul',n:'Filtro de luz azul',pos:'88% 50%'},
+  {k:'hidro',n:'Hidrofóbico',pos:'40% 50%'},
+  {k:'anti',n:'Antirreflexo',pos:'50% 30%'}
+];
+const DLST=['Sem tratamento','Com tratamento'];
+function viewDemoLentes(){
+  return pageHead('Demonstração de lentes','')+
+  '<div class="dlg">'+DL.map(d=>'<button type="button" class="dlc" data-act="dlopen" data-k="'+d.k+'"><img src="/lentes/'+d.k+'-com.jpg" alt="" loading="lazy" style="object-position:'+d.pos+'"><span>'+d.n+'</span></button>').join('')+'</div>';
+}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-act="dlopen"]');if(b){e.preventDefault();dlOpen(b.dataset.k)}});
+let DLEL=null;
+function dlClose(){
+  if(!DLEL)return;document.removeEventListener('keydown',DLEL._key);DLEL.remove();DLEL=null;document.body.style.overflow=DLEL_OV||'';
+}
+let DLEL_OV='';
+function dlOpen(k){
+  const d=DL.find(x=>x.k===k)||DL[0];
+  DL.forEach(x=>{[0,1].forEach(i=>{const im=new Image();im.src='/lentes/'+x.k+'-'+(i?'com':'sem')+'.jpg'})});
+  if(!DLEL){
+    DLEL_OV=document.body.style.overflow;document.body.style.overflow='hidden';
+    const el=document.createElement('div');el.className='dl';el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');
+    el.innerHTML='<div class="dl-top"><button type="button" class="dl-x" aria-label="Fechar">&#215;</button><div class="dl-ti"></div></div>'+
+      '<div class="dl-sw"><button type="button" data-i="0"></button><button type="button" data-i="1" class="com"></button></div>'+
+      '<div class="dl-track" tabindex="0" aria-label="Deslize para o lado para comparar"><div class="dl-sl"><img alt="" draggable="false"></div><div class="dl-sl"><img alt="" draggable="false"></div></div>'+
+      '<div class="dl-nav"></div>';
+    document.body.appendChild(el);DLEL=el;
+    const tr=el.querySelector('.dl-track'),sw=el.querySelectorAll('.dl-sw button');
+    DLST.forEach((t,i)=>sw[i].textContent=t);
+    let idx=0,raf=0;
+    const mark=()=>{raf=0;const w=tr.clientWidth||1,i=tr.scrollLeft>w*.5?1:0;if(i!==idx){idx=i}sw.forEach((b,j)=>b.classList.toggle('on',j===idx))};
+    el._mark=mark;
+    tr.addEventListener('scroll',()=>{if(!raf)raf=requestAnimationFrame(mark)},{passive:true});
+    const go=i=>tr.scrollTo({left:i*tr.clientWidth,behavior:'smooth'});
+    sw.forEach(b=>b.addEventListener('click',()=>go(+b.dataset.i)));
+    el.querySelector('.dl-x').addEventListener('click',dlClose);
+    // arrastar com o mouse (no toque, o próprio navegador desliza)
+    let down=false,sx=0,sl=0,moved=0,t0=0;
+    tr.addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse'||e.button)return;down=true;sx=e.clientX;sl=tr.scrollLeft;moved=0;t0=Date.now();tr.classList.add('drag');tr.setPointerCapture(e.pointerId)});
+    tr.addEventListener('pointermove',e=>{if(!down)return;const dx=e.clientX-sx;moved=dx;tr.scrollLeft=sl-dx});
+    const end=()=>{if(!down)return;down=false;tr.classList.remove('drag');const w=tr.clientWidth,base=sl>w*.5?1:0;let i=base;if(Math.abs(moved)>w*.12||(Math.abs(moved)>25&&Date.now()-t0<300))i=moved<0?1:0;go(i)};
+    tr.addEventListener('pointerup',end);tr.addEventListener('pointercancel',end);
+    // toque: acompanha o dedo e, ao soltar, qualquer arrasto curto já troca de lado
+    let tx=0,ty=0,tl=0,tt=0,tdir=0;
+    tr.addEventListener('touchstart',e=>{const t=e.touches[0];tx=t.clientX;ty=t.clientY;tl=tr.scrollLeft;tt=Date.now();tdir=0},{passive:true});
+    tr.addEventListener('touchend',e=>{const t=e.changedTouches[0];const dx=t.clientX-tx,dy=t.clientY-ty,w=tr.clientWidth,base=tl>w*.5?1:0;
+      if(Math.abs(dx)<10||Math.abs(dy)>Math.abs(dx)*1.6){return}
+      const v=Math.abs(dx)/Math.max(1,Date.now()-tt);let i=base;
+      if(Math.abs(dx)>w*.08||v>.25)i=dx<0?1:0;
+      tr.scrollTo({left:i*w,behavior:'smooth'})},{passive:true});
+    el._key=e=>{if(e.key==='Escape')dlClose();else if(e.key==='ArrowRight')go(1);else if(e.key==='ArrowLeft')go(0)};
+    document.addEventListener('keydown',el._key);
+    el._go=go;
+    el.querySelector('.dl-nav').addEventListener('click',e=>{const b=e.target.closest('button[data-k]');if(b)dlOpen(b.dataset.k)});
+  }
+  const el=DLEL,tr=el.querySelector('.dl-track');
+  el.querySelector('.dl-ti').textContent=d.n;
+  const im=el.querySelectorAll('.dl-sl img');im[0].src='/lentes/'+d.k+'-sem.jpg';im[1].src='/lentes/'+d.k+'-com.jpg';
+  im[0].alt=d.n+' – '+DLST[0];im[1].alt=d.n+' – '+DLST[1];
+  el.querySelector('.dl-nav').innerHTML=DL.map(x=>'<button type="button" data-k="'+x.k+'"'+(x.k===d.k?' class="on"':'')+'>'+x.n+'</button>').join('');
+  tr.style.scrollBehavior='auto';tr.scrollLeft=0;tr.style.scrollBehavior='';el._mark();
+  tr.focus({preventScroll:true});
+}
 function viewLentes(){
   return pageHead('Tabela de lentes','Cadastre cada lente com o valor. Na venda, escolha a lente e, se quiser, ponha juros em cima.')+
   '<div class="card"><div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))"><div class="field"><span>Lente</span><input id="ln-nome" type="text" placeholder="Ex.: Resina 1.67 com antirreflexo"></div><div class="field"><span>Tipo</span><input id="ln-tipo" type="text" list="tipos" placeholder="Multifocal"></div><div class="field"><span>Valor (R$)</span><input id="ln-valor" type="text" inputmode="decimal" placeholder="0,00"></div></div><div><button class="btn primary" data-act="addlente">Adicionar lente</button></div></div>'+
