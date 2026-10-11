@@ -279,11 +279,12 @@ details[open] summary{margin-bottom:10px}
 .dl-sw button{flex:1;min-height:46px;border-radius:12px;border:0;background:rgba(255,255,255,.12);color:#fff;font:inherit;font-weight:700;font-size:16px;cursor:pointer;transition:background .15s,color .15s}
 .dl-sw button.on{background:#fff;color:#0A1D3C}
 .dl-sw button.on.com{background:#4AB0F5;color:#03173A}
-.dl-track{flex:1;min-height:0;display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none;touch-action:pan-x;cursor:grab}
-.dl-track::-webkit-scrollbar{display:none}
-.dl-track.drag{scroll-snap-type:none;cursor:grabbing}
-.dl-sl{flex:0 0 100%;width:100%;height:100%;scroll-snap-align:center;scroll-snap-stop:always;display:flex;align-items:center;justify-content:center}
-.dl-sl img{display:block;max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;-webkit-user-drag:none;pointer-events:none}
+.dl-stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:0 0 4px}
+.dl-cmp{position:relative;width:min(100%,calc((100vh - 250px)*var(--ar)));width:min(100%,calc((100dvh - 250px)*var(--ar)));aspect-ratio:var(--ar);overflow:hidden;touch-action:none;cursor:ew-resize;background:#0d1426;--p:50%}
+.dl-cmp img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;-webkit-user-drag:none;pointer-events:none}
+.dl-cmp .dl-top-img{clip-path:inset(0 calc(100% - var(--p)) 0 0)}
+.dl-bar{position:absolute;top:0;bottom:0;left:var(--p);width:3px;margin-left:-1.5px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.25);pointer-events:none}
+.dl-grip{position:absolute;top:50%;left:var(--p);width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;background:#fff;color:#0A1D3C;box-shadow:0 2px 10px rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;pointer-events:none}
 .dl-nav{display:flex;gap:8px;overflow-x:auto;padding:10px 14px calc(12px + env(safe-area-inset-bottom,0px));scrollbar-width:none}
 .dl-nav::-webkit-scrollbar{display:none}
 .dl-nav button{flex:none;min-height:42px;padding:0 16px;border-radius:999px;border:1px solid rgba(255,255,255,.25);background:transparent;color:#fff;font:inherit;font-weight:600;font-size:14px;cursor:pointer}
@@ -918,7 +919,7 @@ const ICON={
   sair:I('<path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4M15 8l4 4-4 4M19 12H9"/>')
 };
 const GLASSES='<svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11.5" cy="23" r="7"/><circle cx="28.5" cy="23" r="7"/><path d="M18.5 22c1-1.3 2-1.3 3 0M4.5 21 7 12M35.5 21 33 12"/></svg>';
-const TABS=[['painel','Painel'],['agenda','Agenda'],['vendas','Vendas'],['clientes','Clientes'],['cobrar','Cobrar'],['aguard','Aguardando'],['entregas','Follow-up'],['os','Ordens de serviço'],['relacao','Relacionamento'],['caixa','Caixa'],['lentes','Lentes'],['demolentes','Demonstração de lentes'],['whatsapp','WhatsApp Automático'],['ajustes','Ajustes']];
+const TABS=[['painel','Painel'],['agenda','Agenda'],['vendas','Vendas'],['clientes','Clientes'],['cobrar','Cobrar'],['aguard','Orçamentos'],['entregas','Follow-up'],['os','Ordens de serviço'],['relacao','Relacionamento'],['caixa','Caixa'],['lentes','Lentes'],['demolentes','Demonstração de lentes'],['whatsapp','WhatsApp Automático'],['ajustes','Ajustes']];
 function admTabInicial(){const q=new URLSearchParams(location.search),t=q.get('tab');if(t){q.delete('tab');history.replaceState(null,'',location.pathname+(q.toString()?'?'+q:''))}return t==='mensal'?'mensal':'admin'}
 const ADMTAB=['admin','Administração'];
 const MENSTAB=['mensal','Mensalidades'];
@@ -1162,7 +1163,7 @@ function aguardList(){
   }).join('')+'</div>';
 }
 function viewAguard(){
-  return pageHead('Aguardando pagamento','Orçamentos que ainda não viraram venda','<button class="btn primary" data-act="novavenda">Novo orçamento</button>')+
+  return pageHead('Orçamentos','Guardados até o cliente voltar para pagar','<button class="btn primary" data-act="novavenda">Novo orçamento</button>')+
   '<p class="sub" style="margin-bottom:12px">Aqui ficam os orçamentos de quem ainda vai pagar ou dar a entrada. Eles não entram nas vendas, no caixa nem nas cobranças. Quando o cliente pagar, toque em Marcar como pago e vira venda.</p><div id="aglist">'+aguardList()+'</div>';
 }
 function filteredVendas(){
@@ -1268,10 +1269,10 @@ function viewCaixa(){
 /* ---------- lentes ---------- */
 const sortedLentes=()=>Object.values(S.lentes).sort((a,b)=>a.nome.localeCompare(b.nome));
 const DL=[
-  {k:'foto',n:'Fotocromática',pos:'50% 30%'},
-  {k:'azul',n:'Filtro de luz azul',pos:'88% 50%'},
-  {k:'hidro',n:'Hidrofóbico',pos:'40% 50%'},
-  {k:'anti',n:'Antirreflexo',pos:'50% 30%'}
+  {k:'foto',h:728,n:'Fotocromática',pos:'50% 30%'},
+  {k:'azul',h:604,n:'Filtro de luz azul',pos:'88% 50%'},
+  {k:'hidro',h:602,n:'Hidrofóbico',pos:'40% 50%'},
+  {k:'anti',h:722,n:'Antirreflexo',pos:'50% 30%'}
 ];
 const DLST=['Sem tratamento','Com tratamento'];
 function viewDemoLentes(){
@@ -1292,44 +1293,36 @@ function dlOpen(k){
     const el=document.createElement('div');el.className='dl';el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');
     el.innerHTML='<div class="dl-top"><button type="button" class="dl-x" aria-label="Fechar">&#215;</button><div class="dl-ti"></div></div>'+
       '<div class="dl-sw"><button type="button" data-i="0"></button><button type="button" data-i="1" class="com"></button></div>'+
-      '<div class="dl-track" tabindex="0" aria-label="Deslize para o lado para comparar"><div class="dl-sl"><img alt="" draggable="false"></div><div class="dl-sl"><img alt="" draggable="false"></div></div>'+
+      '<div class="dl-stage"><div class="dl-cmp" aria-label="Deslize para comparar sem e com tratamento"><img class="dl-com" alt="" draggable="false"><img class="dl-top-img dl-sem" alt="" draggable="false"><div class="dl-bar"></div><div class="dl-grip">&#8249;&#8250;</div></div></div>'+
       '<div class="dl-nav"></div>';
     document.body.appendChild(el);DLEL=el;
-    const tr=el.querySelector('.dl-track'),sw=el.querySelectorAll('.dl-sw button');
+    const cmp=el.querySelector('.dl-cmp'),sw=el.querySelectorAll('.dl-sw button');
     DLST.forEach((t,i)=>sw[i].textContent=t);
-    let idx=0,raf=0;
-    const mark=()=>{raf=0;const w=tr.clientWidth||1,i=tr.scrollLeft>w*.5?1:0;if(i!==idx){idx=i}sw.forEach((b,j)=>b.classList.toggle('on',j===idx))};
-    el._mark=mark;
-    tr.addEventListener('scroll',()=>{if(!raf)raf=requestAnimationFrame(mark)},{passive:true});
-    const go=i=>tr.scrollTo({left:i*tr.clientWidth,behavior:'smooth'});
-    sw.forEach(b=>b.addEventListener('click',()=>go(+b.dataset.i)));
+    // p = quanto da imagem (da esquerda) mostra SEM tratamento; o resto mostra COM
+    let p=50,raf=0,anim=0;
+    const draw=()=>{raf=0;cmp.style.setProperty('--p',p+'%');sw[0].classList.toggle('on',p>=50);sw[1].classList.toggle('on',p<50)};
+    const set=v=>{p=Math.max(0,Math.min(100,v));if(!raf)raf=requestAnimationFrame(draw)};
+    const mover=x=>{const r=cmp.getBoundingClientRect();set((x-r.left)/r.width*100)};
+    const ir=to=>{cancelAnimationFrame(anim);const from=p,t0=performance.now();const f=t=>{const k=Math.min(1,(t-t0)/260),e=1-Math.pow(1-k,3);set(from+(to-from)*e);if(k<1)anim=requestAnimationFrame(f)};anim=requestAnimationFrame(f)};
+    el._set=set;el._ir=ir;el._reset=()=>{cancelAnimationFrame(anim);p=50;draw()};
+    cmp.addEventListener('pointerdown',e=>{if(e.button)return;cancelAnimationFrame(anim);cmp.setPointerCapture(e.pointerId);cmp._on=true;mover(e.clientX)});
+    cmp.addEventListener('pointermove',e=>{if(cmp._on)mover(e.clientX)});
+    const fim=()=>{cmp._on=false};cmp.addEventListener('pointerup',fim);cmp.addEventListener('pointercancel',fim);
+    sw[0].addEventListener('click',()=>ir(100));sw[1].addEventListener('click',()=>ir(0));
     el.querySelector('.dl-x').addEventListener('click',dlClose);
-    // arrastar com o mouse (no toque, o próprio navegador desliza)
-    let down=false,sx=0,sl=0,moved=0,t0=0;
-    tr.addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse'||e.button)return;down=true;sx=e.clientX;sl=tr.scrollLeft;moved=0;t0=Date.now();tr.classList.add('drag');tr.setPointerCapture(e.pointerId)});
-    tr.addEventListener('pointermove',e=>{if(!down)return;const dx=e.clientX-sx;moved=dx;tr.scrollLeft=sl-dx});
-    const end=()=>{if(!down)return;down=false;tr.classList.remove('drag');const w=tr.clientWidth,base=sl>w*.5?1:0;let i=base;if(Math.abs(moved)>w*.12||(Math.abs(moved)>25&&Date.now()-t0<300))i=moved<0?1:0;go(i)};
-    tr.addEventListener('pointerup',end);tr.addEventListener('pointercancel',end);
-    // toque: acompanha o dedo e, ao soltar, qualquer arrasto curto já troca de lado
-    let tx=0,ty=0,tl=0,tt=0,tdir=0;
-    tr.addEventListener('touchstart',e=>{const t=e.touches[0];tx=t.clientX;ty=t.clientY;tl=tr.scrollLeft;tt=Date.now();tdir=0},{passive:true});
-    tr.addEventListener('touchend',e=>{const t=e.changedTouches[0];const dx=t.clientX-tx,dy=t.clientY-ty,w=tr.clientWidth,base=tl>w*.5?1:0;
-      if(Math.abs(dx)<10||Math.abs(dy)>Math.abs(dx)*1.6){return}
-      const v=Math.abs(dx)/Math.max(1,Date.now()-tt);let i=base;
-      if(Math.abs(dx)>w*.08||v>.25)i=dx<0?1:0;
-      tr.scrollTo({left:i*w,behavior:'smooth'})},{passive:true});
-    el._key=e=>{if(e.key==='Escape')dlClose();else if(e.key==='ArrowRight')go(1);else if(e.key==='ArrowLeft')go(0)};
+    el._key=e=>{if(e.key==='Escape')dlClose();else if(e.key==='ArrowRight')ir(Math.min(100,p+25));else if(e.key==='ArrowLeft')ir(Math.max(0,p-25))};
     document.addEventListener('keydown',el._key);
-    el._go=go;
     el.querySelector('.dl-nav').addEventListener('click',e=>{const b=e.target.closest('button[data-k]');if(b)dlOpen(b.dataset.k)});
+    draw();
   }
-  const el=DLEL,tr=el.querySelector('.dl-track');
+  const el=DLEL,cmp=el.querySelector('.dl-cmp');
   el.querySelector('.dl-ti').textContent=d.n;
-  const im=el.querySelectorAll('.dl-sl img');im[0].src='/lentes/'+d.k+'-sem.jpg';im[1].src='/lentes/'+d.k+'-com.jpg';
-  im[0].alt=d.n+' – '+DLST[0];im[1].alt=d.n+' – '+DLST[1];
+  cmp.style.setProperty('--ar',(1044/d.h).toFixed(4));
+  const sem=el.querySelector('.dl-sem'),com=el.querySelector('.dl-com');
+  sem.src='/lentes/'+d.k+'-sem.jpg';com.src='/lentes/'+d.k+'-com.jpg';
+  sem.alt=d.n+' – '+DLST[0];com.alt=d.n+' – '+DLST[1];
   el.querySelector('.dl-nav').innerHTML=DL.map(x=>'<button type="button" data-k="'+x.k+'"'+(x.k===d.k?' class="on"':'')+'>'+x.n+'</button>').join('');
-  tr.style.scrollBehavior='auto';tr.scrollLeft=0;tr.style.scrollBehavior='';el._mark();
-  tr.focus({preventScroll:true});
+  el._reset();
 }
 function viewLentes(){
   return pageHead('Tabela de lentes','Cadastre cada lente com o valor. Na venda, escolha a lente e, se quiser, ponha juros em cima.')+
@@ -1616,7 +1609,7 @@ function salvarVenda(){
   if(old&&old.entregueEm){v.entregueEm=old.entregueEm;if(old.agradEm)v.agradEm=old.agradEm}
   S.vendas[v.id]=v;persist('vendas',v.id);
   premLog(old?'Venda editada':(v.aguardando?'Orçamento criado':'Venda criada'),((S.clientes[cid]||{}).nome||'')+' · '+brl(v.total));
-  ui.draft=null;ui.sheet={kind:'venda',id:v.id};if(!old)ui.tab=v.aguardando?'aguard':'vendas';render();renderSheet();toast(v.aguardando?(old?'Orçamento atualizado':'Orçamento salvo em Aguardando pagamento'):(old?'Venda atualizada':'Venda registrada'));
+  ui.draft=null;ui.sheet={kind:'venda',id:v.id};if(!old)ui.tab=v.aguardando?'aguard':'vendas';render();renderSheet();toast(v.aguardando?(old?'Orçamento atualizado':'Orçamento salvo em Orçamentos'):(old?'Venda atualizada':'Venda registrada'));
 }
 
 /* cliente */
@@ -2218,9 +2211,8 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&ui.sheet)closeSheet
 <script>
 /* avisa quando há uma versão nova do sistema publicada (o app da tela de início fica aberto por dias) */
 (function(){
-  var base=null,ult=0,avisado=false;
-  function hash(t){var h=0;for(var i=0;i<t.length;i++){h=(h*31+t.charCodeAt(i))|0}return h}
-  function pegar(){return fetch(location.pathname+'?v='+Date.now(),{cache:'no-store'}).then(function(r){return r.ok?r.text():null}).then(function(t){return t?hash(t):null}).catch(function(){return null})}
+  var ult=0,avisado=false;
+  function pegar(){return fetch(location.pathname+'?v='+Date.now(),{cache:'no-store'}).then(function(r){return r.ok?r.text():null}).then(function(t){var m=t&&t.match(/APP_BUILD='([^']+)'/);return m?m[1]:null}).catch(function(){return null})}
   function aviso(){
     if(avisado)return;avisado=true;
     var b=document.createElement('button');b.type='button';b.id='nova-versao';
@@ -2230,7 +2222,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&ui.sheet)closeSheet
   }
   function checar(){
     var agora=Date.now();if(agora-ult<5*60*1000)return;ult=agora;
-    pegar().then(function(h){if(h==null)return;if(base==null){base=h;return}if(h!==base)aviso()});
+    pegar().then(function(h){if(h==null||typeof APP_BUILD==='undefined')return;if(h!==APP_BUILD)aviso()});
   }
   window.addEventListener('load',function(){setTimeout(function(){ult=0;checar()},4000)});
   document.addEventListener('visibilitychange',function(){if(!document.hidden)checar()});
