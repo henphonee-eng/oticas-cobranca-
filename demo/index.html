@@ -2222,7 +2222,12 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&ui.sheet)closeSheet
   }
   function checar(){
     var agora=Date.now();if(agora-ult<5*60*1000)return;ult=agora;
-    pegar().then(function(h){if(h==null||typeof APP_BUILD==='undefined')return;if(h!==APP_BUILD)aviso()});
+    pegar().then(function(h){if(h==null||typeof APP_BUILD==='undefined'||h===APP_BUILD)return;
+      /* versão antiga aberta: atualiza sozinho se não houver nada sendo digitado; senão, avisa */
+      var ae=document.activeElement,digitando=ae&&/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName),ocupado=!!document.querySelector('.sheet,.dl')||(typeof ui!=='undefined'&&ui&&ui.draft);
+      var ok=true;try{var u=+sessionStorage.getItem('autoRecarga')||0;if(Date.now()-u<120000)ok=false}catch(e){}
+      if(!digitando&&!ocupado&&ok&&!document.hidden){try{sessionStorage.setItem('autoRecarga',String(Date.now()))}catch(e){}location.reload();return}
+      aviso()});
   }
   window.addEventListener('load',function(){setTimeout(function(){ult=0;checar()},4000)});
   document.addEventListener('visibilitychange',function(){if(!document.hidden)checar()});
