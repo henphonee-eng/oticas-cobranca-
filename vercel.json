@@ -38,6 +38,14 @@
     {
       "source": "/prospectar/",
       "destination": "/prospectar.html"
+    },
+    {
+      "source": "/agendar/:slug",
+      "destination": "/agendar.html"
+    },
+    {
+      "source": "/agendar",
+      "destination": "/agendar.html"
     }
   ]
 }

@@ -228,7 +228,6 @@ begin
   insert into ex_agend(otica_id,nome,whatsapp,data,hora,origem,campanha,anuncio,consentimento)
   values (o.id, nome, t, p_data, p_hora, left(regexp_replace(coalesce(p_origem,''),'[^A-Za-z0-9_.\- ]','','g'),60), left(regexp_replace(coalesce(p_campanha,''),'[^A-Za-z0-9_.\- ]','','g'),80), left(regexp_replace(coalesce(p_anuncio,''),'[^A-Za-z0-9_.\- ]','','g'),60), true)
   returning id into nid;
-  perform public.ex_enfileirar(nid);
   return jsonb_build_object('ok',true,'id',nid);
 end $$;
 
@@ -292,3 +291,21 @@ create policy ads_midia_del on storage.objects for delete to authenticated using
 
 -- ---------- rotina automática (a cada 6 h) ----------
 insert into public.app_segredos(chave,valor) values ('cron_secret', encode(gen_random_bytes(24),'hex')) on conflict (chave) do nothing;
+
+-- agendamento feito pela equipe (aba Exames de vista) também envia a confirmação
+create or replace function public.ex_tg_ins() returns trigger language plpgsql security definer set search_path=public as $$
+begin
+  if new.status in ('agendado','confirmado') then perform public.ex_enfileirar(new.id); end if;
+  return null;
+end $$;
+drop trigger if exists ex_agend_ins on public.ex_agend;
+create trigger ex_agend_ins after insert on public.ex_agend for each row execute function public.ex_tg_ins();
+
+-- atualiza resultados e sugestões dos anúncios a cada 6 horas
+do $$ begin perform cron.unschedule('meta-cron'); exception when others then null; end $$;
+select cron.schedule('meta-cron','0 */6 * * *', $c$
+  select net.http_post(
+    url := 'https://ovynkeifzhavhjdkjjui.supabase.co/functions/v1/meta-cron',
+    headers := jsonb_build_object('Content-Type','application/json','x-cron',(select valor from public.app_segredos where chave='cron_secret')),
+    body := '{}'::jsonb);
+$c$);
