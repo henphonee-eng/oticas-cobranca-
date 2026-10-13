@@ -1022,9 +1022,10 @@ const ICON={
 };
 const GLASSES='<svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11.5" cy="23" r="7"/><circle cx="28.5" cy="23" r="7"/><path d="M18.5 22c1-1.3 2-1.3 3 0M4.5 21 7 12M35.5 21 33 12"/></svg>';
 const TABS=[['painel','Painel'],['vendas','Vendas'],['aguard','Orçamentos'],['clientes','Clientes'],['cobrar','Cobrar'],['entregas','Follow-up'],['agenda','Agenda'],['os','Ordens de serviço'],['relacao','Relacionamento'],['caixa','Caixa'],['lentes','Lentes'],['demolentes','Demonstração de lentes'],['whatsapp','WhatsApp Automático'],['ajustes','Ajustes']];
-/* grupos do menu: o que se usa todo dia fica junto, depois o acompanhamento, a loja, o Premium e o sistema */
-const TGRP={painel:'Dia a dia',vendas:'Dia a dia',aguard:'Dia a dia',clientes:'Dia a dia',cobrar:'Dia a dia',entregas:'Acompanhar',agenda:'Acompanhar',exames:'Adicional',os:'Acompanhar',relacao:'Acompanhar',caixa:'Minha loja',lentes:'Minha loja',demolentes:'Minha loja',campanhas:'Premium',financeiro:'Premium',metas:'Premium',whatsapp:'Premium',ajustes:'Sistema'};
-function tabsGrp(tv,fn){let g='',o='';tv.forEach(t=>{const k=TGRP[t[0]]||'';if(k&&k!==g){o+='<div class="tgrp'+(k==='Premium'||k==='Adicional'?' pro':'')+'" aria-hidden="true">'+k+'</div>'}g=k;o+=fn(t)});return o}
+/* grupos do menu por finalidade: vendas e loja, clientes (follow-up, WhatsApp, campanhas, agenda, exames), financeiro e sistema */
+const TGORD=['painel','vendas','aguard','os','lentes','demolentes','clientes','relacao','entregas','whatsapp','campanhas','agenda','exames','cobrar','caixa','financeiro','metas','ajustes'];
+const TGRP={painel:'',vendas:'Vendas e loja',aguard:'Vendas e loja',os:'Vendas e loja',lentes:'Vendas e loja',demolentes:'Vendas e loja',clientes:'Clientes',relacao:'Clientes',entregas:'Clientes',whatsapp:'Clientes',campanhas:'Clientes',agenda:'Clientes',exames:'Clientes',cobrar:'Financeiro',caixa:'Financeiro',financeiro:'Financeiro',metas:'Financeiro',ajustes:'Sistema'};
+function tabsGrp(tv,fn){let g='',o='';const ix=k=>{const n=TGORD.indexOf(k);return n<0?99:n};tv=tv.map((t,n)=>[t,n]).sort((a,b)=>ix(a[0][0])-ix(b[0][0])||a[1]-b[1]).map(x=>x[0]);tv.forEach(t=>{const k=TGRP[t[0]]||'';if(k&&k!==g){o+='<div class="tgrp'+''+'" aria-hidden="true">'+k+'</div>'}g=k;o+=fn(t)});return o}
 const saudacao=()=>{const h=new Date().getHours();return h<12?'Bom dia':h<18?'Boa tarde':'Boa noite'};
 function admTabInicial(){const q=new URLSearchParams(location.search),t=q.get('tab');if(t){q.delete('tab');history.replaceState(null,'',location.pathname+(q.toString()?'?'+q:''))}return t==='mensal'?'mensal':'admin'}
 const ADMTAB=['admin','Administração'];
