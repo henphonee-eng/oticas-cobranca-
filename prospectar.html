@@ -206,6 +206,7 @@ const DEF={
   abordagem:'Olá, equipe da {otica}! Tudo bem?\n\nSou o {seu_nome}, desenvolvo apps personalizados para empresas.\n\nMontei um protótipo de teste do nosso sistema de gestão para óticas (vendas, clientes, carnê e Pix, financeiro e avisos pelo WhatsApp), já com o nome de vocês. Dá uma olhada:\n{link}\n\nSe gostar, finalizamos com a logo e as cores da {otica}, um sistema só de vocês. Posso te mostrar como funciona?',
   followup:'Oi, pessoal da {otica}! Passando só para saber se conseguiram dar uma olhada na demonstração do sistema de gestão:\n{link}\n\nSe fizer sentido, te mostro rapidinho por aqui mesmo.',
   interesse:'Que bom que gostou, pessoal da {otica}! 😊\n\nFunciona assim: o sistema roda no navegador, no computador e no celular, sem instalar nada. Fica com a logo e as cores da {otica} e reúne vendas, clientes, carnê com Pix, ordens de serviço, financeiro e avisos pelo WhatsApp.\n\nValores:\n• Implantação: a partir de R$ 457 (pagamento único, deixo tudo configurado para vocês)\n• Mensalidade: R$ 47 no plano Básico\n• Plano Premium: R$ 67 por mês, com as funções novas e as atualizações\n\nA primeira mensalidade só vence 30 dias depois da implantação. Quer que eu mostre o sistema funcionando numa chamada rápida?',
+  site_extra:'Vi também que a {otica} ainda não tem site no Google. Montei uma prévia de site com o nome e o endereço de vocês, para verem como ficaria:\n{site}',
   agradecimento:'Tudo bem, pessoal da {otica}! Obrigado pelo retorno e pela atenção. 🙏\n\nAproveito para contar: além do sistema para óticas, eu desenvolvo soluções personalizadas para empresas, como sites profissionais, agentes de IA que atendem clientes no WhatsApp e sistemas feitos sob medida para facilitar o dia a dia do negócio.\n\nSe um dia precisarem de algo assim, é só me chamar por aqui. Sucesso para vocês!\n\n{seu_nome}'
 };
 
@@ -231,15 +232,22 @@ const nomeCurto=n=>{const s=String(n||'').trim(),c=s.split(/\s*(?::|\||\s[-–�
 const linkBase=()=>String(cfg('link_base')||location.origin).replace(/\/+$/,'');
 const demoLink=(l,meu)=>meu?location.origin+'/demo/?o='+encodeURIComponent(nomeCurto(l.nome)):linkBase()+'/d/'+String(l.id).replace(/-/g,'').slice(0,7);
 const fmtDH=iso=>{const d=new Date(iso);return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+' às '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
-const acessos=l=>st.ac[l.id]||[];
-function msg(kind,l){return cfg(kind).replace(/\{otica\}/g,nomeCurto(l.nome)).replace(/\{link\}/g,demoLink(l)).replace(/\{cidade\}/g,l.cidade||'').replace(/\{seu_nome\}/g,cfg('seu_nome')||'').replace(/\n{3,}/g,'\n\n')}
+const acessos=l=>(st.ac[l.id]||[]).filter(a=>a.tipo!=='site');
+const acessosSite=l=>(st.ac[l.id]||[]).filter(a=>a.tipo==='site');
+/* site demonstrativo: /s/ + o mesmo código do demo; só oferecido para quem não tem site no Google */
+const siteLink=(l,meu)=>linkBase()+'/s/'+String(l.id).replace(/-/g,'').slice(0,7)+(meu?'?eu=1':'');
+function msg(kind,l){let t=cfg(kind);
+  // abordagem para quem não tem site: entra o parágrafo do site demonstrativo antes da pergunta final
+  if(kind==='abordagem'){const bloco=!l.site&&cfg('site_extra')?cfg('site_extra'):'';
+    if(t.includes('{site_bloco}'))t=t.replace(/\{site_bloco\}/g,bloco);else if(bloco){const p=t.split(/\n\n/);p.splice(Math.max(1,p.length-1),0,bloco);t=p.join('\n\n')}}
+  return t.replace(/\{site\}/g,l.id?siteLink(l):'').replace(/\{otica\}/g,nomeCurto(l.nome)).replace(/\{link\}/g,demoLink(l)).replace(/\{cidade\}/g,l.cidade||'').replace(/\{seu_nome\}/g,cfg('seu_nome')||'').replace(/\n{3,}/g,'\n\n')}
 
 /* ---------- dados ---------- */
 async function load(){
   // a sessão pode ter vencido com a aba aberta: renova antes de buscar (sem isso o banco devolve tudo vazio)
   try{const {data:sd}=await sb.auth.getSession();if(!sd.session){st.user=false;st.loaded=false;render();return}
     const exp=(sd.session.expires_at||0)*1000;if(exp&&exp-Date.now()<120000){const r=await sb.auth.refreshSession();if(r.error){st.user=false;st.loaded=false;render();return}}}catch(e){}
-  const [lr,cr,ar]=await Promise.all([sb.from('prosp_leads').select('*').order('criado_em',{ascending:false}),sb.from('prosp_config').select('*'),sb.from('prosp_acessos').select('lead_id,em,aparelho').order('em',{ascending:false}).limit(5000)]);
+  const [lr,cr,ar]=await Promise.all([sb.from('prosp_leads').select('*').order('criado_em',{ascending:false}),sb.from('prosp_config').select('*'),sb.from('prosp_acessos').select('lead_id,em,aparelho,tipo').order('em',{ascending:false}).limit(5000)]);
   if(lr.error){toast('Erro ao carregar: '+lr.error.message);return}
   st.leads=lr.data||[];st.cfg={};(cr.data||[]).forEach(r=>st.cfg[r.chave]=r.valor);
   st.ac={};((ar&&ar.data)||[]).forEach(a=>{(st.ac[a.lead_id]=st.ac[a.lead_id]||[]).push(a)});
@@ -501,6 +509,8 @@ function cardLead(l){
   const op=st.open===l.id,tf=tipoFone(foneDe(l)),late=l.follow_up&&l.follow_up<=today()&&['enviado','respondeu','interessada'].includes(l.status);
   let h='<div class="card lead"><div class="row">'+(podeAuto(l)?'<input type="checkbox" data-marca="'+l.id+'"'+(st.marc[l.id]?' checked':'')+' aria-label="Marcar para o envio automático" style="width:20px;height:20px;flex:none">':'')+'<h2 class="grow">'+esc(l.nome)+'</h2><span class="tag '+STAG[l.status]+'">'+STATUS[l.status]+'</span></div><div class="meta">'+
     (acessos(l).length?'<span class="tag hot">👀 '+acessos(l).length+(acessos(l).length>1?' acessos':' acesso')+' ao demo · último '+fmtDH(acessos(l)[0].em)+'</span>':l.status!=='novo'?'<span class="tag">Ainda não abriu o demo</span>':'')+
+    (acessosSite(l).length?'<span class="tag hot">🌐 '+acessosSite(l).length+(acessosSite(l).length>1?' acessos':' acesso')+' ao site · último '+fmtDH(acessosSite(l)[0].em)+'</span>':'')+
+    (!l.site?'<span class="tag">Sem site: recebe a prévia de site</span>':'')+
     (late?'<span class="tag warn">Follow-up '+(l.follow_up<today()?'atrasado':'hoje')+'</span>':l.follow_up&&l.status!=='fechou'&&l.status!=='sem_interesse'?'<span class="tag">Follow-up '+fmtD(l.follow_up)+'</span>':'')+
     tagFila(l)+(tf==='fixo'?'<span class="tag warn">Fixo</span>':'')+(!foneDe(l)?'<span class="tag bad">Sem telefone</span>':'')+
     (l.site?'<span class="tag">Tem site</span>':'')+(l.nota?'<span class="tag">★ '+l.nota+' · '+l.avaliacoes+'</span>':'')+
@@ -520,8 +530,8 @@ function cardLead(l){
       '<div><label>Próximo follow-up</label><input type="date" data-upd="'+l.id+'" data-fld="follow_up" value="'+esc(l.follow_up||'')+'"></div>'+
       '<div class="full"><label>WhatsApp (se for diferente do telefone do Google)</label><input type="text" data-upd="'+l.id+'" data-fld="whatsapp" value="'+esc(l.whatsapp||'')+'" placeholder="(81) 9XXXX-XXXX"></div>'+
       '<div class="full"><label>Anotações</label><textarea data-upd="'+l.id+'" data-fld="notas" style="min-height:70px" placeholder="Quem atendeu, o que perguntou, quantas lojas…">'+esc(l.notas||'')+'</textarea></div>'+
-      '<div class="full acts"><button class="btn sm" data-copy="'+l.id+'">Copiar link do demo</button><a class="btn sm" href="'+esc(demoLink(l,true))+'" target="_blank" rel="noopener">Ver demo</a>'+(l.maps_url?'<a class="btn sm" href="'+esc(l.maps_url)+'" target="_blank" rel="noopener">Google Maps</a>':'')+(l.site?'<a class="btn sm" href="'+esc(l.site)+'" target="_blank" rel="noopener">Site</a>':'')+(l.status!=='novo'?'<button class="btn sm" data-env="'+l.id+'" data-k="abordagem">Reenviar abordagem</button>':'')+'<button class="btn sm" data-del="'+l.id+'" style="color:var(--bad)">Remover</button></div>'+
-      '<div class="full"><label>Acessos ao demo</label>'+(acessos(l).length?'<div class="acs">'+acessos(l).map((a,i)=>'<div><b>'+(acessos(l).length-i)+'º</b> '+fmtDH(a.em)+(a.aparelho?' · '+esc(a.aparelho):'')+'</div>').join('')+'</div>':'<div class="small muted">Nenhum acesso ainda.</div>')+'</div>'+
+      '<div class="full acts"><button class="btn sm" data-copy="'+l.id+'">Copiar link do demo</button><a class="btn sm" href="'+esc(demoLink(l,true))+'" target="_blank" rel="noopener">Ver demo</a>'+(!l.site?'<button class="btn sm" data-copysite="'+l.id+'">Copiar link do site</button><a class="btn sm" href="'+esc(siteLink(l,true))+'" target="_blank" rel="noopener">Ver site demo</a>':'')+(l.maps_url?'<a class="btn sm" href="'+esc(l.maps_url)+'" target="_blank" rel="noopener">Google Maps</a>':'')+(l.site?'<a class="btn sm" href="'+esc(l.site)+'" target="_blank" rel="noopener">Site</a>':'')+(l.status!=='novo'?'<button class="btn sm" data-env="'+l.id+'" data-k="abordagem">Reenviar abordagem</button>':'')+'<button class="btn sm" data-del="'+l.id+'" style="color:var(--bad)">Remover</button></div>'+
+      '<div class="full"><label>Acessos ao demo e ao site</label>'+((st.ac[l.id]||[]).length?'<div class="acs">'+(st.ac[l.id]||[]).map((a,i)=>'<div><b>'+((st.ac[l.id]||[]).length-i)+'º</b> '+(a.tipo==='site'?'Site':'Demo')+' · '+fmtDH(a.em)+(a.aparelho?' · '+esc(a.aparelho):'')+'</div>').join('')+'</div>':'<div class="small muted">Nenhum acesso ainda.</div>')+'</div>'+
       '<div class="full small muted">'+(l.historico||[]).slice().reverse().map(x=>fmtD(x.em.slice(0,10))+' '+x.em.slice(11,16)+' — '+esc(x.txt)).join('<br>')+'</div></div>';
   }
   return h+'</div>';
@@ -531,8 +541,9 @@ function vMsg(){
   const ex={id:'00000000-0000-0000-0000-000000000000',nome:'Ótica Exemplo',cidade:'Recife'};
   const f=(k,lbl,area,ph)=>'<div class="fld" style="margin-bottom:10px"><label>'+lbl+'</label>'+(area?'<textarea data-cfg="'+k+'">'+esc(cfg(k))+'</textarea>':'<input type="text" data-cfg="'+k+'" value="'+esc(st.cfg[k]||DEF[k]||'')+'" placeholder="'+esc(ph||'')+'">')+'</div>';
   return '<div class="card">'+f('seu_nome','Seu nome (aparece na mensagem)',0,'ex.: Henrique')+f('limite','Limite de abordagens por dia (aviso)',0,'25')+
-    '<p class="small muted" style="margin:0">Use <b>{otica}</b>, <b>{link}</b> (demo com o nome da ótica), <b>{cidade}</b> e <b>{seu_nome}</b>.</p></div>'+
+    '<p class="small muted" style="margin:0">Use <b>{otica}</b>, <b>{link}</b> (demo com o nome da ótica), <b>{site}</b> (site demonstrativo da ótica), <b>{cidade}</b> e <b>{seu_nome}</b>.</p></div>'+
     '<div class="sec"><h2>Primeira mensagem</h2><div class="card">'+f('abordagem','Texto',1)+'<label class="small muted">Prévia</label><div class="prev">'+esc(msg('abordagem',ex))+'</div></div></div>'+
+    '<div class="sec"><h2>Parágrafo do site (só para óticas sem site no Google)</h2><div class="card"><p class="small muted" style="margin:0 0 8px">Entra na primeira mensagem, antes da pergunta final, só para as óticas que não têm site. Se quiser escolher o lugar, escreva {site_bloco} na primeira mensagem.</p>'+f('site_extra','Texto',1)+'<label class="small muted">Prévia da primeira mensagem para uma ótica sem site</label><div class="prev">'+esc(msg('abordagem',ex))+'</div></div></div>'+
     '<div class="sec"><h2>Follow-up</h2><div class="card">'+f('followup','Texto',1)+'<label class="small muted">Prévia</label><div class="prev">'+esc(msg('followup',ex))+'</div></div></div>'+
     '<div class="sec"><h2>Quando a ótica se interessa: como funciona e valores</h2><div class="card">'+f('interesse','Texto',1)+'<label class="small muted">Prévia</label><div class="prev">'+esc(msg('interesse',ex))+'</div></div></div>'+
     '<div class="sec"><h2>Quando não tem interesse: agradecimento</h2><div class="card">'+f('agradecimento','Texto',1)+'<label class="small muted">Prévia</label><div class="prev">'+esc(msg('agradecimento',ex))+'</div></div></div>'+
@@ -555,6 +566,7 @@ document.addEventListener('click',async e=>{
   if(d.zfu){const g=zConvs().find(x=>x.k===st.zsel);if(g&&g.lead){const v=msg(['followup','interesse','agradecimento'].includes(d.zfu)?d.zfu:'followup',g.lead);st.ztxt[g.k]=v;const ta=$('#ztxt');if(ta){ta.value=v;ta.style.height='auto';ta.style.height=Math.min(320,ta.scrollHeight+4)+'px';ta.focus();ta.setSelectionRange(0,0);ta.scrollTop=0}}return}
   if(d.fcancl)return cancelarLead(d.fcancl);
   if(d.st){const l=st.leads.find(x=>x.id===d.st);return upd(d.st,{status:d.v,historico:hist(l,'Status: '+STATUS[d.v]),follow_up:d.v==='fechou'?null:l.follow_up})}
+  if(d.copysite){const l=st.leads.find(x=>x.id===d.copysite);try{await navigator.clipboard.writeText(siteLink(l));toast('Link do site copiado')}catch(x){prompt('Copie o link:',siteLink(l))}return}
   if(d.copy){const l=st.leads.find(x=>x.id===d.copy);try{await navigator.clipboard.writeText(demoLink(l));toast('Link copiado')}catch(x){prompt('Copie o link:',demoLink(l))}return}
   if(d.del){if(!confirm('Remover essa ótica do CRM?'))return;const r=await sb.from('prosp_leads').delete().eq('id',d.del);if(r.error)return toast(r.error.message);st.leads=st.leads.filter(l=>l.id!==d.del);return render()}
   switch(d.a){
@@ -572,7 +584,7 @@ document.addEventListener('click',async e=>{
     case 'wtoken':{if(st.wst&&st.wst.tem_token&&!confirm('Gerar um novo código desconecta o programa atual até você trocar o arquivo. Continuar?'))return;const r=await sb.rpc('prosp_wa_gerar_token');if(r.error)return toast(r.error.message);st.token=r.data;await loadFila();return render()}
     case 'wbaixar':{if(!st.token)return;const b=new Blob([JSON.stringify({supabaseUrl:SB_URL,supabaseKey:SB_KEY,token:st.token,modo:'prospeccao',porta:3940},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='config.json';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);return toast('Arquivo baixado: coloque na pasta do conector de prospecção')}
     case 'salvarcfg':{const rows=[...document.querySelectorAll('[data-cfg]')].map(i=>({chave:i.dataset.cfg,valor:i.value}));const r=await sb.from('prosp_config').upsert(rows);if(r.error)return toast(r.error.message);rows.forEach(x=>st.cfg[x.chave]=x.valor);toast('Mensagens salvas');return render()}
-    case 'padrao':['abordagem','followup','interesse','agradecimento'].forEach(k=>st.cfg[k]='');await sb.from('prosp_config').upsert(['abordagem','followup','interesse','agradecimento'].map(k=>({chave:k,valor:''})));toast('Texto padrão restaurado');return render();
+    case 'padrao':['abordagem','followup','interesse','agradecimento','site_extra'].forEach(k=>st.cfg[k]='');await sb.from('prosp_config').upsert(['abordagem','followup','interesse','agradecimento','site_extra'].map(k=>({chave:k,valor:''})));toast('Texto padrão restaurado');return render();
   }
 });
 document.addEventListener('change',e=>{

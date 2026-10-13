@@ -28,6 +28,10 @@
       "destination": "/demo/index.html"
     },
     {
+      "source": "/s/:cod",
+      "destination": "/vitrine/index.html"
+    },
+    {
       "source": "/adm",
       "destination": "/index.html"
     },
