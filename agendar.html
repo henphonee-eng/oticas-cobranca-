@@ -25,8 +25,8 @@ h1,h2{font-family:Newsreader,Georgia,serif;font-weight:600;margin:0;letter-spaci
 .chart i{display:block;font-style:normal}
 .chart i:nth-child(2){font-size:38px}.chart i:nth-child(3){font-size:27px}.chart i:nth-child(4){font-size:19px}.chart i:nth-child(5){font-size:13px}
 h1{font-size:clamp(30px,8.4vw,40px);line-height:1.08;margin-top:26px;max-width:11em}
-.sub{margin:10px 0 0;color:rgba(255,255,255,.88);max-width:30em}
-.badge{display:block;max-width:520px;margin-top:16px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.28);padding:10px 14px;border-radius:14px;font-size:15px;font-weight:600;line-height:1.35}.badge small{display:block;margin-top:6px;font-size:13px;font-weight:400;opacity:.92}
+.sub{margin:10px 0 0;color:rgba(255,255,255,.88);max-width:30em;text-wrap:pretty}
+.badge{display:block;max-width:520px;text-wrap:balance;margin-top:16px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.28);padding:10px 14px;border-radius:14px;font-size:15px;font-weight:600;line-height:1.35}.badge small{display:block;margin-top:6px;font-size:13px;font-weight:400;opacity:.92;text-wrap:pretty}
 .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px 16px;margin-top:-40px;position:relative;box-shadow:0 10px 30px -18px rgba(8,20,40,.35)}
 .card+.card{margin-top:14px}
 .step{display:flex;align-items:center;gap:10px;margin:0 0 12px}
@@ -80,6 +80,14 @@ input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid color
 .skel{height:180px;border-radius:16px;background:linear-gradient(90deg,var(--line),transparent,var(--line));background-size:200% 100%;animation:sk 1.4s linear infinite;margin-top:-40px}
 @keyframes sk{to{background-position:-200% 0}}
 @media (prefers-reduced-motion:reduce){.skel{animation:none}}
+/* botão flutuante do WhatsApp: fica acima da barra de agendar */
+.wa-fab{position:fixed;right:16px;bottom:calc(88px + env(safe-area-inset-bottom));z-index:6;display:flex;align-items:center;gap:8px;height:56px;padding:0 18px 0 14px;border-radius:28px;background:#25D366;color:#fff;text-decoration:none;font:600 15px "IBM Plex Sans",sans-serif;box-shadow:0 8px 22px -6px rgba(0,0,0,.35)}
+.wa-fab svg{width:28px;height:28px;flex:none}
+.wa-fab:hover{background:#1ebe5b}
+.wa-fab:focus-visible{outline:3px solid #fff;outline-offset:2px;box-shadow:0 0 0 6px #128C7E}
+body.semBarra .wa-fab{bottom:calc(20px + env(safe-area-inset-bottom))}
+@media (max-width:380px){.wa-fab span{display:none}.wa-fab{width:56px;padding:0;justify-content:center}}
+@media (min-width:900px){.wa-fab{right:28px}}
 [hidden]{display:none!important}
 </style>
 </head>
@@ -89,6 +97,7 @@ input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid color
 <main class="wrap" id="app"><div class="skel"></div></main>
 <div class="bar" id="bar" hidden><div class="wrap"><p id="barTxt"><b>Escolha dia e horário</b>Depois é só informar seus dados</p><button class="btn" id="go" disabled>Agendar</button></div></div>
 <p class="foot" id="foot"></p>
+<a class="wa-fab" id="waFab" target="_blank" rel="noopener" hidden aria-label="Falar com a ótica no WhatsApp"><svg viewBox="0 0 32 32" aria-hidden="true"><path fill="currentColor" d="M16 3C8.8 3 3 8.7 3 15.8c0 2.5.7 4.9 2 7L3 29l6.4-2c2 1.1 4.3 1.7 6.6 1.7 7.2 0 13-5.7 13-12.8S23.2 3 16 3zm0 23.4c-2.1 0-4.1-.6-5.9-1.7l-.4-.3-3.8 1.2 1.2-3.7-.3-.4c-1.2-1.8-1.9-3.9-1.9-6.1C4.9 9.8 9.9 5 16 5s11.1 4.8 11.1 10.8S22.1 26.4 16 26.4zm6.1-8c-.3-.2-2-1-2.3-1.1-.3-.1-.5-.2-.8.2-.2.3-.9 1.1-1.1 1.3-.2.2-.4.3-.7.1-.3-.2-1.4-.5-2.7-1.7-1-.9-1.7-2-1.9-2.3-.2-.3 0-.5.1-.7l.5-.6c.2-.2.2-.3.3-.6.1-.2 0-.4 0-.6l-1-2.5c-.3-.7-.6-.6-.8-.6h-.7c-.2 0-.6.1-1 .5-.3.3-1.3 1.3-1.3 3.1s1.3 3.6 1.5 3.8c.2.3 2.6 4 6.3 5.6.9.4 1.6.6 2.1.8.9.3 1.7.2 2.3.1.7-.1 2-.8 2.3-1.6.3-.8.3-1.5.2-1.6-.1-.2-.3-.3-.6-.4z"/></svg><span>Fale com a gente</span></a>
 <script>
 const SB='https://ovynkeifzhavhjdkjjui.supabase.co',KEY='sb_publishable_7RunIjZPQDCuWNSuPrD10w_Gy_lIUFl';
 const $=s=>document.querySelector(s);
@@ -130,6 +139,10 @@ const locAtual=()=>sel.l!=null?GRP[sel.l]:(sel.d&&LOC.length&&localIx(sel.d)>=0?
 const enderecoAtual=()=>{const l=locAtual(),c=D.cfg;return l?[l.nome,l.endereco].filter(Boolean).join(' – '):[c.endereco,c.cidade].filter(Boolean).join(', ')};
 const mapaAtual=()=>{const l=locAtual();return l?(l.maps_url||''):(D.cfg.maps_url||'')};
 const IC={pin:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>',clock:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>'};
+/* evita palavra sozinha na última linha e não quebra o nome da ótica */
+function semViuva(t){t=String(t||'');const n=String((D&&D.nome)||'').trim();if(n&&n.includes(' '))t=t.split(n).join(n.replace(/ /g,'\u00a0'));return t.replace(/\s+(\S+)$/,'\u00a0$1')}
+function waFab(){const w=String(D.cfg.whatsapp||'').replace(/\D/g,''),b=$('#waFab');if(w.length<10){b.hidden=true;return}
+  b.href='https://wa.me/'+(w.length<=11?'55':'')+w+'?text='+encodeURIComponent('Olá! Vim pela página de agendamento do exame de vista e queria tirar uma dúvida.');b.hidden=false}
 function brand(){const b=$('#brand'),lg=D.logo_escuro||D.logo_claro;b.innerHTML=lg?'<img alt="'+esc(D.nome)+'" src="'+esc(lg)+'" onerror="this.replaceWith(document.createTextNode(this.alt))">':'<span>'+esc(D.nome)+'</span>'}
 function pixel(){const id=String(D.cfg.pixel_id||'').replace(/\D/g,'');if(!id)return;!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init',id);fbq('track','PageView')}
 function tel(v){const d=v.replace(/\D/g,'').slice(0,11);if(d.length<=2)return d?'('+d:'';if(d.length<=6)return '('+d.slice(0,2)+') '+d.slice(2);if(d.length<=10)return '('+d.slice(0,2)+') '+d.slice(2,6)+'-'+d.slice(6);return '('+d.slice(0,2)+') '+d.slice(2,7)+'-'+d.slice(7)}
@@ -166,7 +179,7 @@ function ics(){const p=sel.d.replace(/-/g,''),h=sel.h.replace(':','')+'00',f=hm(
 function done(fake,id){
   if(!fake&&window.fbq){try{fbq('track','Lead',{content_name:'Exame de vista'},{eventID:id});fbq('track','Schedule',{},{eventID:'s'+id})}catch(e){}}
   const c=D.cfg,lo=locAtual(),mp=mapaAtual(),w=String(c.whatsapp||'').replace(/\D/g,''),wl=w?'https://wa.me/'+(w.length<=11?'55':'')+w+'?text='+encodeURIComponent('Olá! Agendei meu exame de vista para '+fmtD(sel.d)+' às '+sel.h+(lo&&lo.nome?', '+lo.nome:'')+'.'):'';
-  $('#bar').hidden=true;document.querySelector('.top h1').textContent='Tudo certo!';$('#sub').textContent='Seu horário está reservado.';$('#badge').hidden=true;
+  $('#bar').hidden=true;document.body.classList.add('semBarra');document.querySelector('.top h1').textContent='Tudo certo!';$('#sub').textContent='Seu horário está reservado.';$('#badge').hidden=true;
   $('#app').innerHTML='<section class="card ok"><div class="tick"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div><h2>Exame agendado</h2><div class="sum"><b>'+esc(fmtD(sel.d))+' às '+sel.h+'</b>'+esc(lo&&lo.nome?lo.nome:D.nome)+(enderecoAtual()?'<br>'+esc(lo?lo.endereco||'':enderecoAtual()):'')+'</div><p class="hint">Você vai receber a confirmação no WhatsApp. Se não conseguir vir, avise por lá para remarcarmos.</p><div class="acts"><button class="btn" id="cal">Adicionar ao calendário</button>'+(mp?'<a class="btn ghost" target="_blank" rel="noopener" href="'+esc(mp)+'">Como chegar</a>':'')+(wl?'<a class="btn ghost" target="_blank" rel="noopener" href="'+esc(wl)+'">Falar no WhatsApp</a>':'')+'</div></section>';
   $('#cal').onclick=ics;scrollTo(0,0)}
 async function load(keep){
@@ -174,7 +187,8 @@ async function load(keep){
     D=r;D.cfg.dias=D.cfg.dias||[];D.ocupados=D.ocupados||[];LOC=(Array.isArray(D.cfg.locais)?D.cfg.locais:[]).filter(l=>l&&(l.nome||l.endereco));GRP=[];LOC.forEach((l,i)=>{const k=((l.nome||'')+'|'+(l.endereco||'')).toLowerCase().trim(),g=GRP.find(x=>x.k===k);if(g){g.ix.push(i);if(!g.maps_url&&l.maps_url)g.maps_url=l.maps_url}else GRP.push({k,nome:l.nome||'',endereco:l.endereco||'',maps_url:l.maps_url||'',ix:[i]})});if(GRP.length===1&&sel.l==null)sel.l=0;if(sel.l!=null&&sel.l>=GRP.length)sel.l=null;
     const st=document.documentElement.style;st.setProperty('--c1',D.cor1||'#0486DE');st.setProperty('--c2',D.cor2||'#00348A');
     document.title='Agendar exame de vista · '+D.nome;
-    if(!keep){brand();$('#h1').textContent=D.cfg.titulo||'Agende seu exame de vista';$('#sub').textContent=D.cfg.subtitulo||'';const b=$('#badge');if(D.cfg.valor_texto){const p=String(D.cfg.valor_texto).split(/\n+/).map(x=>x.trim()).filter(Boolean);b.textContent=p[0]||'';if(p.length>1){const s=document.createElement('small');s.textContent=p.slice(1).join(' ');b.appendChild(s)}b.hidden=false}$('#foot').textContent=D.nome;pixel()}
+    if(!keep){brand();$('#h1').textContent=D.cfg.titulo||'Agende seu exame de vista';$('#sub').textContent=semViuva(D.cfg.subtitulo||'');const b=$('#badge');if(D.cfg.valor_texto){const sv=semViuva,p=String(D.cfg.valor_texto).split(/\n+/).map(x=>sv(x.trim())).filter(Boolean);b.textContent=p[0]||'';if(p.length>1){const s=document.createElement('small');s.textContent=p.slice(1).join(' ');b.appendChild(s)}b.hidden=false}$('#foot').textContent=D.nome;pixel()}
+    waFab();
     if(keep&&sel.d&&!slotsDe(sel.d).some(x=>x.h===sel.h&&x.livre))sel.h=null;
     draw()
   }catch(e){$('#app').innerHTML='<section class="card"><h2>Não foi possível carregar</h2><p class="hint">Verifique sua conexão e abra o link de novo.</p></section>'}}
