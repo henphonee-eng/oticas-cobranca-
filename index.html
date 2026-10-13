@@ -873,7 +873,7 @@ const WAT=isMobile?'':' target="_blank" rel="noopener"';
 const pForma=(p,v)=>p.forma||v.forma;
 
 /* ---------- supabase ---------- */
-const APP_BUILD='20261012-2230';
+const APP_BUILD='20261012-2245';
 const SB_URL='https://ovynkeifzhavhjdkjjui.supabase.co',SB_KEY='sb_publishable_7RunIjZPQDCuWNSuPrD10w_Gy_lIUFl';
 const sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});
 const queues={},pendingW={},recentW={};
@@ -3110,7 +3110,7 @@ function exPagina(){
    '<p class="sub" style="margin:0">Coloque este link na bio do Instagram, no WhatsApp da ótica e nos anúncios. Quem agendar aparece na aba Agenda de exames.</p></div>'+
    '<div class="card" style="gap:12px;margin-top:14px"><b>Como a página funciona</b>'+
    '<label class="aguard-box" style="margin:0"><input type="checkbox" data-exf="ativo"'+(D.ativo?' checked':'')+'> Página aberta para agendamentos</label>'+
-   f('titulo','Título da página')+'<div class="field"><span>Texto de apoio</span><textarea rows="2" data-exf="subtitulo">'+esc(D.subtitulo)+'</textarea></div>'+f('valor_texto','Destaque (ex.: Exame de vista sem compromisso)')+
+   f('titulo','Título da página')+'<div class="field"><span>Texto de apoio</span><textarea rows="2" data-exf="subtitulo">'+esc(D.subtitulo)+'</textarea></div>'+'<div class="field"><span>Destaque e observação (a 1ª linha é o destaque; as outras viram observação)</span><textarea rows="3" data-exf="valor_texto">'+esc(D.valor_texto)+'</textarea></div>'+
    '<div class="field"><span>Dias de atendimento</span><div class="chips">'+dias+'</div></div>'+
    '<div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(120px,1fr))">'+f('hora_ini','Abre às','time')+f('hora_fim','Último exame termina às','time')+f('duracao_min','Duração (min)','number',' min="10" max="180" step="5"')+f('vagas','Exames ao mesmo tempo','number',' min="1" max="20"')+f('antecedencia_h','Antecedência mínima (horas)','number',' min="0" max="168"')+f('janela_dias','Mostrar os próximos (dias)','number',' min="1" max="60"')+'</div>'+
    f('endereco','Endereço')+f('cidade','Cidade')+f('maps_url','Link do Google Maps (opcional)')+f('whatsapp','WhatsApp da ótica')+

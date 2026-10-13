@@ -26,7 +26,7 @@ h1,h2{font-family:Newsreader,Georgia,serif;font-weight:600;margin:0;letter-spaci
 .chart i:nth-child(2){font-size:38px}.chart i:nth-child(3){font-size:27px}.chart i:nth-child(4){font-size:19px}.chart i:nth-child(5){font-size:13px}
 h1{font-size:clamp(30px,8.4vw,40px);line-height:1.08;margin-top:26px;max-width:11em}
 .sub{margin:10px 0 0;color:rgba(255,255,255,.88);max-width:30em}
-.badge{display:inline-flex;gap:6px;align-items:center;margin-top:16px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.28);padding:6px 12px;border-radius:99px;font-size:14px;font-weight:500}
+.badge{display:block;max-width:520px;margin-top:16px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.28);padding:10px 14px;border-radius:14px;font-size:15px;font-weight:600;line-height:1.35}.badge small{display:block;margin-top:6px;font-size:13px;font-weight:400;opacity:.92}
 .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px 16px;margin-top:-40px;position:relative;box-shadow:0 10px 30px -18px rgba(8,20,40,.35)}
 .card+.card{margin-top:14px}
 .step{display:flex;align-items:center;gap:10px;margin:0 0 12px}
@@ -141,7 +141,7 @@ async function load(keep){
     D=r;D.cfg.dias=D.cfg.dias||[];D.ocupados=D.ocupados||[];
     const st=document.documentElement.style;st.setProperty('--c1',D.cor1||'#0486DE');st.setProperty('--c2',D.cor2||'#00348A');
     document.title='Agendar exame de vista · '+D.nome;
-    if(!keep){brand();$('#h1').textContent=D.cfg.titulo||'Agende seu exame de vista';$('#sub').textContent=D.cfg.subtitulo||'';const b=$('#badge');if(D.cfg.valor_texto){b.textContent=D.cfg.valor_texto;b.hidden=false}$('#foot').textContent=D.nome;pixel()}
+    if(!keep){brand();$('#h1').textContent=D.cfg.titulo||'Agende seu exame de vista';$('#sub').textContent=D.cfg.subtitulo||'';const b=$('#badge');if(D.cfg.valor_texto){const p=String(D.cfg.valor_texto).split(/\n+/).map(x=>x.trim()).filter(Boolean);b.textContent=p[0]||'';if(p.length>1){const s=document.createElement('small');s.textContent=p.slice(1).join(' ');b.appendChild(s)}b.hidden=false}$('#foot').textContent=D.nome;pixel()}
     if(keep&&sel.d&&!slotsDe(sel.d).some(x=>x.h===sel.h&&x.livre))sel.h=null;
     draw()
   }catch(e){$('#app').innerHTML='<section class="card"><h2>Não foi possível carregar</h2><p class="hint">Verifique sua conexão e abra o link de novo.</p></section>'}}
