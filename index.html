@@ -3054,7 +3054,7 @@ async function exLoad(){
 const exGarante=()=>{if(EX.ag===null&&!EX.busy)setTimeout(exLoad,0)};
 setInterval(()=>{if(auth==='ok'&&modOn('exames')&&ui.tab==='exames'&&EX.sub==='agenda'&&!document.hidden)exLoad()},30000);
 const exBadge=()=>{if(!modOn('exames')||!EX.ag)return 0;const t=todayStr();return EX.ag.filter(x=>x.data===t&&['agendado','confirmado'].includes(x.status)).length};
-function exDraft(){if(!EX.dr){const b=Object.assign({},EX_PADRAO,{endereco:cfg().endereco||'',whatsapp:cfg().whatsapp||''});EX.dr=Object.assign(b,EX.cfg||{});EX.dr.tpl=Object.assign({},EX.dr.tpl||{});EX.dr.tpl.avisar=Array.isArray(EX.dr.tpl.avisar)?EX.dr.tpl.avisar.map(n=>maskTel(String(n).replace(/^55/,''))).join('\n'):(EX.dr.tpl.avisar||'');EX.dr.hora_ini=exHora(EX.dr.hora_ini);EX.dr.hora_fim=exHora(EX.dr.hora_fim);EX.dr.dias=(EX.dr.dias||[]).slice();EX.dr.locais=(Array.isArray(EX.dr.locais)?EX.dr.locais:[]).map(l=>({nome:l.nome||'',endereco:l.endereco||'',maps_url:l.maps_url||'',dias:Array.isArray(l.dias)?l.dias.map(Number):[],horas:Array.isArray(l.horas)?l.horas.join(', '):''}))}return EX.dr}
+function exDraft(){if(!EX.dr){const b=Object.assign({},EX_PADRAO,{endereco:cfg().endereco||'',whatsapp:cfg().whatsapp||''});EX.dr=Object.assign(b,EX.cfg||{});EX.dr.tpl=Object.assign({},EX.dr.tpl||{});EX.dr.tpl.avisar=Array.isArray(EX.dr.tpl.avisar)?EX.dr.tpl.avisar.map(n=>maskTel(String(n).replace(/^55/,''))).join('\n'):(EX.dr.tpl.avisar||'');EX.dr.hora_ini=exHora(EX.dr.hora_ini);EX.dr.hora_fim=exHora(EX.dr.hora_fim);EX.dr.dias=(EX.dr.dias||[]).slice();EX.dr.locais=(Array.isArray(EX.dr.locais)?EX.dr.locais:[]).map(l=>({nome:l.nome||'',endereco:l.endereco||'',maps_url:l.maps_url||'',dias:Array.isArray(l.dias)?l.dias.map(Number):[],horas:Array.isArray(l.horas)?l.horas.join(', '):'',interno:!!l.interno}))}return EX.dr}
 function viewExames(){
   if(!modOn('exames'))return viewUpsell('exames');
   exGarante();
@@ -3070,7 +3070,7 @@ function exLinhaAg(x){
   const wa=waLink(x.whatsapp,'Olá, '+x.nome.split(' ')[0]+'! Aqui é da '+cfg().nome+', sobre o seu exame de vista de '+fmtDate(x.data)+' às '+exHora(x.hora)+'.');
   const ativo=['agendado','confirmado'].includes(x.status),origem=x.anuncio||x.origem==='meta'?'<span class="chip acc">Anúncio</span>':x.origem&&x.origem!=='direto'?'<span class="chip">'+esc(x.origem)+'</span>':'';
   const cli=Object.values(S.clientes).find(c=>exSoDig(c.whatsapp).replace(/^55/,'')===exSoDig(x.whatsapp).replace(/^55/,''));
-  return '<article class="row"><div class="row-main"><b>'+esc(x.nome)+'</b><div class="meta">'+dh+' às '+exHora(x.hora)+' · '+esc(maskTel(exSoDig(x.whatsapp).replace(/^55/,'')))+'</div><div class="chips"><span class="chip '+st[0]+'">'+st[1]+'</span>'+origem+(cli?'<span class="chip">Já é cliente</span>':'')+'</div></div>'+
+  return '<article class="row"><div class="row-main"><b>'+esc(x.nome)+'</b><div class="meta">'+dh+' às '+exHora(x.hora)+' · '+esc(maskTel(exSoDig(x.whatsapp).replace(/^55/,'')))+'</div><div class="chips"><span class="chip '+st[0]+'">'+st[1]+'</span>'+(x.local&&x.local.nome&&x.local.nome!==exLocNome(x.data)?'<span class="chip">📍 '+esc(x.local.nome)+'</span>':'')+origem+(cli?'<span class="chip">Já é cliente</span>':'')+'</div></div>'+
    '<div class="row-side"><div class="acts">'+(x.status==='agendado'?'<button class="btn sm" data-act="exst" data-id="'+x.id+'" data-s="confirmado">Confirmar</button>':'')+
    (ativo&&x.data<=t?'<button class="btn sm primary" data-act="exst" data-id="'+x.id+'" data-s="compareceu">Compareceu</button>':'')+
    (x.status==='compareceu'&&cli?'<button class="btn sm primary" data-act="novavenda" data-c="'+cli.id+'">Nova venda</button>':'')+
@@ -3081,12 +3081,16 @@ function exLinhaAg(x){
 function exLocs(){return ((EX.cfg&&Array.isArray(EX.cfg.locais))?EX.cfg.locais:[]).filter(l=>l&&(l.nome||l.endereco))}
 const exDow=d=>new Date(d+'T12:00:00Z').getUTCDay();
 const exLocDias=l=>Array.isArray(l.dias)&&l.dias.length?l.dias.map(Number):[0,1,2,3,4,5,6];
-function exLocIx(d){return exLocs().findIndex(l=>exLocDias(l).includes(exDow(d)))}
+function exLocIx(d){return exLocs().findIndex(l=>!l.interno&&exLocDias(l).includes(exDow(d)))}
+/* local de um grupo num dia (inclui os locais só da equipe) */
+function exLocIxG(d,g){const G=exGrupos()[g];if(!G)return -1;const L=exLocs();const i=exLocIx(d);if(G.ix.includes(i))return i;return G.ix.find(j=>exLocDias(L[j]).includes(exDow(d)))??-1}
+/* grupo do local salvo no exame */
+function exGrupoLocal(l){if(!l)return -1;const k=((l.nome||'')+'|'+(l.endereco||'')).toLowerCase().trim();return exGrupos().findIndex(g=>g.k===k)}
 function exGrupos(){const G=[];exLocs().forEach((l,i)=>{const k=((l.nome||'')+'|'+(l.endereco||'')).toLowerCase().trim(),g=G.find(x=>x.k===k);if(g)g.ix.push(i);else G.push({k,nome:l.nome||'',endereco:l.endereco||'',ix:[i]})});return G}
 function exGrupoDe(d){const i=exLocIx(d);return exGrupos().findIndex(g=>g.ix.includes(i))}
-function exHorasDia(d){const c=Object.assign({},EX_PADRAO,EX.cfg||{}),L=exLocs(),i=L.length?exLocIx(d):-1,fx=i>=0&&Array.isArray(L[i].horas)?L[i].horas.filter(h=>/^\d{1,2}:\d{2}$/.test(h)).map(h=>h.padStart(5,'0')):[];
+function exHorasDia(d,g){const c=Object.assign({},EX_PADRAO,EX.cfg||{}),L=exLocs(),i=L.length?(g!=null?exLocIxG(d,g):exLocIx(d)):-1,fx=i>=0&&Array.isArray(L[i].horas)?L[i].horas.filter(h=>/^\d{1,2}:\d{2}$/.test(h)).map(h=>h.padStart(5,'0')):[];
   if(fx.length)return fx.sort();const o=[],dur=Math.max(10,+c.duracao_min||30),hm=t=>{const p=String(t||'').split(':');return (+p[0])*60+(+p[1]||0)};for(let m=hm(c.hora_ini||'09:00');m+dur<=hm(c.hora_fim||'17:00');m+=dur)o.push(String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0'));return o}
-function exDiasDoGrupo(g){const c=Object.assign({},EX_PADRAO,EX.cfg||{}),o=[];for(let i=0;i<=Math.max(14,+c.janela_dias||14)+14;i++){const d=addDays(todayStr(),i);if((c.dias||[]).includes(exDow(d))&&exGrupoDe(d)===g)o.push(d)}return o}
+function exDiasDoGrupo(g){const c=Object.assign({},EX_PADRAO,EX.cfg||{}),o=[];for(let i=0;i<=Math.max(14,+c.janela_dias||14)+14;i++){const d=addDays(todayStr(),i);const j=exLocIxG(d,g);if(j>=0&&((c.dias||[]).includes(exDow(d))||exLocs()[j].interno))o.push(d)}return o}
 /* clientes cadastrados para escolher no agendamento manual */
 function exClientesOpc(){return Object.values(S.clientes).filter(c=>c&&c.nome).sort((a,b)=>a.nome.localeCompare(b.nome)).map(c=>({c,l:c.nome+(c.whatsapp?' · '+maskTel(c.whatsapp):'')}))}
 function exForm(){
@@ -3095,10 +3099,10 @@ function exForm(){
   let hs,dia;
   if(G.length){
     const g=F.loc!=null?F.loc:null,dl=g!=null?exDiasDoGrupo(g):[];
-    if(g!=null&&(!F.data||(!dl.includes(F.data)&&exGrupoDe(F.data)!==g)))F.data=dl[0]||'';
+    if(g!=null&&(!F.data||(!dl.includes(F.data)&&exLocIxG(F.data,g)<0)))F.data=dl[0]||'';
     if(F.data&&!dl.includes(F.data))dl.unshift(F.data);
-    dia=g==null?'<div class="field"><span>Dia</span><p class="sub" style="margin:6px 0 0">Escolha o local primeiro.</p></div>':'<div class="field"><span>Dia</span><select data-exfm="data">'+dl.map(d=>'<option value="'+d+'"'+(d===F.data?' selected':'')+'>'+DS[exDow(d)]+' '+fmtDate(d).slice(0,5)+'</option>').join('')+'</select></div>';
-    hs=F.data?exHorasDia(F.data):[];
+    dia=g==null?'<div class="field"><span>Dia</span><p class="sub" style="margin:6px 0 0">Escolha o local primeiro.</p></div>':'<div class="field"><span>Dia</span><select data-exfm="data">'+dl.map(d=>'<option value="'+d+'"'+(d===F.data?' selected':'')+'>'+DS[exDow(d)]+' '+fmtDate(d).slice(0,5)+(g!=null&&(exLocs()[exLocIxG(d,g)]||{}).interno?' (só equipe)':'')+'</option>').join('')+'</select></div>';
+    hs=F.data?exHorasDia(F.data,g):[];
   }else{
     hs=[];for(let m=8*60;m<=20*60;m+=Math.max(10,+c.duracao_min||30)){hs.push(String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0'))}
     dia='<div class="field"><span>Dia</span><input type="date" data-exfm="data" value="'+esc(F.data)+'" min="'+todayStr()+'"></div>';
@@ -3112,7 +3116,7 @@ function exForm(){
    '<div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))">'+dia+'<div class="field"><span>Horário</span>'+(hs.length?'<select data-exfm="hora">'+hs.map(h=>'<option'+(h===F.hora?' selected':'')+'>'+h+'</option>').join('')+'</select>':'<p class="sub" style="margin:6px 0 0">—</p>')+'</div></div>'+
    '<div class="foot-row"><button class="btn primary" data-act="exsalvarform">Salvar</button><button class="btn" data-act="excancelarform">Fechar</button></div></div>';
 }
-function exLocNome(d){const L=(EX.cfg&&Array.isArray(EX.cfg.locais))?EX.cfg.locais:[];if(!L.length)return '';const w=new Date(d+'T12:00:00Z').getUTCDay(),l=L.find(x=>!Array.isArray(x.dias)||!x.dias.length||x.dias.map(Number).includes(w));return l?(l.nome||l.endereco||''):''}
+function exLocNome(d){const L=(EX.cfg&&Array.isArray(EX.cfg.locais))?EX.cfg.locais:[];if(!L.length)return '';const w=new Date(d+'T12:00:00Z').getUTCDay(),l=L.find(x=>!x.interno&&(!Array.isArray(x.dias)||!x.dias.length||x.dias.map(Number).includes(w)));return l?(l.nome||l.endereco||''):''}
 function exAgenda(){
   const ag=EX.ag,t=todayStr(),dono=exDono();
   if(ag===null)return none('Carregando...');
@@ -3159,7 +3163,8 @@ function exLocaisEd(D){
   const card=(l,i)=>'<div class="card" style="gap:10px;padding:12px;background:var(--surface-2)"><div class="sh" style="margin:0"><b>Local '+(i+1)+'</b><button class="btn sm ghost" data-act="exlocdel" data-i="'+i+'">Remover</button></div>'+
     '<div class="grid2"><div class="field"><span>Nome do local</span><input type="text" data-exl="'+i+'|nome" value="'+esc(l.nome)+'" placeholder="Ex.: Consultório em Beberibe"></div><div class="field"><span>Endereço completo</span><input type="text" data-exl="'+i+'|endereco" value="'+esc(l.endereco)+'" placeholder="Rua, número – bairro, cidade"></div></div>'+
     '<div class="field"><span>Dias neste local</span><div class="chips">'+EX_DIAS.map((n,d)=>'<label class="chip'+(l.dias.includes(d)?' acc':'')+'" style="cursor:pointer;gap:6px"><input type="checkbox" data-exld="'+i+'|'+d+'"'+(l.dias.includes(d)?' checked':'')+' style="margin:0"> '+n+'</label>').join('')+'</div></div>'+
-    '<div class="grid2"><div class="field"><span>Horários fixos (opcional)</span><input type="text" data-exl="'+i+'|horas" value="'+esc(l.horas)+'" placeholder="Ex.: 16:00 · vazio = horários gerais"></div><div class="field"><span>Link do Google Maps (opcional)</span><input type="text" data-exl="'+i+'|maps_url" value="'+esc(l.maps_url)+'"></div></div></div>';
+    '<div class="grid2"><div class="field"><span>Horários fixos (opcional)</span><input type="text" data-exl="'+i+'|horas" value="'+esc(l.horas)+'" placeholder="Ex.: 16:00 · vazio = horários gerais"></div><div class="field"><span>Link do Google Maps (opcional)</span><input type="text" data-exl="'+i+'|maps_url" value="'+esc(l.maps_url)+'"></div></div>'+
+    '<label class="aguard-box" style="margin:0"><input type="checkbox" data-exli="'+i+'"'+(l.interno?' checked':'')+'> Só para a equipe (não aparece no site nem para o agente de IA)</label></div>';
   return '<div class="field"><span>Locais de atendimento (opcional)</span><p class="sub" style="margin:0 0 8px">Use quando o exame acontece em mais de um lugar. O cliente escolhe o local primeiro e só vê os dias e horários dele. A confirmação, o lembrete e o agente de IA usam o endereço do local. Sem locais, vale o endereço acima.</p>'+
     '<div style="display:grid;gap:10px">'+L.map(card).join('')+'</div><div class="foot-row" style="margin-top:8px"><button class="btn sm" data-act="exlocadd">Adicionar local</button></div></div>';
 }
@@ -3182,23 +3187,24 @@ Object.assign(A,{
   exfil(d){EX.fil=d.f;render()},
   exconvrec(){exConvLoad(true)},
   exnovo(){EX.form={id:'',nome:'',whatsapp:'',data:addDays(todayStr(),1),hora:'09:00'};render()},
-  exedit(d){const x=(EX.ag||[]).find(a=>a.id===d.id);if(!x)return;EX.form={id:x.id,nome:x.nome,whatsapp:maskTel(String(x.whatsapp||'').replace(/^55/,'')),data:x.data,hora:exHora(x.hora),orig:{data:x.data,hora:exHora(x.hora)}};render();setTimeout(()=>{const f=document.querySelector('[data-exfm="nome"]');if(f)f.closest('.card').scrollIntoView({behavior:'smooth',block:'start'})},50)},
+  exedit(d){const x=(EX.ag||[]).find(a=>a.id===d.id);if(!x)return;EX.form={id:x.id,nome:x.nome,whatsapp:maskTel(String(x.whatsapp||'').replace(/^55/,'')),data:x.data,hora:exHora(x.hora),loc:(g=>g>=0?g:null)(x.local?exGrupoLocal(x.local):exGrupoDe(x.data)),orig:{data:x.data,hora:exHora(x.hora),local:JSON.stringify(x.local||null)}};render();setTimeout(()=>{const f=document.querySelector('[data-exfm="nome"]');if(f)f.closest('.card').scrollIntoView({behavior:'smooth',block:'start'})},50)},
   excancelarform(){EX.form=null;render()},
   async exsalvarform(){
     const F=EX.form;if(!F)return;if(exLocs().length&&F.loc==null)return toast('Escolha o local do exame');if(!F.data||!F.hora)return toast('Escolha o dia e o horário');
+    let local=null;if(F.loc!=null){const j=exLocIxG(F.data,F.loc);if(j>=0&&j!==exLocIx(F.data)){const l=exLocs()[j];local={nome:l.nome||'',endereco:l.endereco||'',maps_url:l.maps_url||''}}}
     if(F.id){if(F.nome.trim().length<2)return toast('Informe o nome');const t=exSoDig(F.whatsapp);if(t.length<10)return toast('Informe o WhatsApp com DDD');
-      const mudou=!F.orig||F.orig.data!==F.data||F.orig.hora!==F.hora;
-      const up={nome:F.nome.trim(),whatsapp:t.length<=11?'55'+t:t,data:F.data,hora:F.hora};if(mudou)up.status='agendado';const r=await sb.from('ex_agend').update(up).eq('id',F.id);if(r.error)return toast('Não foi possível salvar');
+      const mudou=!F.orig||F.orig.data!==F.data||F.orig.hora!==F.hora||F.orig.local!==JSON.stringify(local);
+      const up={nome:F.nome.trim(),whatsapp:t.length<=11?'55'+t:t,data:F.data,hora:F.hora,local};if(mudou)up.status='agendado';const r=await sb.from('ex_agend').update(up).eq('id',F.id);if(r.error)return toast('Não foi possível salvar');
       toast(mudou?'Exame alterado. O cliente vai receber a mensagem com a alteração':'Exame atualizado')}
     else{if(F.nome.trim().length<2)return toast('Informe o nome');const t=exSoDig(F.whatsapp);if(t.length<10)return toast('Informe o WhatsApp com DDD');
-      const r=await sb.from('ex_agend').insert({otica_id:OTICA.id,nome:F.nome.trim(),whatsapp:t.length<=11?'55'+t:t,data:F.data,hora:F.hora,origem:'equipe',cliente_id:F.cliente_id||null});if(r.error)return toast('Não foi possível agendar');toast('Exame agendado')}
+      const r=await sb.from('ex_agend').insert({otica_id:OTICA.id,nome:F.nome.trim(),whatsapp:t.length<=11?'55'+t:t,data:F.data,hora:F.hora,local,origem:'equipe',cliente_id:F.cliente_id||null});if(r.error)return toast('Não foi possível agendar');toast('Exame agendado')}
     EX.form=null;EX.busy=false;await exLoad();render();
   },
   async exst(d){const x=(EX.ag||[]).find(a=>a.id===d.id);if(!x)return;const r=await sb.from('ex_agend').update({status:d.s}).eq('id',d.id);if(r.error)return toast('Não foi possível atualizar');x.status=d.s;
     if(d.s==='compareceu'&&!Object.values(S.clientes).some(c=>exSoDig(c.whatsapp).replace(/^55/,'')===exSoDig(x.whatsapp).replace(/^55/,'')))toast('Compareceu. Use "Cadastrar como cliente" para registrar a venda.');else toast('Atualizado');render()},
   excli(d){const x=(EX.ag||[]).find(a=>a.id===d.id);if(!x)return;const c=makeCliente({nome:cap(x.nome.toLowerCase()),cpf:'',whatsapp:maskTel(exSoDig(x.whatsapp).replace(/^55/,'')),endereco:'',nascimento:'',obs:'Veio pelo agendamento de exame de vista.',receitas:[]});S.clientes[c.id]=c;persist('clientes',c.id);premLog('Cliente cadastrado',c.nome);premWaHook('bv',null,null,c);toast('Cliente cadastrado');render()},
   excopiar(){const u=exLink();(navigator.clipboard?navigator.clipboard.writeText(u):Promise.reject()).then(()=>toast('Link copiado')).catch(()=>{const i=document.querySelector('.card input[readonly]');if(i){i.select();document.execCommand('copy');toast('Link copiado')}})},
-  exlocadd(){const D=exDraft();D.locais.push({nome:'',endereco:'',maps_url:'',dias:[],horas:''});render()},
+  exlocadd(){const D=exDraft();D.locais.push({nome:'',endereco:'',maps_url:'',dias:[],horas:'',interno:false});render()},
   exlocdel(d){const D=exDraft();D.locais.splice(+d.i,1);render()},
   async exsalvarpag(){
     const D=exDraft();EX.saving=true;render();
@@ -3207,7 +3213,7 @@ Object.assign(A,{
     const hOk=h=>/^([01]?\d|2[0-3]):[0-5]\d$/.test(h);let locErr='';
     const locais=(D.locais||[]).filter(l=>(l.nome||'').trim()||(l.endereco||'').trim()).map((l,i)=>{const hs=String(l.horas||'').split(/[,;\s]+/).map(x=>x.trim().replace(/h$/i,':00')).filter(Boolean);
       if(hs.some(h=>!hOk(h)))locErr='Confira os horários fixos do local '+(i+1)+' (use 16:00, 17:30...)';if(!l.dias.length)locErr='Escolha os dias do local '+(i+1);
-      return {nome:(l.nome||'').trim(),endereco:(l.endereco||'').trim(),maps_url:(l.maps_url||'').trim(),dias:l.dias.slice().sort(),horas:Array.from(new Set(hs.map(h=>h.padStart(5,'0')))).sort()}});
+      return {nome:(l.nome||'').trim(),endereco:(l.endereco||'').trim(),maps_url:(l.maps_url||'').trim(),dias:l.dias.slice().sort(),horas:Array.from(new Set(hs.map(h=>h.padStart(5,'0')))).sort(),...(l.interno?{interno:true}:{})}});
     if(locErr){EX.saving=false;render();return toast(locErr)}
     const row={otica_id:OTICA.id,ativo:!!D.ativo,locais:locais,titulo:(D.titulo||'').trim()||EX_PADRAO.titulo,subtitulo:(D.subtitulo||'').trim(),valor_texto:(D.valor_texto||'').trim(),endereco:(D.endereco||'').trim(),cidade:(D.cidade||'').trim(),maps_url:(D.maps_url||'').trim(),whatsapp:(D.whatsapp||'').trim(),
       dias:D.dias.length?D.dias.slice().sort():[1,2,3,4,5,6],hora_ini:D.hora_ini||'09:00',hora_fim:D.hora_fim||'17:00',duracao_min:Math.max(10,Math.min(180,+D.duracao_min||30)),vagas:Math.max(1,Math.min(20,+D.vagas||1)),antecedencia_h:Math.max(0,Math.min(168,+D.antecedencia_h||0)),janela_dias:Math.max(1,Math.min(60,+D.janela_dias||14)),pixel_id:exSoDig(D.pixel_id)||null,tpl:tpl,atualizado_em:new Date().toISOString()};
@@ -3227,7 +3233,8 @@ document.addEventListener('input',e=>{const t=e.target;if(!t||!t.dataset)return;
 });
 document.addEventListener('change',async e=>{const t=e.target;if(!t||!t.dataset)return;
   if(t.dataset.exloc!==undefined&&EX.form){const F=EX.form;F.loc=+t.dataset.exloc;const dl=exDiasDoGrupo(F.loc);if(!dl.includes(F.data))F.data=dl[0]||'';F.hora='';render();return}
-  if(t.dataset.exfm!==undefined&&EX.form){EX.form[t.dataset.exfm]=t.value;if(t.dataset.exfm==='data'&&exLocs().length){const F2=EX.form;const hs=exHorasDia(F2.data);if(!hs.includes(F2.hora))F2.hora=hs[0]||'';render()}return}
+  if(t.dataset.exfm!==undefined&&EX.form){EX.form[t.dataset.exfm]=t.value;if(t.dataset.exfm==='data'&&exLocs().length){const F2=EX.form;const hs=exHorasDia(F2.data,F2.loc);if(!hs.includes(F2.hora))F2.hora=hs[0]||'';render()}return}
+  if(t.dataset.exli!==undefined&&EX.dr){const l=EX.dr.locais[+t.dataset.exli];if(l)l.interno=t.checked;return}
   if(t.dataset.exld&&EX.dr){const [i,d]=t.dataset.exld.split('|').map(Number),l=EX.dr.locais[i];if(l){l.dias=t.checked?Array.from(new Set(l.dias.concat(d))):l.dias.filter(x=>x!==d);t.closest('label').classList.toggle('acc',t.checked)}return}
   if(t.dataset.exf&&EX.dr&&t.type==='checkbox'){const D=EX.dr,k=t.dataset.exf;if(k==='tpl_ia'){D.tpl.ia=t.checked?'true':'false'}else if(k==='dia'){const n=+t.dataset.d;D.dias=t.checked?Array.from(new Set(D.dias.concat(n))):D.dias.filter(x=>x!==n);t.closest('label').classList.toggle('acc',t.checked)}else D[k]=t.checked;return}
 });
