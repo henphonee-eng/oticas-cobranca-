@@ -44,6 +44,14 @@ h1{font-size:clamp(30px,8.4vw,40px);line-height:1.08;margin-top:26px;max-width:1
 .slot[aria-pressed=true]{background:var(--c1);border-color:var(--c1);color:var(--on)}
 .slot[disabled]{opacity:.38;text-decoration:line-through;cursor:not-allowed}
 .hint{color:var(--muted);font-size:14px;margin:6px 0 0}
+.locs{display:grid;gap:10px}
+.loc{display:flex;gap:12px;align-items:flex-start;text-align:left;width:100%;border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:14px;padding:13px 14px;font:inherit;cursor:pointer}
+.loc svg{flex:none;margin-top:2px;color:var(--c1)}
+.loc b{display:block;font-size:16px}
+.loc .q{display:inline-block;margin-top:6px;padding:3px 9px;border-radius:999px;background:var(--tint);color:var(--ink);font-size:13px;font-weight:600}
+.loc small{display:block;color:var(--muted);font-size:14px;line-height:1.35;margin-top:2px}
+.loc[aria-pressed=true]{border-color:var(--c1);background:var(--tint);box-shadow:0 0 0 1px var(--c1) inset}
+.loc[aria-pressed=true] .q{background:var(--c1);color:var(--on)}
 label.f{display:block;margin:0 0 12px}
 label.f span{display:block;font-size:14px;font-weight:500;margin-bottom:5px}
 input[type=text],input[type=tel]{width:100%;font:inherit;font-size:16px;color:var(--ink);background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:12px 13px;min-height:48px}
@@ -89,33 +97,51 @@ const slug=(location.pathname.split('/').filter(Boolean)[1]||new URLSearchParams
 const Q=new URLSearchParams(location.search);
 const UTM={origem:(Q.get('utm_source')||(Q.get('fbclid')?'meta':'direto')).slice(0,40),camp:(Q.get('utm_campaign')||'').slice(0,60),anuncio:(Q.get('utm_content')||'').slice(0,40)};
 const DIAS=['domingo','segunda','terça','quarta','quinta','sexta','sábado'],MES=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
-let D=null,sel={d:null,h:null},busy=false;
+let D=null,sel={l:null,d:null,h:null},busy=false,LOC=[];
 async function rpc(fn,args){const r=await fetch(SB+'/rest/v1/rpc/'+fn,{method:'POST',headers:{'apikey':KEY,'Content-Type':'application/json'},body:JSON.stringify(args)});if(!r.ok)throw new Error('http '+r.status);return r.json()}
 const pad=n=>String(n).padStart(2,'0');
 const dow=d=>new Date(d+'T12:00:00Z').getUTCDay();
 const addD=(d,n)=>{const x=new Date(d+'T12:00:00Z');x.setUTCDate(x.getUTCDate()+n);return x.toISOString().slice(0,10)};
 const hm=m=>pad(Math.floor(m/60))+':'+pad(m%60),mm=h=>+h.slice(0,2)*60+ +h.slice(3,5);
 const fmtD=d=>{const p=d.split('-');return DIAS[dow(d)]+', '+(+p[2])+' de '+MES[+p[1]-1]};
-function slotsDe(d){const c=D.cfg,o=[],ini=mm(c.hora_ini),fim=mm(c.hora_fim),agora=D.agora,ag=new Date(agora+':00Z').getTime()+c.antecedencia_h*3600e3;
-  for(let m=ini;m+c.duracao<=fim;m+=c.duracao){const h=hm(m),n=(D.ocupados.find(x=>x.d===d&&x.h===h)||{}).n||0,t=new Date(d+'T'+h+':00Z').getTime();o.push({h,livre:n<c.vagas&&t>=ag})}return o}
-function diasLivres(){const c=D.cfg,hoje=D.agora.slice(0,10),o=[];for(let i=0;i<=c.janela;i++){const d=addD(hoje,i);if(c.dias.includes(dow(d))){const s=slotsDe(d);o.push({d,n:s.filter(x=>x.livre).length})}}return o}
+/* locais de atendimento: o local de um dia é o primeiro da lista que atende naquele dia da semana (mesma regra do banco) */
+const locDias=l=>Array.isArray(l.dias)&&l.dias.length?l.dias.map(Number):[0,1,2,3,4,5,6];
+const locHoras=l=>Array.isArray(l.horas)?l.horas.filter(h=>/^\d{1,2}:\d{2}$/.test(h)).map(h=>h.padStart(5,'0')).sort():[];
+const localIx=d=>LOC.findIndex(l=>locDias(l).includes(dow(d)));
+function horasDe(d){const c=D.cfg,i=LOC.length?localIx(d):-1,fx=i>=0?locHoras(LOC[i]):[];if(fx.length)return fx;const o=[],ini=mm(c.hora_ini),fim=mm(c.hora_fim);for(let m=ini;m+c.duracao<=fim;m+=c.duracao)o.push(hm(m));return o}
+function slotsDe(d){const c=D.cfg,ag=new Date(D.agora+':00Z').getTime()+c.antecedencia_h*3600e3;
+  return horasDe(d).map(h=>{const n=(D.ocupados.find(x=>x.d===d&&x.h===h)||{}).n||0,t=new Date(d+'T'+h+':00Z').getTime();return {h,livre:n<c.vagas&&t>=ag}})}
+function diaOk(d){if(!D.cfg.dias.includes(dow(d)))return false;if(!LOC.length)return true;const i=localIx(d);return i>=0&&(sel.l==null||i===sel.l)}
+function diasLivres(){const c=D.cfg,hoje=D.agora.slice(0,10),o=[];for(let i=0;i<=c.janela;i++){const d=addD(hoje,i);if(diaOk(d)){const s=slotsDe(d);o.push({d,n:s.filter(x=>x.livre).length})}}return o}
+const DIASP=['domingos','segundas','terças','quartas','quintas','sextas','sábados'];
+const lista=a=>a.length<2?a.join(''):a.slice(0,-1).join(', ')+' e '+a[a.length-1];
+function locRegra(i){const l=LOC[i],ds=locDias(l).filter(x=>D.cfg.dias.includes(x)&&LOC.findIndex(m=>locDias(m).includes(x))===i).sort((a,b)=>((a+6)%7)-((b+6)%7)),fx=locHoras(l);
+  const DSING=['domingo','segunda','terça','quarta','quinta','sexta','sábado'],fora=[1,2,3,4,5,6].filter(x=>!ds.includes(x));
+  const dt=ds.length===6&&!ds.includes(0)?'Segunda a sábado':ds.length===5&&!ds.includes(0)&&!ds.includes(6)?'Segunda a sexta':!ds.includes(0)&&ds.includes(1)&&ds.includes(6)&&fora.length===1?'Segunda a sábado, exceto '+DSING[fora[0]]:lista(ds.map(x=>DIASP[x]));
+  return (dt.charAt(0).toUpperCase()+dt.slice(1))+(fx.length?', às '+lista(fx):', das '+D.cfg.hora_ini+' às '+D.cfg.hora_fim)}
+const locAtual=()=>sel.l!=null?LOC[sel.l]:(sel.d&&LOC.length&&localIx(sel.d)>=0?LOC[localIx(sel.d)]:null);
+const enderecoAtual=()=>{const l=locAtual(),c=D.cfg;return l?[l.nome,l.endereco].filter(Boolean).join(' – '):[c.endereco,c.cidade].filter(Boolean).join(', ')};
+const mapaAtual=()=>{const l=locAtual();return l?(l.maps_url||''):(D.cfg.maps_url||'')};
 const IC={pin:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>',clock:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>'};
 function brand(){const b=$('#brand'),lg=D.logo_escuro||D.logo_claro;b.innerHTML=lg?'<img alt="'+esc(D.nome)+'" src="'+esc(lg)+'" onerror="this.replaceWith(document.createTextNode(this.alt))">':'<span>'+esc(D.nome)+'</span>'}
 function pixel(){const id=String(D.cfg.pixel_id||'').replace(/\D/g,'');if(!id)return;!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init',id);fbq('track','PageView')}
 function tel(v){const d=v.replace(/\D/g,'').slice(0,11);if(d.length<=2)return d?'('+d:'';if(d.length<=6)return '('+d.slice(0,2)+') '+d.slice(2);if(d.length<=10)return '('+d.slice(0,2)+') '+d.slice(2,6)+'-'+d.slice(6);return '('+d.slice(0,2)+') '+d.slice(2,7)+'-'+d.slice(7)}
 function draw(){
-  const c=D.cfg,dl=diasLivres(),app=$('#app');
+  const c=D.cfg,dl=diasLivres(),app=$('#app'),nl=LOC.length?1:0,precisaLocal=LOC.length&&sel.l==null;
   const dayBtns=dl.map(x=>{const p=x.d.split('-');return '<button class="day" data-d="'+x.d+'" aria-pressed="'+(sel.d===x.d)+'"'+(x.n?'':' disabled')+'><small>'+DIAS[dow(x.d)].slice(0,3)+'</small><b>'+(+p[2])+'</b><span>'+(x.n?MES[+p[1]-1]:'lotado')+'</span></button>'}).join('');
   const sl=sel.d?slotsDe(sel.d):[];
-  app.innerHTML='<section class="card" aria-labelledby="s1"><div class="step"><b>1</b><h2 id="s1">Escolha o dia</h2></div>'+(dl.some(x=>x.n)?'<div class="days" role="group" aria-label="Dias disponíveis">'+dayBtns+'</div>':'<p class="hint">Não há horários livres nos próximos dias. Fale com a gente pelo WhatsApp.</p>')+'</section>'+
-  '<section class="card" aria-labelledby="s2"><div class="step"><b>2</b><h2 id="s2">Escolha o horário</h2></div>'+(sel.d?'<div class="slots" role="group" aria-label="Horários de '+esc(fmtD(sel.d))+'">'+sl.map(s=>'<button class="slot" data-h="'+s.h+'" aria-pressed="'+(sel.h===s.h)+'"'+(s.livre?'':' disabled')+'>'+s.h+'</button>').join('')+'</div><p class="hint">'+esc(fmtD(sel.d))+' · duração de cerca de '+c.duracao+' minutos</p>':'<p class="hint">Primeiro escolha um dia.</p>')+'</section>'+
-  '<section class="card" aria-labelledby="s3"><div class="step"><b>3</b><h2 id="s3">Seus dados</h2></div><form id="f" novalidate><label class="f"><span>Seu nome</span><input type="text" id="nome" autocomplete="name" maxlength="80" placeholder="Nome e sobrenome"></label><label class="f"><span>WhatsApp com DDD</span><input type="tel" id="tel" inputmode="tel" autocomplete="tel" placeholder="(81) 90000-0000"></label><input class="hp" type="text" id="site" tabindex="-1" autocomplete="off" aria-hidden="true"><label class="chk"><input type="checkbox" id="ok"><span>Aceito receber a confirmação e o lembrete do meu exame pelo WhatsApp da '+esc(D.nome)+'.</span></label><p class="err" id="err" role="alert"></p></form></section>'+
-  '<section class="card"><div class="info"><div>'+IC.pin+'<span>'+esc([c.endereco,c.cidade].filter(Boolean).join(', ')||D.nome)+(c.maps_url?'<br><a href="'+esc(c.maps_url)+'" target="_blank" rel="noopener" style="color:var(--c1)">Ver no mapa</a>':'')+'</span></div><div>'+IC.clock+'<span>'+esc(c.valor_texto||'')+'</span></div></div></section>';
+  const locs=LOC.length?'<section class="card" aria-labelledby="s0"><div class="step"><b>1</b><h2 id="s0">Onde você quer fazer o exame?</h2></div><div class="locs" role="group" aria-label="Locais de atendimento">'+LOC.map((l,i)=>'<button class="loc" data-l="'+i+'" aria-pressed="'+(sel.l===i)+'">'+IC.pin+'<span><b>'+esc(l.nome||'Local '+(i+1))+'</b><small>'+esc(l.endereco||'')+'</small><span class="q">'+esc(locRegra(i))+'</span></span></button>').join('')+'</div></section>':'';
+  app.innerHTML=locs+'<section class="card" aria-labelledby="s1"><div class="step"><b>'+(1+nl)+'</b><h2 id="s1">Escolha o dia</h2></div>'+(precisaLocal?'<p class="hint">Primeiro escolha onde quer fazer o exame.</p>':dl.some(x=>x.n)?'<div class="days" role="group" aria-label="Dias disponíveis">'+dayBtns+'</div>':'<p class="hint">Não há horários livres nos próximos dias. Fale com a gente pelo WhatsApp.</p>')+'</section>'+
+  '<section class="card" aria-labelledby="s2"><div class="step"><b>'+(2+nl)+'</b><h2 id="s2">Escolha o horário</h2></div>'+(sel.d?'<div class="slots" role="group" aria-label="Horários de '+esc(fmtD(sel.d))+'">'+sl.map(s=>'<button class="slot" data-h="'+s.h+'" aria-pressed="'+(sel.h===s.h)+'"'+(s.livre?'':' disabled')+'>'+s.h+'</button>').join('')+'</div><p class="hint">'+esc(fmtD(sel.d))+' · duração de cerca de '+c.duracao+' minutos</p>':'<p class="hint">Primeiro escolha um dia.</p>')+'</section>'+
+  '<section class="card" aria-labelledby="s3"><div class="step"><b>'+(3+nl)+'</b><h2 id="s3">Seus dados</h2></div><form id="f" novalidate><label class="f"><span>Seu nome</span><input type="text" id="nome" autocomplete="name" maxlength="80" placeholder="Nome e sobrenome"></label><label class="f"><span>WhatsApp com DDD</span><input type="tel" id="tel" inputmode="tel" autocomplete="tel" placeholder="(81) 90000-0000"></label><input class="hp" type="text" id="site" tabindex="-1" autocomplete="off" aria-hidden="true"><label class="chk"><input type="checkbox" id="ok"><span>Aceito receber a confirmação e o lembrete do meu exame pelo WhatsApp da '+esc(D.nome)+'.</span></label><p class="err" id="err" role="alert"></p></form></section>'+
+  (precisaLocal?'':'<section class="card"><div class="info"><div>'+IC.pin+'<span>'+esc(enderecoAtual()||D.nome)+(mapaAtual()?'<br><a href="'+esc(mapaAtual())+'" target="_blank" rel="noopener" style="color:var(--c1)">Ver no mapa</a>':'')+'</span></div><div>'+IC.clock+'<span>'+esc(c.valor_texto||'')+'</span></div></div></section>');
   $('#bar').hidden=false;upd();
 }
 function upd(){const nome=($('#nome')||{}).value||'',t=(($('#tel')||{}).value||'').replace(/\D/g,''),ok=($('#ok')||{}).checked;const pronto=sel.d&&sel.h&&nome.trim().length>=2&&t.length>=10&&ok;
-  $('#go').disabled=!pronto||busy;$('#barTxt').innerHTML=sel.d&&sel.h?'<b>'+esc(fmtD(sel.d))+' às '+sel.h+'</b>'+(pronto?'Toque para confirmar':'Falta preencher seus dados'):'<b>Escolha dia e horário</b>Depois é só informar seus dados'}
-document.addEventListener('click',e=>{const d=e.target.closest('.day'),h=e.target.closest('.slot');
+  $('#go').disabled=!pronto||busy;$('#barTxt').innerHTML=sel.d&&sel.h?'<b>'+esc(fmtD(sel.d))+' às '+sel.h+'</b>'+(pronto?'Toque para confirmar':'Falta preencher seus dados'):(LOC.length&&sel.l==null?'<b>Escolha onde fazer o exame</b>Depois o dia e o horário':'<b>Escolha dia e horário</b>Depois é só informar seus dados')}
+function keepForm(fn){const n=($('#nome')||{}).value,t=($('#tel')||{}).value,k=($('#ok')||{}).checked;fn();draw();$('#nome').value=n||'';$('#tel').value=t||'';$('#ok').checked=!!k;upd()}
+document.addEventListener('click',e=>{const d=e.target.closest('.day'),h=e.target.closest('.slot'),l=e.target.closest('.loc');
+  if(l){const i=+l.dataset.l;keepForm(()=>{sel.l=i;if(sel.d&&localIx(sel.d)!==i){sel.d=null;sel.h=null}});document.querySelector('#s1').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth',block:'start'});return}
   if(d&&!d.disabled){sel.d=d.dataset.d;sel.h=null;const n=($('#nome')||{}).value,t=($('#tel')||{}).value,k=($('#ok')||{}).checked;draw();$('#nome').value=n||'';$('#tel').value=t||'';$('#ok').checked=!!k;upd();document.querySelector('#s2').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth',block:'start'})}
   else if(h&&!h.disabled){sel.h=h.dataset.h;document.querySelectorAll('.slot').forEach(b=>b.setAttribute('aria-pressed',b===h));upd()}});
 document.addEventListener('input',e=>{if(e.target.id==='tel'){e.target.value=tel(e.target.value)}if(['nome','tel','ok'].includes(e.target.id))upd()});
@@ -128,17 +154,17 @@ $('#go').addEventListener('click',async()=>{
   }catch(x){err.textContent='Sem conexão no momento. Tente de novo.'}
   busy=false;$('#go').textContent='Agendar';upd()});
 function ics(){const p=sel.d.replace(/-/g,''),h=sel.h.replace(':','')+'00',f=hm(mm(sel.h)+D.cfg.duracao).replace(':','')+'00';
-  const t=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//oticas//agendamento//PT','BEGIN:VEVENT','UID:'+Date.now()+'@oticas','DTSTAMP:'+new Date().toISOString().replace(/[-:]|\.\d{3}/g,''),'DTSTART:'+p+'T'+h,'DTEND:'+p+'T'+f,'SUMMARY:Exame de vista - '+D.nome,'LOCATION:'+[D.cfg.endereco,D.cfg.cidade].filter(Boolean).join(', '),'END:VEVENT','END:VCALENDAR'].join('\r\n');
+  const t=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//oticas//agendamento//PT','BEGIN:VEVENT','UID:'+Date.now()+'@oticas','DTSTAMP:'+new Date().toISOString().replace(/[-:]|\.\d{3}/g,''),'DTSTART:'+p+'T'+h,'DTEND:'+p+'T'+f,'SUMMARY:Exame de vista - '+D.nome,'LOCATION:'+enderecoAtual().replace(/[,;]/g,'\\$&'),'END:VEVENT','END:VCALENDAR'].join('\r\n');
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/calendar'}));a.download='exame-de-vista.ics';a.click()}
 function done(fake,id){
   if(!fake&&window.fbq){try{fbq('track','Lead',{content_name:'Exame de vista'},{eventID:id});fbq('track','Schedule',{},{eventID:'s'+id})}catch(e){}}
-  const c=D.cfg,w=String(c.whatsapp||'').replace(/\D/g,''),wl=w?'https://wa.me/'+(w.length<=11?'55':'')+w+'?text='+encodeURIComponent('Olá! Agendei meu exame de vista para '+fmtD(sel.d)+' às '+sel.h+'.'):'';
+  const c=D.cfg,lo=locAtual(),mp=mapaAtual(),w=String(c.whatsapp||'').replace(/\D/g,''),wl=w?'https://wa.me/'+(w.length<=11?'55':'')+w+'?text='+encodeURIComponent('Olá! Agendei meu exame de vista para '+fmtD(sel.d)+' às '+sel.h+(lo&&lo.nome?', '+lo.nome:'')+'.'):'';
   $('#bar').hidden=true;document.querySelector('.top h1').textContent='Tudo certo!';$('#sub').textContent='Seu horário está reservado.';$('#badge').hidden=true;
-  $('#app').innerHTML='<section class="card ok"><div class="tick"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div><h2>Exame agendado</h2><div class="sum"><b>'+esc(fmtD(sel.d))+' às '+sel.h+'</b>'+esc(D.nome)+(c.endereco?'<br>'+esc(c.endereco):'')+'</div><p class="hint">Você vai receber a confirmação no WhatsApp. Se não conseguir vir, avise por lá para remarcarmos.</p><div class="acts"><button class="btn" id="cal">Adicionar ao calendário</button>'+(c.maps_url?'<a class="btn ghost" target="_blank" rel="noopener" href="'+esc(c.maps_url)+'">Como chegar</a>':'')+(wl?'<a class="btn ghost" target="_blank" rel="noopener" href="'+esc(wl)+'">Falar no WhatsApp</a>':'')+'</div></section>';
+  $('#app').innerHTML='<section class="card ok"><div class="tick"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div><h2>Exame agendado</h2><div class="sum"><b>'+esc(fmtD(sel.d))+' às '+sel.h+'</b>'+esc(lo&&lo.nome?lo.nome:D.nome)+(enderecoAtual()?'<br>'+esc(lo?lo.endereco||'':enderecoAtual()):'')+'</div><p class="hint">Você vai receber a confirmação no WhatsApp. Se não conseguir vir, avise por lá para remarcarmos.</p><div class="acts"><button class="btn" id="cal">Adicionar ao calendário</button>'+(mp?'<a class="btn ghost" target="_blank" rel="noopener" href="'+esc(mp)+'">Como chegar</a>':'')+(wl?'<a class="btn ghost" target="_blank" rel="noopener" href="'+esc(wl)+'">Falar no WhatsApp</a>':'')+'</div></section>';
   $('#cal').onclick=ics;scrollTo(0,0)}
 async function load(keep){
   try{const r=await rpc('ex_publico',{p_slug:slug});if(!r){$('#app').innerHTML='<section class="card"><h2>Agendamento indisponível</h2><p class="hint">Esta página não está aberta para agendamentos no momento.</p></section>';return}
-    D=r;D.cfg.dias=D.cfg.dias||[];D.ocupados=D.ocupados||[];
+    D=r;D.cfg.dias=D.cfg.dias||[];D.ocupados=D.ocupados||[];LOC=(Array.isArray(D.cfg.locais)?D.cfg.locais:[]).filter(l=>l&&(l.nome||l.endereco));if(LOC.length===1&&sel.l==null)sel.l=0;if(sel.l!=null&&sel.l>=LOC.length)sel.l=null;
     const st=document.documentElement.style;st.setProperty('--c1',D.cor1||'#0486DE');st.setProperty('--c2',D.cor2||'#00348A');
     document.title='Agendar exame de vista · '+D.nome;
     if(!keep){brand();$('#h1').textContent=D.cfg.titulo||'Agende seu exame de vista';$('#sub').textContent=D.cfg.subtitulo||'';const b=$('#badge');if(D.cfg.valor_texto){const p=String(D.cfg.valor_texto).split(/\n+/).map(x=>x.trim()).filter(Boolean);b.textContent=p[0]||'';if(p.length>1){const s=document.createElement('small');s.textContent=p.slice(1).join(' ');b.appendChild(s)}b.hidden=false}$('#foot').textContent=D.nome;pixel()}
