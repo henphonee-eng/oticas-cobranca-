@@ -57,9 +57,10 @@ Deno.serve(async (req) => {
     const status = alvo.status === "cancelado" ? "cancelado" : alvo.status === "faltou" ? "o cliente faltou" : alvo.status;
     // local do exame (quando a ótica atende em mais de um lugar) e a regra dos locais para remarcar
     const li: any = await rpc("ex_local_info", { p_otica: otica, p_data: String(alvo.data) }).catch(() => null);
-    const endExame = String((li && li.endereco) || [c.endereco, c.cidade].filter(Boolean).join(", ")).replace(/\n/g, " · ");
+    const lx: any = alvo.local && alvo.local.endereco ? alvo.local : null;
+    const endExame = String(lx ? [lx.nome, lx.endereco].filter(Boolean).join(" – ") : (li && li.endereco) || [c.endereco, c.cidade].filter(Boolean).join(", ")).replace(/\n/g, " · ");
     const DS = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
-    const locais = Array.isArray(c.locais) ? c.locais.filter((l: any) => l && (l.nome || l.endereco)) : [];
+    const locais = Array.isArray(c.locais) ? c.locais.filter((l: any) => l && !l.interno && (l.nome || l.endereco)) : [];
     const regraLocais = locais.length ? "\nLocais de atendimento (o local depende do dia): " + locais.map((l: any) => `${l.nome || "Local"} (${l.endereco || ""}): ${(Array.isArray(l.dias) && l.dias.length ? l.dias : [0,1,2,3,4,5,6]).map((d: number) => DS[d]).join(", ")}${Array.isArray(l.horas) && l.horas.length ? " às " + l.horas.join(", ") : ""}`).join("; ") + ". Ao oferecer horários, diga o local de cada um." : "";
     const system = `Você é a assistente de agendamento de exames de vista da ${o.nome}, no WhatsApp. Escreva em português do Brasil, de forma simpática, curta (no máximo 3 frases) e sem formalidade exagerada. Pode usar no máximo um emoji.
 Hoje é ${DIAS[h.getUTCDay()]}, ${hoje}. Cliente: ${nome}. Exame: ${fmtDia(String(alvo.data))}, às ${String(alvo.hora).slice(0, 5)} (situação: ${status}).
