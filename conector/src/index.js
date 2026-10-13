@@ -8,7 +8,7 @@ const { criarApi, criarRobo } = require('./fila');
 const RAIZ = path.join(__dirname, '..');
 const ARQ_CFG = path.join(RAIZ, 'config.json');
 const PASTA_SESSAO = path.join(RAIZ, 'sessao');
-const PORTA = 3939;
+let PORTA = 3939;
 
 function log(t) {
   const linha = '[' + new Date().toLocaleString('pt-BR') + '] ' + t;
@@ -56,9 +56,12 @@ async function lerConfig() {
     cfg.token = (await perguntar('Cole aqui o código do conector (gerado no sistema, no menu WhatsApp automático): ')).replace(/\s+/g, '');
     if (/^wa_[0-9a-f]{48}$/.test(cfg.token)) fs.writeFileSync(ARQ_CFG, JSON.stringify(cfg, null, 2));
   }
+  if (Number(cfg.porta) > 1024 && Number(cfg.porta) < 65535) PORTA = Number(cfg.porta);
+  else if (cfg.modo === 'prospeccao') PORTA = 3940;
   return cfg;
 }
 
+let MODO = '';
 const estado = { estado: 'desconectado', qr: '', numero: '', msg: 'Iniciando...' };
 
 function paginaLocal() {
@@ -67,7 +70,7 @@ function paginaLocal() {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     let img = '';
     if (estado.estado === 'qr' && estado.qr) img = '<img alt="QR Code" width="280" height="280" src="' + (await QRCode.toDataURL(estado.qr, { width: 280, margin: 1 })) + '">';
-    res.end('<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="5"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Conector WhatsApp</title><body style="font-family:system-ui;max-width:420px;margin:40px auto;padding:0 16px"><h2>Conector WhatsApp da ótica</h2><p><b>' +
+    res.end('<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="5"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Conector WhatsApp</title><body style="font-family:system-ui;max-width:420px;margin:40px auto;padding:0 16px"><h2>' + (MODO === 'prospeccao' ? 'Conector WhatsApp da prospecção (CRM)' : 'Conector WhatsApp da ótica') + '</h2><p><b>' +
       (estado.estado === 'conectado' ? 'Conectado' + (estado.numero ? ' no número ' + estado.numero : '') : estado.estado === 'qr' ? 'Leia o QR Code com o WhatsApp da ótica' : 'Desconectado') + '</b></p>' + img +
       (estado.estado === 'qr' ? '<p>No celular: WhatsApp > Configurações > Aparelhos conectados > Conectar um aparelho.</p>' : '') + '<p style="color:#666">' + estado.msg + '</p></body>');
   }).listen(PORTA, '127.0.0.1', () => log('Painel local: http://localhost:' + PORTA));
@@ -75,6 +78,8 @@ function paginaLocal() {
 
 async function main() {
   const cfg = await lerConfig();
+  MODO = cfg.modo || '';
+  if (MODO === 'prospeccao') log('Modo prospecção (CRM): mensagens do chip de prospecção.');
   const api = criarApi(cfg);
   paginaLocal();
   // A biblioteca do WhatsApp (Baileys 7) é um módulo ESM, então é carregada com import().
@@ -158,7 +163,7 @@ async function main() {
           if (/^(sair|parar|remover)[.! ]*$/i.test(txt)) {
             await api.sair(tel);
             log('Pediu para sair: ' + tel);
-            guardar(await sock.sendMessage(m.key.remoteJid, { text: 'Tudo certo, você não vai mais receber avisos por aqui.' }));
+            guardar(await sock.sendMessage(m.key.remoteJid, { text: MODO === 'prospeccao' ? 'Tudo certo, não vou mais mandar mensagens por aqui. Obrigado!' : 'Tudo certo, você não vai mais receber avisos por aqui.' }));
             continue;
           }
           const r = await api.receber(tel, txt, m.pushName);

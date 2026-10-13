@@ -14,6 +14,17 @@ function criarApi(cfg, fetchFn) {
     if (!r.ok) throw new Error('Sistema respondeu ' + r.status);
     return r.json();
   }
+  // modo "prospeccao": o mesmo programa, ligado ao chip do CRM de prospecção (outras funções do sistema)
+  if (cfg.modo === 'prospeccao') {
+    return {
+      puxar: () => rpc('prosp_wa_puxar', { p_token: cfg.token }),
+      resultado: (id, ok, erro) => rpc('prosp_wa_resultado', { p_token: cfg.token, p_id: id, p_ok: ok, p_erro: erro || null }),
+      ping: (estado, numero) => rpc('prosp_wa_ping', { p_token: cfg.token, p_estado: estado, p_numero: numero || null }),
+      sair: (telefone) => rpc('prosp_wa_sair', { p_token: cfg.token, p_telefone: telefone }),
+      receber: (telefone, texto, nome) => rpc('prosp_wa_receber', { p_token: cfg.token, p_telefone: telefone, p_texto: texto, p_nome: nome || null }),
+      registrar: async () => ({ ok: true }),
+    };
+  }
   return {
     puxar: () => rpc('wa_puxar', { p_token: cfg.token }),
     puxarManual: () => rpc('wa_puxar_manual', { p_token: cfg.token }),

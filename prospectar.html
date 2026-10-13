@@ -183,7 +183,7 @@ const DEF={
 
 const st={tab:'crm',user:null,admin:false,leads:[],cfg:{},ac:{},loaded:false,
   q:'óticas em Recife',res:[],next:null,busy:false,sel:{},serr:'',noKey:false,
-  f:'todos',fq:'',open:null};
+  f:'todos',fq:'',open:null,fila:[],wst:null,marc:{},token:''};
 
 function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove('on'),2600)}
 const cfg=k=>(st.cfg[k]!=null&&String(st.cfg[k]).trim()!=='')?st.cfg[k]:DEF[k];
@@ -212,7 +212,64 @@ async function load(){
   if(lr.error){toast('Erro ao carregar: '+lr.error.message);return}
   st.leads=lr.data||[];st.cfg={};(cr.data||[]).forEach(r=>st.cfg[r.chave]=r.valor);
   st.ac={};((ar&&ar.data)||[]).forEach(a=>{(st.ac[a.lead_id]=st.ac[a.lead_id]||[]).push(a)});
-  st.loaded=true;const qt=new URLSearchParams(location.search).get('tab');if(qt&&['crm','buscar','msg'].includes(qt))st.tab=qt;else if(!st.leads.length)st.tab='buscar';render();
+  await loadFila();
+  st.loaded=true;const qt=new URLSearchParams(location.search).get('tab');if(qt&&['crm','buscar','msg','auto'].includes(qt))st.tab=qt;else if(!st.leads.length)st.tab='buscar';render();
+}
+/* ---------- envio automático (chip do CRM + segundo conector) ---------- */
+async function loadFila(){
+  try{const desde=new Date(Date.now()-45*864e5).toISOString();
+    const [fr,sr]=await Promise.all([sb.from('prosp_wa_fila').select('*').gte('criado_em',desde).order('criado_em',{ascending:false}).limit(2000),sb.rpc('prosp_wa_status')]);
+    st.fila=fr.error?[]:(fr.data||[]);st.wst=sr.error?null:sr.data;st.filaErr=!!fr.error}catch(e){st.fila=[];st.filaErr=true}
+}
+const ATIVOS=['espera','aguardando','enviando'];
+const filaDe=id=>st.fila.filter(x=>x.lead_id===id&&ATIVOS.includes(x.status));
+const podeAuto=l=>l.status==='novo'&&!l.enviado_em&&tipoFone(foneDe(l))==='cel'&&!filaDe(l.id).length;
+async function enfileirar(ids){
+  if(!cfg('seu_nome'))return toast('Coloque seu nome na aba Mensagens antes'),go('msg');
+  const L=ids.map(id=>st.leads.find(x=>x.id===id)).filter(l=>l&&podeAuto(l));
+  if(!L.length)return toast('Nenhuma ótica nova com celular selecionada');
+  const fu=+cfg('wa_followup_dias');const rows=[];
+  L.forEach(l=>{const tel=brNumber(foneDe(l));rows.push({lead_id:l.id,tipo:'abordagem',telefone:tel,texto:msg('abordagem',l),status:'aguardando'});
+    if(fu>0)rows.push({lead_id:l.id,tipo:'followup',telefone:tel,texto:msg('followup',l),status:'espera'})});
+  const r=await sb.from('prosp_wa_fila').insert(rows).select();
+  if(r.error)return toast('Não foi possível colocar na fila: '+r.error.message);
+  st.fila=(r.data||[]).concat(st.fila);st.marc={};
+  const on=cfg('wa_on')==='true';
+  toast(L.length+' ótica(s) na fila automática'+(on?'':'. Ligue o envio na aba Envio automático'));render();
+}
+async function cancelarFila(id){const r=await sb.from('prosp_wa_fila').update({status:'cancelada',erro:'cancelada por você'}).eq('id',id).in('status',ATIVOS.concat('falhou'));if(r.error)return toast(r.error.message);await loadFila();render()}
+async function cancelarLead(id){const r=await sb.from('prosp_wa_fila').update({status:'cancelada',erro:'cancelada por você'}).eq('lead_id',id).in('status',ATIVOS);if(r.error)return toast(r.error.message);await loadFila();render()}
+function tagFila(l){const f=filaDe(l.id);if(!f.length)return '';const ab=f.find(x=>x.tipo==='abordagem'),fu=f.find(x=>x.tipo==='followup');
+  if(ab)return '<span class="tag acc">🤖 Na fila automática</span>';
+  if(fu&&fu.status==='espera')return '<span class="tag acc">🤖 Follow-up automático depois da abordagem</span>';
+  if(fu)return '<span class="tag acc">🤖 Follow-up automático '+fmtD(new Date(new Date(fu.enviar_apos).getTime()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10))+'</span>';return ''}
+const WEST={conectado:['ok','Conectado'],qr:['warn','Esperando ler o QR Code'],offline:['bad','Computador desligado ou programa fechado'],desconectado:['bad','Desconectado'],sem_conector:['','Conector ainda não instalado']};
+const FST={espera:['','Espera a abordagem'],aguardando:['acc','Na fila'],enviando:['acc','Enviando'],enviada:['ok','Enviada'],falhou:['bad','Falhou'],cancelada:['','Cancelada']};
+function vAuto(){
+  const w=st.wst||{},e=WEST[w.estado]||WEST.sem_conector,nm=id=>{const l=st.leads.find(x=>x.id===id);return l?l.nome:'Ótica removida'};
+  const dh=iso=>fmtDH(iso);
+  const f=(k,lbl,typ,def,extra)=>'<div class="fld"><label>'+lbl+'</label><input type="'+typ+'" data-wcfg="'+k+'" value="'+esc(st.cfg[k]!=null&&st.cfg[k]!==''?st.cfg[k]:def)+'"'+(extra||'')+'></div>';
+  let h='';
+  if(st.filaErr)h+='<div class="note warn">A fila automática ainda não está pronta no banco de dados. Aprove a mudança no chat e recarregue a página.</div>';
+  h+='<div class="stats"><div class="stat"><b><span class="tag '+e[0]+'" style="font-size:13px">'+e[1]+'</span></b><span>'+(w.numero?'Chip '+esc(fmtFone(w.numero)):'Chip do CRM')+'</span></div>'+
+    '<div class="stat"><b>'+(+w.enviadas_hoje||0)+'<span style="font-size:14px"> / '+esc(cfg('wa_limite')||'20')+'</span></b><span>Enviadas hoje</span></div>'+
+    '<div class="stat"><b>'+(+w.na_fila||0)+'</b><span>Na fila</span></div><div class="stat"><b>'+(+w.esperando||0)+'</b><span>Follow-ups esperando</span></div></div>';
+  h+='<div class="card sec"><h2 style="margin:0 0 8px">Como funciona</h2><p class="small muted" style="margin:0">No CRM, marque as óticas novas e toque em <b>Colocar na fila automática</b>: isso já é a sua aprovação. O programa no computador manda uma de cada vez pelo chip do CRM, só no horário, com intervalo e limite por dia. O follow-up sai sozinho alguns dias depois, e é cancelado se a ótica responder, pedir para sair (SAIR) ou se você mudar o status dela. Quando a ótica responde, o cartão vira <b>Respondeu</b> e a resposta aparece no histórico.</p></div>';
+  h+='<div class="card sec"><h2 style="margin:0 0 10px">Configuração</h2>'+
+    '<label class="row small" style="gap:8px;margin-bottom:8px"><input type="checkbox" data-wchk="wa_on"'+(cfg('wa_on')==='true'?' checked':'')+'> Envio automático ligado</label>'+
+    '<label class="row small" style="gap:8px;margin-bottom:10px"><input type="checkbox" data-wchk="wa_pausa"'+(cfg('wa_pausa')==='true'?' checked':'')+'> Pausar agora</label>'+
+    '<div class="list two">'+f('wa_ini','Enviar a partir de','time','09:00')+f('wa_fim','Até','time','18:00')+f('wa_limite','Limite por dia','number','20',' min="1" max="80"')+f('wa_intervalo','Intervalo entre mensagens (minutos)','number','5',' min="1" max="120"')+f('wa_followup_dias','Follow-up depois de (dias, 0 = sem follow-up)','number','3',' min="0" max="30"')+'</div>'+
+    '<p class="small muted" style="margin:8px 0">Não envia aos domingos. Para um chip novo, comece com 10 a 15 por dia e vá aumentando.</p>'+
+    '<div class="row"><button class="btn pri" data-a="wsalvar">Salvar configuração</button></div></div>';
+  h+='<div class="card sec"><h2 style="margin:0 0 8px">Programa do computador</h2><p class="small muted" style="margin:0 0 10px">É o mesmo conector da ótica, em outra pasta, ligado ao chip do CRM. '+(w.tem_token?'Já existe um código; gerar outro desconecta o atual.':'Gere o código e baixe o arquivo de configuração.')+'</p>'+
+    (st.token?'<div class="note" style="margin-bottom:10px">Código gerado. Baixe o arquivo agora (por segurança ele aparece só desta vez) e coloque na pasta do conector de prospecção.</div><div class="row" style="margin-bottom:10px"><button class="btn pri" data-a="wbaixar">Baixar config.json</button></div>':'')+
+    '<div class="row"><button class="btn" data-a="wtoken">'+(w.tem_token?'Gerar novo código':'Gerar código do conector')+'</button><a class="btn" href="/conector.zip" download>Baixar o programa</a></div></div>';
+  const at=st.fila.filter(x=>ATIVOS.includes(x.status)||x.status==='falhou').sort((a,b)=>String(a.enviar_apos).localeCompare(String(b.enviar_apos)));
+  const env=st.fila.filter(x=>x.status==='enviada').sort((a,b)=>String(b.enviado_em).localeCompare(String(a.enviado_em))).slice(0,40);
+  const row=(x,act)=>{const s=FST[x.status]||['',x.status];return '<div class="card" style="padding:10px 12px"><div class="row"><b class="grow">'+esc(nm(x.lead_id))+'</b><span class="tag '+s[0]+'">'+s[1]+'</span></div><div class="small muted" style="margin-top:4px">'+(x.tipo==='abordagem'?'Abordagem':'Follow-up')+' · '+(x.status==='enviada'?'enviada '+dh(x.enviado_em):x.status==='espera'?'sai alguns dias depois da abordagem':'a partir de '+dh(x.enviar_apos))+(x.erro&&x.status!=='enviada'?' · '+esc(x.erro):'')+'</div>'+(act?'<div class="acts" style="margin-top:8px"><button class="btn sm" data-fcanc="'+x.id+'">Cancelar</button></div>':'')+'</div>'};
+  h+='<div class="sec"><h2>Fila ('+at.length+')</h2>'+(at.length?'<div class="list two">'+at.map(x=>row(x,true)).join('')+'</div>':'<div class="empty">Nada na fila. No CRM, marque as óticas novas e coloque na fila automática.</div>')+'</div>';
+  h+='<div class="sec"><h2>Enviadas recentemente</h2>'+(env.length?'<div class="list two">'+env.map(x=>row(x,false)).join('')+'</div>':'<div class="empty">Nenhuma mensagem automática enviada ainda.</div>')+'</div>';
+  return h;
 }
 async function upd(id,patch){
   patch.atualizado_em=new Date().toISOString();
@@ -276,10 +333,10 @@ function render(){
   const sec=st.tab==='buscar'?'buscar':'crm';
   const item=n=>n[2]?'<a href="'+n[2]+'"'+(sec===n[0]?' class="on"':'')+'>'+n[3]+'<span>'+n[1]+'</span></a>':'<a href="/prospectar?tab='+n[0]+'" data-tab="'+n[0]+'"'+(sec===n[0]?' class="on" aria-current="page"':'')+'>'+n[3]+'<span>'+n[1]+'</span></a>';
   const head=st.tab==='buscar'?['Prospecção','Encontre óticas no Google Maps e adicione ao CRM']:['CRM','Óticas abordadas, follow-up e acessos ao demo'];
-  const sub=st.tab==='buscar'?'':'<div class="subtabs"><button class="chip '+(st.tab==='crm'?'on':'')+'" data-tab="crm">Óticas ('+st.leads.length+')</button><button class="chip '+(st.tab==='msg'?'on':'')+'" data-tab="msg">Mensagens</button></div>';
+  const sub=st.tab==='buscar'?'':'<div class="subtabs"><button class="chip '+(st.tab==='crm'?'on':'')+'" data-tab="crm">Óticas ('+st.leads.length+')</button><button class="chip '+(st.tab==='msg'?'on':'')+'" data-tab="msg">Mensagens</button><button class="chip '+(st.tab==='auto'?'on':'')+'" data-tab="auto">🤖 Envio automático ('+st.fila.filter(x=>x.status==='aguardando'||x.status==='enviando').length+')</button></div>';
   a.innerHTML='<aside class="pside"><div class="brand"><b>Adm Óticas</b><small>Controle geral</small></div><nav>'+NAV.map(item).join('')+'</nav><div class="foot"><div>'+esc((st.user&&st.user.email)||'')+'</div><button data-a="sair">Sair</button></div></aside>'+
    '<header class="mtop"><b>Adm Óticas</b><span class="sp"></span><button data-a="sair">Sair</button></header>'+
-   '<main><div class="ph"><h1>'+head[0]+'</h1><p>'+head[1]+'</p></div>'+sub+(st.tab==='buscar'?vBuscar():st.tab==='msg'?vMsg():vCrm())+'</main>'+
+   '<main><div class="ph"><h1>'+head[0]+'</h1><p>'+head[1]+'</p></div>'+sub+(st.tab==='buscar'?vBuscar():st.tab==='msg'?vMsg():st.tab==='auto'?vAuto():vCrm())+'</main>'+
    '<nav class="pnav" aria-label="Seções">'+NAV.map(item).join('')+'</nav>';
 }
 function gate(){return '<div class="gate"><div class="card"><h1>Prospecção</h1><p class="muted small" style="margin:0">Entre com o mesmo e-mail e senha do painel administrativo.</p><input type="email" id="g-e" placeholder="E-mail" autocomplete="username"><input type="password" id="g-p" placeholder="Senha" autocomplete="current-password"><div class="err" id="g-err"></div><button class="btn pri" data-a="entrar">Entrar</button></div></div>'}
@@ -328,15 +385,17 @@ function vCrm(){
   if(q)L=L.filter(l=>(l.nome+' '+(l.endereco||'')+' '+digits(foneDe(l))).toLowerCase().includes(q));
   if(st.f==='abriu')h+='<p class="small muted" style="margin:8px 0 0">Óticas que abriram o link, da mais recente para a mais antiga. Só contam acessos reais: os seus, a prévia do WhatsApp e recarregar a página em menos de 30 min ficam de fora.</p>';
   if(!L.length)return h+'<div class="empty">'+(st.f==='abriu'?'Nenhuma ótica abriu o demo ainda.':'Nada aqui.')+'</div>';
+  const cand=L.filter(podeAuto),nm=Object.keys(st.marc).filter(id=>st.marc[id]).length;
+  if(cand.length)h+='<div class="card sec" style="padding:10px 12px"><div class="row" style="flex-wrap:wrap;gap:8px"><span class="grow small">🤖 <b>Envio automático:</b> '+(nm?nm+' ótica(s) marcada(s)':'marque as óticas novas (com celular) nos cartões')+'</span><button class="btn sm" data-a="marcartodas">Marcar as '+Math.min(cand.length,+cfg('wa_limite')||20)+' primeiras novas</button>'+(nm?'<button class="btn sm" data-a="desmarcar">Desmarcar</button><button class="btn pri sm" data-a="enfileirar">Colocar '+nm+' na fila automática</button>':'')+'</div></div>';
   h+='<div class="list two">'+L.map(cardLead).join('')+'</div>';
   return h;
 }
 function cardLead(l){
   const op=st.open===l.id,tf=tipoFone(foneDe(l)),late=l.follow_up&&l.follow_up<=today()&&['enviado','respondeu','interessada'].includes(l.status);
-  let h='<div class="card lead"><div class="row"><h2 class="grow">'+esc(l.nome)+'</h2><span class="tag '+STAG[l.status]+'">'+STATUS[l.status]+'</span></div><div class="meta">'+
+  let h='<div class="card lead"><div class="row">'+(podeAuto(l)?'<input type="checkbox" data-marca="'+l.id+'"'+(st.marc[l.id]?' checked':'')+' aria-label="Marcar para o envio automático" style="width:20px;height:20px;flex:none">':'')+'<h2 class="grow">'+esc(l.nome)+'</h2><span class="tag '+STAG[l.status]+'">'+STATUS[l.status]+'</span></div><div class="meta">'+
     (acessos(l).length?'<span class="tag hot">👀 '+acessos(l).length+(acessos(l).length>1?' acessos':' acesso')+' ao demo · último '+fmtDH(acessos(l)[0].em)+'</span>':l.status!=='novo'?'<span class="tag">Ainda não abriu o demo</span>':'')+
     (late?'<span class="tag warn">Follow-up '+(l.follow_up<today()?'atrasado':'hoje')+'</span>':l.follow_up&&l.status!=='fechou'&&l.status!=='sem_interesse'?'<span class="tag">Follow-up '+fmtD(l.follow_up)+'</span>':'')+
-    (tf==='fixo'?'<span class="tag warn">Fixo</span>':'')+(!foneDe(l)?'<span class="tag bad">Sem telefone</span>':'')+
+    tagFila(l)+(tf==='fixo'?'<span class="tag warn">Fixo</span>':'')+(!foneDe(l)?'<span class="tag bad">Sem telefone</span>':'')+
     (l.site?'<span class="tag">Tem site</span>':'')+(l.nota?'<span class="tag">★ '+l.nota+' · '+l.avaliacoes+'</span>':'')+
     '</div><div class="small muted" style="margin:-4px 0 10px">'+esc(fmtFone(foneDe(l)))+(foneDe(l)?' · ':'')+esc(l.endereco||'')+'</div><div class="acts">';
   h+=l.status==='novo'?'<button class="btn wa sm" data-env="'+l.id+'" data-k="abordagem">Enviar abordagem</button>':
@@ -345,6 +404,7 @@ function cardLead(l){
   if(l.status==='respondeu')h+='<button class="btn sm" data-st="'+l.id+'" data-v="interessada">Interessada</button>';
   if(l.status==='interessada')h+='<button class="btn sm" data-st="'+l.id+'" data-v="fechou">Fechou</button>';
   if(l.status==='fechou')h+='<a class="btn pri sm" href="/adm?nova=1&nome='+encodeURIComponent(l.nome)+'&whats='+encodeURIComponent(fmtFone(foneDe(l))||'')+'">Cadastrar como cliente</a>';
+  if(filaDe(l.id).length)h+='<button class="btn sm" data-fcancl="'+l.id+'">Tirar da fila automática</button>';
   h+='<button class="btn sm" data-open="'+l.id+'">'+(op?'Fechar':'Detalhes')+'</button></div>';
   if(op){
     h+='<div class="more">'+
@@ -376,6 +436,8 @@ document.addEventListener('click',async e=>{
   if(d.f){st.f=d.f;return render()}
   if(d.open){st.open=st.open===d.open?null:d.open;return render()}
   if(d.env)return enviar(d.env,d.k);
+  if(d.fcanc)return cancelarFila(d.fcanc);
+  if(d.fcancl)return cancelarLead(d.fcancl);
   if(d.st){const l=st.leads.find(x=>x.id===d.st);return upd(d.st,{status:d.v,historico:hist(l,'Status: '+STATUS[d.v]),follow_up:d.v==='fechou'?null:l.follow_up})}
   if(d.copy){const l=st.leads.find(x=>x.id===d.copy);try{await navigator.clipboard.writeText(demoLink(l));toast('Link copiado')}catch(x){prompt('Copie o link:',demoLink(l))}return}
   if(d.del){if(!confirm('Remover essa ótica do CRM?'))return;const r=await sb.from('prosp_leads').delete().eq('id',d.del);if(r.error)return toast(r.error.message);st.leads=st.leads.filter(l=>l.id!==d.del);return render()}
@@ -385,6 +447,13 @@ document.addEventListener('click',async e=>{
     case 'buscar':st.q=$('#q').value;return buscar(false);
     case 'mais':return buscar(true);
     case 'add':return addSel();
+    case 'enfileirar':return enfileirar(Object.keys(st.marc).filter(id=>st.marc[id]));
+    case 'desmarcar':st.marc={};return render();
+    case 'marcartodas':{const q=st.fq.trim().toLowerCase();let L=st.f==='todos'?st.leads:st.leads.filter(l=>l.status===st.f);if(q)L=L.filter(l=>(l.nome+' '+(l.endereco||'')+' '+digits(foneDe(l))).toLowerCase().includes(q));L.filter(podeAuto).slice(0,+cfg('wa_limite')||20).forEach(l=>st.marc[l.id]=true);return render()}
+    case 'wsalvar':{const rows=[...document.querySelectorAll('[data-wcfg]')].map(i=>({chave:i.dataset.wcfg,valor:String(i.value||'').trim()})).concat([...document.querySelectorAll('[data-wchk]')].map(i=>({chave:i.dataset.wchk,valor:i.checked?'true':'false'})));
+      const r=await sb.from('prosp_config').upsert(rows);if(r.error)return toast(r.error.message);rows.forEach(x=>st.cfg[x.chave]=x.valor);toast('Configuração salva');await loadFila();return render()}
+    case 'wtoken':{if(st.wst&&st.wst.tem_token&&!confirm('Gerar um novo código desconecta o programa atual até você trocar o arquivo. Continuar?'))return;const r=await sb.rpc('prosp_wa_gerar_token');if(r.error)return toast(r.error.message);st.token=r.data;await loadFila();return render()}
+    case 'wbaixar':{if(!st.token)return;const b=new Blob([JSON.stringify({supabaseUrl:SB_URL,supabaseKey:SB_KEY,token:st.token,modo:'prospeccao',porta:3940},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='config.json';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);return toast('Arquivo baixado: coloque na pasta do conector de prospecção')}
     case 'salvarcfg':{const rows=[...document.querySelectorAll('[data-cfg]')].map(i=>({chave:i.dataset.cfg,valor:i.value}));const r=await sb.from('prosp_config').upsert(rows);if(r.error)return toast(r.error.message);rows.forEach(x=>st.cfg[x.chave]=x.valor);toast('Mensagens salvas');return render()}
     case 'padrao':st.cfg.abordagem='';st.cfg.followup='';await sb.from('prosp_config').upsert([{chave:'abordagem',valor:''},{chave:'followup',valor:''}]);toast('Texto padrão restaurado');return render();
   }
@@ -392,6 +461,7 @@ document.addEventListener('click',async e=>{
 document.addEventListener('change',e=>{
   const t=e.target;
   if(t.dataset.sel){st.sel[t.dataset.sel]=t.checked;return render()}
+  if(t.dataset.marca){st.marc[t.dataset.marca]=t.checked;return render()}
   if(t.dataset.upd){const l=st.leads.find(x=>x.id===t.dataset.upd),f=t.dataset.fld,v=t.value||null;const p={[f]:v};if(f==='status')p.historico=hist(l,'Status: '+STATUS[v]);upd(l.id,p)}
 });
 document.addEventListener('input',e=>{
@@ -419,7 +489,8 @@ function recarregar(ms){clearTimeout(vt);vt=setTimeout(()=>{if(digitando()||st.b
 document.addEventListener('focusout',()=>{if(vp)recarregar(600)});
 function aoVivo(){if(vivo||!st.admin)return;vivo=sb.channel('crm-ao-vivo')
   .on('postgres_changes',{event:'INSERT',schema:'public',table:'prosp_acessos'},p=>{const l=st.leads.find(x=>x.id===p.new.lead_id);toast('👀 '+((l&&l.nome)||'Uma ótica')+' abriu o demo agora');recarregar(300)})
-  .on('postgres_changes',{event:'*',schema:'public',table:'prosp_leads'},()=>recarregar())
+  .on('postgres_changes',{event:'*',schema:'public',table:'prosp_leads'},p=>{const n=p.new,o=st.leads.find(x=>x&&n&&x.id===n.id);if(o&&n&&o.status==='enviado'&&n.status==='respondeu')toast('💬 '+n.nome+' respondeu no WhatsApp');recarregar()})
+  .on('postgres_changes',{event:'*',schema:'public',table:'prosp_wa_fila'},()=>recarregar())
   .subscribe()}
 </script>
 <script>
