@@ -9,10 +9,10 @@ if errorlevel 1 (
   pause
   exit /b 1
 )
-where git >nul 2>nul
-if errorlevel 1 (
-  echo O Git nao esta instalado. Abra o Prompt de Comando e rode: winget install --id Git.Git -e
-  echo Depois reinicie o computador e abra este arquivo de novo.
+set "NODEMAJ=0"
+for /f "tokens=1 delims=." %%v in ('node -p "process.versions.node"') do set "NODEMAJ=%%v"
+if %NODEMAJ% LSS 20 (
+  echo O Node.js deste computador e muito antigo. Instale a versao LTS em https://nodejs.org e reinicie o computador.
   pause
   exit /b 1
 )
