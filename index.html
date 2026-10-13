@@ -873,7 +873,7 @@ const WAT=isMobile?'':' target="_blank" rel="noopener"';
 const pForma=(p,v)=>p.forma||v.forma;
 
 /* ---------- supabase ---------- */
-const APP_BUILD='20261012-2350';
+const APP_BUILD='20261013-0010';
 const SB_URL='https://ovynkeifzhavhjdkjjui.supabase.co',SB_KEY='sb_publishable_7RunIjZPQDCuWNSuPrD10w_Gy_lIUFl';
 const sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});
 const queues={},pendingW={},recentW={};
@@ -3054,11 +3054,11 @@ function exDraft(){if(!EX.dr){const b=Object.assign({},EX_PADRAO,{endereco:cfg()
 function viewExames(){
   if(!modOn('exames'))return viewUpsell('exames');
   exGarante();
-  const dono=exDono(),subs=[['agenda','Agenda de exames']].concat(dono?[['pagina','Página de agendamento']]:[]);
+  const dono=exDono(),subs=[['agenda','Agenda de exames']].concat(dono?[['pagina','Página de agendamento'],['conversas','Conversas']]:[]);
   if(!dono)EX.sub='agenda';
   const nav='<div class="seg ex-nav" role="tablist" aria-label="Tráfego exame de vista">'+subs.map(s=>'<button class="btn sm'+(EX.sub===s[0]?' primary':'')+'" role="tab" aria-selected="'+(EX.sub===s[0])+'" data-act="exsub" data-s="'+s[0]+'">'+s[1]+'</button>').join('')+'</div>';
-  const corpo=EX.sub==='pagina'?exPagina():exAgenda();
-  return pageHead('Tráfego exame de vista','Agendamentos feitos pelo link e pela equipe, com confirmação e lembrete pelo WhatsApp')+nav+(EX.err?'<p class="sub" style="color:var(--bad)">'+esc(EX.err)+'</p>':'')+corpo;
+  const corpo=EX.sub==='pagina'?exPagina():EX.sub==='conversas'?exConversas():exAgenda();
+  return pageHead('Tráfego exame de vista','Agendamentos feitos pelo link e pela equipe, com confirmação, lembrete e respostas pelo WhatsApp')+nav+(EX.err?'<p class="sub" style="color:var(--bad)">'+esc(EX.err)+'</p>':'')+corpo;
 }
 /* ---- agenda ---- */
 function exLinhaAg(x){
@@ -3116,13 +3116,30 @@ function exPagina(){
       '<div class="field"><span>Mensagem de confirmação (sai na hora)</span><textarea rows="5" data-exf="tpl_conf" placeholder="Deixe vazio para usar a mensagem padrão">'+esc(D.tpl.conf||'')+'</textarea></div>'+
    '<div class="field"><span>Mensagem de lembrete (véspera, às 17h)</span><textarea rows="5" data-exf="tpl_lemb" placeholder="Deixe vazio para usar a mensagem padrão">'+esc(D.tpl.lemb||'')+'</textarea></div>'+
    '<div class="field"><span>Mensagem para quem faltou (sai 1 hora depois de marcar "Faltou")</span><textarea rows="5" data-exf="tpl_falt" placeholder="Deixe vazio para usar a mensagem padrão">'+esc(D.tpl.falt||'')+'</textarea></div>'+
+   '<label class="aguard-box" style="margin:0"><input type="checkbox" data-exf="tpl_ia"'+(D.tpl.ia==='true'?' checked':'')+'> Agente de IA responde os clientes sobre o exame (remarcar, cancelar, dúvidas simples)</label>'+
+   '<p class="sub" style="margin:0">SIM, CANCELAR e REMARCAR já funcionam sem o agente. Com o agente ligado, quem escrever outras coisas sobre o exame também é atendido, e os donos são chamados quando o assunto é outro.</p>'+
    '<div class="field"><span>Avisar os donos quando alguém agendar (WhatsApp, um número por linha)</span><textarea rows="3" data-exf="tpl_avisar" placeholder="(81) 99999-9999">'+esc(D.tpl.avisar||'')+'</textarea></div>'+
    '<p class="sub" style="margin:0">Você pode usar {nome}, {otica}, {dia}, {hora}, {endereco} e, no lembrete, {quando}; na mensagem de falta, {link}. As mensagens saem pelo WhatsApp Automático, de forma automática, e param se o exame for cancelado ou remarcado.</p>'+
    '<div class="foot-row"><button class="btn primary" data-act="exsalvarpag"'+(EX.saving?' disabled':'')+'>'+(EX.saving?'Salvando...':'Salvar página')+'</button></div></div>';
 }
+async function exConvLoad(force){
+  if(EX.convBusy||(!force&&EX.conv))return;EX.convBusy=true;
+  try{const r=await sb.from('wa_conversa').select('telefone,papel,texto,criado_em').eq('otica_id',OTICA.id).gte('criado_em',new Date(Date.now()-7*864e5).toISOString()).order('criado_em',{ascending:false}).limit(300);EX.conv=r.data||[]}catch(e){EX.conv=EX.conv||[]}
+  EX.convBusy=false;if(ui.tab==='exames'&&EX.sub==='conversas'&&!fieldsOn()&&!ui.sheet)render();
+}
+function exConversas(){
+  if(!EX.conv){exConvLoad();return '<p class="sub">Carregando...</p>'}
+  const por={};EX.conv.forEach(m=>{(por[m.telefone]=por[m.telefone]||[]).push(m)});
+  const tels=Object.keys(por).sort((a,b)=>por[b][0].criado_em.localeCompare(por[a][0].criado_em));
+  if(!tels.length)return '<div class="empty" style="margin-top:12px"><h3>Nenhuma conversa ainda</h3><p>Quando um cliente responder as mensagens do exame, a conversa aparece aqui (últimos 7 dias).</p></div>';
+  const nome=t=>{const x=(EX.ag||[]).find(a=>exSoDig(a.whatsapp).slice(-8)===t.slice(-8));return x?cap(x.nome.toLowerCase()):maskTel(t.replace(/^55/,''))};
+  const hr=s=>{const d=new Date(s);return fmtDate(d.toISOString().slice(0,10)).slice(0,5)+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
+  return '<div class="sh" style="margin-top:12px"><h2>Conversas dos últimos 7 dias</h2><button class="btn sm ghost" data-act="exconvrec">Atualizar</button></div>'+tels.map(t=>'<div class="card" style="gap:6px;margin-bottom:10px"><b>'+esc(nome(t))+'</b><span class="sub" style="margin:0">'+esc(maskTel(t.replace(/^55/,'')))+'</span>'+por[t].slice(0,8).reverse().map(m=>'<div style="font-size:14px;'+(m.papel==='cliente'?'':'color:var(--muted)')+'"><b>'+(m.papel==='cliente'?'Cliente':m.papel==='agente'?'Agente':'Sistema')+'</b> <span class="sub" style="margin:0">'+hr(m.criado_em)+'</span><br>'+esc(m.texto)+'</div>').join('')+'</div>').join('');
+}
 Object.assign(A,{
-  exsub(d){EX.sub=d.s;if(d.s==='pagina')EX.dr=null;render()},
+  exsub(d){EX.sub=d.s;if(d.s==='pagina')EX.dr=null;if(d.s==='conversas')exConvLoad(true);render()},
   exfil(d){EX.fil=d.f;render()},
+  exconvrec(){exConvLoad(true)},
   exnovo(){EX.form={id:'',nome:'',whatsapp:'',data:addDays(todayStr(),1),hora:'09:00'};render()},
   exedit(d){const x=(EX.ag||[]).find(a=>a.id===d.id);if(!x)return;EX.form={id:x.id,nome:x.nome,whatsapp:x.whatsapp,data:x.data,hora:exHora(x.hora)};render()},
   excancelarform(){EX.form=null;render()},
@@ -3139,7 +3156,7 @@ Object.assign(A,{
   excopiar(){const u=exLink();(navigator.clipboard?navigator.clipboard.writeText(u):Promise.reject()).then(()=>toast('Link copiado')).catch(()=>{const i=document.querySelector('.card input[readonly]');if(i){i.select();document.execCommand('copy');toast('Link copiado')}})},
   async exsalvarpag(){
     const D=exDraft();EX.saving=true;render();
-    const tpl={};if((D.tpl.conf||'').trim())tpl.conf=D.tpl.conf.trim();if((D.tpl.lemb||'').trim())tpl.lemb=D.tpl.lemb.trim();if((D.tpl.falt||'').trim())tpl.falt=D.tpl.falt.trim();
+    const tpl={};if((D.tpl.conf||'').trim())tpl.conf=D.tpl.conf.trim();if((D.tpl.lemb||'').trim())tpl.lemb=D.tpl.lemb.trim();if((D.tpl.falt||'').trim())tpl.falt=D.tpl.falt.trim();if(D.tpl.ia==='true')tpl.ia='true';
     const av=String(D.tpl.avisar||'').split(/\n|,|;/).map(x=>exSoDig(x)).filter(x=>x.length>=10&&x.length<=13).map(x=>x.length<=11?'55'+x:x);if(av.length)tpl.avisar=Array.from(new Set(av));
     const row={otica_id:OTICA.id,ativo:!!D.ativo,titulo:(D.titulo||'').trim()||EX_PADRAO.titulo,subtitulo:(D.subtitulo||'').trim(),valor_texto:(D.valor_texto||'').trim(),endereco:(D.endereco||'').trim(),cidade:(D.cidade||'').trim(),maps_url:(D.maps_url||'').trim(),whatsapp:(D.whatsapp||'').trim(),
       dias:D.dias.length?D.dias.slice().sort():[1,2,3,4,5,6],hora_ini:D.hora_ini||'09:00',hora_fim:D.hora_fim||'17:00',duracao_min:Math.max(10,Math.min(180,+D.duracao_min||30)),vagas:Math.max(1,Math.min(20,+D.vagas||1)),antecedencia_h:Math.max(0,Math.min(168,+D.antecedencia_h||0)),janela_dias:Math.max(1,Math.min(60,+D.janela_dias||14)),pixel_id:exSoDig(D.pixel_id)||null,tpl:tpl,atualizado_em:new Date().toISOString()};
@@ -3155,7 +3172,7 @@ document.addEventListener('input',e=>{const t=e.target;if(!t||!t.dataset)return;
 });
 document.addEventListener('change',async e=>{const t=e.target;if(!t||!t.dataset)return;
   if(t.dataset.exfm!==undefined&&EX.form){EX.form[t.dataset.exfm]=t.value;return}
-  if(t.dataset.exf&&EX.dr&&t.type==='checkbox'){const D=EX.dr,k=t.dataset.exf;if(k==='dia'){const n=+t.dataset.d;D.dias=t.checked?Array.from(new Set(D.dias.concat(n))):D.dias.filter(x=>x!==n);t.closest('label').classList.toggle('acc',t.checked)}else D[k]=t.checked;return}
+  if(t.dataset.exf&&EX.dr&&t.type==='checkbox'){const D=EX.dr,k=t.dataset.exf;if(k==='tpl_ia'){D.tpl.ia=t.checked?'true':'false'}else if(k==='dia'){const n=+t.dataset.d;D.dias=t.checked?Array.from(new Set(D.dias.concat(n))):D.dias.filter(x=>x!==n);t.closest('label').classList.toggle('acc',t.checked)}else D[k]=t.checked;return}
 });
 
 /* ---------- PREMIUM-FIM ---------- */

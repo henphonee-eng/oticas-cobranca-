@@ -81,21 +81,27 @@ async function main() {
         setTimeout(() => conectar().catch((e) => log('Erro: ' + e.message)), 8000);
       }
     });
-    // Quem responder SAIR deixa de receber avisos
+    // Mensagens recebidas: SAIR tira o número dos avisos; o resto vai para o sistema,
+    // que confirma/cancela/remarca o exame ou avisa os donos (e, se ligado, chama o agente de IA).
     sock.ev.on('messages.upsert', async ({ messages, type }) => {
       if (type !== 'notify') return;
       for (const m of messages) {
         try {
-          if (!m.message || m.key.fromMe || String(m.key.remoteJid || '').endsWith('@g.us')) continue;
+          if (!m.message || m.key.fromMe || String(m.key.remoteJid || '').endsWith('@g.us') || String(m.key.remoteJid || '') === 'status@broadcast') continue;
           const txt = ((m.message.conversation || (m.message.extendedTextMessage && m.message.extendedTextMessage.text)) || '').trim();
-          if (!/^(sair|parar|cancelar|remover)[.! ]*$/i.test(txt)) continue;
+          if (!txt) continue;
           const jid = m.key.remoteJidAlt || m.key.senderPn || m.key.remoteJid || '';
           const tel = String(jid).split('@')[0].replace(/\D/g, '');
           if (!tel) continue;
-          await api.sair(tel);
-          log('Pediu para sair: ' + tel);
-          await sock.sendMessage(m.key.remoteJid, { text: 'Tudo certo, você não vai mais receber avisos por aqui.' });
-        } catch (e) { log('Erro ao tratar SAIR: ' + e.message); }
+          if (/^(sair|parar|remover)[.! ]*$/i.test(txt)) {
+            await api.sair(tel);
+            log('Pediu para sair: ' + tel);
+            await sock.sendMessage(m.key.remoteJid, { text: 'Tudo certo, você não vai mais receber avisos por aqui.' });
+            continue;
+          }
+          const r = await api.receber(tel, txt, m.pushName);
+          if (r && r.acao) log('Resposta de ' + tel + ' tratada pelo sistema: ' + r.acao);
+        } catch (e) { log('Erro ao tratar mensagem recebida: ' + e.message); }
       }
     });
   }

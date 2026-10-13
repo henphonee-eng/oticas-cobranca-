@@ -19,6 +19,7 @@ function criarApi(cfg, fetchFn) {
     resultado: (id, ok, erro) => rpc('wa_resultado', { p_token: cfg.token, p_id: id, p_ok: ok, p_erro: erro || null }),
     ping: (estado, numero) => rpc('wa_ping', { p_token: cfg.token, p_estado: estado, p_numero: numero || null }),
     sair: (telefone) => rpc('wa_sair', { p_token: cfg.token, p_telefone: telefone }),
+    receber: (telefone, texto, nome) => rpc('wa_receber', { p_token: cfg.token, p_telefone: telefone, p_texto: texto, p_nome: nome || null }),
   };
 }
 
