@@ -21,7 +21,7 @@ a.w{background:#3dbe78;color:#04210f}.o{word-break:break-all;background:#0a1a36;
 </div><script>
 var n=document.getElementById('n'),o=document.getElementById('o'),wa=document.getElementById('wa'),m=document.getElementById('m');
 function link(){var v=n.value.trim();var base=location.origin+'/demo/';return v?base+'?o='+encodeURIComponent(v):base}
-function up(){var l=link();o.textContent=l;var v=n.value.trim();wa.href='https://wa.me/?text='+encodeURIComponent('Olá'+(v?', '+v:'')+'! Preparei uma demonstração do sistema de cobranças e agendamento de parcelas para a sua ótica. Pode abrir e testar à vontade: '+l)}
+function up(){var l=link();o.textContent=l;var v=n.value.trim();wa.href='https://wa.me/?text='+encodeURIComponent('Olá'+(v?', '+v:'')+'! Preparei uma demonstração do sistema de gestão para a sua ótica. Pode abrir e testar à vontade: '+l)}
 n.addEventListener('input',up);up();
 document.getElementById('cp').addEventListener('click',function(){var l=link();(navigator.clipboard?navigator.clipboard.writeText(l):Promise.reject()).then(function(){m.textContent='Link copiado.'},function(){m.textContent='Selecione o link acima e copie.'})});
 </script></body></html>
