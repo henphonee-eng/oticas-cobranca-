@@ -44,6 +44,14 @@
       "destination": "/agendar.html"
     },
     {
+      "source": "/exame/:slug",
+      "destination": "/agendar.html"
+    },
+    {
+      "source": "/exame",
+      "destination": "/agendar.html"
+    },
+    {
       "source": "/agendar",
       "destination": "/agendar.html"
     }

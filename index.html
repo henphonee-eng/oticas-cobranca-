@@ -3034,7 +3034,7 @@ const EX_ST={agendado:['acc','Agendado'],confirmado:['ok','Confirmado'],comparec
 const EX_DIAS=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
 const EX_PADRAO={ativo:false,titulo:'Agende seu exame de vista',subtitulo:'Escolha o melhor dia e horário. Leva poucos minutos e a gente confirma pelo WhatsApp.',endereco:'',cidade:'',maps_url:'',whatsapp:'',dias:[1,2,3,4,5,6],hora_ini:'09:00',hora_fim:'17:00',duracao_min:30,vagas:1,antecedencia_h:2,janela_dias:14,valor_texto:'Exame de vista sem compromisso',pixel_id:'',tpl:{}};
 const exSoDig=s=>String(s||'').replace(/\D/g,'');
-const exLink=()=>location.origin+'/agendar/'+(OTICA&&OTICA.slug||'');
+const exLink=()=>location.origin+'/exame/'+(OTICA&&OTICA.slug||'');
 const exHora=h=>String(h||'').slice(0,5);
 const exDono=()=>ROLE==='dono'||IS_ADMIN;
 async function exLoad(){
