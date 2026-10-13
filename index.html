@@ -2957,15 +2957,15 @@ function premFuPesq(){
 Object.assign(A,{fupesq(){ui.cs='pesq';ui.tab='campanhas';render()}});
 /* ----- WhatsApp automático (conector no computador da loja) ----- */
 const WA_TIPOS=[['boasvindas','Boas-vindas ao cadastrar o cliente'],['recibo','Recibo quando a parcela é recebida'],['chegou','Aviso: seu óculos chegou'],['agradecimento','Agradecimento ao entregar'],['lembrete','Lembrete na véspera do vencimento'],['atraso','Parcela em atraso (1, 7 e 15 dias)'],['aniversario','Feliz aniversário'],['revisao','Revisão do grau (11 meses)'],['exame_conf','Exame de vista: confirmação ao agendar'],['exame_lembrete','Exame de vista: lembrete na véspera']];
-const WA_NOME={};WA_TIPOS.forEach(x=>WA_NOME[x[0]]=x[1]);
+const WA_NOME={exame_conf:'Exame de vista: confirmação',exame_lembrete:'Exame de vista: lembrete',exame_resp:'Exame de vista: resposta',exame_faltou:'Exame de vista: faltou',exame_equipe:'Aviso de novo exame para a equipe',manual:'Mensagem da conversa'};WA_TIPOS.forEach(x=>WA_NOME[x[0]]=x[1]);
 const WA_ST={aprovar:['warn','Espera sua aprovação'],aguardando:['acc','Na fila'],enviando:['acc','Enviando'],enviada:['ok','Enviada'],falhou:['bad','Falhou'],cancelada:['','Cancelada'],expirada:['','Venceu o prazo']};
 const waDoc=()=>{if(!S.config.wa)S.config.wa={id:'wa',on:false,pausa:false,ini:'08:00',fim:'18:30',limite:30,modo:{}};if(!S.config.wa.modo)S.config.wa.modo={};return S.config.wa};
 const waOn=()=>modOn('wa')&&!!waDoc().on;
-const WA={st:null,fila:null,busy:false,token:'',err:'',t:0};
+const WA={st:null,fila:null,busy:false,token:'',err:'',t:0,q:''};
 async function waLoad(){
   if(WA.busy||!OTICA||!modOn('wa'))return;WA.busy=true;
   try{
-    const r=await Promise.all([sb.rpc('wa_status',{p_otica:OTICA.id}),sb.from('wa_fila').select('id,cliente_id,cliente_nome,tipo,telefone,texto,status,enviar_apos,expira_em,erro,enviado_em,criado_em').eq('otica_id',OTICA.id).neq('tipo','manual').order('criado_em',{ascending:false}).limit(80)]);
+    const r=await Promise.all([sb.rpc('wa_status',{p_otica:OTICA.id}),sb.from('wa_fila').select('id,cliente_id,cliente_nome,tipo,telefone,texto,status,enviar_apos,expira_em,erro,enviado_em,criado_em').eq('otica_id',OTICA.id).neq('tipo','manual').order('criado_em',{ascending:false}).limit(500)]);
     WA.st=(r[0]&&r[0].data)||null;WA.fila=(r[1]&&r[1].data)||[];
   }catch(e){WA.fila=WA.fila||[]}
   WA.busy=false;WA.t=Date.now();
@@ -3007,8 +3007,37 @@ function premFuWa(){
   return {n:n,html:'<div class="chips" style="margin-bottom:8px"><span class="chip '+e[0]+'">'+e[1]+'</span><span class="chip">Enviadas hoje: '+(+st.enviadas_hoje||0)+'</span><span class="chip">Na fila: '+(+st.na_fila||0)+'</span>'+(+st.falhas?'<span class="chip bad">Falhas: '+st.falhas+'</span>':'')+(waDoc().pausa?'<span class="chip warn">Envios pausados</span>':'')+'</div>'+
    '<div class="acts" style="margin-bottom:10px">'+(dono&&n?'<button class="btn primary sm" data-act="waaprovtodas">Aprovar todas ('+n+')</button>':'')+'<button class="btn sm" data-act="waatualizar">Atualizar</button></div>'+
    '<p class="sub" style="margin:0 0 8px">Se o computador da loja estiver desligado, as mensagens ficam guardadas aqui e saem quando ele ligar, dentro do prazo de cada aviso.</p>'+
-   '<div class="stack">'+(WA.fila===null?none('Carregando...'):fila.length?fila.map(linha).join(''):none('Nenhuma mensagem na fila ainda.'))+'</div>'};
+   (WA.fila===null?none('Carregando...'):waFilaHtml(fila,linha))};
 }
+/* fila em duas partes: o que precisa de atenção (aprovar, na fila, falhou) e o histórico agrupado por cliente */
+const WA_PEND=['aprovar','aguardando','enviando','falhou'];
+function waGrupos(fila){
+  const G={};
+  fila.filter(m=>!WA_PEND.includes(m.status)).forEach(m=>{const k=String(m.telefone||'').replace(/\D/g,'').slice(-8)||m.cliente_id||m.id;
+    const g=G[k]||(G[k]={k,msgs:[],tel:m.telefone,nomes:[]});g.msgs.push(m);if(m.cliente_nome)g.nomes.push(m.cliente_nome)});
+  return Object.values(G).map(g=>{g.msgs.sort((a,b)=>String(b.enviado_em||b.criado_em).localeCompare(String(a.enviado_em||a.criado_em)));
+    const cli=Object.values(S.clientes).find(c=>c&&c.whatsapp&&String(c.whatsapp).replace(/\D/g,'').slice(-8)===g.k);
+    const equipe=g.msgs.every(m=>m.tipo==='exame_equipe');
+    g.nome=cli?cli.nome:equipe?'Equipe (avisos para os donos)':(g.nomes.find(n=>n&&n!=='Equipe'&&n!=='Conversa')||maskTel(String(g.tel||'').replace(/^55/,'')));
+    g.ult=String(g.msgs[0].enviado_em||g.msgs[0].criado_em);g.env=g.msgs.filter(m=>m.status==='enviada').length;return g})
+   .sort((a,b)=>b.ult.localeCompare(a.ult));
+}
+function waHistHtml(){
+  const q=String(WA.q||'').trim().toLowerCase(),qd=q.replace(/\D/g,'');
+  const gs=waGrupos(WA.fila||[]).filter(g=>!q||g.nome.toLowerCase().includes(q)||(qd.length>=3&&String(g.tel||'').includes(qd)));
+  if(!gs.length)return none(q?'Nenhum cliente encontrado.':'Nenhuma mensagem enviada ainda.');
+  const dh=s=>{const d=new Date(s);return fmtDate(new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10))+' às '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
+  return gs.map(g=>'<details class="card wa-cli" style="padding:0;gap:0"'+(WA.aberto===g.k?' open':'')+' data-wak="'+g.k+'"><summary style="padding:12px 14px;cursor:pointer;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><b style="flex:1;min-width:160px">'+esc(g.nome)+'</b><span class="chip ok">'+plural(g.env,'enviada','enviadas')+'</span><span class="sub" style="margin:0">Última: '+dh(g.ult)+'</span></summary>'+
+    '<div class="stack" style="padding:0 14px 12px">'+g.msgs.map(m=>{const sp=WA_ST[m.status]||['',m.status];return '<div style="border-top:1px solid var(--line);padding-top:10px"><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><b style="font-size:14px">'+esc(WA_NOME[m.tipo]||m.tipo)+'</b><span class="chip '+sp[0]+'">'+sp[1]+'</span><span class="sub" style="margin:0">'+dh(m.enviado_em||m.criado_em)+'</span></div><div class="meta" style="white-space:pre-line;margin-top:4px">'+esc(String(m.texto||'').replace(/\n\nPara não receber mais avisos, responda SAIR\.$/,''))+'</div></div>'}).join('')+'</div></details>').join('');
+}
+function waFilaHtml(fila,linha){
+  const pend=fila.filter(m=>WA_PEND.includes(m.status));
+  return '<h3 style="margin:6px 0 8px;font-size:15px">Precisa de atenção <span class="sub num">'+pend.length+'</span></h3><div class="stack">'+(pend.length?pend.map(linha).join(''):none('Nada esperando aprovação ou na fila.'))+'</div>'+
+    '<h3 style="margin:18px 0 8px;font-size:15px">Histórico por cliente</h3><div class="field" style="max-width:420px;margin-bottom:10px"><input type="search" id="wa-q" placeholder="Buscar cliente pelo nome ou WhatsApp" value="'+esc(WA.q)+'" aria-label="Buscar cliente no histórico"></div>'+
+    '<div class="stack" id="wa-hist">'+waHistHtml()+'</div><p class="sub" style="margin-top:8px">Mostra as últimas 500 mensagens. Toque no nome do cliente para ver tudo o que foi enviado para ele.</p>';
+}
+document.addEventListener('input',e=>{const t=e.target;if(t&&t.id==='wa-q'){WA.q=t.value;const h=document.getElementById('wa-hist');if(h)h.innerHTML=waHistHtml()}});
+document.addEventListener('toggle',e=>{const t=e.target;if(t&&t.dataset&&t.dataset.wak){if(t.open)WA.aberto=t.dataset.wak;else if(WA.aberto===t.dataset.wak)WA.aberto=''}},true);
 const WA_SEC={boasvindas:['boasvindas'],cobrar:['lembrete','atraso'],aniversarios:['aniversario'],revisao:['revisao']};
 const waQ=(tipos,cid)=>(WA.fila||[]).filter(m=>tipos.includes(m.tipo)&&['aprovar','aguardando','enviando','enviada'].includes(m.status)&&(!cid||m.cliente_id===cid));
 function premBvFiltro(l){if(!waOn()||waModo('boasvindas')==='off')return l;return l.filter(c=>!waQ(['boasvindas'],c.id).length)}
