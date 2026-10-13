@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0A1322">
+<title>Ótica · prévia do site</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Manrope:wght@400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@500;600&display=swap" rel="stylesheet">
+<style>
+/* Prévia de site para óticas: laboratório óptico. Topo escuro como a tela de um autorrefrator,
+   corpo claro com painéis de dados (como um relatório), um único destaque ciano de "lente". */
+:root{
+  --ink:#0A1322;--deep:#0F1D33;--deep-2:#16284A;--canvas:#F3F6FA;--surface:#fff;--line:#DCE3EE;--text:#13203A;--muted:#5D6B82;
+  --blue:#2F6BFF;--cyan:#5ED3F3;--gold:#F2C811;--ok:#1E9E6A;
+  --r:10px;--wrap:1180px;
+  --display:'Sora',system-ui,sans-serif;--body:'Manrope',system-ui,sans-serif;--num:'IBM Plex Sans Condensed','Manrope',sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--canvas);color:var(--text);font:16px/1.6 var(--body);-webkit-font-smoothing:antialiased}
+a{color:inherit}
+img,svg{display:block}
+:focus-visible{outline:2px solid var(--cyan);outline-offset:3px;border-radius:4px}
+.wrap{max-width:var(--wrap);margin:0 auto;padding:0 20px}
+h1,h2,h3{font-family:var(--display);letter-spacing:-.02em;margin:0;line-height:1.1}
+p{margin:0}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:13px 20px;border-radius:999px;font:600 15px var(--body);text-decoration:none;border:1px solid transparent;cursor:pointer;white-space:nowrap;transition:transform .15s,background .15s}
+.btn:active{transform:scale(.98)}
+.btn.pri{background:var(--blue);color:#fff}
+.btn.pri:hover{background:#2458dd}
+.btn.ghost{border-color:rgba(255,255,255,.28);color:#fff;background:rgba(255,255,255,.04)}
+.btn.ghost:hover{background:rgba(255,255,255,.1)}
+.btn.line{border-color:var(--line);background:var(--surface);color:var(--text)}
+.btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* faixa de prévia */
+.demo-bar{position:sticky;top:0;z-index:40;background:var(--gold);color:#2B2300;font:600 13.5px var(--body)}
+.demo-bar .wrap{display:flex;align-items:center;gap:12px;min-height:42px;padding-top:6px;padding-bottom:6px}
+.demo-bar span{flex:1;min-width:0}
+.demo-bar a{background:#1A1500;color:#fff;text-decoration:none;padding:6px 14px;border-radius:999px;font-size:13px;white-space:nowrap}
+
+/* topo */
+.hero{background:radial-gradient(1100px 600px at 78% 30%,#163B6E 0%,transparent 60%),radial-gradient(700px 500px at 10% 100%,#0F2A4A 0%,transparent 70%),var(--ink);color:#EAF1FB;position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(94,211,243,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(94,211,243,.06) 1px,transparent 1px);background-size:44px 44px;mask-image:radial-gradient(ellipse at 70% 40%,#000 0%,transparent 70%);pointer-events:none}
+nav.top{display:flex;align-items:center;gap:18px;padding:18px 0;position:relative;z-index:2}
+.brand{display:flex;align-items:center;gap:12px;text-decoration:none;min-width:0}
+.mono{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;font:700 15px var(--display);color:var(--ink);background:conic-gradient(from 210deg,var(--cyan),#fff,var(--cyan) 60%,#9BE6FA);box-shadow:0 0 0 4px rgba(94,211,243,.15);flex:none}
+.brand b{font:600 17px var(--display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+nav.top .links{display:flex;gap:22px;margin-left:auto;font-size:14.5px;font-weight:500}
+nav.top .links a{text-decoration:none;opacity:.78}
+nav.top .links a:hover{opacity:1}
+nav.top .btn{padding:10px 16px;font-size:14px}
+@media (max-width:860px){nav.top .links{display:none}nav.top .btn{margin-left:auto}}
+.hero-grid{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:40px;align-items:center;padding:48px 0 76px;position:relative;z-index:2}
+@media (max-width:960px){.hero-grid{grid-template-columns:1fr;padding:24px 0 56px}}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:14px;color:#BFD3EE;margin-bottom:18px}
+.eyebrow i{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 4px rgba(30,158,106,.25)}
+.hero h1{font-size:clamp(40px,6.2vw,76px);font-weight:700;letter-spacing:-.035em}
+.hero h1 .foco{display:block;color:var(--cyan)}
+.hero .lead{margin-top:22px;font-size:clamp(17px,1.6vw,19px);color:#C3D2E8;max-width:34em}
+.hero .acts{display:flex;gap:12px;margin-top:30px;flex-wrap:wrap}
+.desfoque{animation:foca 1.6s cubic-bezier(.2,.7,.2,1) .15s both}
+@keyframes foca{from{filter:blur(16px);opacity:.25;letter-spacing:.02em}to{filter:blur(0);opacity:1}}
+
+/* autorrefrator */
+.ar{background:linear-gradient(180deg,rgba(22,40,74,.85),rgba(10,19,34,.9));border:1px solid rgba(94,211,243,.22);border-radius:18px;padding:18px;box-shadow:0 30px 80px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.06);backdrop-filter:blur(6px)}
+.ar-top{display:flex;align-items:center;justify-content:space-between;font-size:13px;color:#9FB3D1;margin-bottom:12px}
+.ar-top b{color:#EAF1FB;font-weight:600}
+.ar-top .live{display:inline-flex;align-items:center;gap:6px}.ar-top .live i{width:7px;height:7px;border-radius:50%;background:var(--cyan);animation:pisca 1.6s infinite}
+@keyframes pisca{50%{opacity:.25}}
+.ar-body{display:grid;grid-template-columns:minmax(0,1fr) 168px;gap:16px;align-items:center}
+@media (max-width:520px){.ar-body{grid-template-columns:1fr}.leit{grid-template-columns:repeat(3,minmax(0,1fr))}.leit b{font-size:19px}.lente{max-width:220px}.demo-bar{font-size:12.5px}}
+.lente{aspect-ratio:1;width:100%;max-width:300px;margin:auto}
+.lente .anel{transform-origin:150px 150px;animation:gira 30s linear infinite}
+.lente .anel.b{animation-duration:46s;animation-direction:reverse}
+@keyframes gira{to{transform:rotate(360deg)}}
+.leit{display:grid;gap:8px}
+.leit div{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:9px 12px}
+.leit small{display:block;font-size:12px;color:#93A8C8}
+.leit b{font:600 22px/1.1 var(--num);color:#fff;font-variant-numeric:tabular-nums}
+.leit b em{font-style:normal;font-size:13px;color:#93A8C8;margin-left:4px}
+.ar-foot{margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.08)}
+.ar-foot label{display:flex;justify-content:space-between;font-size:13px;color:#9FB3D1;margin-bottom:8px}
+.tabela{display:flex;justify-content:center;gap:clamp(8px,2vw,16px);font:700 clamp(22px,3vw,30px) var(--display);color:#fff;letter-spacing:.06em;padding:10px 0 6px;transition:filter .2s}
+input[type=range]{width:100%;accent-color:var(--cyan)}
+
+/* faixa de indicadores */
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));background:var(--surface);border:1px solid var(--line);border-radius:14px;margin-top:-40px;position:relative;z-index:3;box-shadow:0 18px 40px rgba(19,32,58,.08);overflow:hidden}
+.kpi{padding:20px 22px;border-left:1px solid var(--line);position:relative}
+.kpi:first-child{border-left:0}
+.kpi::before{content:"";position:absolute;left:0;top:18px;bottom:18px;width:3px;border-radius:3px;background:var(--c,var(--blue))}
+.kpi:first-child::before{left:0}
+.kpi b{display:block;font:600 30px/1.1 var(--num);letter-spacing:-.01em}
+.kpi span{font-size:14px;color:var(--muted)}
+.estrelas{color:#F2B705;letter-spacing:1px;font-size:15px}
+@media (max-width:860px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.kpi:nth-child(3){border-left:0}.kpi:nth-child(n+3){border-top:1px solid var(--line)}}
+
+section{padding:88px 0 0}
+.sh{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:28px;flex-wrap:wrap}
+.sh h2{font-size:clamp(28px,3.4vw,42px);max-width:16em}
+.sh p{color:var(--muted);max-width:30em}
+
+/* exame */
+.passos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;counter-reset:p}
+@media (max-width:860px){.passos{grid-template-columns:1fr}}
+.passo{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:24px;position:relative}
+.passo::before{counter-increment:p;content:counter(p);font:600 14px var(--num);color:var(--blue);background:#EAF0FF;border-radius:999px;width:30px;height:30px;display:grid;place-items:center;margin-bottom:16px}
+.passo h3{font-size:19px;margin-bottom:8px}
+.passo p{color:var(--muted);font-size:15px}
+.cta-exame{margin-top:16px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;background:var(--deep);color:#EAF1FB;border-radius:var(--r);padding:22px 24px}
+.cta-exame b{font:600 20px var(--display)}
+.cta-exame p{color:#AFC1DC;font-size:15px}
+
+/* lentes: comparativo */
+.comp{display:grid;grid-template-columns:260px minmax(0,1fr);background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+@media (max-width:860px){.comp{grid-template-columns:1fr}}
+.comp .tabs{display:flex;flex-direction:column;border-right:1px solid var(--line);padding:10px}
+@media (max-width:860px){.comp .tabs{flex-direction:row;overflow-x:auto;border-right:0;border-bottom:1px solid var(--line)}}
+.comp .tabs button{text-align:left;background:none;border:0;border-radius:8px;padding:12px 14px;font:600 15px var(--body);color:var(--muted);cursor:pointer;white-space:nowrap}
+.comp .tabs button small{display:block;font-weight:500;font-size:12.5px}
+.comp .tabs button[aria-selected=true]{background:#EEF3FF;color:var(--text);box-shadow:inset 3px 0 0 var(--blue)}
+.comp .painel{padding:26px 28px}
+.comp .painel h3{font-size:24px;margin-bottom:6px}
+.comp .painel>p{color:var(--muted);max-width:40em;margin-bottom:22px}
+.barra{display:grid;grid-template-columns:190px minmax(0,1fr) 40px;gap:14px;align-items:center;font-size:14.5px;margin-bottom:12px}
+.barra .t{height:12px;background:#EEF2F8;border-radius:6px;overflow:hidden}
+.barra .t i{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,var(--blue),var(--cyan));width:0;transition:width .7s cubic-bezier(.2,.7,.2,1)}
+.barra b{font:600 15px var(--num);text-align:right}
+@media (max-width:520px){.barra{grid-template-columns:120px minmax(0,1fr) 30px;gap:8px;font-size:13.5px}}
+.nota{font-size:13px;color:var(--muted);margin-top:14px}
+
+/* armações */
+.arms{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+@media (max-width:960px){.arms{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.arm{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:22px 20px;display:flex;flex-direction:column;gap:12px}
+.arm svg{width:100%;height:84px;stroke:var(--text);fill:none;stroke-width:5;stroke-linecap:round;stroke-linejoin:round}
+.arm svg .vidro{fill:url(#reflexo);stroke:none}
+.arm h3{font-size:17px}
+.arm p{font-size:14px;color:var(--muted)}
+
+/* onde estamos */
+.local{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:16px}
+@media (max-width:860px){.local{grid-template-columns:1fr}}
+.info{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:26px;display:flex;flex-direction:column;gap:18px}
+.info dl{margin:0;display:grid;gap:16px}
+.info dt{font-size:13px;color:var(--muted);font-weight:600}
+.info dd{margin:2px 0 0;font-size:16.5px;font-weight:600}
+.mapa{border-radius:var(--r);overflow:hidden;border:1px solid var(--line);min-height:340px;background:var(--deep)}
+.mapa iframe{width:100%;height:100%;min-height:340px;border:0;display:block;filter:saturate(.9)}
+
+/* proposta (para o dono da ótica) */
+.proposta{margin-top:96px;background:var(--ink);color:#EAF1FB;position:relative;overflow:hidden}
+.proposta::before{content:"";position:absolute;inset:0;background:radial-gradient(700px 400px at 85% 20%,rgba(94,211,243,.18),transparent 70%)}
+.proposta .wrap{position:relative;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:40px;padding-top:72px;padding-bottom:72px;align-items:center}
+@media (max-width:860px){.proposta .wrap{grid-template-columns:1fr}}
+.proposta h2{font-size:clamp(28px,3.6vw,44px)}
+.proposta p{color:#B9C9E2;margin-top:14px;font-size:17px}
+.lista{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.lista li{display:flex;gap:12px;align-items:flex-start;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:13px 15px;font-size:15px}
+.lista li::before{content:"";flex:none;width:18px;height:18px;margin-top:2px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fff,var(--cyan) 55%,#2A8FB0)}
+footer{background:var(--ink);color:#8DA2C2;font-size:13.5px;border-top:1px solid rgba(255,255,255,.08)}
+footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding-top:20px;padding-bottom:28px}
+
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--deep);color:#fff;padding:12px 18px;border-radius:10px;font-size:14.5px;opacity:0;transition:.25s;z-index:60;max-width:calc(100% - 32px);border-left:3px solid var(--cyan)}
+.toast.on{opacity:1;transform:translateX(-50%)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<div class="demo-bar"><div class="wrap"><span id="barTxt">Prévia de site criada pela ADM Óticas.</span><a id="quero" href="#proposta">Quero este site</a></div></div>
+
+<header class="hero">
+  <div class="wrap">
+    <nav class="top" aria-label="Menu">
+      <a class="brand" href="#"><span class="mono" id="mono">OT</span><b id="navNome">Sua Ótica</b></a>
+      <div class="links"><a href="#exame">Exame de vista</a><a href="#lentes">Lentes</a><a href="#armacoes">Armações</a><a href="#local">Onde estamos</a></div>
+      <a class="btn pri" href="#" data-wa>Falar no WhatsApp</a>
+    </nav>
+    <div class="hero-grid">
+      <div>
+        <p class="eyebrow"><i></i><span id="heroCidade">Óculos, lentes e exame de vista</span></p>
+        <h1 class="desfoque"><span id="heroNome">Sua Ótica</span><span class="foco">em alta definição.</span></h1>
+        <p class="lead" id="heroLead">Exame de vista, lentes com tecnologia de ponta e armações para todos os estilos. Tudo para você enxergar melhor, com atendimento de perto.</p>
+        <div class="acts"><a class="btn pri" href="#exame">Agendar exame de vista</a><a class="btn ghost" href="#lentes">Comparar lentes</a></div>
+      </div>
+      <div class="ar" aria-label="Simulação de leitura de um autorrefrator">
+        <div class="ar-top"><span><b>Leitura do exame</b> · demonstração</span><span class="live"><i></i>ao vivo</span></div>
+        <div class="ar-body">
+          <svg class="lente" viewBox="0 0 300 300" aria-hidden="true">
+            <defs>
+              <radialGradient id="iris" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#0A1322"/><stop offset=".32" stop-color="#0A1322"/><stop offset=".36" stop-color="#1D5E8C"/><stop offset=".62" stop-color="#3FB4DA"/><stop offset=".8" stop-color="#16406A"/><stop offset="1" stop-color="#0A1322"/></radialGradient>
+              <linearGradient id="brilho" x1="0" x2="1"><stop offset="0" stop-color="#fff" stop-opacity=".0"/><stop offset=".5" stop-color="#fff" stop-opacity=".55"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+            </defs>
+            <circle cx="150" cy="150" r="140" fill="none" stroke="rgba(94,211,243,.18)"/>
+            <g class="anel"><circle cx="150" cy="150" r="126" fill="none" stroke="rgba(94,211,243,.55)" stroke-width="1.5" stroke-dasharray="2 9"/></g>
+            <g class="anel b"><circle cx="150" cy="150" r="112" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="1" stroke-dasharray="40 14 6 14"/></g>
+            <circle cx="150" cy="150" r="92" fill="url(#iris)"/>
+            <circle cx="150" cy="150" r="30" fill="#05090F"/>
+            <ellipse cx="128" cy="124" rx="20" ry="10" fill="url(#brilho)" transform="rotate(-30 128 124)"/>
+            <circle cx="150" cy="150" r="58" fill="none" stroke="var(--cyan)" stroke-width="1.5" stroke-dasharray="4 6" opacity=".9"/>
+            <path d="M150 20v34M150 246v34M20 150h34M246 150h34" stroke="var(--cyan)" stroke-width="1.5"/>
+            <path d="M58 58l16 16M242 58l-16 16M58 242l16-16M242 242l-16-16" stroke="rgba(255,255,255,.35)" stroke-width="1.2"/>
+          </svg>
+          <div class="leit">
+            <div><small>Esférico</small><b data-v="-1.25">-1,25<em>D</em></b></div>
+            <div><small>Cilíndrico</small><b data-v="-0.50">-0,50<em>D</em></b></div>
+            <div><small>Eixo</small><b data-v="180">180<em>°</em></b></div>
+          </div>
+        </div>
+        <div class="ar-foot">
+          <label for="foco"><span>Arraste para ajustar o foco</span><span id="focoTxt">sem correção</span></label>
+          <div class="tabela" id="tabela" aria-hidden="true">E F P T O Z</div>
+          <input type="range" id="foco" min="0" max="100" value="0" aria-label="Ajustar o foco">
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="kpis" id="kpis"></div>
+</div>
+
+<section id="exame">
+  <div class="wrap">
+    <div class="sh"><h2>Exame de vista sem complicação</h2><p>Você marca o horário, faz o exame com calma e já sai sabendo quais lentes combinam com a sua rotina.</p></div>
+    <div class="passos">
+      <div class="passo"><h3>Agende pelo WhatsApp</h3><p>Escolha o dia e o horário que ficam melhores para você, sem fila.</p></div>
+      <div class="passo"><h3>Faça o exame</h3><p>Avaliação completa da visão, com equipamentos modernos e explicação de cada resultado.</p></div>
+      <div class="passo"><h3>Escolha seus óculos</h3><p>A equipe ajuda a escolher a armação e as lentes ideais para o seu grau e o seu dia a dia.</p></div>
+    </div>
+    <div class="cta-exame"><div><b>Marque seu exame de vista</b><p id="ctaExame">Atendimento na loja.</p></div><a class="btn pri" href="#" data-wa>Agendar pelo WhatsApp</a></div>
+  </div>
+</section>
+
+<section id="lentes">
+  <div class="wrap">
+    <div class="sh"><h2>Compare as lentes antes de escolher</h2><p>Cada tipo de lente resolve uma necessidade. Veja como elas se comportam em cada situação.</p></div>
+    <div class="comp">
+      <div class="tabs" role="tablist" id="tabs"></div>
+      <div class="painel" id="painel" role="tabpanel"></div>
+    </div>
+    <p class="nota">Comparativo ilustrativo para ajudar na escolha. A indicação certa vem da receita e da conversa com a equipe da ótica.</p>
+  </div>
+</section>
+
+<section id="armacoes">
+  <div class="wrap">
+    <div class="sh"><h2>Uma armação para cada rosto</h2><p>Do clássico ao moderno, com opções para adultos e crianças.</p></div>
+    <div class="arms">
+      <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><linearGradient id="reflexo" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#DDF6FD"/><stop offset=".55" stop-color="#F6FBFF"/><stop offset="1" stop-color="#C8EEF9"/></linearGradient></defs></svg>
+      <div class="arm"><svg viewBox="0 0 200 84" aria-hidden="true"><circle class="vidro" cx="56" cy="44" r="32"/><circle class="vidro" cx="144" cy="44" r="32"/><circle cx="56" cy="44" r="32"/><circle cx="144" cy="44" r="32"/><path d="M88 40q12-10 24 0M24 36L4 30M176 36l20-6"/></svg><h3>Redonda</h3><p>Leve e marcante, suaviza rostos com traços retos.</p></div>
+      <div class="arm"><svg viewBox="0 0 200 84" aria-hidden="true"><rect class="vidro" x="20" y="16" width="66" height="54" rx="10"/><rect class="vidro" x="114" y="16" width="66" height="54" rx="10"/><rect x="20" y="16" width="66" height="54" rx="10"/><rect x="114" y="16" width="66" height="54" rx="10"/><path d="M86 34q14-8 28 0M20 28L4 24M180 28l16-4"/></svg><h3>Quadrada</h3><p>Presença e personalidade para o dia a dia e o trabalho.</p></div>
+      <div class="arm"><svg viewBox="0 0 200 84" aria-hidden="true"><path class="vidro" d="M18 22q34-10 70 4q2 30-22 42q-32 4-46-20z"/><path class="vidro" d="M182 22q-34-10-70 4q-2 30 22 42q32 4 46-20z"/><path d="M18 22q34-10 70 4q2 30-22 42q-32 4-46-20zM182 22q-34-10-70 4q-2 30 22 42q32 4 46-20zM88 32q12-8 24 0"/></svg><h3>Gatinho</h3><p>Elegante, valoriza o olhar e combina com rostos ovais.</p></div>
+      <div class="arm"><svg viewBox="0 0 200 84" aria-hidden="true"><path class="vidro" d="M22 20h62q4 28-14 46q-30 10-46-14q-6-16-2-32z"/><path class="vidro" d="M178 20h-62q-4 28 14 46q30 10 46-14q6-16 2-32z"/><path d="M22 20h62q4 28-14 46q-30 10-46-14q-6-16-2-32zM178 20h-62q-4 28 14 46q30 10 46-14q6-16 2-32zM84 22h32M84 32q16-6 32 0"/></svg><h3>Aviador</h3><p>Clássico atemporal, perfeito também para óculos de sol com grau.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="local">
+  <div class="wrap">
+    <div class="sh"><h2>Onde estamos</h2><p id="localTxt">Venha conhecer a loja.</p></div>
+    <div class="local">
+      <div class="info">
+        <dl>
+          <div><dt>Endereço</dt><dd id="endTxt">Endereço da ótica</dd></div>
+          <div><dt>WhatsApp e telefone</dt><dd id="telTxt">(00) 00000-0000</dd></div>
+          <div><dt>Horário</dt><dd>Segunda a sábado <span style="font-weight:500;color:var(--muted)">(você informa o horário da loja)</span></dd></div>
+        </dl>
+        <div style="display:flex;gap:10px;flex-wrap:wrap"><a class="btn pri" id="rota" href="#" target="_blank" rel="noopener">Como chegar</a><a class="btn line" href="#" data-wa>Chamar no WhatsApp</a></div>
+      </div>
+      <div class="mapa" id="mapa"></div>
+    </div>
+  </div>
+</section>
+
+<section class="proposta" id="proposta">
+  <div class="wrap">
+    <div>
+      <h2 id="propTit">Gostou? Este site pode ser da sua ótica.</h2>
+      <p>Esta é uma prévia montada com as informações públicas do Google. No site final entram as fotos da loja, a sua logo e cores, os horários, as marcas que você trabalha e um botão de agendamento ligado ao seu WhatsApp.</p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:26px"><a class="btn pri" id="queroWa" href="#" target="_blank" rel="noopener">Quero o site da minha ótica</a></div>
+    </div>
+    <ul class="lista">
+      <li>Endereço próprio, como www.suaotica.com.br</li>
+      <li>Pronto para celular, rápido e seguro</li>
+      <li>Botão de WhatsApp e agendamento de exame de vista</li>
+      <li>Você pede as alterações e a gente atualiza</li>
+      <li>Integra com o sistema de gestão da ADM Óticas, se você quiser</li>
+    </ul>
+  </div>
+</section>
+<footer><div class="wrap"><span id="footNome">Sua Ótica</span><span>Prévia criada pela ADM Óticas · sites e sistemas para óticas</span></div></footer>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(function(){
+'use strict';
+var SB='https://ovynkeifzhavhjdkjjui.supabase.co/rest/v1/rpc/',KEY='sb_publishable_7RunIjZPQDCuWNSuPrD10w_Gy_lIUFl';
+var ADM_WA='5581999707538';
+var $=function(s){return document.querySelector(s)};
+function curto(n){var s=String(n||'').trim(),c=s.split(/\s*(?::|\||\s[-–—]\s)\s*/)[0].trim();return (c.length>=3?c:s).slice(0,40)}
+function digs(s){return String(s||'').replace(/\D/g,'')}
+function fone(s){var d=digs(s);if(d.indexOf('55')===0&&d.length>11)d=d.slice(2);if(d.length===11)return '('+d.slice(0,2)+') '+d.slice(2,7)+'-'+d.slice(7);if(d.length===10)return '('+d.slice(0,2)+') '+d.slice(2,6)+'-'+d.slice(6);return s||''}
+function toast(t){var e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(function(){e.classList.remove('on')},3600)}
+function iniciais(n){var p=n.replace(/[^A-Za-zÀ-ú0-9 ]/g,' ').split(/\s+/).filter(function(w){return w&&!/^(de|da|do|das|dos|e|ótica|óticas|otica|oticas|óptica|optica)$/i.test(w)});var s=(p[0]||n)[0]+((p[1]||'')[0]||'');return s.toUpperCase()}
+
+/* comparativo de lentes (valores ilustrativos de 0 a 10) */
+var LENTES=[
+ {k:'simples',n:'Visão simples',d:'Um único grau na lente toda',t:'Lente de visão simples',p:'Corrige um tipo de grau (perto ou longe). É a escolha mais comum e tem o melhor custo-benefício.',v:[['Nitidez de longe',9],['Nitidez de perto',6],['Conforto em telas',6],['Adaptação',10]]},
+ {k:'multi',n:'Multifocal',d:'Perto, meio e longe na mesma lente',t:'Lente multifocal',p:'Para quem precisa de grau para perto e para longe: a visão muda de forma suave conforme você olha, sem a linha dos bifocais.',v:[['Nitidez de longe',9],['Nitidez de perto',9],['Conforto em telas',8],['Adaptação',7]]},
+ {k:'azul',n:'Filtro de luz azul',d:'Para quem passa o dia em telas',t:'Lente com filtro de luz azul',p:'Filtra parte da luz azul de celulares e computadores e reduz reflexos. Indicada para quem trabalha ou estuda em frente às telas.',v:[['Nitidez de longe',9],['Nitidez de perto',7],['Conforto em telas',10],['Adaptação',9]]},
+ {k:'foto',n:'Fotossensível',d:'Escurece no sol, clareia na sombra',t:'Lente fotossensível',p:'Escurece sozinha ao sol e volta a ficar clara em ambientes internos. Um óculos só para o dia todo, com proteção UV.',v:[['Nitidez de longe',9],['Proteção no sol',10],['Conforto em telas',7],['Adaptação',9]]}
+];
+function lente(i){var L=LENTES[i];
+  $('#tabs').querySelectorAll('button').forEach(function(b,j){b.setAttribute('aria-selected',String(j===i));b.tabIndex=j===i?0:-1});
+  $('#painel').innerHTML='<h3>'+L.t+'</h3><p>'+L.p+'</p>'+L.v.map(function(x){return '<div class="barra"><span>'+x[0]+'</span><span class="t"><i data-w="'+x[1]*10+'"></i></span><b>'+x[1]+'/10</b></div>'}).join('');
+  requestAnimationFrame(function(){$('#painel').querySelectorAll('i[data-w]').forEach(function(e){e.style.width=e.dataset.w+'%'})});
+}
+$('#tabs').innerHTML=LENTES.map(function(L,i){return '<button role="tab" data-i="'+i+'">'+L.n+'<small>'+L.d+'</small></button>'}).join('');
+$('#tabs').addEventListener('click',function(e){var b=e.target.closest('button');if(b)lente(+b.dataset.i)});
+$('#tabs').addEventListener('keydown',function(e){if(e.key!=='ArrowDown'&&e.key!=='ArrowUp'&&e.key!=='ArrowRight'&&e.key!=='ArrowLeft')return;var bs=[].slice.call(this.querySelectorAll('button')),i=bs.indexOf(document.activeElement),n=(i+(e.key==='ArrowDown'||e.key==='ArrowRight'?1:-1)+bs.length)%bs.length;lente(n);bs[n].focus();e.preventDefault()});
+lente(0);
+
+/* tabela de letras: o controle tira o desfoque, como no exame */
+function foco(){var v=+$('#foco').value,b=(1-v/100)*6;$('#tabela').style.filter='blur('+b.toFixed(2)+'px)';$('#focoTxt').textContent=v>=95?'foco ajustado':v>40?'quase lá':'sem correção'}
+$('#foco').addEventListener('input',foco);foco();
+/* o foco se ajusta sozinho uma vez, quando o topo aparece */
+if(!(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches)){var t0=null;setTimeout(function(){function passo(t){if(!t0)t0=t;var p=Math.min(1,(t-t0)/1800),e=1-Math.pow(1-p,3);$('#foco').value=Math.round(e*100);foco();if(p<1)requestAnimationFrame(passo)}requestAnimationFrame(passo)},900)}else{$('#foco').value=100;foco()}
+
+function montar(d){
+  var nome=curto(d.nome||'Sua Ótica'),cid=d.cidade||'',end=d.endereco||'',tel=d.telefone||'';
+  document.title=nome+' · prévia do site';
+  ['#navNome','#heroNome','#footNome'].forEach(function(s){$(s).textContent=nome});
+  $('#mono').textContent=iniciais(nome);
+  $('#heroCidade').textContent=cid?'Óculos, lentes e exame de vista em '+cid:'Óculos, lentes e exame de vista';
+  $('#barTxt').textContent='Prévia do site da '+nome+' · ADM Óticas';
+  $('#ctaExame').textContent=end?('Atendimento na loja: '+end.split(',').slice(0,2).join(',')):'Atendimento na loja.';
+  $('#localTxt').textContent=cid?('Em '+cid+'. Venha conhecer a '+nome+'.'):'Venha conhecer a '+nome+'.';
+  $('#endTxt').textContent=end||'Endereço da ótica';
+  $('#telTxt').textContent=tel?fone(tel):'Telefone da ótica';
+  $('#propTit').textContent='Gostou? Este site pode ser da '+nome+'.';
+  var rota=d.maps_url||(end?'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(nome+' '+end):'');
+  if(rota)$('#rota').href=rota;else $('#rota').style.display='none';
+  if(end){var f=document.createElement('iframe');f.loading='lazy';f.title='Mapa de '+nome;f.referrerPolicy='no-referrer-when-downgrade';f.src='https://www.google.com/maps?q='+encodeURIComponent(nome+', '+end)+'&output=embed';$('#mapa').appendChild(f)}
+  /* indicadores: só dados reais do Google; o que não houver, sai da faixa */
+  var k=[];
+  if(d.nota)k.push('<div class="kpi" style="--c:#F2B705"><b>'+String(d.nota).replace('.',',')+' <span class="estrelas" aria-hidden="true">★</span></b><span>nota no Google</span></div>');
+  if(d.avaliacoes)k.push('<div class="kpi" style="--c:var(--blue)"><b>'+d.avaliacoes+'</b><span>avaliações de clientes</span></div>');
+  k.push('<div class="kpi" style="--c:var(--cyan)"><b>Exame</b><span>de vista com hora marcada</span></div>');
+  k.push('<div class="kpi" style="--c:var(--ok)"><b>'+(cid||'Loja')+'</b><span>'+(cid?'atendimento na cidade':'atendimento presencial')+'</span></div>');
+  if(k.length<4)k.splice(1,0,'<div class="kpi" style="--c:#7A5AF8"><b>Lentes</b><span>de visão simples a multifocais</span></div>');
+  $('#kpis').innerHTML=k.slice(0,4).join('');
+  /* botões de WhatsApp: na prévia mostram como vai funcionar */
+  document.querySelectorAll('[data-wa]').forEach(function(a){a.addEventListener('click',function(e){e.preventDefault();toast(tel?'No site final, este botão abre o WhatsApp da '+nome+': '+fone(tel)+'.':'No site final, este botão abre o WhatsApp da '+nome+'.')})});
+  var msg='Olá! Vi a prévia do site da '+nome+' e quero saber como deixar o site no ar.';
+  $('#queroWa').href='https://wa.me/'+ADM_WA+'?text='+encodeURIComponent(msg);
+}
+
+/* registra a abertura (não conta você logado no painel nem a prévia do link no WhatsApp) */
+function rastrear(l){try{
+  if(!l||/bot|crawl|spider|preview|facebookexternalhit|whatsapp/i.test(navigator.userAgent))return;
+  try{for(var i=0;i<localStorage.length;i++){if(/^sb-.*-auth-token$/.test(localStorage.key(i)))return}}catch(e){}
+  if(new URLSearchParams(location.search).get('eu'))return;
+  var ua=navigator.userAgent,ap=/iPhone|iPad|iPod/.test(ua)?'Celular · iPhone':/Android/.test(ua)?'Celular · Android':/Mobi/.test(ua)?'Celular':/Mac/.test(ua)?'Computador · Mac':/Windows/.test(ua)?'Computador · Windows':'Computador';
+  var k='site-visto-'+l,now=Date.now();try{var t=+localStorage.getItem(k)||0;if(now-t<1800000)return;localStorage.setItem(k,String(now))}catch(e){}
+  fetch(SB+'prosp_site_aberto',{method:'POST',headers:{'Content-Type':'application/json',apikey:KEY},body:JSON.stringify({p_lead:l,p_aparelho:ap}),keepalive:true}).catch(function(){});
+}catch(e){}}
+
+var cod=(location.pathname.match(/^\/s\/([0-9a-f]{7,32})\/?$/i)||[])[1];
+var q=new URLSearchParams(location.search);
+if(cod){
+  fetch(SB+'prosp_site_codigo',{method:'POST',headers:{'Content-Type':'application/json',apikey:KEY},body:JSON.stringify({p_cod:cod})})
+   .then(function(r){return r.ok?r.json():null}).then(function(d){montar(d||{});if(d&&d.lead)rastrear(d.lead)}).catch(function(){montar({})});
+}else montar({nome:q.get('o')||'Ótica Exemplo',cidade:q.get('c')||'Recife',endereco:q.get('e')||'',telefone:q.get('t')||'',nota:q.get('n')||null,avaliacoes:+q.get('a')||0});
+})();
+</script>
+</body>
+</html>
