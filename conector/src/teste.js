@@ -41,5 +41,11 @@ const { criarApi, criarRobo } = require('./fila');
   fila = [{ id: 'a2', telefone: '5581999990007', texto: 'automático', tipo: 'exame_conf' }];
   assert.strictEqual(await r2.umaVez(), 'enviada');
   assert.deepStrictEqual(enviados.slice(-2).map((x) => x[1]), ['automático', 'durante a pausa']);
+  // modo prospecção: usa as funções do CRM
+  const nomes = [];
+  const apiP = criarApi({ supabaseUrl: 'http://x', supabaseKey: 'k', token: 'wa_t', modo: 'prospeccao' }, async (url) => { nomes.push(url.split('/rpc/')[1]); return { ok: true, status: 200, json: async () => ({ ok: true, msg: null }) }; });
+  await apiP.puxar(); await apiP.resultado('x', true); await apiP.ping('conectado'); await apiP.receber('5581', 'oi'); await apiP.sair('5581'); await apiP.registrar({});
+  assert.deepStrictEqual(nomes, ['prosp_wa_puxar', 'prosp_wa_resultado', 'prosp_wa_ping', 'prosp_wa_receber', 'prosp_wa_sair']);
+  assert.strictEqual(apiP.puxarManual, undefined);
   console.log('Teste ok');
 })().catch((e) => { console.error('FALHOU', e); process.exit(1); });
