@@ -1131,10 +1131,10 @@ const ICON={
   sair:I('<path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4M15 8l4 4-4 4M19 12H9"/>')
 };
 const GLASSES='<svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11.5" cy="23" r="7"/><circle cx="28.5" cy="23" r="7"/><path d="M18.5 22c1-1.3 2-1.3 3 0M4.5 21 7 12M35.5 21 33 12"/></svg>';
-const TABS=[['painel','Painel'],['vendas','Vendas'],['aguard','Orçamentos'],['clientes','Clientes'],['cobrar','Cobrar'],['entregas','Follow-up'],['agenda','Agenda'],['os','Ordens de serviço'],['relacao','Relacionamento'],['caixa','Caixa'],['lentes','Lentes'],['demolentes','Demonstração de lentes'],['campanhas','Campanhas'],['financeiro','Financeiro'],['metas','Metas'],['whatsapp','WhatsApp Automático'],['exames','Exames de vista'],['ajustes','Ajustes']];
-/* grupos do menu por finalidade: vendas e loja, clientes (follow-up, WhatsApp, campanhas, agenda, exames), financeiro e sistema */
-const TGORD=['painel','vendas','aguard','os','lentes','demolentes','clientes','relacao','entregas','whatsapp','campanhas','agenda','exames','cobrar','caixa','financeiro','metas','ajustes'];
-const TGRP={painel:'',vendas:'Vendas e loja',aguard:'Vendas e loja',os:'Vendas e loja',lentes:'Vendas e loja',demolentes:'Vendas e loja',clientes:'Clientes',relacao:'Clientes',entregas:'Clientes',whatsapp:'Clientes',campanhas:'Clientes',agenda:'Clientes',exames:'Clientes',cobrar:'Financeiro',caixa:'Financeiro',financeiro:'Financeiro',metas:'Financeiro',ajustes:'Sistema'};
+const TABS=[['painel','Painel'],['vendas','Vendas'],['aguard','Orçamentos'],['clientes','Clientes'],['cobrar','Cobrar'],['entregas','Follow-up'],['agenda','Agenda financeira'],['os','Ordens de serviço'],['relacao','Relacionamento'],['caixa','Caixa'],['lentes','Lentes'],['demolentes','Demonstração de lentes'],['campanhas','Campanhas'],['financeiro','Financeiro'],['metas','Metas'],['whatsapp','WhatsApp Automático'],['exames','Exames de vista'],['ajustes','Ajustes']];
+/* grupos do menu por finalidade: vendas e loja, clientes (follow-up, WhatsApp, campanhas, exames), financeiro (cobrar, agenda financeira, caixa...) e sistema */
+const TGORD=['painel','vendas','aguard','os','lentes','demolentes','clientes','relacao','entregas','whatsapp','campanhas','exames','cobrar','agenda','caixa','financeiro','metas','ajustes'];
+const TGRP={painel:'',vendas:'Vendas e loja',aguard:'Vendas e loja',os:'Vendas e loja',lentes:'Vendas e loja',demolentes:'Vendas e loja',clientes:'Clientes',relacao:'Clientes',entregas:'Clientes',whatsapp:'Clientes',campanhas:'Clientes',agenda:'Financeiro',exames:'Clientes',cobrar:'Financeiro',caixa:'Financeiro',financeiro:'Financeiro',metas:'Financeiro',ajustes:'Sistema'};
 function tabsGrp(tv,fn){let g='',o='';const ix=k=>{const n=TGORD.indexOf(k);return n<0?99:n};tv=tv.map((t,n)=>[t,n]).sort((a,b)=>ix(a[0][0])-ix(b[0][0])||a[1]-b[1]).map(x=>x[0]);tv.forEach(t=>{const k=TGRP[t[0]]||'';if(k&&k!==g){o+='<div class="tgrp'+''+'" aria-hidden="true">'+k+'</div>'}g=k;o+=fn(t)});return o}
 const saudacao=()=>{const h=new Date().getHours();return h<12?'Bom dia':h<18?'Boa tarde':'Boa noite'};
 function admTabInicial(){const q=new URLSearchParams(location.search),t=q.get('tab');if(t){q.delete('tab');history.replaceState(null,'',location.pathname+(q.toString()?'?'+q:''))}return t==='mensal'?'mensal':'admin'}
@@ -1477,7 +1477,7 @@ function viewAgenda(){
   const dayItems=ps.filter(x=>x.p.venc===ui.sel).sort((a,b)=>(a.p.pago-b.p.pago)||a.c.nome.localeCompare(b.c.nome));
   const dRec=sumV(dayItems.filter(x=>!x.p.pago)),dPaid=sumV(dayItems.filter(x=>x.p.pago));
   const dtitle=cap(parseYmd(ui.sel).toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'}));
-  return pageHead('Agenda','Vencimentos do mês, por data','<button class="btn primary" data-act="novavenda">Nova venda</button>')+
+  return pageHead('Agenda financeira','Vencimentos do mês, por data','<button class="btn primary" data-act="novavenda">Nova venda</button>')+
   '<div class="kpis k3"><div class="kpi"><small>A receber</small><b class="c-acc">'+brl(aRec)+'</b><span>'+plural(inM.filter(x=>!x.p.pago).length,'parcela','parcelas')+' no mês</span></div>'+
   '<div class="kpi"><small>Recebido</small><b class="c-ok">'+brl(rec)+'</b><span>'+plural(inM.filter(x=>x.p.pago).length,'parcela','parcelas')+' no mês</span></div>'+
   '<button class="kpi'+(lateAll.length?' neg':'')+'" data-act="tab" data-t="cobrar"><small>Em atraso</small><b>'+brl(sumV(lateAll))+'</b><span>'+plural(lateAll.length,'parcela','parcelas')+(lateAll.length?' · cobrar':'')+'</span></button></div>'+
@@ -3051,7 +3051,7 @@ async function exLoad(){
 const exGarante=()=>{if(EX.ag===null&&!EX.busy)setTimeout(exLoad,0)};
 setInterval(()=>{if(auth==='ok'&&modOn('exames')&&ui.tab==='exames'&&EX.sub==='agenda'&&!document.hidden)exLoad()},30000);
 const exBadge=()=>{if(!modOn('exames')||!EX.ag)return 0;const t=todayStr();return EX.ag.filter(x=>x.data===t&&['agendado','confirmado'].includes(x.status)).length};
-function exDraft(){if(!EX.dr){const b=Object.assign({},EX_PADRAO,{endereco:cfg().endereco||'',whatsapp:cfg().whatsapp||''});EX.dr=Object.assign(b,EX.cfg||{});EX.dr.tpl=Object.assign({},EX.dr.tpl||{});EX.dr.tpl.avisar=Array.isArray(EX.dr.tpl.avisar)?EX.dr.tpl.avisar.map(n=>maskTel(String(n).replace(/^55/,''))).join('\n'):(EX.dr.tpl.avisar||'');EX.dr.hora_ini=exHora(EX.dr.hora_ini);EX.dr.hora_fim=exHora(EX.dr.hora_fim);EX.dr.dias=(EX.dr.dias||[]).slice()}return EX.dr}
+function exDraft(){if(!EX.dr){const b=Object.assign({},EX_PADRAO,{endereco:cfg().endereco||'',whatsapp:cfg().whatsapp||''});EX.dr=Object.assign(b,EX.cfg||{});EX.dr.tpl=Object.assign({},EX.dr.tpl||{});EX.dr.tpl.avisar=Array.isArray(EX.dr.tpl.avisar)?EX.dr.tpl.avisar.map(n=>maskTel(String(n).replace(/^55/,''))).join('\n'):(EX.dr.tpl.avisar||'');EX.dr.hora_ini=exHora(EX.dr.hora_ini);EX.dr.hora_fim=exHora(EX.dr.hora_fim);EX.dr.dias=(EX.dr.dias||[]).slice();EX.dr.locais=(Array.isArray(EX.dr.locais)?EX.dr.locais:[]).map(l=>({nome:l.nome||'',endereco:l.endereco||'',maps_url:l.maps_url||'',dias:Array.isArray(l.dias)?l.dias.map(Number):[],horas:Array.isArray(l.horas)?l.horas.join(', '):''}))}return EX.dr}
 function viewExames(){
   if(!modOn('exames'))return viewUpsell('exames');
   exGarante();
@@ -3083,6 +3083,7 @@ function exForm(){
    '<div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))"><div class="field"><span>Dia</span><input type="date" data-exfm="data" value="'+esc(F.data)+'" min="'+todayStr()+'"></div><div class="field"><span>Horário</span><select data-exfm="hora">'+hs.map(h=>'<option'+(h===F.hora?' selected':'')+'>'+h+'</option>').join('')+'</select></div></div>'+
    '<div class="foot-row"><button class="btn primary" data-act="exsalvarform">Salvar</button><button class="btn" data-act="excancelarform">Fechar</button></div></div>';
 }
+function exLocNome(d){const L=(EX.cfg&&Array.isArray(EX.cfg.locais))?EX.cfg.locais:[];if(!L.length)return '';const w=new Date(d+'T12:00:00Z').getUTCDay(),l=L.find(x=>!Array.isArray(x.dias)||!x.dias.length||x.dias.map(Number).includes(w));return l?(l.nome||l.endereco||''):''}
 function exAgenda(){
   const ag=EX.ag,t=todayStr(),dono=exDono();
   if(ag===null)return none('Carregando...');
@@ -3095,7 +3096,7 @@ function exAgenda(){
   const lista=ag.filter(fl[EX.fil]||fl.prox).sort((p,q)=>(p.data+exHora(p.hora)).localeCompare(q.data+exHora(q.hora)));if(EX.fil==='pass'||EX.fil==='canc')lista.reverse();
   const novos=ag.filter(x=>x.status==='agendado'&&x.data>=t).length;
   const fbtn=[['prox','Próximos'],['hoje','Hoje'],['pass','Já passaram'],['canc','Cancelados']].map(f=>'<button class="btn sm'+(EX.fil===f[0]?' primary':'')+'" data-act="exfil" data-f="'+f[0]+'">'+f[1]+'</button>').join('');
-  let g='',h='';lista.forEach(x=>{if(x.data!==g){g=x.data;h+='<div class="sh" style="margin:14px 0 6px"><h2 style="font-size:16px">'+(x.data===t?'Hoje':x.data===addDays(t,1)?'Amanhã':fmtDate(x.data))+'</h2></div>'}h+=exLinhaAg(x)});
+  let g='',h='';lista.forEach(x=>{if(x.data!==g){g=x.data;h+='<div class="sh" style="margin:14px 0 6px"><h2 style="font-size:16px">'+(x.data===t?'Hoje':x.data===addDays(t,1)?'Amanhã':fmtDate(x.data))+'</h2>'+(exLocNome(x.data)?'<span class="chip">📍 '+esc(exLocNome(x.data))+'</span>':'')+'</div>'}h+=exLinhaAg(x)});
   const wa=waOn()?'':'<p class="sub" style="margin:0 0 10px">Para enviar a confirmação e o lembrete sozinhos, ligue o WhatsApp Automático no menu. Sem ele, use o botão WhatsApp de cada exame.</p>';
   return tiles+wa+'<div class="acts" style="margin-bottom:10px">'+fbtn+'<button class="btn primary sm" data-act="exnovo">Agendar um exame</button></div>'+exForm()+(novos?'<p class="sub" style="margin:0 0 4px">'+plural(novos,'exame ainda sem confirmação','exames ainda sem confirmação')+'.</p>':'')+'<div class="stack">'+(h||none('Nenhum exame nesta lista.'))+'</div>';
 }
@@ -3113,7 +3114,7 @@ function exPagina(){
    f('titulo','Título da página')+'<div class="field"><span>Texto de apoio</span><textarea rows="2" data-exf="subtitulo">'+esc(D.subtitulo)+'</textarea></div>'+'<div class="field"><span>Destaque e observação (a 1ª linha é o destaque; as outras viram observação)</span><textarea rows="3" data-exf="valor_texto">'+esc(D.valor_texto)+'</textarea></div>'+
    '<div class="field"><span>Dias de atendimento</span><div class="chips">'+dias+'</div></div>'+
    '<div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(120px,1fr))">'+f('hora_ini','Abre às','time')+f('hora_fim','Último exame termina às','time')+f('duracao_min','Duração (min)','number',' min="10" max="180" step="5"')+f('vagas','Exames ao mesmo tempo','number',' min="1" max="20"')+f('antecedencia_h','Antecedência mínima (horas)','number',' min="0" max="168"')+f('janela_dias','Mostrar os próximos (dias)','number',' min="1" max="60"')+'</div>'+
-   f('endereco','Endereço')+f('cidade','Cidade')+f('maps_url','Link do Google Maps (opcional)')+f('whatsapp','WhatsApp da ótica')+
+   f('endereco','Endereço')+f('cidade','Cidade')+f('maps_url','Link do Google Maps (opcional)')+f('whatsapp','WhatsApp da ótica')+exLocaisEd(D)+
       '<div class="field"><span>Mensagem de confirmação (sai na hora)</span><textarea rows="5" data-exf="tpl_conf" placeholder="Deixe vazio para usar a mensagem padrão">'+esc(D.tpl.conf||'')+'</textarea></div>'+
    '<div class="field"><span>Mensagem de lembrete (véspera, às 17h)</span><textarea rows="5" data-exf="tpl_lemb" placeholder="Deixe vazio para usar a mensagem padrão">'+esc(D.tpl.lemb||'')+'</textarea></div>'+
    '<div class="field"><span>Mensagem para quem faltou (sai 1 hora depois de marcar "Faltou")</span><textarea rows="5" data-exf="tpl_falt" placeholder="Deixe vazio para usar a mensagem padrão">'+esc(D.tpl.falt||'')+'</textarea></div>'+
@@ -3122,6 +3123,16 @@ function exPagina(){
    '<div class="field"><span>Avisar os donos quando alguém agendar (WhatsApp, um número por linha)</span><textarea rows="3" data-exf="tpl_avisar" placeholder="(81) 99999-9999">'+esc(D.tpl.avisar||'')+'</textarea></div>'+
    '<p class="sub" style="margin:0">Você pode usar {nome}, {otica}, {dia}, {hora}, {endereco} e, no lembrete, {quando}; na mensagem de falta, {link}. As mensagens saem pelo WhatsApp Automático, de forma automática, e param se o exame for cancelado ou remarcado.</p>'+
    '<div class="foot-row"><button class="btn primary" data-act="exsalvarpag"'+(EX.saving?' disabled':'')+'>'+(EX.saving?'Salvando...':'Salvar página')+'</button></div></div>';
+}
+/* locais de atendimento: cada dia da semana fica com o primeiro local que atende nele; horários vazios = horários gerais acima */
+function exLocaisEd(D){
+  const L=D.locais||[];
+  const card=(l,i)=>'<div class="card" style="gap:10px;padding:12px;background:var(--surface-2)"><div class="sh" style="margin:0"><b>Local '+(i+1)+'</b><button class="btn sm ghost" data-act="exlocdel" data-i="'+i+'">Remover</button></div>'+
+    '<div class="grid2"><div class="field"><span>Nome do local</span><input type="text" data-exl="'+i+'|nome" value="'+esc(l.nome)+'" placeholder="Ex.: Consultório em Beberibe"></div><div class="field"><span>Endereço completo</span><input type="text" data-exl="'+i+'|endereco" value="'+esc(l.endereco)+'" placeholder="Rua, número – bairro, cidade"></div></div>'+
+    '<div class="field"><span>Dias neste local</span><div class="chips">'+EX_DIAS.map((n,d)=>'<label class="chip'+(l.dias.includes(d)?' acc':'')+'" style="cursor:pointer;gap:6px"><input type="checkbox" data-exld="'+i+'|'+d+'"'+(l.dias.includes(d)?' checked':'')+' style="margin:0"> '+n+'</label>').join('')+'</div></div>'+
+    '<div class="grid2"><div class="field"><span>Horários fixos (opcional)</span><input type="text" data-exl="'+i+'|horas" value="'+esc(l.horas)+'" placeholder="Ex.: 16:00 · vazio = horários gerais"></div><div class="field"><span>Link do Google Maps (opcional)</span><input type="text" data-exl="'+i+'|maps_url" value="'+esc(l.maps_url)+'"></div></div></div>';
+  return '<div class="field"><span>Locais de atendimento (opcional)</span><p class="sub" style="margin:0 0 8px">Use quando o exame acontece em mais de um lugar. O cliente escolhe o local primeiro e só vê os dias e horários dele. A confirmação, o lembrete e o agente de IA usam o endereço do local. Sem locais, vale o endereço acima.</p>'+
+    '<div style="display:grid;gap:10px">'+L.map(card).join('')+'</div><div class="foot-row" style="margin-top:8px"><button class="btn sm" data-act="exlocadd">Adicionar local</button></div></div>';
 }
 async function exConvLoad(force){
   if(EX.convBusy||(!force&&EX.conv))return;EX.convBusy=true;
@@ -3155,11 +3166,18 @@ Object.assign(A,{
     if(d.s==='compareceu'&&!Object.values(S.clientes).some(c=>exSoDig(c.whatsapp).replace(/^55/,'')===exSoDig(x.whatsapp).replace(/^55/,'')))toast('Compareceu. Use "Cadastrar como cliente" para registrar a venda.');else toast('Atualizado');render()},
   excli(d){const x=(EX.ag||[]).find(a=>a.id===d.id);if(!x)return;const c=makeCliente({nome:cap(x.nome.toLowerCase()),cpf:'',whatsapp:maskTel(exSoDig(x.whatsapp).replace(/^55/,'')),endereco:'',nascimento:'',obs:'Veio pelo agendamento de exame de vista.',receitas:[]});S.clientes[c.id]=c;persist('clientes',c.id);premLog('Cliente cadastrado',c.nome);premWaHook('bv',null,null,c);toast('Cliente cadastrado');render()},
   excopiar(){const u=exLink();(navigator.clipboard?navigator.clipboard.writeText(u):Promise.reject()).then(()=>toast('Link copiado')).catch(()=>{const i=document.querySelector('.card input[readonly]');if(i){i.select();document.execCommand('copy');toast('Link copiado')}})},
+  exlocadd(){const D=exDraft();D.locais.push({nome:'',endereco:'',maps_url:'',dias:[],horas:''});render()},
+  exlocdel(d){const D=exDraft();D.locais.splice(+d.i,1);render()},
   async exsalvarpag(){
     const D=exDraft();EX.saving=true;render();
     const tpl={};if((D.tpl.conf||'').trim())tpl.conf=D.tpl.conf.trim();if((D.tpl.lemb||'').trim())tpl.lemb=D.tpl.lemb.trim();if((D.tpl.falt||'').trim())tpl.falt=D.tpl.falt.trim();if(D.tpl.ia==='true')tpl.ia='true';
     const av=String(D.tpl.avisar||'').split(/\n|,|;/).map(x=>exSoDig(x)).filter(x=>x.length>=10&&x.length<=13).map(x=>x.length<=11?'55'+x:x);if(av.length)tpl.avisar=Array.from(new Set(av));
-    const row={otica_id:OTICA.id,ativo:!!D.ativo,titulo:(D.titulo||'').trim()||EX_PADRAO.titulo,subtitulo:(D.subtitulo||'').trim(),valor_texto:(D.valor_texto||'').trim(),endereco:(D.endereco||'').trim(),cidade:(D.cidade||'').trim(),maps_url:(D.maps_url||'').trim(),whatsapp:(D.whatsapp||'').trim(),
+    const hOk=h=>/^([01]?\d|2[0-3]):[0-5]\d$/.test(h);let locErr='';
+    const locais=(D.locais||[]).filter(l=>(l.nome||'').trim()||(l.endereco||'').trim()).map((l,i)=>{const hs=String(l.horas||'').split(/[,;\s]+/).map(x=>x.trim().replace(/h$/i,':00')).filter(Boolean);
+      if(hs.some(h=>!hOk(h)))locErr='Confira os horários fixos do local '+(i+1)+' (use 16:00, 17:30...)';if(!l.dias.length)locErr='Escolha os dias do local '+(i+1);
+      return {nome:(l.nome||'').trim(),endereco:(l.endereco||'').trim(),maps_url:(l.maps_url||'').trim(),dias:l.dias.slice().sort(),horas:Array.from(new Set(hs.map(h=>h.padStart(5,'0')))).sort()}});
+    if(locErr){EX.saving=false;render();return toast(locErr)}
+    const row={otica_id:OTICA.id,ativo:!!D.ativo,locais:locais,titulo:(D.titulo||'').trim()||EX_PADRAO.titulo,subtitulo:(D.subtitulo||'').trim(),valor_texto:(D.valor_texto||'').trim(),endereco:(D.endereco||'').trim(),cidade:(D.cidade||'').trim(),maps_url:(D.maps_url||'').trim(),whatsapp:(D.whatsapp||'').trim(),
       dias:D.dias.length?D.dias.slice().sort():[1,2,3,4,5,6],hora_ini:D.hora_ini||'09:00',hora_fim:D.hora_fim||'17:00',duracao_min:Math.max(10,Math.min(180,+D.duracao_min||30)),vagas:Math.max(1,Math.min(20,+D.vagas||1)),antecedencia_h:Math.max(0,Math.min(168,+D.antecedencia_h||0)),janela_dias:Math.max(1,Math.min(60,+D.janela_dias||14)),pixel_id:exSoDig(D.pixel_id)||null,tpl:tpl,atualizado_em:new Date().toISOString()};
     if(row.hora_fim<=row.hora_ini){EX.saving=false;render();return toast('O horário final precisa ser depois do inicial')}
     const r=await sb.from('ex_config').upsert(row);EX.saving=false;
@@ -3169,10 +3187,12 @@ Object.assign(A,{
 });
 document.addEventListener('input',e=>{const t=e.target;if(!t||!t.dataset)return;
   if(t.dataset.exfm!==undefined&&EX.form){EX.form[t.dataset.exfm]=t.value;return}
+  if(t.dataset.exl&&EX.dr){const [i,k]=t.dataset.exl.split('|');if(EX.dr.locais[+i])EX.dr.locais[+i][k]=t.value;return}
   if(t.dataset.exf&&EX.dr&&t.type!=='checkbox'){const k=t.dataset.exf;if(k==='tpl_conf')EX.dr.tpl.conf=t.value;else if(k==='tpl_lemb')EX.dr.tpl.lemb=t.value;else if(k==='tpl_falt')EX.dr.tpl.falt=t.value;else if(k==='tpl_avisar')EX.dr.tpl.avisar=t.value;else EX.dr[k]=t.value;return}
 });
 document.addEventListener('change',async e=>{const t=e.target;if(!t||!t.dataset)return;
   if(t.dataset.exfm!==undefined&&EX.form){EX.form[t.dataset.exfm]=t.value;return}
+  if(t.dataset.exld&&EX.dr){const [i,d]=t.dataset.exld.split('|').map(Number),l=EX.dr.locais[i];if(l){l.dias=t.checked?Array.from(new Set(l.dias.concat(d))):l.dias.filter(x=>x!==d);t.closest('label').classList.toggle('acc',t.checked)}return}
   if(t.dataset.exf&&EX.dr&&t.type==='checkbox'){const D=EX.dr,k=t.dataset.exf;if(k==='tpl_ia'){D.tpl.ia=t.checked?'true':'false'}else if(k==='dia'){const n=+t.dataset.d;D.dias=t.checked?Array.from(new Set(D.dias.concat(n))):D.dias.filter(x=>x!==n);t.closest('label').classList.toggle('acc',t.checked)}else D[k]=t.checked;return}
 });
 
