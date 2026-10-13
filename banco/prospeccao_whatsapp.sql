@@ -29,9 +29,10 @@ create table if not exists public.prosp_wa_fila (
 create index if not exists prosp_wa_fila_st on public.prosp_wa_fila(status, enviar_apos);
 create index if not exists prosp_wa_fila_lead on public.prosp_wa_fila(lead_id);
 alter table public.prosp_wa_fila enable row level security;
-drop policy if exists prosp_wa_fila_adm on public.prosp_wa_fila;
-create policy prosp_wa_fila_adm on public.prosp_wa_fila for all using (public.sou_admin()) with check (public.sou_admin());
-grant select, insert, update, delete on public.prosp_wa_fila to authenticated;
+create policy prosp_wa_fila_sel on public.prosp_wa_fila for select using (public.sou_admin());
+create policy prosp_wa_fila_ins on public.prosp_wa_fila for insert with check (public.sou_admin());
+create policy prosp_wa_fila_upd on public.prosp_wa_fila for update using (public.sou_admin()) with check (public.sou_admin());
+grant select, insert, update on public.prosp_wa_fila to authenticated;
 
 create or replace function public.prosp_cfg(k text, def text)
 returns text language sql stable security definer set search_path to 'public' as $$
