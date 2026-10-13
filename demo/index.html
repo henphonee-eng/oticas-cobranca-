@@ -2073,15 +2073,18 @@ const osFmt=n=>(n>0?'+':'')+n.toFixed(2).replace('.',',');
 function osSubj(id){if(String(id).startsWith('c:')){const c=S.clientes[id.slice(2)];return c?{id:id,clienteId:c.id,itens:[],os:c.os,_c:c}:null}return S.vendas[id]}
 function osNumero(v){if(v._c){let m=0;Object.values(S.vendas).concat(Object.values(S.clientes)).forEach(x=>{const n=parseInt(x.os&&x.os.num,10);if(n>m)m=n});return String(m+1).padStart(4,'0')}
   const ids=Object.values(S.vendas).sort((a,b)=>String(a.data||'').localeCompare(String(b.data||''))||(+a.criadoEm||0)-(+b.criadoEm||0)||a.id.localeCompare(b.id)).map(x=>x.id);return String(ids.indexOf(v.id)+1).padStart(4,'0')}
+function osReceita(v){const c=S.clientes[v.clienteId]||{};return (c.receitas||[]).filter(x=>!receitaVazia(x)).sort((a,b)=>(b.data||'').localeCompare(a.data||''))[0]}
 function osBase(v){
-  if(v.os)return JSON.parse(JSON.stringify(v.os));
-  const c=S.clientes[v.clienteId]||{};const r=(c.receitas||[]).filter(x=>!receitaVazia(x)).sort((a,b)=>(b.data||'').localeCompare(a.data||''))[0];
-  const e=()=>({esf:'',cil:'',eixo:''}),o={num:osNumero(v),longe:{od:e(),oe:e()},perto:{od:e(),oe:e()},dpL:'',altL:'',dpP:'',altP:'',tipo:'',cor:''};
+  /* OS já salva: mantém, mas completa a adição com a receita se ainda não tiver */
+  if(v.os){const o=JSON.parse(JSON.stringify(v.os));if(o.adicao==null){const r=osReceita(v);o.adicao=(r&&r.adicao)||''}return o}
+  const r=osReceita(v);
+  const e=()=>({esf:'',cil:'',eixo:''}),o={num:osNumero(v),longe:{od:e(),oe:e()},perto:{od:e(),oe:e()},dpL:'',altL:'',dpP:'',altP:'',tipo:'',cor:'',adicao:''};
   if(r){
     ['od','oe'].forEach(k=>{const l=r[k]||{};o.longe[k]={esf:l.esf||'',cil:l.cil||'',eixo:l.eixo||''};
-      const a=osNum(r.adicao),en=osNum(l.esf);
+      const a=osNum(r.adicao),esf=String(l.esf||'').trim(),en=osNum(esf)!==null?osNum(esf):(!esf||/plan/i.test(esf)?0:null);
       if(a!==null&&en!==null)o.perto[k]={esf:osFmt(en+a),cil:l.cil||'',eixo:l.eixo||''}});
     if(r.dnp)o.dpL=r.dnp;
+    o.adicao=r.adicao||'';
   }
   const ln=(v.itens||[]).filter(i=>i.tipo==='lente'||i.lenteId).map(i=>i.nome).filter(Boolean);
   o.tipo=ln.join(' / ');
@@ -2096,7 +2099,7 @@ function sheetOS(id){
   const body='<div class="sec"><p class="sub" style="margin:0">Já veio preenchido com o último grau do cliente. Confira, ajuste o que precisar e imprima. Endereço e telefone do cliente não saem na OS.</p>'+
    '<div class="grid2"><div class="field"><span>Cliente</span><input type="text" value="'+esc(c.nome)+'" disabled></div><div class="field"><span>Nº da OS</span>'+f('num','Número da OS')+'</div></div>'+
    '<div class="sec"><h3>Longe</h3>'+tab('longe','Longe')+'<div class="grid2"><div class="field"><span>DP</span>'+f('dpL','DP longe')+'</div><div class="field"><span>Alt</span>'+f('altL','Altura longe')+'</div></div></div>'+
-   '<div class="sec"><h3>Perto</h3>'+tab('perto','Perto')+'<div class="grid2"><div class="field"><span>DP</span>'+f('dpP','DP perto')+'</div><div class="field"><span>Alt</span>'+f('altP','Altura perto')+'</div></div></div>'+
+   '<div class="sec"><h3>Perto</h3>'+tab('perto','Perto')+'<div class="grid2" style="grid-template-columns:repeat(3,minmax(0,1fr))"><div class="field"><span>Adição</span>'+f('adicao','Adição','+2,00')+'</div><div class="field"><span>DP</span>'+f('dpP','DP perto')+'</div><div class="field"><span>Alt</span>'+f('altP','Altura perto')+'</div></div></div>'+
    '<div class="grid2"><div class="field"><span>Tipo de lente</span>'+f('tipo','Tipo de lente')+'</div><div class="field"><span>Cor</span>'+f('cor','Cor')+'</div></div></div>';
   return sheetShell('Ordem de serviço',body,'<button class="btn primary" data-act="osimprimir" data-v="'+id+'">Imprimir OS</button><button class="btn" data-act="ospdf" data-v="'+id+'">Baixar PDF</button>');
 }
@@ -2120,6 +2123,7 @@ function osBlob(v){
     doc.setFontSize(12);[['od','OD'],['oe','OE']].forEach((e,r)=>{const yy=top+rh*(r+1)+rh/2+1.8;doc.setFont('helvetica','bold');T(e[1],x+lw/2,yy,{align:'center'});doc.setFont('helvetica','normal');['esf','cil','eixo'].forEach((q,i)=>T((D[k][e[0]]||{})[q]||'',x+lw+cw*i+cw/2,yy,{align:'center'}))});
   };
   tbl(M,62,'LONGE','longe');tbl(M+100,62,'PERTO','perto');
+  {const ad=String(D.adicao||'').trim();doc.setFont('helvetica','bold');doc.setFontSize(12);const lb='Adição:',xr=M+100+86;doc.setFont('helvetica','normal');const vw=Math.max(doc.getTextWidth(ad||'')+4,22);doc.setFont('helvetica','bold');T(lb,xr-vw-doc.getTextWidth(lb)-2,62);doc.setLineWidth(.3);doc.line(xr-vw,63,xr,63);doc.setFont('helvetica','normal');T(ad,xr-vw/2,61.5,{align:'center'})}
   const ln=(lab,val,x,y,w)=>{doc.setFont('helvetica','bold');doc.setFontSize(12);T(lab,x,y);const lx=x+doc.getTextWidth(lab)+2;doc.setLineWidth(.3);doc.line(lx,y+1,x+w,y+1);doc.setFont('helvetica','normal');T(val||'',lx+2,y-.5)};
   ln('DP',D.dpL,M,110,40);ln('Alt',D.altL,M+50,110,45);ln('DP',D.dpP,M+100,110,40);ln('Alt',D.altP,M+150,110,36);
   ln('Tipo de Lente:',D.tipo,M,124,125);ln('Cor:',D.cor,M+135,124,51);
