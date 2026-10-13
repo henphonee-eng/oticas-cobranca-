@@ -53,13 +53,22 @@ async function main() {
   const { useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion } = baileys;
   const pino = require('pino');
   let sock = null;
+  // Guarda as últimas mensagens enviadas. Quando o celular de quem recebe não consegue abrir
+  // a mensagem de primeira ("Aguardando mensagem"), ele pede para reenviar e o WhatsApp
+  // busca a mensagem aqui. Sem isso ela fica presa para sempre.
+  const enviadas = new Map();
+  function guardar(r) {
+    if (!r || !r.key || !r.key.id || !r.message) return;
+    enviadas.set(r.key.id, r.message);
+    if (enviadas.size > 1000) enviadas.delete(enviadas.keys().next().value);
+  }
   let aberto = false;
 
   async function conectar() {
     const { state, saveCreds } = await useMultiFileAuthState(PASTA_SESSAO);
     let version;
     try { version = (await fetchLatestBaileysVersion()).version; } catch (e) { /* usa a padrão */ }
-    sock = makeWASocket({ auth: state, version, logger: pino({ level: 'silent' }), browser: ['Otica', 'Chrome', '1.0'], markOnlineOnConnect: false, syncFullHistory: false });
+    sock = makeWASocket({ auth: state, version, logger: pino({ level: 'silent' }), browser: ['Otica', 'Chrome', '1.0'], markOnlineOnConnect: false, syncFullHistory: false, getMessage: async (key) => enviadas.get(key.id) });
     sock.ev.on('creds.update', saveCreds);
     sock.ev.on('connection.update', async (u) => {
       if (u.qr) { estado.estado = 'qr'; estado.qr = u.qr; estado.msg = 'Aguardando a leitura do QR Code.'; api.ping('qr').catch(() => {}); log('QR Code pronto: abra http://localhost:' + PORTA); }
@@ -96,7 +105,7 @@ async function main() {
           if (/^(sair|parar|remover)[.! ]*$/i.test(txt)) {
             await api.sair(tel);
             log('Pediu para sair: ' + tel);
-            await sock.sendMessage(m.key.remoteJid, { text: 'Tudo certo, você não vai mais receber avisos por aqui.' });
+            guardar(await sock.sendMessage(m.key.remoteJid, { text: 'Tudo certo, você não vai mais receber avisos por aqui.' }));
             continue;
           }
           const r = await api.receber(tel, txt, m.pushName);
@@ -129,6 +138,7 @@ async function main() {
       const jid = (await acharJid(tel)) || (tel + '@s.whatsapp.net');
       try { await sock.presenceSubscribe(jid); await sock.sendPresenceUpdate('composing', jid); } catch (e) { /* ignora */ }
       const r = await sock.sendMessage(jid, { text: texto });
+      guardar(r);
       log('Entregue ao WhatsApp: ' + jid + ' (id ' + ((r && r.key && r.key.id) || '?') + ')');
       try { await sock.sendPresenceUpdate('paused', jid); } catch (e) { /* ignora */ }
     },
