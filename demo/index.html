@@ -2406,9 +2406,9 @@ document.addEventListener('change',onField);
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&ui.sheet)closeSheet()});
 
 /* ---------- início ---------- */
-(function init(){
+function init(){
   if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});
-  try{const q=new URLSearchParams(location.search).get('o');if(q&&q.trim()){DEMO_NOME=q.trim().slice(0,40);DEMO_PERSONAL=true}}catch(e){}
+  try{const q=DEMO_NOME_COD||new URLSearchParams(location.search).get('o');if(q&&q.trim()){DEMO_NOME=nomeCurtoDemo(q);DEMO_PERSONAL=true}}catch(e){}
   OTICA.nome=DEMO_NOME;document.title='Demonstração · '+DEMO_NOME;
   const bl=document.getElementById('brand-logo');
   if(DEMO_PERSONAL){bl.textContent='';const a=document.createElement('span');a.textContent=DEMO_NOME;const m=document.createElement('small');m.textContent='sistema de gestão';bl.appendChild(a);bl.appendChild(m);if(DEMO_NOME.length>16)bl.classList.add('long')}
@@ -2416,7 +2416,14 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&ui.sheet)closeSheet
   const sf=document.querySelector('.side-foot');if(sf)sf.insertBefore(sc,sf.firstChild);
   S.config.otica={id:'otica',nome:DEMO_NOME,whatsapp:'',endereco:'Rua Exemplo, 123 · Sua cidade',pix:'seu-pix@exemplo.com',autolock:0};
   loadDemo();
-})();
+}
+/* link curto /d/<código>: busca o nome da ótica e o lead antes de montar o demo */
+function nomeCurtoDemo(n){const s=String(n||'').trim(),c=s.split(/\s*(?::|\||\s[-–—]\s)\s*/)[0].trim();return (c.length>=3?c:s).slice(0,40)}
+let DEMO_NOME_COD='';
+(function(){const cod=(location.pathname.match(/^\/d\/([0-9a-f]{7,32})\/?$/i)||[])[1];if(!cod)return init();
+  fetch('https://ovynkeifzhavhjdkjjui.supabase.co/rest/v1/rpc/prosp_demo_codigo',{method:'POST',headers:{'Content-Type':'application/json',apikey:'sb_publishable_7RunIjZPQDCuWNSuPrD10w_Gy_lIUFl'},body:JSON.stringify({p_cod:cod})})
+    .then(r=>r.ok?r.json():null).then(r=>{if(r&&r.nome){DEMO_NOME_COD=r.nome;window.DEMO_LEAD=r.lead}}).catch(()=>{})
+    .then(()=>{init();if(window.DEMO_LEAD&&window.demoRastrear)window.demoRastrear(window.DEMO_LEAD)})})();
 </script>
 <script>
 /* avisa quando há uma versão nova do sistema publicada (o app da tela de início fica aberto por dias) */
@@ -2448,14 +2455,15 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&ui.sheet)closeSheet
 /* prospecção: registra cada acesso real da ótica ao demo (?l=id do lead).
    Não conta: você logado no sistema, a prévia do link no WhatsApp (robôs não rodam JS)
    nem recarregar a página no mesmo aparelho em menos de 30 min. */
-(function(){try{
-  var l=new URLSearchParams(location.search).get('l');if(!l||!/^[0-9a-f-]{36}$/i.test(l))return;
+window.demoRastrear=function(l){try{
+  if(!l||!/^[0-9a-f-]{36}$/i.test(l))return;
   if(/bot|crawl|spider|preview|facebookexternalhit|whatsapp/i.test(navigator.userAgent))return;
   try{for(var i=0;i<localStorage.length;i++){if(/^sb-.*-auth-token$/.test(localStorage.key(i)))return}}catch(e){}
   var ua=navigator.userAgent,ap=/iPhone|iPad|iPod/.test(ua)?'Celular · iPhone':/Android/.test(ua)?'Celular · Android':/Mobi/.test(ua)?'Celular':/Mac/.test(ua)?'Computador · Mac':/Windows/.test(ua)?'Computador · Windows':'Computador';
   var k='demo-visto-'+l,now=Date.now();try{var t=+localStorage.getItem(k)||0;if(now-t<1800000)return;localStorage.setItem(k,String(now))}catch(e){}
   fetch('https://ovynkeifzhavhjdkjjui.supabase.co/rest/v1/rpc/prosp_demo_aberto',{method:'POST',headers:{'Content-Type':'application/json',apikey:'sb_publishable_7RunIjZPQDCuWNSuPrD10w_Gy_lIUFl'},body:JSON.stringify({p_lead:l,p_aparelho:ap}),keepalive:true}).catch(function(){});
-}catch(e){}})();
+}catch(e){}};
+try{var lq=new URLSearchParams(location.search).get('l');if(lq)window.demoRastrear(lq)}catch(e){}
 </script>
 </body>
 </html>

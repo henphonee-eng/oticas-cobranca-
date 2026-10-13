@@ -24,6 +24,10 @@
   ],
   "rewrites": [
     {
+      "source": "/d/:cod",
+      "destination": "/demo/index.html"
+    },
+    {
       "source": "/adm",
       "destination": "/index.html"
     },
