@@ -7,7 +7,7 @@
 <link rel="manifest" href="/demo/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/demo/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-title" content="Demo">
-<title>Demonstração · Sistema de cobranças para óticas</title>
+<title>Demonstração · Sistema de gestão para óticas</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="robots" content="noindex,nofollow">
@@ -803,7 +803,7 @@ html.adm .tab[aria-current=page] svg{box-shadow:inset 0 0 0 1px var(--edge)}
 <div id="app" class="shell" hidden>
   <aside class="side">
     <button class="menubtn" id="menubtn" data-act="mais" aria-label="Menu"></button>
-    <div class="brand"><div class="brand-name" id="brand-logo">SUA ÓTICA<small>aqui</small></div><span class="brand-sub">Sistema de cobranças</span></div>
+    <div class="brand"><div class="brand-name" id="brand-logo">SUA ÓTICA<small>aqui</small></div><span class="brand-sub">Sistema de gestão</span></div>
     <button class="bellbtn" id="bell" data-act="bell" aria-label="Avisos de cobrança"></button>
     <nav class="tabs" id="tabs" aria-label="Seções"></nav>
     <div class="side-foot"><div class="sync" id="sync"><i></i><span>Demonstração</span></div><span class="who" id="who">Modo demonstração</span></div>
@@ -924,11 +924,11 @@ const CTA_NUM='5581999707538';
 function demoHero(){
   if(ui.dhHide)return '';
   const n=esc(DEMO_NOME);
-  return '<section class="dhero" aria-label="Apresentação"><div class="dh-main"><b>'+(DEMO_PERSONAL?'Demonstração para '+n:'Demonstração ao vivo')+'</b><span>Dados de exemplo, nada fica salvo. Clique em tudo e veja a cobrança funcionando.</span></div>'+
+  return '<section class="dhero" aria-label="Apresentação"><div class="dh-main"><b>'+(DEMO_PERSONAL?'Demonstração para '+n:'Demonstração ao vivo')+'</b><span>Dados de exemplo, nada fica salvo. Clique em tudo e veja o sistema funcionando.</span></div>'+
     '<div class="dh-acts"><a class="btn gold sm" target="_blank" rel="noopener" href="'+ctaHref()+'">Quero para minha ótica</a><button class="dh-x" data-act="dhx" aria-label="Fechar aviso" title="Fechar">&times;</button></div></section>';
 }
 
-const ctaHref=()=>'https://wa.me/'+CTA_NUM+'?text='+encodeURIComponent((DEMO_PERSONAL?'Olá! Sou da '+DEMO_NOME+'. ':'Olá! ')+'Vi a demonstração do sistema de cobranças e quero para a minha ótica.');
+const ctaHref=()=>'https://wa.me/'+CTA_NUM+'?text='+encodeURIComponent((DEMO_PERSONAL?'Olá! Sou da '+DEMO_NOME+'. ':'Olá! ')+'Vi a demonstração do sistema de gestão e quero para a minha ótica.');
 const demoNote=()=>(!ui.dhHide&&ui.tab==='painel')?'':'<div class="demo-note"><b>Demonstração</b><span>Você está vendo dados de exemplo. Pode clicar em tudo, cadastrar clientes e simular vendas. Nada fica salvo: ao recarregar a página, volta ao início.</span><a class="btn wa sm" target="_blank" rel="noopener" href="'+ctaHref()+'">Quero para minha ótica</a></div>';
 
 /* ---------- modelo ---------- */
@@ -2411,7 +2411,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&ui.sheet)closeSheet
   try{const q=new URLSearchParams(location.search).get('o');if(q&&q.trim()){DEMO_NOME=q.trim().slice(0,40);DEMO_PERSONAL=true}}catch(e){}
   OTICA.nome=DEMO_NOME;document.title='Demonstração · '+DEMO_NOME;
   const bl=document.getElementById('brand-logo');
-  if(DEMO_PERSONAL){bl.textContent='';const a=document.createElement('span');a.textContent=DEMO_NOME;const m=document.createElement('small');m.textContent='sistema de cobranças';bl.appendChild(a);bl.appendChild(m);if(DEMO_NOME.length>16)bl.classList.add('long')}
+  if(DEMO_PERSONAL){bl.textContent='';const a=document.createElement('span');a.textContent=DEMO_NOME;const m=document.createElement('small');m.textContent='sistema de gestão';bl.appendChild(a);bl.appendChild(m);if(DEMO_NOME.length>16)bl.classList.add('long')}
   const sc=document.createElement('a');sc.className='btn wa side-cta';sc.target='_blank';sc.rel='noopener';sc.href=ctaHref();sc.textContent='Quero para minha ótica';
   const sf=document.querySelector('.side-foot');if(sf)sf.insertBefore(sc,sf.firstChild);
   S.config.otica={id:'otica',nome:DEMO_NOME,whatsapp:'',endereco:'Rua Exemplo, 123 · Sua cidade',pix:'seu-pix@exemplo.com',autolock:0};

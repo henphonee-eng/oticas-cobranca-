@@ -8,8 +8,8 @@
 document.write('<meta name="theme-color" content="'+(a?'#191A23':'#00348A')+'">'+
 '<link rel="manifest" href="'+(a?'/adm.webmanifest':'/manifest.webmanifest')+'">'+
 '<link rel="apple-touch-icon" href="'+(a?'/icons/adm-apple-touch-icon.png':'/icons/apple-touch-icon.png')+'">'+
-'<meta name="apple-mobile-web-app-title" content="'+(a?'Adm Óticas':'Cobranças')+'">'+
-'<title>'+(a?'Adm Óticas':'Cobranças')+'</title>')})();</script>
+'<meta name="apple-mobile-web-app-title" content="'+(a?'Adm Óticas':'Gestão')+'">'+
+'<title>'+(a?'Adm Óticas':'Gestão da ótica')+'</title>')})();</script>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="robots" content="noindex,nofollow">
@@ -771,7 +771,7 @@ html:not(.adm) :is(.btn,.tab,.fchip,button.card,button.kpi,button.tile,.dlc):foc
 <div id="app" class="shell" hidden>
   <aside class="side">
     <button class="menubtn" id="menubtn" data-act="mais" aria-label="Menu"></button>
-    <div class="brand"><img class="logo" id="brand-logo" alt="" hidden><span class="brand-sub">Sistema de cobranças</span></div>
+    <div class="brand"><img class="logo" id="brand-logo" alt="" hidden><span class="brand-sub">Sistema de gestão</span></div>
     <button class="bellbtn" id="bell" data-act="bell" aria-label="Avisos de cobrança"></button>
     <nav class="tabs" id="tabs" aria-label="Seções"></nav>
     <div class="side-foot"><div class="sync" id="sync"><i></i><span>Conectando</span></div><span class="who" id="who"></span><button class="btn sm ghost" data-act="logout">Sair</button></div>
@@ -939,10 +939,10 @@ async function pwaBrand(o,c1,c2){
   if(!LOGO_W)return;
   const im=await new Promise(ok=>{const i=new Image();i.onload=()=>ok(i);i.onerror=()=>ok(null);i.src=LOGO_W});if(!im)return;
   const i192=iconData(192,c1,c2,im),i512=iconData(512,c1,c2,im),i180=iconData(180,c1,c2,im);
-  const man={name:(o.nome||'Cobranças')+' · Cobranças',short_name:String(o.nome||'Cobranças').slice(0,12),start_url:location.origin+'/?o='+encodeURIComponent(tenantSlug()),scope:location.origin+'/',display:'standalone',orientation:'portrait',background_color:c2,theme_color:c2,lang:'pt-BR',icons:[{src:i192,sizes:'192x192',type:'image/png',purpose:'any maskable'},{src:i512,sizes:'512x512',type:'image/png',purpose:'any maskable'}]};
+  const man={name:(o.nome||'Gestão da ótica')+' · Gestão',short_name:String(o.nome||'Gestão').slice(0,12),start_url:location.origin+'/?o='+encodeURIComponent(tenantSlug()),scope:location.origin+'/',display:'standalone',orientation:'portrait',background_color:c2,theme_color:c2,lang:'pt-BR',icons:[{src:i192,sizes:'192x192',type:'image/png',purpose:'any maskable'},{src:i512,sizes:'512x512',type:'image/png',purpose:'any maskable'}]};
   const ml=document.querySelector('link[rel=manifest]');if(ml)ml.href=URL.createObjectURL(new Blob([JSON.stringify(man)],{type:'application/manifest+json'}));
   const al=document.querySelector('link[rel=apple-touch-icon]');if(al)al.href=i180;
-  const at=document.querySelector('meta[name=apple-mobile-web-app-title]');if(at)at.content=String(o.nome||'Cobranças').slice(0,14);
+  const at=document.querySelector('meta[name=apple-mobile-web-app-title]');if(at)at.content=String(o.nome||'Gestão').slice(0,14);
 }
 async function applyBrand(o){
   if(!o)return;
@@ -952,7 +952,7 @@ async function applyBrand(o){
   const L='--accent:'+c2+';--accent-fg:#fff;--accent-soft:color-mix(in srgb,'+c2+' 12%,transparent);';
   const D='--accent:'+dk+';--accent-fg:#06142C;--accent-soft:color-mix(in srgb,'+dk+' 22%,transparent);';
   st.textContent=':root{--brand-1:'+c1+';--brand-2:'+c2+'}@media (prefers-color-scheme:light){:root:not([data-theme=dark]){'+L+'}}@media (prefers-color-scheme:dark){:root:not([data-theme=light]){'+D+'}}:root[data-theme=light]{'+L+'}:root[data-theme=dark]{'+D+'}';
-  document.title=(o.nome||'Cobranças')+' · Cobranças';
+  document.title=(o.nome||'Gestão da ótica')+' · Gestão';
   const [b,w]=await Promise.all([o.logo_claro?toDataUrl(o.logo_claro):'',o.logo_escuro?toDataUrl(o.logo_escuro):'']);
   LOGO_B=b||w;LOGO_W=w||b;
   if(LOGO_W){await new Promise(ok=>{const im=new Image();im.onload=()=>{if(im.naturalHeight)LOGO_R=im.naturalWidth/im.naturalHeight;ok()};im.onerror=ok;im.src=LOGO_W})}
@@ -978,7 +978,7 @@ function computeAuth(){
 }
 function gateHtml(){
   const nm=brandNome();
-  const head='<div class="gate-card"><div class="gate-brand">'+(LOGO_B?'<img class="logo lg-b" src="'+LOGO_B+'" alt="'+esc(nm)+'"><img class="logo lg-w" src="'+LOGO_W+'" alt="'+esc(nm)+'">':'<h2>'+esc(nm||'Cobranças')+'</h2>')+'<p class="sub">'+(ADM_MODE?'Controle geral das óticas':'Sistema de cobranças')+'</p></div>';
+  const head='<div class="gate-card"><div class="gate-brand">'+(LOGO_B?'<img class="logo lg-b" src="'+LOGO_B+'" alt="'+esc(nm)+'"><img class="logo lg-w" src="'+LOGO_W+'" alt="'+esc(nm)+'">':'<h2>'+esc(nm||'Gestão da ótica')+'</h2>')+'<p class="sub">'+(ADM_MODE?'Controle geral das óticas':'Sistema de gestão')+'</p></div>';
   if(auth==='loading')return head+'<p class="sub" style="text-align:center">Carregando...</p></div>';
   if(auth==='error')return head+'<p class="sub">Não foi possível conectar aos seus dados. Confira a internet e tente de novo.</p><button class="btn primary" data-act="reload">Tentar de novo</button></div>';
   return head+'<form data-gate="login" class="stack" autocomplete="on"><h2>Entrar</h2>'+(gateNote?'<p class="hint">'+esc(gateNote)+'</p>':'')+
@@ -3217,7 +3217,7 @@ function pixCopia(chave,nome,cidade,centavos,txid){
 }
 const admPix=c=>pixCopia(ADM.cfg.pix,ADM.cfg.pix_nome||'Eder Henrique',ADM.cfg.pix_cidade||'Recife',c?c.valor:0,c?('MENS'+String(c.id||'').replace(/-/g,'').slice(0,12)):'');
 const ADMDEF={
-  boasvindas:'Olá, {nome}! Seja bem-vindo(a) ao sistema de cobranças da {otica}. O seu acesso já está pronto.\n\nLink: {link}\nE-mail: {email}{senha}\n\nQualquer dúvida, é só chamar por aqui.',
+  boasvindas:'Olá, {nome}! Seja bem-vindo(a) ao sistema de gestão da {otica}. O seu acesso já está pronto.\n\nLink: {link}\nE-mail: {email}{senha}\n\nQualquer dúvida, é só chamar por aqui.',
   lembrete:'Olá, {nome}! Passando para lembrar que a {descricao} do sistema da {otica}, de {valor}, vence em {vencimento}.\n\nPix copia e cola (já com o valor):\n{pixcopia}\n\nObrigado!',
   atraso:'Olá, {nome}! A {descricao} do sistema da {otica}, de {valor}, venceu em {vencimento} e está em atraso há {dias}.\n\nPix copia e cola (já com o valor):\n{pixcopia}\n\nSe já pagou, é só enviar o comprovante. Obrigado!'
 };
