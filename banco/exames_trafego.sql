@@ -301,14 +301,5 @@ end $$;
 drop trigger if exists ex_agend_ins on public.ex_agend;
 create trigger ex_agend_ins after insert on public.ex_agend for each row execute function public.ex_tg_ins();
 
--- atualiza resultados e sugestões dos anúncios a cada 6 horas
-do $$ begin perform cron.unschedule('meta-cron'); exception when others then null; end $$;
-select cron.schedule('meta-cron','0 */6 * * *', $c$
-  select net.http_post(
-    url := 'https://ovynkeifzhavhjdkjjui.supabase.co/functions/v1/meta-cron',
-    headers := jsonb_build_object('Content-Type','application/json','x-cron',(select valor from public.app_segredos where chave='cron_secret')),
-    body := '{}'::jsonb);
-$c$);
-
 -- libera para a Óticas DK (piloto)
 update public.oticas set modulos = coalesce(modulos,'{}'::jsonb) || '{"exames":true}'::jsonb where slug='oticadk';

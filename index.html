@@ -873,7 +873,7 @@ const WAT=isMobile?'':' target="_blank" rel="noopener"';
 const pForma=(p,v)=>p.forma||v.forma;
 
 /* ---------- supabase ---------- */
-const APP_BUILD='20261012-2245';
+const APP_BUILD='20261012-2320';
 const SB_URL='https://ovynkeifzhavhjdkjjui.supabase.co',SB_KEY='sb_publishable_7RunIjZPQDCuWNSuPrD10w_Gy_lIUFl';
 const sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});
 const queues={},pendingW={},recentW={};
@@ -2501,7 +2501,7 @@ const MODS=[
  {k:'campanhas',n:'Campanhas por grupo de clientes',d:'Escolha um grupo e envie a mensagem pelo WhatsApp com poucos toques, sem digitar o nome de ninguém.',b:['Grupos prontos: sem comprar há 1 ano, grau antigo, em atraso, aniversariantes','Mensagem editável com o nome do cliente já preenchido','Marca quem já recebeu para não repetir']},
  {k:'pesquisa',n:'Pesquisa de satisfação e avaliação no Google',d:'Alguns dias depois da compra, peça ao cliente uma avaliação com o link da sua ótica no Google.',b:['Lista de quem comprou há alguns dias e ainda não foi chamado','Mensagem pronta com o seu link de avaliação','Marca quem já foi chamado']},
  {k:'wa',n:'WhatsApp automático',d:'Os avisos de boas-vindas, recibo, óculos chegou, agradecimento, lembrete e atraso saem sozinhos pelo WhatsApp da ótica, de um programa no computador da loja.',b:['Você escolhe, aviso por aviso, se sai sozinho ou se espera a sua aprovação','Fila guardada na nuvem: se o computador estiver desligado, nada se perde','Limite por dia, horário comercial e pausa com um clique','Quem responder SAIR não recebe mais avisos']},
- {k:'exames',add:true,n:'Tráfego exame de vista',d:'Uma página para o cliente agendar o exame de vista, a confirmação sai sozinha pelo WhatsApp e os anúncios no Facebook e no Instagram são criados e acompanhados pelo sistema. Função adicional, contratada à parte do Premium.',b:['Página de agendamento com o seu logo e as suas cores, pronta para divulgar','Agenda de exames: confirmar, remarcar, marcar quem veio e quem faltou','Confirmação na hora e lembrete na véspera pelo WhatsApp Automático','Anúncios no Facebook e Instagram para quem mora perto da ótica','Artes criadas pelo sistema ou fotos e vídeos feitos na sua loja','Resultados: quanto investiu, quantos agendaram e quanto custou cada agendamento','Sugestões do que pausar e do que melhorar, ou ajustes automáticos dentro do limite que você definir']},
+ {k:'exames',add:true,n:'Tráfego exame de vista',d:'Uma página para o cliente agendar o exame de vista, e a confirmação e o lembrete saem sozinhos pelo WhatsApp. Função adicional, contratada à parte do Premium.',b:['Página de agendamento com o seu logo e as suas cores, pronta para divulgar','Agenda de exames: confirmar, remarcar, marcar quem veio e quem faltou','Confirmação na hora e lembrete na véspera pelo WhatsApp Automático','Link curto para colocar na bio do Instagram, no WhatsApp e nos seus anúncios','Quem agendar já aparece na agenda e vira cliente com um toque','Mensagens de confirmação e lembrete que você pode personalizar']},
  {k:'historico',n:'Histórico de alterações e backup automático',d:'Saiba quem fez o quê no sistema e tenha uma cópia de segurança toda semana.',b:['Registro de vendas, recebimentos, edições e exclusões com data e usuário','Backup semanal baixado sozinho no aparelho','Mais segurança quando há equipe usando o sistema']}
 ];
 const MOD=k=>MODS.find(m=>m.k===k)||{};
@@ -3028,8 +3028,7 @@ document.addEventListener('change',e=>{
 });
 
 /* ----- Exames de vista e tráfego pago (função adicional) ----- */
-const EX={cfg:undefined,ag:null,busy:false,sub:'agenda',fil:'prox',err:'',dr:null,form:null,saving:false,
-  ads:{st:null,cri:null,met:null,sug:null,busy:false,msg:'',per:7,gen:null,gerando:false,foto:null,cfg:null,pick:{},geo:''}};
+const EX={cfg:undefined,ag:null,busy:false,sub:'agenda',fil:'prox',err:'',dr:null,form:null,saving:false};
 const EX_ST={agendado:['acc','Agendado'],confirmado:['ok','Confirmado'],compareceu:['ok','Compareceu'],faltou:['bad','Faltou'],cancelado:['','Cancelado']};
 const EX_DIAS=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
 const EX_PADRAO={ativo:false,titulo:'Agende seu exame de vista',subtitulo:'Escolha o melhor dia e horário. Leva poucos minutos e a gente confirma pelo WhatsApp.',endereco:'',cidade:'',maps_url:'',whatsapp:'',dias:[1,2,3,4,5,6],hora_ini:'09:00',hora_fim:'17:00',duracao_min:30,vagas:1,antecedencia_h:2,janela_dias:14,valor_texto:'Exame de vista sem compromisso',pixel_id:'',tpl:{}};
@@ -3055,11 +3054,11 @@ function exDraft(){if(!EX.dr){const b=Object.assign({},EX_PADRAO,{endereco:cfg()
 function viewExames(){
   if(!modOn('exames'))return viewUpsell('exames');
   exGarante();
-  const dono=exDono(),subs=[['agenda','Agenda de exames']].concat(dono?[['pagina','Página de agendamento'],['anuncios','Anúncios']]:[]);
+  const dono=exDono(),subs=[['agenda','Agenda de exames']].concat(dono?[['pagina','Página de agendamento']]:[]);
   if(!dono)EX.sub='agenda';
   const nav='<div class="seg ex-nav" role="tablist" aria-label="Tráfego exame de vista">'+subs.map(s=>'<button class="btn sm'+(EX.sub===s[0]?' primary':'')+'" role="tab" aria-selected="'+(EX.sub===s[0])+'" data-act="exsub" data-s="'+s[0]+'">'+s[1]+'</button>').join('')+'</div>';
-  const corpo=EX.sub==='pagina'?exPagina():EX.sub==='anuncios'?exAds():exAgenda();
-  return pageHead('Tráfego exame de vista','Agendamentos feitos pelo link, pelos anúncios e pela equipe')+nav+(EX.err?'<p class="sub" style="color:var(--bad)">'+esc(EX.err)+'</p>':'')+corpo;
+  const corpo=EX.sub==='pagina'?exPagina():exAgenda();
+  return pageHead('Tráfego exame de vista','Agendamentos feitos pelo link e pela equipe, com confirmação e lembrete pelo WhatsApp')+nav+(EX.err?'<p class="sub" style="color:var(--bad)">'+esc(EX.err)+'</p>':'')+corpo;
 }
 /* ---- agenda ---- */
 function exLinhaAg(x){
@@ -3086,7 +3085,7 @@ function exForm(){
 function exAgenda(){
   const ag=EX.ag,t=todayStr(),dono=exDono();
   if(ag===null)return none('Carregando...');
-  if(EX.cfg===null&&dono&&!ag.length)return '<div class="empty" style="margin-top:12px"><h3>Comece pela página de agendamento</h3><p>Configure dias, horários e endereço. Depois é só divulgar o link ou ligar os anúncios.</p><button class="btn primary" data-act="exsub" data-s="pagina">Configurar página</button></div>';
+  if(EX.cfg===null&&dono&&!ag.length)return '<div class="empty" style="margin-top:12px"><h3>Comece pela página de agendamento</h3><p>Configure dias, horários e endereço. Depois é só divulgar o link.</p><button class="btn primary" data-act="exsub" data-s="pagina">Configurar página</button></div>';
   const m30=addDays(t,-30),rec=ag.filter(x=>x.data>=m30&&x.data<=t),comp=rec.filter(x=>x.status==='compareceu').length,falt=rec.filter(x=>x.status==='faltou').length;
   const hoje=ag.filter(x=>x.data===t&&x.status!=='cancelado').length,prox=ag.filter(x=>x.data>t&&['agendado','confirmado'].includes(x.status)).length;
   const anun=ag.filter(x=>x.data>=m30&&(x.anuncio||x.origem==='meta')&&x.status!=='cancelado').length;
@@ -3107,141 +3106,20 @@ function exPagina(){
   return '<div class="card" style="gap:12px"><div class="sh" style="margin:0"><h2>Link para divulgar</h2><span class="chip '+(EX.cfg&&EX.cfg.ativo?'ok':'warn')+'">'+(EX.cfg&&EX.cfg.ativo?'Página no ar':'Página desligada')+'</span></div>'+
    '<input type="text" readonly value="'+esc(url)+'" onclick="this.select()" aria-label="Link da página de agendamento">'+
    '<div class="foot-row"><button class="btn primary" data-act="excopiar">Copiar link</button><a class="btn" target="_blank" rel="noopener" href="'+esc(url)+'">Abrir a página</a><a class="btn wa"'+WAT+' href="'+esc((isMobile?'whatsapp://send?text=':'https://web.whatsapp.com/send?text=')+encodeURIComponent(msg))+'">Enviar no WhatsApp</a></div>'+
-   '<p class="sub" style="margin:0">Coloque este link na bio do Instagram, no WhatsApp da ótica e nos anúncios. Quem agendar aparece na aba Agenda de exames.</p></div>'+
+   '<p class="sub" style="margin:0">Coloque este link na bio do Instagram, no WhatsApp da ótica e nos seus anúncios. Quem agendar aparece na aba Agenda de exames.</p></div>'+
    '<div class="card" style="gap:12px;margin-top:14px"><b>Como a página funciona</b>'+
    '<label class="aguard-box" style="margin:0"><input type="checkbox" data-exf="ativo"'+(D.ativo?' checked':'')+'> Página aberta para agendamentos</label>'+
    f('titulo','Título da página')+'<div class="field"><span>Texto de apoio</span><textarea rows="2" data-exf="subtitulo">'+esc(D.subtitulo)+'</textarea></div>'+'<div class="field"><span>Destaque e observação (a 1ª linha é o destaque; as outras viram observação)</span><textarea rows="3" data-exf="valor_texto">'+esc(D.valor_texto)+'</textarea></div>'+
    '<div class="field"><span>Dias de atendimento</span><div class="chips">'+dias+'</div></div>'+
    '<div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(120px,1fr))">'+f('hora_ini','Abre às','time')+f('hora_fim','Último exame termina às','time')+f('duracao_min','Duração (min)','number',' min="10" max="180" step="5"')+f('vagas','Exames ao mesmo tempo','number',' min="1" max="20"')+f('antecedencia_h','Antecedência mínima (horas)','number',' min="0" max="168"')+f('janela_dias','Mostrar os próximos (dias)','number',' min="1" max="60"')+'</div>'+
    f('endereco','Endereço')+f('cidade','Cidade')+f('maps_url','Link do Google Maps (opcional)')+f('whatsapp','WhatsApp da ótica')+
-   f('pixel_id','ID do Pixel da Meta (opcional, para medir os anúncios)','text',' inputmode="numeric"')+
-   '<div class="field"><span>Mensagem de confirmação (sai na hora)</span><textarea rows="5" data-exf="tpl_conf" placeholder="Deixe vazio para usar a mensagem padrão">'+esc(D.tpl.conf||'')+'</textarea></div>'+
+      '<div class="field"><span>Mensagem de confirmação (sai na hora)</span><textarea rows="5" data-exf="tpl_conf" placeholder="Deixe vazio para usar a mensagem padrão">'+esc(D.tpl.conf||'')+'</textarea></div>'+
    '<div class="field"><span>Mensagem de lembrete (véspera, às 17h)</span><textarea rows="5" data-exf="tpl_lemb" placeholder="Deixe vazio para usar a mensagem padrão">'+esc(D.tpl.lemb||'')+'</textarea></div>'+
    '<p class="sub" style="margin:0">Você pode usar {nome}, {otica}, {dia}, {hora}, {endereco} e, no lembrete, {quando}. As mensagens saem pelo WhatsApp Automático, de forma automática, e param se o exame for cancelado ou remarcado.</p>'+
    '<div class="foot-row"><button class="btn primary" data-act="exsalvarpag"'+(EX.saving?' disabled':'')+'>'+(EX.saving?'Salvando...':'Salvar página')+'</button></div></div>';
 }
-/* ---- anúncios (Meta) ---- */
-const exMoeda=c=>brl(Math.round((+c||0)*100));
-const exReais=s=>Math.round(parseFloat(String(s||'0').replace(/\./g,'').replace(',','.'))*100)||0;
-async function exAdsLoad(){
-  const a=EX.ads;if(a.busy||!OTICA||!exDono())return;a.busy=true;
-  try{
-    const d30=addDays(todayStr(),-30);
-    const r=await Promise.all([sb.rpc('ads_estado',{p_otica:OTICA.id}),sb.from('ads_criativos').select('*').eq('otica_id',OTICA.id).neq('status','arquivado').order('criado_em',{ascending:false}),sb.from('ads_metricas').select('*').eq('otica_id',OTICA.id).gte('dia',d30),sb.from('ads_sugestoes').select('*').eq('otica_id',OTICA.id).eq('status','pendente').order('criada_em',{ascending:false}).limit(20)]);
-    a.st=(r[0]&&r[0].data)||{estado:'desconectado',config:{},opcoes:{}};a.cri=r[1].data||[];a.met=r[2].data||[];a.sug=r[3].data||[];
-    if(!a.cfg)a.cfg=exCfgDraft(a.st.config||{});
-  }catch(e){a.st=a.st||{estado:'desconectado',config:{},opcoes:{}};a.cri=a.cri||[];a.met=a.met||[];a.sug=a.sug||[];a.cfg=a.cfg||exCfgDraft({})}
-  a.busy=false;if(ui.tab==='exames'&&EX.sub==='anuncios'&&!fieldsOn()&&!ui.sheet)render();
-}
-const exCfgDraft=c=>({orcamento_dia:c.orcamento_dia?String(c.orcamento_dia/100).replace('.',','):'20,00',teto_dia:c.teto_dia?String(c.teto_dia/100).replace('.',','):'40,00',raio_km:c.raio_km||5,idade_min:c.idade_min||18,cpa_alvo:c.cpa_alvo?String(c.cpa_alvo/100).replace('.',','):'25,00',modo:c.modo||'sugerir',ativo:c.ativo!==false,lat:c.lat||null,lng:c.lng||null});
-function exAdsFn(acao,extra){return sb.functions.invoke('meta-ads',{body:Object.assign({acao:acao,otica:OTICA.id},extra||{})}).then(r=>{if(r.error){let m='Não foi possível concluir agora.';try{m=(r.error.context&&r.error.context.json&&r.error.context.json.erro)||m}catch(e){}throw new Error(m)}const d=r.data||{};if(d.erro)throw new Error(d.erro);return d})}
-function exAdsErr(e){EX.ads.msg=(e&&e.message)||'Falha';EX.ads.busy=false;render()}
-function exAds(){
-  const a=EX.ads;if(a.st===null){setTimeout(exAdsLoad,0);return none('Carregando...')}
-  const st=a.st,conectado=st.estado==='conectado';
-  const msg=a.msg?'<p class="sub" role="status" style="margin:0 0 10px;color:'+(/^OK/.test(a.msg)?'var(--ok)':'var(--bad)')+'">'+esc(a.msg.replace(/^OK /,''))+'</p>':'';
-  return msg+exAdsConexao(st)+(conectado?exAdsConfig(st):'')+exAdsCriativos()+(conectado?exAdsResultados():'');
-}
-function exAdsConexao(st){
-  const e=st.estado,id=String(st.ad_account_id||'').replace(/^act_/,'');
-  if(e==='conectado'){
-    return '<div class="card" style="gap:10px;margin-bottom:14px"><div class="sh" style="margin:0"><h2>Conta da Meta</h2><span class="chip ok">Conectada</span></div>'+
-     '<div class="sum-row"><span>Página do Facebook</span><b>'+esc(st.page_nome||'-')+'</b></div><div class="sum-row"><span>Instagram</span><b>'+esc(st.ig_nome||'Não ligado')+'</b></div><div class="sum-row"><span>Conta de anúncios</span><b>'+esc(st.ad_account_nome||id)+'</b></div>'+
-     (st.erro?'<p class="sub" style="color:var(--bad);margin:0">'+esc(st.erro)+'</p>':'')+
-     '<div class="foot-row"><a class="btn primary" target="_blank" rel="noopener" href="https://business.facebook.com/billing_hub/payment_settings?asset_id='+esc(id)+'">Depositar saldo na Meta</a><a class="btn" target="_blank" rel="noopener" href="https://adsmanager.facebook.com/adsmanager/manage/campaigns?act='+esc(id)+'">Abrir Gerenciador de Anúncios</a><button class="btn" data-act="exdesc">Desconectar</button></div>'+
-     '<p class="sub" style="margin:0">O dinheiro dos anúncios é pago direto à Meta, no cartão ou Pix da própria ótica. Aqui você só define quanto quer gastar por dia.</p></div>';
-  }
-  if(e==='escolher'){
-    const o=st.opcoes||{},pg=o.paginas||[],ct=o.contas||[];const sp=EX.ads.pick;if(!sp.pg&&pg[0])sp.pg=pg[0].id;if(!sp.ct&&ct[0])sp.ct=ct[0].id;
-    const pgo=pg.find(x=>x.id===sp.pg)||{},cto=ct.find(x=>x.id===sp.ct)||{pixels:[]};
-    return '<div class="card" style="gap:10px;margin-bottom:14px"><b>Escolha as contas que vão usar nos anúncios</b>'+
-     '<div class="field"><span>Página do Facebook</span><select data-exad="pg">'+pg.map(x=>'<option value="'+esc(x.id)+'"'+(x.id===sp.pg?' selected':'')+'>'+esc(x.nome)+'</option>').join('')+'</select></div>'+
-     '<div class="field"><span>Instagram da página</span><select data-exad="ig"><option value="">'+(pgo.ig_id?'Não usar':'Nenhum Instagram ligado a esta página')+'</option>'+(pgo.ig_id?'<option value="'+esc(pgo.ig_id)+'" selected>'+esc(pgo.ig_nome||pgo.ig_id)+'</option>':'')+'</select></div>'+
-     '<div class="field"><span>Conta de anúncios</span><select data-exad="ct">'+ct.map(x=>'<option value="'+esc(x.id)+'"'+(x.id===sp.ct?' selected':'')+'>'+esc(x.nome)+'</option>').join('')+'</select></div>'+
-     '<div class="field"><span>Pixel (para medir agendamentos)</span><select data-exad="px"><option value="">Sem pixel</option>'+(cto.pixels||[]).map(x=>'<option value="'+esc(x.id)+'">'+esc(x.nome)+'</option>').join('')+'</select></div>'+
-     (pg.length&&ct.length?'':'<p class="sub" style="color:var(--bad);margin:0">Não encontramos página ou conta de anúncios nesse login. Crie na Meta e conecte de novo.</p>')+
-     '<div class="foot-row"><button class="btn primary" data-act="exescolher"'+(pg.length&&ct.length?'':' disabled')+'>Confirmar</button><button class="btn" data-act="exdesc">Cancelar</button></div></div>';
-  }
-  return '<div class="card" style="gap:10px;margin-bottom:14px"><div class="sh" style="margin:0"><h2>Conectar Facebook e Instagram</h2><span class="chip">Não conectado</span></div>'+
-   '<p style="margin:0">Conecte a conta da Meta da ótica para o sistema criar e acompanhar os anúncios de exame de vista. Você só escolhe quanto quer investir por dia.</p>'+
-   '<ul class="pl"><li>Anúncios para quem mora perto da ótica</li><li>Quem clicar cai na página de agendamento e aparece na sua agenda</li><li>O sistema acompanha os resultados e sugere o que pausar e o que melhorar</li></ul>'+
-   '<div class="foot-row"><button class="btn primary" data-act="exconectar"'+(EX.ads.busy?' disabled':'')+'>Conectar com a Meta</button></div>'+
-   '<p class="sub" style="margin:0">Você entra com o seu login do Facebook e autoriza. Não guardamos sua senha. O saldo dos anúncios fica na sua conta da Meta.</p>'+
-   (IS_ADMIN?'<details><summary class="sub" style="cursor:pointer">Passo a passo do administrador (criar o app da Meta)</summary><ol class="pl" style="margin-top:8px"><li>Em developers.facebook.com, crie um app do tipo Empresa e adicione o produto Login do Facebook para Empresas.</li><li>Em Login do Facebook, cadastre como URI de redirecionamento: <code>'+SB_URL+'/functions/v1/meta-conectar</code></li><li>Guarde o ID do app e a chave secreta nos segredos META_APP_ID e META_APP_SECRET das Edge Functions do Supabase.</li><li>Enquanto o app está em modo de desenvolvimento, só quem é administrador, desenvolvedor ou testador do app consegue conectar. Para outras óticas, peça a análise do app (permissões ads_management, ads_read, business_management, pages_show_list, pages_read_engagement, pages_manage_ads, instagram_basic).</li></ol></details>':'')+'</div>';
-}
-function exAdsConfig(st){
-  const a=EX.ads,C=a.cfg;
-  const f=(k,l,t,extra)=>'<div class="field"><span>'+l+'</span><input type="'+(t||'text')+'" data-exad="'+k+'" value="'+esc(C[k])+'"'+(extra||'')+'></div>';
-  const loc=C.lat&&C.lng?'Local definido ('+(+C.lat).toFixed(4)+', '+(+C.lng).toFixed(4)+')':'Local ainda não definido';
-  return '<div class="card" style="gap:12px;margin-bottom:14px"><div class="sh" style="margin:0"><h2>Investimento e região</h2><span class="chip '+(C.ativo?'ok':'warn')+'">'+(C.ativo?'Anúncios ligados':'Anúncios pausados')+'</span></div>'+
-   '<div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))">'+f('orcamento_dia','Quanto investir por dia (R$)','text',' inputmode="decimal"')+f('teto_dia','Nunca passar de (R$ por dia)','text',' inputmode="decimal"')+f('raio_km','Raio ao redor da ótica (km)','number',' min="1" max="50"')+f('idade_min','Idade mínima','number',' min="18" max="65"')+f('cpa_alvo','Custo desejado por agendamento (R$)','text',' inputmode="decimal"')+'</div>'+
-   '<div class="field"><span>Localização da ótica</span><div class="chips"><span class="chip '+(C.lat?'ok':'warn')+'">'+loc+'</span></div><div class="foot-row"><button class="btn sm" data-act="exgeo" data-m="end">Usar o endereço da ótica</button><button class="btn sm" data-act="exgeo" data-m="gps">Usar minha localização agora</button></div>'+(a.geo?'<p class="sub" style="margin:0">'+esc(a.geo)+'</p>':'')+'</div>'+
-   '<div class="field"><span>Como o sistema cuida dos anúncios</span><select data-exad="modo"><option value="sugerir"'+(C.modo==='sugerir'?' selected':'')+'>Sugerir mudanças e esperar meu OK</option><option value="automatico"'+(C.modo==='automatico'?' selected':'')+'>Pausar e ajustar sozinho (sem passar do teto)</option></select></div>'+
-   '<label class="aguard-box" style="margin:0"><input type="checkbox" data-exad="ativo"'+(C.ativo?' checked':'')+'> Anúncios ligados</label>'+
-   '<div class="foot-row"><button class="btn primary" data-act="exsalvarads">Salvar</button><button class="btn" data-act="expublicar"'+(a.busy?' disabled':'')+'>'+(st.campanha_id?'Publicar artes novas':'Publicar anúncios na Meta')+'</button>'+(st.campanha_id?'<button class="btn" data-act="exsync">Atualizar resultados</button>':'')+'</div>'+
-   '<p class="sub" style="margin:0">Os anúncios passam pela análise da Meta antes de rodar, o que costuma levar algumas horas. Anúncios de saúde têm regras próprias, então as artes não prometem resultado nem falam de problemas de vista de quem vê.</p></div>';
-}
-function exAdsCriativos(){
-  const a=EX.ads,cri=a.cri||[],met=a.met||[];
-  const ger=a.gen?'<div class="card" style="gap:10px;margin-bottom:12px"><b>Artes geradas</b><p class="sub" style="margin:0">Marque as que quer usar. Cada uma testa uma mensagem diferente, e o sistema mostra qual traz mais agendamentos.</p><div class="ex-grid">'+a.gen.map((g,i)=>'<label class="ex-art"><img alt="Arte '+(i+1)+'" src="'+g.url+'"><span><input type="checkbox" data-exad="gpick" data-i="'+i+'"'+(g.on!==false?' checked':'')+'> '+esc(g.titulo)+'</span></label>').join('')+'</div><div class="foot-row"><button class="btn primary" data-act="exsalvargen"'+(a.busy?' disabled':'')+'>Salvar artes marcadas</button><button class="btn" data-act="exdescgen">Descartar</button></div></div>':'';
-  const cards=cri.map(c=>{const m=met.filter(x=>c.meta_ad_id&&x.ad_id===c.meta_ad_id),g=m.reduce((s,x)=>s+ +x.gasto,0),cl=m.reduce((s,x)=>s+x.cliques,0),ag=(EX.ag||[]).filter(x=>c.meta_ad_id&&x.anuncio===c.meta_ad_id&&x.status!=='cancelado').length;
-    const stc={pronto:['','Pronta, ainda não publicada'],ativo:['ok','No ar'],pausado:['warn','Pausada'],reprovado:['bad','Reprovada pela Meta']}[c.status]||['',c.status];
-    return '<article class="ex-cri"><div class="ex-thumb">'+(c.tipo==='video'?'<video src="'+esc(c.midia_url)+'" poster="'+esc(c.thumb_url||'')+'" muted playsinline preload="none" controls></video>':'<img alt="'+esc(c.titulo)+'" src="'+esc(c.midia_url)+'" loading="lazy">')+'</div><div class="ex-info"><b>'+esc(c.nome||c.titulo)+'</b><div class="chips"><span class="chip '+stc[0]+'">'+stc[1]+'</span><span class="chip">'+(c.tipo==='video'?'Vídeo':'Imagem')+'</span></div>'+(c.meta_ad_id?'<div class="meta">'+exMoeda(g)+' investidos · '+cl+' cliques · '+plural(ag,'agendamento','agendamentos')+(ag?' · '+exMoeda(g/ag)+' cada':'')+'</div>':'')+(c.erro?'<div class="meta" style="color:var(--bad)">'+esc(c.erro)+'</div>':'')+
-      '<div class="acts"><a class="btn sm" href="'+esc(c.midia_url)+'" target="_blank" rel="noopener" download>Baixar</a>'+(c.meta_ad_id?'<button class="btn sm" data-act="excstatus" data-id="'+c.id+'" data-s="'+(c.status==='ativo'?'pausado':'ativo')+'">'+(c.status==='ativo'?'Pausar':'Ativar')+'</button>':'<button class="btn sm" data-act="excarq" data-id="'+c.id+'">Excluir</button>')+'</div></div></article>'}).join('');
-  return '<div class="sh"><h2>Artes e vídeos dos anúncios</h2></div>'+
-   '<div class="card" style="gap:10px;margin-bottom:12px"><p style="margin:0">O sistema cria artes com as cores e o logo da ótica. Você também pode enviar fotos e vídeos feitos na loja, que costumam funcionar melhor.</p>'+
-   '<div class="foot-row"><button class="btn primary" data-act="exgerar"'+(a.gerando?' disabled':'')+'>'+(a.gerando?'Criando...':'Criar artes automáticas')+'</button><label class="btn" style="cursor:pointer">Enviar vídeo ou foto<input type="file" accept="video/mp4,video/quicktime,image/jpeg,image/png,image/webp" data-exad="upload" hidden></label><label class="btn" style="cursor:pointer">Foto de fundo para as artes<input type="file" accept="image/jpeg,image/png,image/webp" data-exad="foto" hidden></label></div>'+(a.foto?'<p class="sub" style="margin:0">Foto de fundo escolhida. Ela será usada em uma das artes.</p>':'')+'</div>'+ger+
-   '<div class="stack ex-list">'+(cards||(a.gen?'':none('Nenhuma arte ainda. Toque em "Criar artes automáticas".')))+'</div>';
-}
-function exAdsResultados(){
-  const a=EX.ads,per=a.per,d0=addDays(todayStr(),-(per-1)),m=(a.met||[]).filter(x=>x.dia>=d0);
-  const g=m.reduce((s,x)=>s+ +x.gasto,0),im=m.reduce((s,x)=>s+x.impressoes,0),cl=m.reduce((s,x)=>s+x.cliques,0);
-  const ag=(EX.ag||[]).filter(x=>x.data>=d0&&(x.anuncio||x.origem==='meta')&&x.status!=='cancelado').length,cp=(EX.ag||[]).filter(x=>x.data>=d0&&(x.anuncio||x.origem==='meta')&&x.status==='compareceu').length;
-  const sug=(a.sug||[]).map(s=>'<article class="row"><div class="row-main"><b>'+esc(s.titulo)+'</b><div class="meta">'+esc(s.detalhe)+'</div></div><div class="row-side"><div class="acts">'+(['pausar','escalar','orcamento'].includes(s.tipo)?'<button class="btn sm primary" data-act="exsugok" data-id="'+s.id+'">Aplicar</button>':'')+'<button class="btn sm" data-act="exsugno" data-id="'+s.id+'">'+(['pausar','escalar','orcamento'].includes(s.tipo)?'Ignorar':'Entendi')+'</button></div></div></article>').join('');
-  return '<div class="sh"><h2>Resultados</h2><div class="acts"><button class="btn sm'+(per===7?' primary':'')+'" data-act="exper" data-p="7">7 dias</button><button class="btn sm'+(per===30?' primary':'')+'" data-act="exper" data-p="30">30 dias</button></div></div>'+
-   '<div class="kpis" style="margin-bottom:12px">'+tile('Investido',exMoeda(g))+tile('Cliques',cl.toLocaleString('pt-BR'))+tile('CTR',im?(cl/im*100).toFixed(1).replace('.',',')+'%':'-')+tile('Agendamentos',ag)+tile('Custo por agendamento',ag?exMoeda(g/ag):'-')+tile('Compareceram',cp)+'</div>'+
-   (sug?'<div class="sh"><h2>Sugestões do sistema</h2></div><div class="stack" style="margin-bottom:12px">'+sug+'</div>':'<p class="sub">Quando houver dados suficientes, o sistema mostra aqui o que pausar, o que ampliar e o que melhorar.</p>')+
-   (a.st&&a.st.ultima_sync?'<p class="sub">Última atualização: '+new Date(a.st.ultima_sync).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})+'</p>':'');
-}
-/* ---- artes automáticas (canvas) ---- */
-function exImg(src){return new Promise(ok=>{if(!src)return ok(null);const i=new Image();i.crossOrigin='anonymous';i.onload=()=>ok(i);i.onerror=()=>ok(null);i.src=src})}
-function exWrap(ctx,t,max){const w=t.split(' '),l=[];let c='';w.forEach(x=>{const n=c?c+' '+x:x;if(ctx.measureText(n).width>max&&c){l.push(c);c=x}else c=n});if(c)l.push(c);return l}
-function exTxtId(s){return String(s).replace(/\s+/g,' ').trim()}
-const EX_MODELOS=[
- {k:'ultimo',h:'Quando foi seu último exame de vista?',s:'Agende o seu pelo celular, em poucos toques.',cta:'Agende agora',estilo:'marca',txt:'Quando foi a última vez que você fez um exame de vista? 👓 Agende o seu na {otica}: escolha o dia e o horário pelo celular e receba a confirmação no WhatsApp.'},
- {k:'semcomp',h:'Exame de vista sem compromisso',s:'Escolha o dia e o horário que ficam bons para você.',cta:'Escolher horário',estilo:'claro',txt:'Escolha o melhor dia e horário para fazer seu exame de vista na {otica}. É rápido, e a confirmação chega no seu WhatsApp. ✅'},
- {k:'dia',h:'Cuidar da visão é cuidar do seu dia',s:'Agende seu exame de vista na {otica}.',cta:'Agendar exame',estilo:'escuro',txt:'Enxergar bem faz diferença no trabalho, nos estudos e no lazer. Agende seu exame de vista na {otica} em poucos minutos. 😊'},
- {k:'minuto',h:'Agende seu exame de vista em 1 minuto',s:'Confirmação rápida pelo WhatsApp.',cta:'Agendar pelo celular',estilo:'foto',txt:'Agende seu exame de vista na {otica} pelo celular, sem fila de espera por telefone. Você escolhe o dia e o horário e recebe a confirmação no WhatsApp. 📲'}
-];
-async function exArte(m){
-  const W=1080,H=1350,cv=document.createElement('canvas');cv.width=W;cv.height=H;const x=cv.getContext('2d');
-  const c1=(OTICA&&OTICA.cor1)||'#0486DE',c2=(OTICA&&OTICA.cor2)||'#00348A',nome=cfg().nome,end=[cfg().endereco,(EX.cfg&&EX.cfg.cidade)||''].filter(Boolean).join(', ');
-  const claro=m.estilo==='claro',escuro=m.estilo==='escuro';let foto=m.estilo==='foto'&&EX.ads.foto;
-  const ink=claro?'#14202E':'#FFFFFF',sub=claro?'#4A5868':'rgba(255,255,255,.88)';
-  if(foto){const im=await exImg(EX.ads.foto);if(im){const r=Math.max(W/im.width,H/im.height),w=im.width*r,h=im.height*r;x.drawImage(im,(W-w)/2,(H-h)/2,w,h);const g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,'rgba(0,20,50,.78)');g.addColorStop(.55,'rgba(0,20,50,.55)');g.addColorStop(1,'rgba(0,20,50,.88)');x.fillStyle=g;x.fillRect(0,0,W,H)}else{foto=false}}
-  if(!foto){const g=x.createLinearGradient(0,0,W,H);if(claro){g.addColorStop(0,'#FFFFFF');g.addColorStop(1,'#EAF1F9')}else if(escuro){g.addColorStop(0,'#0B1B2B');g.addColorStop(1,'#12304D')}else{g.addColorStop(0,c1);g.addColorStop(1,c2)}x.fillStyle=g;x.fillRect(0,0,W,H)}
-  /* optotipos decorativos */
-  x.save();x.fillStyle=claro?c1:'#fff';x.globalAlpha=claro?.1:.12;x.textAlign='right';x.font='700 300px "IBM Plex Sans",Arial,sans-serif';x.fillText('E',W-40,420);x.font='700 190px "IBM Plex Sans",Arial,sans-serif';x.fillText('F P',W-40,610);x.font='700 120px "IBM Plex Sans",Arial,sans-serif';x.fillText('T O Z',W-40,740);x.restore();
-  /* marca */
-  const lg=await exImg(OTICA&&(claro?OTICA.logo_claro:(OTICA.logo_escuro||OTICA.logo_claro)));
-  if(lg){const r=Math.min(340/lg.width,110/lg.height);x.drawImage(lg,80,80,lg.width*r,lg.height*r)}else{x.fillStyle=ink;x.font='600 54px Newsreader,Georgia,serif';x.textAlign='left';x.fillText(nome,80,140)}
-  /* título */
-  x.textAlign='left';x.fillStyle=ink;x.font='600 112px Newsreader,Georgia,serif';const hl=exWrap(x,m.h,780);let y=420;hl.slice(0,4).forEach(l=>{x.fillText(l,80,y);y+=124});
-  x.fillStyle=sub;x.font='400 48px "IBM Plex Sans",Arial,sans-serif';y+=18;exWrap(x,m.s.replace('{otica}',nome),860).slice(0,3).forEach(l=>{x.fillText(l,80,y);y+=64});
-  /* botão */
-  const by=Math.max(y+50,1010);x.font='600 52px "IBM Plex Sans",Arial,sans-serif';const tw=x.measureText(m.cta).width+120;
-  x.fillStyle=claro?c1:'#fff';x.beginPath();x.roundRect(80,by,tw,120,60);x.fill();x.fillStyle=claro?'#fff':(escuro?'#0B1B2B':c2);x.fillText(m.cta,80+60,by+78);
-  /* endereço */
-  x.fillStyle=sub;x.font='400 36px "IBM Plex Sans",Arial,sans-serif';if(end)exWrap(x,end,920).slice(0,2).forEach((l,i)=>x.fillText((i?'':'📍 ')+l,80,H-92+i*46));
-  return new Promise(ok=>cv.toBlob(b=>ok(b),'image/jpeg',.92));
-}
-async function exUp(blob,ext,tipo){
-  const path=OTICA.id+'/'+uid()+'.'+ext;const r=await sb.storage.from('ads-midia').upload(path,blob,{contentType:tipo,upsert:false});if(r.error)throw r.error;
-  return sb.storage.from('ads-midia').getPublicUrl(path).data.publicUrl;
-}
-function exPoster(file){return new Promise(ok=>{const v=document.createElement('video');v.muted=true;v.playsInline=true;v.preload='metadata';v.src=URL.createObjectURL(file);v.onloadedmetadata=()=>{v.currentTime=Math.min(.5,(v.duration||1)/2)};v.onseeked=()=>{const c=document.createElement('canvas');c.width=v.videoWidth||720;c.height=v.videoHeight||1280;c.getContext('2d').drawImage(v,0,0,c.width,c.height);c.toBlob(b=>{URL.revokeObjectURL(v.src);ok(b)},'image/jpeg',.85)};v.onerror=()=>ok(null)})}
 Object.assign(A,{
-  exsub(d){EX.sub=d.s;EX.ads.msg='';if(d.s==='pagina')EX.dr=null;render()},
+  exsub(d){EX.sub=d.s;if(d.s==='pagina')EX.dr=null;render()},
   exfil(d){EX.fil=d.f;render()},
   exnovo(){EX.form={id:'',nome:'',whatsapp:'',data:addDays(todayStr(),1),hora:'09:00'};render()},
   exedit(d){const x=(EX.ag||[]).find(a=>a.id===d.id);if(!x)return;EX.form={id:x.id,nome:x.nome,whatsapp:x.whatsapp,data:x.data,hora:exHora(x.hora)};render()},
@@ -3267,80 +3145,15 @@ Object.assign(A,{
     if(r.error){render();return toast('Não foi possível salvar')}
     EX.cfg=row;EX.dr=null;premLog('Página de exames atualizada','');toast(row.ativo?'Página salva e no ar':'Página salva (desligada)');render();
   },
-  /* ---- anúncios ---- */
-  async exconectar(){
-    EX.ads.busy=true;EX.ads.msg='';render();
-    try{const r=await sb.functions.invoke('meta-conectar',{body:{acao:'iniciar',otica:OTICA.id,retorno:location.origin+location.pathname}});
-      let erro=r.error&&r.error.context&&r.error.context.json&&r.error.context.json.erro;
-      if(r.error||!r.data||!r.data.url){EX.ads.msg=erro==='meta_nao_configurada'?'A conexão com a Meta ainda não foi liberada neste sistema. Fale com o suporte.':(erro||'Não foi possível iniciar a conexão com a Meta.')}
-      else{location.href=r.data.url;return}
-    }catch(e){EX.ads.msg='Não foi possível iniciar a conexão com a Meta.'}
-    EX.ads.busy=false;render();
-  },
-  async exescolher(){const sp=EX.ads.pick;const ig=(document.querySelector('[data-exad="ig"]')||{}).value||'';const px=(document.querySelector('[data-exad="px"]')||{}).value||'';
-    const r=await sb.rpc('ads_escolher',{p_otica:OTICA.id,p_page:sp.pg,p_ig:ig,p_conta:sp.ct,p_pixel:px});if(r.error){EX.ads.msg='Não foi possível salvar a escolha.';return render()}
-    if(px&&EX.cfg&&!EX.cfg.pixel_id)await sb.from('ex_config').update({pixel_id:px}).eq('otica_id',OTICA.id);
-    EX.ads.st=null;EX.ads.msg='OK Conta conectada.';render()},
-  async exdesc(){if(!confirm('Desconectar a conta da Meta? Os anúncios que já estão rodando continuam na Meta até você pausar por lá.'))return;await sb.rpc('ads_desconectar',{p_otica:OTICA.id});EX.ads.st=null;EX.ads.pick={};render()},
-  exper(d){EX.ads.per=+d.p;render()},
-  async exgeo(d){
-    const a=EX.ads;a.geo='Procurando...';render();
-    const set=(la,ln)=>{a.cfg.lat=la;a.cfg.lng=ln;a.geo='Local encontrado. Toque em Salvar.';render()};
-    if(d.m==='gps'){if(!navigator.geolocation){a.geo='Seu aparelho não permite usar a localização.';return render()}navigator.geolocation.getCurrentPosition(p=>set(+p.coords.latitude.toFixed(6),+p.coords.longitude.toFixed(6)),()=>{a.geo='Não foi possível pegar a localização. Permita o acesso e tente de novo.';render()},{enableHighAccuracy:true,timeout:15000});return}
-    try{const q=[cfg().endereco,(EX.cfg&&EX.cfg.cidade)||'Recife','Brasil'].filter(Boolean).join(', ');const r=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=br&q='+encodeURIComponent(q));const j=await r.json();if(j[0])set(+(+j[0].lat).toFixed(6),+(+j[0].lon).toFixed(6));else{a.geo='Não encontramos o endereço. Use a localização do aparelho estando na ótica.';render()}}catch(e){a.geo='Não foi possível buscar o endereço agora.';render()}
-  },
-  async exsalvarads(){const C=EX.ads.cfg;const orc=exReais(C.orcamento_dia),teto=Math.max(exReais(C.teto_dia),orc);
-    if(orc<500)return toast('O investimento diário mínimo é R$ 5,00');
-    const r=await sb.rpc('ads_config',{p_otica:OTICA.id,p_cfg:{orcamento_dia:orc,teto_dia:teto,raio_km:Math.max(1,Math.min(50,+C.raio_km||5)),idade_min:Math.max(18,Math.min(65,+C.idade_min||18)),cpa_alvo:exReais(C.cpa_alvo)||2500,modo:C.modo,ativo:!!C.ativo,lat:C.lat,lng:C.lng}});
-    if(r.error)return toast('Não foi possível salvar');EX.ads.st=null;EX.ads.msg='OK Configuração salva.';render()},
-  async expublicar(){const a=EX.ads;if(!a.cfg.lat)return toast('Defina a localização da ótica primeiro');if(!(a.cri||[]).some(c=>c.status==='pronto'||c.status==='pausado'))return toast('Crie ou envie uma arte primeiro');
-    a.busy=true;a.msg='';render();
-    try{await A.exsalvarads();const d=await exAdsFn('publicar');a.busy=false;a.st=null;a.cri=null;a.msg='OK '+(d.msg||'Anúncios enviados para análise da Meta.');render()}catch(e){exAdsErr(e)}},
-  async exsync(){const a=EX.ads;a.busy=true;render();try{await exAdsFn('sync');a.busy=false;a.st=null;a.msg='OK Resultados atualizados.';render()}catch(e){exAdsErr(e)}},
-  async excstatus(d){try{await exAdsFn('status',{criativo:d.id,status:d.s});EX.ads.st=null;render()}catch(e){exAdsErr(e)}},
-  async excarq(d){if(!confirm('Excluir esta arte?'))return;await sb.from('ads_criativos').update({status:'arquivado'}).eq('id',d.id);EX.ads.st=null;render()},
-  async exsugok(d){try{await exAdsFn('aplicar',{sugestao:d.id});EX.ads.st=null;EX.ads.msg='OK Sugestão aplicada.';render()}catch(e){exAdsErr(e)}},
-  async exsugno(d){await sb.from('ads_sugestoes').update({status:'ignorada'}).eq('id',d.id);EX.ads.st=null;render()},
-  async exgerar(){
-    const a=EX.ads;a.gerando=true;a.msg='';render();
-    try{try{await document.fonts.load('600 40px Newsreader');await document.fonts.load('400 40px "IBM Plex Sans"')}catch(e){}
-      a.gen=[];for(const m of EX_MODELOS){const b=await exArte(m);if(b)a.gen.push({m:m,b:b,url:URL.createObjectURL(b),titulo:m.h,on:true})}
-    }catch(e){a.msg='Não foi possível criar as artes agora.'}
-    a.gerando=false;render();
-  },
-  exdescgen(){EX.ads.gen=null;render()},
-  async exsalvargen(){
-    const a=EX.ads,sel=(a.gen||[]).filter(g=>g.on!==false);if(!sel.length)return toast('Marque pelo menos uma arte');a.busy=true;render();
-    try{for(const g of sel){const url=await exUp(g.b,'jpg','image/jpeg');const txt=g.m.txt.split('{otica}').join(cfg().nome)+((cfg().endereco)?'\n📍 '+cfg().endereco:'');
-      const r=await sb.from('ads_criativos').insert({otica_id:OTICA.id,tipo:'imagem',origem:'gerado',nome:g.m.k,titulo:g.m.h,texto:txt,midia_url:url,status:'pronto'});if(r.error)throw r.error}
-      a.gen=null;a.cri=null;a.busy=false;a.msg='OK Artes salvas. Falta publicar.';render();
-    }catch(e){a.busy=false;a.msg='Não foi possível salvar as artes.';render()}
-  }
 });
 document.addEventListener('input',e=>{const t=e.target;if(!t||!t.dataset)return;
   if(t.dataset.exfm!==undefined&&EX.form){EX.form[t.dataset.exfm]=t.value;return}
   if(t.dataset.exf&&EX.dr&&t.type!=='checkbox'){const k=t.dataset.exf;if(k==='tpl_conf')EX.dr.tpl.conf=t.value;else if(k==='tpl_lemb')EX.dr.tpl.lemb=t.value;else EX.dr[k]=t.value;return}
-  if(t.dataset.exad&&EX.ads.cfg&&t.type!=='checkbox'&&t.type!=='file'&&!['pg','ct','ig','px'].includes(t.dataset.exad)){EX.ads.cfg[t.dataset.exad]=t.value}});
+});
 document.addEventListener('change',async e=>{const t=e.target;if(!t||!t.dataset)return;
   if(t.dataset.exfm!==undefined&&EX.form){EX.form[t.dataset.exfm]=t.value;return}
   if(t.dataset.exf&&EX.dr&&t.type==='checkbox'){const D=EX.dr,k=t.dataset.exf;if(k==='dia'){const n=+t.dataset.d;D.dias=t.checked?Array.from(new Set(D.dias.concat(n))):D.dias.filter(x=>x!==n);t.closest('label').classList.toggle('acc',t.checked)}else D[k]=t.checked;return}
-  const k=t.dataset.exad;if(!k)return;const a=EX.ads;
-  if(k==='pg'){a.pick.pg=t.value;render();return}if(k==='ct'){a.pick.ct=t.value;render();return}
-  if(k==='ativo'){a.cfg.ativo=t.checked;return}
-  if(k==='gpick'){const g=a.gen&&a.gen[+t.dataset.i];if(g)g.on=t.checked;return}
-  if(k==='foto'&&t.files&&t.files[0]){const f=t.files[0];if(f.size>15e6)return toast('Foto muito grande (máx. 15 MB)');if(a.foto)URL.revokeObjectURL(a.foto);a.foto=URL.createObjectURL(f);toast('Foto escolhida. Toque em "Criar artes automáticas".');render();return}
-  if(k==='upload'&&t.files&&t.files[0]){const f=t.files[0],vid=/^video\//.test(f.type);t.value='';
-    if(!/^(video\/(mp4|quicktime)|image\/(jpeg|png|webp))$/.test(f.type))return toast('Use vídeo MP4 ou MOV, ou foto JPG, PNG ou WebP');
-    if(f.size>(vid?100:15)*1048576)return toast(vid?'Vídeo muito grande (máx. 100 MB). Use um vídeo mais curto.':'Foto muito grande (máx. 15 MB)');
-    a.busy=true;toast('Enviando...');
-    try{const ext=vid?(f.type==='video/quicktime'?'mov':'mp4'):(f.type==='image/png'?'png':f.type==='image/webp'?'webp':'jpg');const url=await exUp(f,ext,f.type);let th=null;
-      if(vid){const pb=await exPoster(f);if(pb)th=await exUp(pb,'jpg','image/jpeg')}
-      const txt='Agende seu exame de vista na '+cfg().nome+'. Escolha o dia e o horário pelo celular e receba a confirmação no WhatsApp. 👓'+(cfg().endereco?'\n📍 '+cfg().endereco:'');
-      const r=await sb.from('ads_criativos').insert({otica_id:OTICA.id,tipo:vid?'video':'imagem',origem:'upload',nome:f.name.replace(/\.[^.]+$/,'').slice(0,60),titulo:'Agende seu exame de vista',texto:txt,midia_url:url,thumb_url:th,status:'pronto'});if(r.error)throw r.error;
-      a.cri=null;a.busy=false;a.msg='OK Arquivo enviado. Falta publicar.';render();
-    }catch(x){a.busy=false;a.msg='Não foi possível enviar o arquivo.';render()}}
 });
-(function(){const q=new URLSearchParams(location.search),r=q.get('ads');if(!r)return;EX.sub='anuncios';EX.ads.msg=r==='ok'?'OK Facebook conectado. Escolha abaixo as contas dos anúncios.':'Não foi possível conectar a conta da Meta. Tente de novo.';ui.tab='exames';q.delete('ads');history.replaceState(null,'',location.pathname+(q.toString()?'?'+q:''))})();
 
 /* ---------- PREMIUM-FIM ---------- */
 /* ---------- ADMIN-INICIO (somente sistema real) ---------- */
