@@ -3077,12 +3077,15 @@ function exLinhaAg(x){
    '<a class="btn sm wa"'+WAT+' href="'+esc(wa)+'">WhatsApp</a></div>'+
    '<details class="ex-more"><summary class="sub">Mais</summary><div class="acts" style="margin-top:6px">'+(ativo?'<button class="btn sm" data-act="exedit" data-id="'+x.id+'">Remarcar</button><button class="btn sm" data-act="exst" data-id="'+x.id+'" data-s="faltou">Faltou</button><button class="btn sm" data-act="exst" data-id="'+x.id+'" data-s="cancelado">Cancelar</button>':'<button class="btn sm" data-act="exst" data-id="'+x.id+'" data-s="agendado">Voltar para agendado</button>')+(cli?'':'<button class="btn sm" data-act="excli" data-id="'+x.id+'">Cadastrar como cliente</button>')+'</div></details></div></article>';
 }
+/* clientes cadastrados para escolher no agendamento manual */
+function exClientesOpc(){return Object.values(S.clientes).filter(c=>c&&c.nome).sort((a,b)=>a.nome.localeCompare(b.nome)).map(c=>({c,l:c.nome+(c.whatsapp?' · '+maskTel(c.whatsapp):'')}))}
 function exForm(){
   const F=EX.form;if(!F)return '';const c=Object.assign({},EX_PADRAO,EX.cfg||{});
   const hs=[];for(let m=8*60;m<=20*60;m+=Math.max(10,+c.duracao_min||30)){hs.push(String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0'))}
   if(F.hora&&!hs.includes(F.hora))hs.push(F.hora);hs.sort();
   return '<div class="card" style="gap:10px;margin-bottom:12px"><b>'+(F.id?'Remarcar exame':'Agendar um exame')+'</b>'+
-   (F.id?'':'<div class="field"><span>Nome</span><input type="text" data-exfm="nome" value="'+esc(F.nome)+'" autocomplete="off"></div><div class="field"><span>WhatsApp com DDD</span><input type="tel" inputmode="tel" data-exfm="whatsapp" value="'+esc(F.whatsapp)+'"></div>')+
+   (F.id?'':'<div class="field"><span>Cliente já cadastrado (opcional)</span><input type="search" data-excli="1" list="exclis" value="'+esc(F.busca||'')+'" placeholder="Digite o nome ou o WhatsApp do cliente" autocomplete="off"><datalist id="exclis">'+exClientesOpc().map(o=>'<option value="'+esc(o.l)+'"></option>').join('')+'</datalist>'+(F.cliente_id?'<span class="sub" style="margin-top:4px">Cliente selecionado. Nome e WhatsApp preenchidos abaixo.</span>':'')+'</div>'+
+   '<div class="field"><span>Nome</span><input type="text" data-exfm="nome" value="'+esc(F.nome)+'" autocomplete="off"></div><div class="field"><span>WhatsApp com DDD</span><input type="tel" inputmode="tel" data-exfm="whatsapp" value="'+esc(F.whatsapp)+'"></div>')+
    '<div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))"><div class="field"><span>Dia</span><input type="date" data-exfm="data" value="'+esc(F.data)+'" min="'+todayStr()+'"></div><div class="field"><span>Horário</span><select data-exfm="hora">'+hs.map(h=>'<option'+(h===F.hora?' selected':'')+'>'+h+'</option>').join('')+'</select></div></div>'+
    '<div class="foot-row"><button class="btn primary" data-act="exsalvarform">Salvar</button><button class="btn" data-act="excancelarform">Fechar</button></div></div>';
 }
@@ -3162,7 +3165,7 @@ Object.assign(A,{
     const F=EX.form;if(!F)return;if(!F.data||!F.hora)return toast('Escolha o dia e o horário');
     if(F.id){const r=await sb.from('ex_agend').update({data:F.data,hora:F.hora}).eq('id',F.id);if(r.error)return toast('Não foi possível remarcar');toast('Exame remarcado e nova mensagem na fila')}
     else{if(F.nome.trim().length<2)return toast('Informe o nome');const t=exSoDig(F.whatsapp);if(t.length<10)return toast('Informe o WhatsApp com DDD');
-      const r=await sb.from('ex_agend').insert({otica_id:OTICA.id,nome:F.nome.trim(),whatsapp:t.length<=11?'55'+t:t,data:F.data,hora:F.hora,origem:'equipe'});if(r.error)return toast('Não foi possível agendar');toast('Exame agendado')}
+      const r=await sb.from('ex_agend').insert({otica_id:OTICA.id,nome:F.nome.trim(),whatsapp:t.length<=11?'55'+t:t,data:F.data,hora:F.hora,origem:'equipe',cliente_id:F.cliente_id||null});if(r.error)return toast('Não foi possível agendar');toast('Exame agendado')}
     EX.form=null;EX.busy=false;await exLoad();render();
   },
   async exst(d){const x=(EX.ag||[]).find(a=>a.id===d.id);if(!x)return;const r=await sb.from('ex_agend').update({status:d.s}).eq('id',d.id);if(r.error)return toast('Não foi possível atualizar');x.status=d.s;
@@ -3189,7 +3192,10 @@ Object.assign(A,{
   },
 });
 document.addEventListener('input',e=>{const t=e.target;if(!t||!t.dataset)return;
-  if(t.dataset.exfm!==undefined&&EX.form){EX.form[t.dataset.exfm]=t.value;return}
+  if(t.dataset.excli&&EX.form){const F=EX.form;F.busca=t.value;const o=exClientesOpc().find(x=>x.l===t.value);
+    if(o){F.cliente_id=o.c.id;F.nome=o.c.nome;F.whatsapp=o.c.whatsapp?maskTel(o.c.whatsapp):'';const n=document.querySelector('[data-exfm="nome"]'),w=document.querySelector('[data-exfm="whatsapp"]');if(n)n.value=F.nome;if(w)w.value=F.whatsapp;if(!F.whatsapp)toast('Esse cliente não tem WhatsApp no cadastro. Preencha abaixo.');}
+    else if(F.cliente_id){F.cliente_id=''}return}
+  if(t.dataset.exfm!==undefined&&EX.form){EX.form[t.dataset.exfm]=t.value;if(t.dataset.exfm==='nome'||t.dataset.exfm==='whatsapp')EX.form.cliente_id='';return}
   if(t.dataset.exl&&EX.dr){const [i,k]=t.dataset.exl.split('|');if(EX.dr.locais[+i])EX.dr.locais[+i][k]=t.value;return}
   if(t.dataset.exf&&EX.dr&&t.type!=='checkbox'){const k=t.dataset.exf;if(k==='tpl_conf')EX.dr.tpl.conf=t.value;else if(k==='tpl_lemb')EX.dr.tpl.lemb=t.value;else if(k==='tpl_falt')EX.dr.tpl.falt=t.value;else if(k==='tpl_avisar')EX.dr.tpl.avisar=t.value;else EX.dr[k]=t.value;return}
 });
