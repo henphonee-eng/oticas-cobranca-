@@ -1,0 +1,7 @@
+-- WhatsApp do CRM: conversas do chip de prospecção (prosp_wa_msg) e envio manual (prosp_wa_fila tipo 'manual').
+-- Aplicado em partes: tabela prosp_wa_msg (RLS só admin, realtime), tipo 'manual' na fila, lead_id opcional,
+-- prosp_lead_tel, prosp_wa_registrar, prosp_wa_enviar_manual, prosp_wa_puxar_manual;
+-- prosp_wa_puxar passou a mandar as mensagens manuais primeiro (sem horário/limite/intervalo) e os
+-- contadores e o intervalo do envio automático ignoram as manuais; prosp_wa_resultado trata 'manual'
+-- (sem mexer no lead; falha tenta de novo em 1 minuto); prosp_wa_status ganhou 'nao_lidas'.
+-- Definições atuais: veja no banco (pg_get_functiondef) — este arquivo registra o que mudou.

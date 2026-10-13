@@ -22,7 +22,8 @@ function criarApi(cfg, fetchFn) {
       ping: (estado, numero) => rpc('prosp_wa_ping', { p_token: cfg.token, p_estado: estado, p_numero: numero || null }),
       sair: (telefone) => rpc('prosp_wa_sair', { p_token: cfg.token, p_telefone: telefone }),
       receber: (telefone, texto, nome) => rpc('prosp_wa_receber', { p_token: cfg.token, p_telefone: telefone, p_texto: texto, p_nome: nome || null }),
-      registrar: async () => ({ ok: true }),
+      puxarManual: () => rpc('prosp_wa_puxar_manual', { p_token: cfg.token }),
+      registrar: (m) => rpc('prosp_wa_registrar', { p_token: cfg.token, p_tel: m.telefone, p_nome: m.nome || null, p_de_mim: !!m.deMim, p_texto: m.texto, p_tipo: m.tipo || 'texto', p_wa_id: m.waId || null, p_origem: m.origem || null }),
     };
   }
   return {
