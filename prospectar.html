@@ -197,10 +197,14 @@ const foneDe=l=>l.whatsapp||l.telefone;
 function waUrl(num,text){const n=brNumber(num);return isMobile?'whatsapp://send?phone='+n+'&text='+encodeURIComponent(text):'https://web.whatsapp.com/send?phone='+n+'&text='+encodeURIComponent(text)}
 
 /* ---------- mensagem ---------- */
-const demoLink=(l,meu)=>location.origin+'/demo/?o='+encodeURIComponent(l.nome)+(meu?'':'&l='+l.id);
+/* nome curto da ótica: o Google costuma trazer "Nome: Óculos de Grau, Lentes..." ou "Nome - Recife"; fica só o nome */
+const nomeCurto=n=>{const s=String(n||'').trim(),c=s.split(/\s*(?::|\||\s[-–—]\s)\s*/)[0].trim();return (c.length>=3?c:s).slice(0,40)};
+/* link curto do demo: /d/ + 7 primeiros caracteres do id do lead (o banco devolve o nome e registra a abertura) */
+const linkBase=()=>String(cfg('link_base')||location.origin).replace(/\/+$/,'');
+const demoLink=(l,meu)=>meu?location.origin+'/demo/?o='+encodeURIComponent(nomeCurto(l.nome)):linkBase()+'/d/'+String(l.id).replace(/-/g,'').slice(0,7);
 const fmtDH=iso=>{const d=new Date(iso);return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+' às '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
 const acessos=l=>st.ac[l.id]||[];
-function msg(kind,l){return cfg(kind).replace(/\{otica\}/g,l.nome).replace(/\{link\}/g,demoLink(l)).replace(/\{cidade\}/g,l.cidade||'').replace(/\{seu_nome\}/g,cfg('seu_nome')||'').replace(/\n{3,}/g,'\n\n')}
+function msg(kind,l){return cfg(kind).replace(/\{otica\}/g,nomeCurto(l.nome)).replace(/\{link\}/g,demoLink(l)).replace(/\{cidade\}/g,l.cidade||'').replace(/\{seu_nome\}/g,cfg('seu_nome')||'').replace(/\n{3,}/g,'\n\n')}
 
 /* ---------- dados ---------- */
 async function load(){
