@@ -28,5 +28,18 @@ const { criarApi, criarRobo } = require('./fila');
   assert.strictEqual(await robo.umaVez(), 'falhou');
   // desconectado: não puxa nada
   wa.conectado = () => false; const n = chamadas.length; assert.strictEqual(await robo.umaVez(), 'desconectado'); assert.strictEqual(chamadas.length, n);
+  // mensagem da conversa (manual): sai sem a pausa longa
+  wa.conectado = () => true; wa.enviar = async (t, x, tp) => { enviados.push([t, x, tp]); };
+  const lento = criarRobo(api, wa, () => {}, { pausaMin: 60000, pausaMax: 60000, digitarMin: 1, digitarMax: 2, manualMin: 1, manualMax: 2 });
+  fila = [{ id: 'm1', telefone: '5581999990005', texto: 'resposta', tipo: 'manual' }];
+  const t0 = Date.now(); assert.strictEqual(await lento.umaVez(), 'enviada'); assert.ok(Date.now() - t0 < 1000, 'manual não pode esperar a pausa');
+  assert.deepStrictEqual(enviados[enviados.length - 1], ['5581999990005', 'resposta', 'manual']);
+  // durante a pausa de um automático, uma mensagem da conversa sai na hora
+  let manuais = [{ id: 'm2', telefone: '5581999990006', texto: 'durante a pausa', tipo: 'manual' }];
+  const api2 = Object.assign({}, api, { puxarManual: async () => ({ ok: true, msg: manuais.shift() || null }) });
+  const r2 = criarRobo(api2, wa, () => {}, { pausaMin: 30, pausaMax: 30, intervaloBusca: 5, digitarMin: 1, digitarMax: 2, manualMin: 1, manualMax: 2 });
+  fila = [{ id: 'a2', telefone: '5581999990007', texto: 'automático', tipo: 'exame_conf' }];
+  assert.strictEqual(await r2.umaVez(), 'enviada');
+  assert.deepStrictEqual(enviados.slice(-2).map((x) => x[1]), ['automático', 'durante a pausa']);
   console.log('Teste ok');
 })().catch((e) => { console.error('FALHOU', e); process.exit(1); });

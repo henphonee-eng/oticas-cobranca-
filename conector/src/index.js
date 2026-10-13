@@ -15,6 +15,35 @@ function log(t) {
   console.log(linha);
   try { fs.appendFileSync(path.join(RAIZ, 'conector.log'), linha + '\n'); } catch (e) { /* ignora */ }
 }
+// Conteúdo de uma mensagem do WhatsApp em texto simples (fotos, áudios etc. viram uma descrição curta).
+function conteudo(msg) {
+  let m = msg;
+  for (let i = 0; i < 4 && m; i++) {
+    const w = m.ephemeralMessage || m.viewOnceMessage || m.viewOnceMessageV2 || m.viewOnceMessageV2Extension || m.documentWithCaptionMessage;
+    if (w && w.message) m = w.message; else break;
+  }
+  if (!m) return null;
+  const leg = (x) => (x && x.caption ? ': ' + x.caption : '');
+  if (m.conversation) return { tipo: 'texto', texto: m.conversation };
+  if (m.extendedTextMessage && m.extendedTextMessage.text) return { tipo: 'texto', texto: m.extendedTextMessage.text };
+  if (m.imageMessage) return { tipo: 'foto', texto: '📷 Foto' + leg(m.imageMessage) };
+  if (m.videoMessage) return { tipo: 'video', texto: '🎬 Vídeo' + leg(m.videoMessage) };
+  if (m.audioMessage) return { tipo: 'audio', texto: '🎤 Áudio' };
+  if (m.documentMessage) return { tipo: 'documento', texto: '📄 Documento' + (m.documentMessage.fileName ? ': ' + m.documentMessage.fileName : '') + leg(m.documentMessage) };
+  if (m.stickerMessage) return { tipo: 'figurinha', texto: '🙂 Figurinha' };
+  if (m.contactMessage) return { tipo: 'outro', texto: '👤 Contato: ' + (m.contactMessage.displayName || '') };
+  if (m.locationMessage || m.liveLocationMessage) return { tipo: 'outro', texto: '📍 Localização' };
+  return null; // reações, edições, avisos do sistema etc.
+}
+// Número (só dígitos) de uma conversa privada, ou '' se for grupo, status, canal ou não der para saber.
+function numeroDaConversa(key) {
+  const rj = String(key.remoteJid || '');
+  if (!rj || rj.endsWith('@g.us') || rj === 'status@broadcast' || rj.endsWith('@broadcast') || rj.endsWith('@newsletter')) return '';
+  const jid = rj.endsWith('@s.whatsapp.net') ? rj : String(key.remoteJidAlt || key.senderPn || '');
+  if (!jid.endsWith('@s.whatsapp.net')) return '';
+  return jid.split('@')[0].split(':')[0].replace(/\D/g, '');
+}
+
 const perguntar = (q) => new Promise((res) => { const rl = readline.createInterface({ input: process.stdin, output: process.stdout }); rl.question(q, (a) => { rl.close(); res(a.trim()); }); });
 
 async function lerConfig() {
@@ -68,6 +97,9 @@ async function main() {
     if (enviadas.size > 1000) enviadas.delete(enviadas.keys().next().value);
   }
   let aberto = false;
+  // ids das mensagens que o próprio conector enviou (já guardadas na conversa com a origem certa)
+  const saindo = new Set();
+  const marcarSaindo = (id) => { if (!id) return; saindo.add(id); if (saindo.size > 500) saindo.delete(saindo.values().next().value); };
 
   async function conectar() {
     const { state, saveCreds } = await useMultiFileAuthState(PASTA_SESSAO);
@@ -98,7 +130,22 @@ async function main() {
     });
     // Mensagens recebidas: SAIR tira o número dos avisos; o resto vai para o sistema,
     // que confirma/cancela/remarca o exame ou avisa os donos (e, se ligado, chama o agente de IA).
+    // Toda conversa privada (recebida ou enviada pelo celular) também é guardada no sistema,
+    // para a equipe ver e responder pela aba Conversas (função Premium; sem ela o sistema ignora).
     sock.ev.on('messages.upsert', async ({ messages, type }) => {
+      for (const m of messages) {
+        try {
+          if (!m.message || !m.key) continue;
+          const ts = Number(m.messageTimestamp || 0) * 1000;
+          if (type !== 'notify' && (!ts || Date.now() - ts > 15 * 60000)) continue; // histórico antigo: ignora
+          const tel = numeroDaConversa(m.key);
+          const c = tel ? conteudo(m.message) : null;
+          if (c && !(m.key.fromMe && saindo.has(m.key.id))) {
+            api.registrar({ telefone: tel, nome: m.key.fromMe ? '' : m.pushName, deMim: !!m.key.fromMe, texto: c.texto, tipo: c.tipo, waId: m.key.id, origem: m.key.fromMe ? 'celular' : 'cliente' })
+              .catch((e) => log('Não consegui guardar a conversa: ' + e.message));
+          }
+        } catch (e) { log('Erro ao guardar mensagem: ' + e.message); }
+      }
       if (type !== 'notify') return;
       for (const m of messages) {
         try {
@@ -140,13 +187,21 @@ async function main() {
   const wa = {
     conectado: () => aberto,
     existe: async (tel) => !!(await acharJid(tel)),
-    enviar: async (tel, texto) => {
+    enviar: async (tel, texto, tipo) => {
       const jid = (await acharJid(tel)) || (tel + '@s.whatsapp.net');
-      try { await sock.presenceSubscribe(jid); await sock.sendPresenceUpdate('composing', jid); } catch (e) { /* ignora */ }
-      const r = await sock.sendMessage(jid, { text: texto });
+      const manual = tipo === 'manual';
+      if (!manual) { try { await sock.presenceSubscribe(jid); await sock.sendPresenceUpdate('composing', jid); } catch (e) { /* ignora */ } }
+      // o id é criado aqui para o eco da própria mensagem não ser guardado como "enviada pelo celular"
+      const id = baileys.generateMessageIDV2 ? baileys.generateMessageIDV2(sock.user && sock.user.id) : (baileys.generateMessageID ? baileys.generateMessageID() : undefined);
+      marcarSaindo(id);
+      const r = await sock.sendMessage(jid, { text: texto }, id ? { messageId: id } : undefined);
       guardar(r);
-      log('Entregue ao WhatsApp: ' + jid + ' (id ' + ((r && r.key && r.key.id) || '?') + ')');
-      try { await sock.sendPresenceUpdate('paused', jid); } catch (e) { /* ignora */ }
+      const wid = (r && r.key && r.key.id) || id;
+      marcarSaindo(wid);
+      log('Entregue ao WhatsApp: ' + jid + ' (id ' + (wid || '?') + ')');
+      if (!manual) { try { await sock.sendPresenceUpdate('paused', jid); } catch (e) { /* ignora */ } }
+      api.registrar({ telefone: tel, deMim: true, texto, tipo: 'texto', waId: wid, origem: manual ? 'sistema' : 'automatico' })
+        .catch((e) => log('Não consegui guardar a conversa: ' + e.message));
     },
   };
   await conectar();

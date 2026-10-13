@@ -16,6 +16,9 @@ function criarApi(cfg, fetchFn) {
   }
   return {
     puxar: () => rpc('wa_puxar', { p_token: cfg.token }),
+    puxarManual: () => rpc('wa_puxar_manual', { p_token: cfg.token }),
+    // guarda a mensagem na conversa do sistema (WhatsApp dentro do sistema, função Premium)
+    registrar: (m) => rpc('wa_registrar', { p_token: cfg.token, p_tel: m.telefone, p_nome: m.nome || null, p_de_mim: !!m.deMim, p_texto: m.texto, p_tipo: m.tipo || 'texto', p_wa_id: m.waId || null, p_origem: m.origem || null }),
     resultado: (id, ok, erro) => rpc('wa_resultado', { p_token: cfg.token, p_id: id, p_ok: ok, p_erro: erro || null }),
     ping: (estado, numero) => rpc('wa_ping', { p_token: cfg.token, p_estado: estado, p_numero: numero || null }),
     sair: (telefone) => rpc('wa_sair', { p_token: cfg.token, p_telefone: telefone }),
@@ -23,11 +26,39 @@ function criarApi(cfg, fetchFn) {
   };
 }
 
-// "wa" = { conectado(): bool, existe(tel): Promise<bool>, enviar(tel, texto): Promise<void> }
+// "wa" = { conectado(): bool, existe(tel): Promise<bool>, enviar(tel, texto, tipo): Promise<void> }
+// Avisos automáticos saem devagar (digitando + pausa). Mensagens da conversa (tipo "manual",
+// escritas pela equipe no sistema) saem na hora, inclusive durante a pausa dos automáticos.
 function criarRobo(api, wa, log, opc) {
-  const o = Object.assign({ intervaloBusca: 15000, pausaMin: 30000, pausaMax: 90000, digitarMin: 3000, digitarMax: 9000 }, opc || {});
+  const o = Object.assign({ intervaloBusca: 5000, pausaMin: 30000, pausaMax: 90000, digitarMin: 3000, digitarMax: 9000, manualMin: 500, manualMax: 1500 }, opc || {});
   let parar = false;
   let ultimoMotivo = '';
+
+  async function enviarUma(m) {
+    const manual = m.tipo === 'manual';
+    try {
+      if (!(await wa.existe(m.telefone))) { await api.resultado(m.id, false, 'sem_whatsapp'); log('Número sem WhatsApp: ' + m.telefone); return 'sem_whatsapp'; }
+      await sleep(manual ? rand(o.manualMin, o.manualMax) : rand(o.digitarMin, o.digitarMax));
+      await wa.enviar(m.telefone, m.texto, m.tipo);
+      await api.resultado(m.id, true);
+      log((manual ? 'Mensagem da conversa enviada para ' : 'Enviada para ') + m.telefone);
+      return 'enviada';
+    } catch (e) {
+      await api.resultado(m.id, false, String(e.message || e).slice(0, 150)).catch(() => {});
+      log('Falha ao enviar: ' + (e.message || e));
+      return 'falhou';
+    }
+  }
+
+  // pausa entre avisos automáticos, olhando a cada poucos segundos se a equipe mandou mensagem
+  async function pausa(ms) {
+    const fim = Date.now() + ms;
+    while (!parar && Date.now() < fim) {
+      await sleep(Math.min(o.intervaloBusca, Math.max(0, fim - Date.now())));
+      if (!wa.conectado() || !api.puxarManual) continue;
+      try { const r = await api.puxarManual(); if (r && r.msg) await enviarUma(r.msg); } catch (e) { /* tenta de novo na próxima volta */ }
+    }
+  }
 
   async function umaVez() {
     if (!wa.conectado()) return 'desconectado';
@@ -38,19 +69,9 @@ function criarRobo(api, wa, log, opc) {
     }
     if (!r.msg) { ultimoMotivo = r.motivo || ''; return 'vazio'; }
     const m = r.msg;
-    try {
-      if (!(await wa.existe(m.telefone))) { await api.resultado(m.id, false, 'sem_whatsapp'); log('Número sem WhatsApp: ' + m.telefone); return 'sem_whatsapp'; }
-      await sleep(rand(o.digitarMin, o.digitarMax));
-      await wa.enviar(m.telefone, m.texto);
-      await api.resultado(m.id, true);
-      log('Enviada para ' + m.telefone);
-      await sleep(rand(o.pausaMin, o.pausaMax));
-      return 'enviada';
-    } catch (e) {
-      await api.resultado(m.id, false, String(e.message || e).slice(0, 150));
-      log('Falha ao enviar: ' + (e.message || e));
-      return 'falhou';
-    }
+    const res = await enviarUma(m);
+    if (res === 'enviada' && m.tipo !== 'manual') await pausa(rand(o.pausaMin, o.pausaMax));
+    return res;
   }
 
   async function rodar() {
