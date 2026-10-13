@@ -1,0 +1,3 @@
+-- Aplicado em 2026-10-13 (migration exames_mensagem_alteracao):
+-- ex_enfileirar_x(p_id, p_alterado): confirmação normal ou mensagem de alteração (tpl->>'alt' ou padrão);
+-- ex_enfileirar(p_id) = ex_enfileirar_x(p_id,false); ex_tg_pos chama ex_enfileirar_x(new.id,true) quando muda dia/horário.

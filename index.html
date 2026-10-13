@@ -3075,7 +3075,7 @@ function exLinhaAg(x){
    (ativo&&x.data<=t?'<button class="btn sm primary" data-act="exst" data-id="'+x.id+'" data-s="compareceu">Compareceu</button>':'')+
    (x.status==='compareceu'&&cli?'<button class="btn sm primary" data-act="novavenda" data-c="'+cli.id+'">Nova venda</button>':'')+
    '<a class="btn sm wa"'+WAT+' href="'+esc(wa)+'">WhatsApp</a></div>'+
-   '<details class="ex-more"><summary class="sub">Mais</summary><div class="acts" style="margin-top:6px">'+(ativo?'<button class="btn sm" data-act="exedit" data-id="'+x.id+'">Remarcar</button><button class="btn sm" data-act="exst" data-id="'+x.id+'" data-s="faltou">Faltou</button><button class="btn sm" data-act="exst" data-id="'+x.id+'" data-s="cancelado">Cancelar</button>':'<button class="btn sm" data-act="exst" data-id="'+x.id+'" data-s="agendado">Voltar para agendado</button>')+(cli?'':'<button class="btn sm" data-act="excli" data-id="'+x.id+'">Cadastrar como cliente</button>')+'</div></details></div></article>';
+   '<details class="ex-more"><summary class="sub">Mais</summary><div class="acts" style="margin-top:6px">'+(ativo?'<button class="btn sm" data-act="exedit" data-id="'+x.id+'">Editar</button><button class="btn sm" data-act="exst" data-id="'+x.id+'" data-s="faltou">Faltou</button><button class="btn sm" data-act="exst" data-id="'+x.id+'" data-s="cancelado">Cancelar</button>':'<button class="btn sm" data-act="exst" data-id="'+x.id+'" data-s="agendado">Voltar para agendado</button>')+(cli?'':'<button class="btn sm" data-act="excli" data-id="'+x.id+'">Cadastrar como cliente</button>')+'</div></details></div></article>';
 }
 /* locais do exame: o local de um dia é o primeiro que atende naquele dia da semana; locais com mesmo nome e endereço formam um grupo */
 function exLocs(){return ((EX.cfg&&Array.isArray(EX.cfg.locais))?EX.cfg.locais:[]).filter(l=>l&&(l.nome||l.endereco))}
@@ -3105,8 +3105,8 @@ function exForm(){
   }
   if(F.hora&&hs.length&&!hs.includes(F.hora))F.hora=hs[0];if(!F.hora&&hs.length)F.hora=hs[0];
   const locs=G.length?'<div class="field"><span>Local do exame</span><div style="display:grid;gap:8px">'+G.map((g,i)=>'<label class="aguard-box" style="margin:0;align-items:flex-start'+(F.loc===i?';border-style:solid;border-color:var(--acc,currentColor)':'')+'"><input type="radio" name="exloc" data-exloc="'+i+'"'+(F.loc===i?' checked':'')+'><span><b>'+esc(g.nome||'Local '+(i+1))+'</b><br><span class="sub" style="margin:0">'+esc(g.endereco)+'</span></span></label>').join('')+'</div></div>':'';
-  return '<div class="card" style="gap:10px;margin-bottom:12px"><b>'+(F.id?'Remarcar exame':'Agendar um exame')+'</b>'+
-   (F.id?'':'<div class="field"><span>Cliente já cadastrado (opcional)</span><input type="search" data-excli="1" list="exclis" value="'+esc(F.busca||'')+'" placeholder="Digite o nome ou o WhatsApp do cliente" autocomplete="off"><datalist id="exclis">'+exClientesOpc().map(o=>'<option value="'+esc(o.l)+'"></option>').join('')+'</datalist>'+(F.cliente_id?'<span class="sub" style="margin-top:4px">Cliente selecionado. Nome e WhatsApp preenchidos abaixo.</span>':'')+'</div>'+
+  return '<div class="card" style="gap:10px;margin-bottom:12px"><b>'+(F.id?'Editar exame':'Agendar um exame')+'</b>'+(F.id?'<p class="sub" style="margin:0">Se mudar o dia, o horário ou o local, o cliente recebe uma mensagem no WhatsApp com a alteração e o novo endereço.</p>':'')+
+   (F.id?'<div class="field"><span>Nome</span><input type="text" data-exfm="nome" value="'+esc(F.nome)+'" autocomplete="off"></div><div class="field"><span>WhatsApp com DDD</span><input type="tel" inputmode="tel" data-exfm="whatsapp" value="'+esc(F.whatsapp)+'"></div>':'<div class="field"><span>Cliente já cadastrado (opcional)</span><input type="search" data-excli="1" list="exclis" value="'+esc(F.busca||'')+'" placeholder="Digite o nome ou o WhatsApp do cliente" autocomplete="off"><datalist id="exclis">'+exClientesOpc().map(o=>'<option value="'+esc(o.l)+'"></option>').join('')+'</datalist>'+(F.cliente_id?'<span class="sub" style="margin-top:4px">Cliente selecionado. Nome e WhatsApp preenchidos abaixo.</span>':'')+'</div>'+
    '<div class="field"><span>Nome</span><input type="text" data-exfm="nome" value="'+esc(F.nome)+'" autocomplete="off"></div><div class="field"><span>WhatsApp com DDD</span><input type="tel" inputmode="tel" data-exfm="whatsapp" value="'+esc(F.whatsapp)+'"></div>')+
    locs+
    '<div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))">'+dia+'<div class="field"><span>Horário</span>'+(hs.length?'<select data-exfm="hora">'+hs.map(h=>'<option'+(h===F.hora?' selected':'')+'>'+h+'</option>').join('')+'</select>':'<p class="sub" style="margin:6px 0 0">—</p>')+'</div></div>'+
@@ -3182,11 +3182,14 @@ Object.assign(A,{
   exfil(d){EX.fil=d.f;render()},
   exconvrec(){exConvLoad(true)},
   exnovo(){EX.form={id:'',nome:'',whatsapp:'',data:addDays(todayStr(),1),hora:'09:00'};render()},
-  exedit(d){const x=(EX.ag||[]).find(a=>a.id===d.id);if(!x)return;EX.form={id:x.id,nome:x.nome,whatsapp:x.whatsapp,data:x.data,hora:exHora(x.hora)};render()},
+  exedit(d){const x=(EX.ag||[]).find(a=>a.id===d.id);if(!x)return;EX.form={id:x.id,nome:x.nome,whatsapp:maskTel(String(x.whatsapp||'').replace(/^55/,'')),data:x.data,hora:exHora(x.hora),orig:{data:x.data,hora:exHora(x.hora)}};render();setTimeout(()=>{const f=document.querySelector('[data-exfm="nome"]');if(f)f.closest('.card').scrollIntoView({behavior:'smooth',block:'start'})},50)},
   excancelarform(){EX.form=null;render()},
   async exsalvarform(){
     const F=EX.form;if(!F)return;if(exLocs().length&&F.loc==null)return toast('Escolha o local do exame');if(!F.data||!F.hora)return toast('Escolha o dia e o horário');
-    if(F.id){const r=await sb.from('ex_agend').update({data:F.data,hora:F.hora}).eq('id',F.id);if(r.error)return toast('Não foi possível remarcar');toast('Exame remarcado e nova mensagem na fila')}
+    if(F.id){if(F.nome.trim().length<2)return toast('Informe o nome');const t=exSoDig(F.whatsapp);if(t.length<10)return toast('Informe o WhatsApp com DDD');
+      const mudou=!F.orig||F.orig.data!==F.data||F.orig.hora!==F.hora;
+      const up={nome:F.nome.trim(),whatsapp:t.length<=11?'55'+t:t,data:F.data,hora:F.hora};if(mudou)up.status='agendado';const r=await sb.from('ex_agend').update(up).eq('id',F.id);if(r.error)return toast('Não foi possível salvar');
+      toast(mudou?'Exame alterado. O cliente vai receber a mensagem com a alteração':'Exame atualizado')}
     else{if(F.nome.trim().length<2)return toast('Informe o nome');const t=exSoDig(F.whatsapp);if(t.length<10)return toast('Informe o WhatsApp com DDD');
       const r=await sb.from('ex_agend').insert({otica_id:OTICA.id,nome:F.nome.trim(),whatsapp:t.length<=11?'55'+t:t,data:F.data,hora:F.hora,origem:'equipe',cliente_id:F.cliente_id||null});if(r.error)return toast('Não foi possível agendar');toast('Exame agendado')}
     EX.form=null;EX.busy=false;await exLoad();render();
