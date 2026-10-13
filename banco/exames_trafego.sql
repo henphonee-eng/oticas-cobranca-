@@ -309,3 +309,6 @@ select cron.schedule('meta-cron','0 */6 * * *', $c$
     headers := jsonb_build_object('Content-Type','application/json','x-cron',(select valor from public.app_segredos where chave='cron_secret')),
     body := '{}'::jsonb);
 $c$);
+
+-- libera para a Óticas DK (piloto)
+update public.oticas set modulos = coalesce(modulos,'{}'::jsonb) || '{"exames":true}'::jsonb where slug='oticadk';

@@ -873,7 +873,7 @@ const WAT=isMobile?'':' target="_blank" rel="noopener"';
 const pForma=(p,v)=>p.forma||v.forma;
 
 /* ---------- supabase ---------- */
-const APP_BUILD='20261012-2100';
+const APP_BUILD='20261012-2230';
 const SB_URL='https://ovynkeifzhavhjdkjjui.supabase.co',SB_KEY='sb_publishable_7RunIjZPQDCuWNSuPrD10w_Gy_lIUFl';
 const sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});
 const queues={},pendingW={},recentW={};
@@ -1131,7 +1131,7 @@ const ICON={
   sair:I('<path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4M15 8l4 4-4 4M19 12H9"/>')
 };
 const GLASSES='<svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11.5" cy="23" r="7"/><circle cx="28.5" cy="23" r="7"/><path d="M18.5 22c1-1.3 2-1.3 3 0M4.5 21 7 12M35.5 21 33 12"/></svg>';
-const TABS=[['painel','Painel'],['vendas','Vendas'],['aguard','Orçamentos'],['clientes','Clientes'],['cobrar','Cobrar'],['entregas','Follow-up'],['agenda','Agenda'],['exames','Exames de vista'],['os','Ordens de serviço'],['relacao','Relacionamento'],['caixa','Caixa'],['lentes','Lentes'],['demolentes','Demonstração de lentes'],['campanhas','Campanhas'],['financeiro','Financeiro'],['metas','Metas'],['whatsapp','WhatsApp Automático'],['ajustes','Ajustes']];
+const TABS=[['painel','Painel'],['vendas','Vendas'],['aguard','Orçamentos'],['clientes','Clientes'],['cobrar','Cobrar'],['entregas','Follow-up'],['agenda','Agenda'],['os','Ordens de serviço'],['relacao','Relacionamento'],['caixa','Caixa'],['lentes','Lentes'],['demolentes','Demonstração de lentes'],['campanhas','Campanhas'],['financeiro','Financeiro'],['metas','Metas'],['whatsapp','WhatsApp Automático'],['exames','Tráfego exame de vista'],['ajustes','Ajustes']];
 /* grupos do menu: o que se usa todo dia fica junto, depois o acompanhamento, a loja, o Premium e o sistema */
 const TGRP={painel:'Dia a dia',vendas:'Dia a dia',aguard:'Dia a dia',clientes:'Dia a dia',cobrar:'Dia a dia',entregas:'Acompanhar',agenda:'Acompanhar',exames:'Adicional',os:'Acompanhar',relacao:'Acompanhar',caixa:'Minha loja',lentes:'Minha loja',demolentes:'Minha loja',campanhas:'Premium',financeiro:'Premium',metas:'Premium',whatsapp:'Premium',ajustes:'Sistema'};
 function tabsGrp(tv,fn){let g='',o='';tv.forEach(t=>{const k=TGRP[t[0]]||'';if(k&&k!==g){o+='<div class="tgrp'+(k==='Premium'||k==='Adicional'?' pro':'')+'" aria-hidden="true">'+k+'</div>'}g=k;o+=fn(t)});return o}
@@ -2501,7 +2501,7 @@ const MODS=[
  {k:'campanhas',n:'Campanhas por grupo de clientes',d:'Escolha um grupo e envie a mensagem pelo WhatsApp com poucos toques, sem digitar o nome de ninguém.',b:['Grupos prontos: sem comprar há 1 ano, grau antigo, em atraso, aniversariantes','Mensagem editável com o nome do cliente já preenchido','Marca quem já recebeu para não repetir']},
  {k:'pesquisa',n:'Pesquisa de satisfação e avaliação no Google',d:'Alguns dias depois da compra, peça ao cliente uma avaliação com o link da sua ótica no Google.',b:['Lista de quem comprou há alguns dias e ainda não foi chamado','Mensagem pronta com o seu link de avaliação','Marca quem já foi chamado']},
  {k:'wa',n:'WhatsApp automático',d:'Os avisos de boas-vindas, recibo, óculos chegou, agradecimento, lembrete e atraso saem sozinhos pelo WhatsApp da ótica, de um programa no computador da loja.',b:['Você escolhe, aviso por aviso, se sai sozinho ou se espera a sua aprovação','Fila guardada na nuvem: se o computador estiver desligado, nada se perde','Limite por dia, horário comercial e pausa com um clique','Quem responder SAIR não recebe mais avisos']},
- {k:'exames',add:true,n:'Exames de vista e tráfego pago',d:'Uma página para o cliente agendar o exame de vista, a confirmação sai sozinha pelo WhatsApp e os anúncios no Facebook e no Instagram são criados e acompanhados pelo sistema. Função adicional, contratada à parte do Premium.',b:['Página de agendamento com o seu logo e as suas cores, pronta para divulgar','Agenda de exames: confirmar, remarcar, marcar quem veio e quem faltou','Confirmação na hora e lembrete na véspera pelo WhatsApp Automático','Anúncios no Facebook e Instagram para quem mora perto da ótica','Artes criadas pelo sistema ou fotos e vídeos feitos na sua loja','Resultados: quanto investiu, quantos agendaram e quanto custou cada agendamento','Sugestões do que pausar e do que melhorar, ou ajustes automáticos dentro do limite que você definir']},
+ {k:'exames',add:true,n:'Tráfego exame de vista',d:'Uma página para o cliente agendar o exame de vista, a confirmação sai sozinha pelo WhatsApp e os anúncios no Facebook e no Instagram são criados e acompanhados pelo sistema. Função adicional, contratada à parte do Premium.',b:['Página de agendamento com o seu logo e as suas cores, pronta para divulgar','Agenda de exames: confirmar, remarcar, marcar quem veio e quem faltou','Confirmação na hora e lembrete na véspera pelo WhatsApp Automático','Anúncios no Facebook e Instagram para quem mora perto da ótica','Artes criadas pelo sistema ou fotos e vídeos feitos na sua loja','Resultados: quanto investiu, quantos agendaram e quanto custou cada agendamento','Sugestões do que pausar e do que melhorar, ou ajustes automáticos dentro do limite que você definir']},
  {k:'historico',n:'Histórico de alterações e backup automático',d:'Saiba quem fez o quê no sistema e tenha uma cópia de segurança toda semana.',b:['Registro de vendas, recebimentos, edições e exclusões com data e usuário','Backup semanal baixado sozinho no aparelho','Mais segurança quando há equipe usando o sistema']}
 ];
 const MOD=k=>MODS.find(m=>m.k===k)||{};
@@ -3057,9 +3057,9 @@ function viewExames(){
   exGarante();
   const dono=exDono(),subs=[['agenda','Agenda de exames']].concat(dono?[['pagina','Página de agendamento'],['anuncios','Anúncios']]:[]);
   if(!dono)EX.sub='agenda';
-  const nav='<div class="seg ex-nav" role="tablist" aria-label="Exames de vista">'+subs.map(s=>'<button class="btn sm'+(EX.sub===s[0]?' primary':'')+'" role="tab" aria-selected="'+(EX.sub===s[0])+'" data-act="exsub" data-s="'+s[0]+'">'+s[1]+'</button>').join('')+'</div>';
+  const nav='<div class="seg ex-nav" role="tablist" aria-label="Tráfego exame de vista">'+subs.map(s=>'<button class="btn sm'+(EX.sub===s[0]?' primary':'')+'" role="tab" aria-selected="'+(EX.sub===s[0])+'" data-act="exsub" data-s="'+s[0]+'">'+s[1]+'</button>').join('')+'</div>';
   const corpo=EX.sub==='pagina'?exPagina():EX.sub==='anuncios'?exAds():exAgenda();
-  return pageHead('Exames de vista','Agendamentos feitos pelo link, pelos anúncios e pela equipe')+nav+(EX.err?'<p class="sub" style="color:var(--bad)">'+esc(EX.err)+'</p>':'')+corpo;
+  return pageHead('Tráfego exame de vista','Agendamentos feitos pelo link, pelos anúncios e pela equipe')+nav+(EX.err?'<p class="sub" style="color:var(--bad)">'+esc(EX.err)+'</p>':'')+corpo;
 }
 /* ---- agenda ---- */
 function exLinhaAg(x){
