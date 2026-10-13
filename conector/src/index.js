@@ -48,10 +48,15 @@ async function main() {
   const cfg = await lerConfig();
   const api = criarApi(cfg);
   paginaLocal();
-  const baileys = require('@whiskeysockets/baileys');
-  const makeWASocket = baileys.default || baileys.makeWASocket;
-  const { useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion } = baileys;
+  // A biblioteca do WhatsApp (Baileys 7) é um módulo ESM, então é carregada com import().
+  let baileys;
+  try { baileys = await import('@whiskeysockets/baileys'); }
+  catch (e) { log('Não consegui carregar a biblioteca do WhatsApp (' + e.message + '). Confira se o Node.js é a versão 20 ou mais nova e rode o instalar.bat de novo.'); throw e; }
+  const makeWASocket = typeof baileys.default === 'function' ? baileys.default : (baileys.makeWASocket || (baileys.default && baileys.default.default));
+  const { useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion, makeCacheableSignalKeyStore } = baileys;
+  try { log('Biblioteca do WhatsApp: ' + JSON.parse(fs.readFileSync(path.join(RAIZ, 'node_modules', '@whiskeysockets', 'baileys', 'package.json'), 'utf8')).version + ' · Node ' + process.versions.node); } catch (e) { /* ignora */ }
   const pino = require('pino');
+  const logger = pino({ level: 'silent' });
   let sock = null;
   // Guarda as últimas mensagens enviadas. Quando o celular de quem recebe não consegue abrir
   // a mensagem de primeira ("Aguardando mensagem"), ele pede para reenviar e o WhatsApp
@@ -68,7 +73,8 @@ async function main() {
     const { state, saveCreds } = await useMultiFileAuthState(PASTA_SESSAO);
     let version;
     try { version = (await fetchLatestBaileysVersion()).version; } catch (e) { /* usa a padrão */ }
-    sock = makeWASocket({ auth: state, version, logger: pino({ level: 'silent' }), browser: ['Otica', 'Chrome', '1.0'], markOnlineOnConnect: false, syncFullHistory: false, getMessage: async (key) => enviadas.get(key.id) });
+    const auth = makeCacheableSignalKeyStore ? { creds: state.creds, keys: makeCacheableSignalKeyStore(state.keys, logger) } : state;
+    sock = makeWASocket({ auth, version, logger, browser: ['Otica', 'Chrome', '1.0'], markOnlineOnConnect: false, syncFullHistory: false, getMessage: async (key) => enviadas.get(key.id) });
     sock.ev.on('creds.update', saveCreds);
     sock.ev.on('connection.update', async (u) => {
       if (u.qr) { estado.estado = 'qr'; estado.qr = u.qr; estado.msg = 'Aguardando a leitura do QR Code.'; api.ping('qr').catch(() => {}); log('QR Code pronto: abra http://localhost:' + PORTA); }
