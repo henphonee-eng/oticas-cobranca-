@@ -3275,8 +3275,11 @@ document.addEventListener('change',async e=>{const t=e.target;if(!t||!t.dataset)
    a resposta entra na fila com tipo "manual" e o conector manda na hora, sem rodapé. */
 const WC={msgs:null,pend:[],sel:'',busy:false,txt:{},chan:null,q:'',novo:null,t:0,st:null,abrirTel:''};
 const wcK=t=>String(t||'').replace(/\D/g,'').slice(-8);
+/* nomes dados na Nova conversa para quem não é cliente cadastrado */
+const wcNomes=()=>{if(!S.config.wachat)S.config.wachat={id:'wachat',nomes:{}};if(!S.config.wachat.nomes)S.config.wachat.nomes={};return S.config.wachat.nomes};
 function wcNome(k,fb){
   const c=Object.values(S.clientes).find(x=>x&&x.whatsapp&&wcK(x.whatsapp)===k);if(c)return c.nome;
+  const n=wcNomes()[k];if(n)return n;
   const e=(typeof EX!=='undefined'&&EX.ag||[]).find(a=>wcK(a.whatsapp)===k);if(e)return cap(String(e.nome).toLowerCase());
   return fb||'';
 }
@@ -3287,6 +3290,7 @@ function wcConvs(){
     c.tel=(ult&&ult.telefone)||(pe[0]&&pe[0].telefone)||'';c.ult=ult;c.quando=[ult&&ult.criado_em,...pe.map(p=>p.criado_em)].filter(Boolean).sort().pop()||'';c.nome=wcNome(c.k,c.nomeWa)||maskTel(c.tel.replace(/^55/,''));return c})
    .sort((a,b)=>b.quando.localeCompare(a.quando));
 }
+function wcClientesOpc(){return Object.values(S.clientes).filter(c=>c&&c.nome).sort((a,b)=>a.nome.localeCompare(b.nome)).map(c=>({c,l:c.nome+(c.whatsapp?' · '+maskTel(c.whatsapp):'')}))}
 const wcNaoLidas=()=>(WC.msgs||[]).filter(m=>!m.de_mim&&!m.lido).length;
 function wcBadge(){if(!OTICA||!modOn('wachat'))return '';wcGarante();const n=wcNaoLidas();return n?'<i class="badge">'+(n>99?'99+':n)+'</i>':''}
 async function wcLoad(){
@@ -3349,7 +3353,11 @@ function viewWaChat(){
   if(WC.msgs===null)return pageHead('Conversas do WhatsApp','')+'<p class="sub">Carregando...</p>';
   const st=WC.st||{},cs=wcConvs(),c=cs.find(x=>x.k===WC.sel);
   const aviso=st.estado==='sem_conector'?'<p class="sub" style="margin:0 0 10px;color:var(--warn)">Para usar as conversas, instale o conector no computador da loja (menu WhatsApp Automático).</p>':st.estado&&st.estado!=='conectado'?'<p class="sub" style="margin:0 0 10px;color:var(--warn)">O conector do computador da loja está desligado. As mensagens só chegam e saem com ele ligado.</p>':'';
-  const novo=WC.novo!==null?'<div class="card" style="gap:10px;margin-bottom:12px"><b>Nova conversa</b><div class="field"><span>WhatsApp com DDD</span><input type="tel" inputmode="tel" data-mask="tel" id="wc-novo" value="'+esc(WC.novo)+'" placeholder="(81) 99999-9999"></div><div class="foot-row"><button class="btn primary" data-act="wcnovook">Abrir conversa</button><button class="btn" data-act="wcnovox">Cancelar</button></div></div>':'';
+  const N=WC.novo;
+  const novo=N?'<div class="card" style="gap:10px;margin-bottom:12px"><b>Nova conversa</b>'+
+    '<div class="field"><span>Cliente já cadastrado (opcional)</span><input type="search" id="wc-ncli" list="wc-clis" value="'+esc(N.busca)+'" placeholder="Digite o nome ou o WhatsApp do cliente" autocomplete="off"><datalist id="wc-clis">'+wcClientesOpc().map(o=>'<option value="'+esc(o.l)+'"></option>').join('')+'</datalist>'+(N.cliente_id?'<span class="sub" style="margin-top:4px">Cliente selecionado. Nome e WhatsApp preenchidos abaixo.</span>':'')+'</div>'+
+    '<div class="grid2"><div class="field"><span>Nome</span><input type="text" id="wc-nnome" value="'+esc(N.nome)+'" placeholder="Nome da pessoa" autocomplete="off"></div><div class="field"><span>WhatsApp com DDD</span><input type="tel" inputmode="tel" data-mask="tel" id="wc-novo" value="'+esc(N.tel)+'" placeholder="(81) 99999-9999"></div></div>'+
+    '<div class="foot-row"><button class="btn primary" data-act="wcnovook">Abrir conversa</button><button class="btn" data-act="wcnovox">Cancelar</button></div></div>':'';
   const lista='<div class="wc-side'+(c?' tem':'')+'"><div class="wc-busca"><input type="search" id="wc-q" placeholder="Buscar conversa" value="'+esc(WC.q)+'" aria-label="Buscar conversa"></div><div id="wc-list" class="wc-list">'+wcLista()+'</div></div>';
   const tel=c?c.tel:'';
   const conversa=c?'<div class="wc-main"><div class="wc-top"><button class="btn sm ghost wc-volta" data-act="wcvoltar" aria-label="Voltar para a lista">&#8249;</button><div style="min-width:0"><b>'+esc(c.nome)+'</b><div class="sub" style="margin:0">'+esc(maskTel(tel.replace(/^55/,'')))+'</div></div><a class="btn sm ghost"'+WAT+' href="'+esc(waLink(tel,''))+'" style="margin-left:auto">Abrir no WhatsApp</a></div>'+
@@ -3367,9 +3375,11 @@ Object.assign(A,{
     if(WC.msgs&&!wcConvs().some(x=>x.k===WC.sel))WC.pend.push({id:'novo',telefone:tel,texto:'',status:'novo',criado_em:new Date().toISOString()});
     else if(!WC.msgs)WC.abrirTel=tel;
     ui.tab='wachat';render();setTimeout(wcRolar,0)},
-  wcnovo(){WC.novo='';render();setTimeout(()=>{const i=document.getElementById('wc-novo');if(i)i.focus()},0)},
+  wcnovo(){WC.novo={busca:'',cliente_id:'',nome:'',tel:''};render();setTimeout(()=>{const i=document.getElementById('wc-ncli');if(i)i.focus()},0)},
   wcnovox(){WC.novo=null;render()},
-  wcnovook(){const i=document.getElementById('wc-novo');const t=String(i?i.value:WC.novo||'').replace(/\D/g,'');if(t.replace(/^55/,'').length<10)return toast('Informe o WhatsApp com DDD');const tel=t.length<=11?'55'+t:t;WC.novo=null;WC.sel=wcK(tel);
+  wcnovook(){const N=WC.novo||{};const t=String(N.tel||'').replace(/\D/g,'');if(t.replace(/^55/,'').length<10)return toast('Informe o WhatsApp com DDD');const tel=t.length<=11?'55'+t:t;const nome=String(N.nome||'').trim().replace(/\s+/g,' ').slice(0,80);
+    WC.novo=null;WC.sel=wcK(tel);
+    if(nome&&!N.cliente_id){const ns=wcNomes();if(ns[WC.sel]!==nome){ns[WC.sel]=nome;persist('config','wachat')}}
     if(!wcConvs().some(c=>c.k===WC.sel))WC.pend.push({id:'novo',telefone:tel,texto:'',status:'novo',criado_em:new Date().toISOString()});render()},
   async wcenviar(){
     const c=wcConvs().find(x=>x.k===WC.sel);const ta=document.getElementById('wc-txt');const txt=String(ta?ta.value:'').trim();if(!c||!txt)return;
@@ -3385,7 +3395,11 @@ Object.assign(A,{
 document.addEventListener('input',e=>{const t=e.target;if(!t)return;
   if(t.id==='wc-txt'&&WC.sel){WC.txt[WC.sel]=t.value;return}
   if(t.id==='wc-q'){WC.q=t.value;const l=document.getElementById('wc-list');if(l)l.innerHTML=wcLista();return}
-  if(t.id==='wc-novo'){WC.novo=t.value}
+  if(t.id==='wc-novo'&&WC.novo){WC.novo.tel=t.value;WC.novo.cliente_id='';return}
+  if(t.id==='wc-nnome'&&WC.novo){WC.novo.nome=t.value;WC.novo.cliente_id='';return}
+  if(t.id==='wc-ncli'&&WC.novo){const N=WC.novo;N.busca=t.value;const o=wcClientesOpc().find(x=>x.l===t.value);
+    if(o){N.cliente_id=o.c.id;N.nome=o.c.nome;N.tel=o.c.whatsapp?maskTel(o.c.whatsapp):'';const a=document.getElementById('wc-nnome'),b=document.getElementById('wc-novo');if(a)a.value=N.nome;if(b)b.value=N.tel;if(!N.tel)toast('Esse cliente não tem WhatsApp no cadastro. Preencha abaixo.')}
+    else N.cliente_id='';return}
 });
 document.addEventListener('keydown',e=>{if(e.target&&e.target.id==='wc-txt'&&e.key==='Enter'&&!e.shiftKey&&!isMobile){e.preventDefault();A.wcenviar()}});
 setInterval(()=>{if(auth==='ok'&&OTICA&&modOn('wachat')&&!document.hidden&&(ui.tab==='wachat'||!WC.chan)&&Date.now()-WC.t>25000)wcLoad()},30000);
