@@ -1,5 +1,5 @@
--- Prospecção: óticas que já apareceram numa busca e foram deixadas de fora (não adicionadas ao CRM).
--- Não aparecem de novo em nenhuma busca (por place_id do Google ou pelo telefone).
+-- Prospecção: tabela criada para guardar óticas vistas e descartadas nas buscas.
+-- NÃO É USADA: o Éder preferiu que só as óticas adicionadas ao CRM deixem de aparecer.
 create table if not exists public.prosp_vistos (
   place_id text primary key,
   nome text,
