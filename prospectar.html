@@ -134,7 +134,7 @@ button.stat{cursor:pointer}button.stat:hover{background:var(--surface-2)}
 .zb small{display:block;text-align:right;color:var(--muted);font-size:11px;margin-top:2px}
 .zd{text-align:center;margin:8px 0}.zd span{font-size:12px;color:var(--muted);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1px 10px}
 .ze{padding:10px;border-top:1px solid var(--line);display:grid;gap:8px}
-.ze .row textarea{min-height:46px;max-height:160px;flex:1}
+.ze .row textarea{min-height:46px;max-height:320px;flex:1}
 .zback{display:none}
 @media (max-width:899px){.zl.tem{display:none}.zl:not(.tem)+.zm.vazio{display:none}.zback{display:inline-flex}.zap{height:calc(100dvh - 230px);min-height:440px}}
 /* menu: barra de baixo no celular, lateral no computador */
@@ -194,7 +194,9 @@ const DEF={
   seu_nome:'Éder Henrique',
   limite:'25',
   abordagem:'Olá, equipe da {otica}! Tudo bem?\n\nSou o {seu_nome}, desenvolvo apps personalizados para empresas.\n\nMontei um protótipo de teste do nosso sistema de gestão para óticas (vendas, clientes, carnê e Pix, financeiro e avisos pelo WhatsApp), já com o nome de vocês. Dá uma olhada:\n{link}\n\nSe gostar, finalizamos com a logo e as cores da {otica}, um sistema só de vocês. Posso te mostrar como funciona?',
-  followup:'Oi, pessoal da {otica}! Passando só para saber se conseguiram dar uma olhada na demonstração do sistema de gestão:\n{link}\n\nSe fizer sentido, te mostro rapidinho por aqui mesmo.'
+  followup:'Oi, pessoal da {otica}! Passando só para saber se conseguiram dar uma olhada na demonstração do sistema de gestão:\n{link}\n\nSe fizer sentido, te mostro rapidinho por aqui mesmo.',
+  interesse:'Que bom que gostou, pessoal da {otica}! 😊\n\nFunciona assim: o sistema roda no navegador, no computador e no celular, sem instalar nada. Fica com a logo e as cores da {otica} e reúne vendas, clientes, carnê com Pix, ordens de serviço, financeiro e avisos pelo WhatsApp.\n\nValores:\n• Implantação: a partir de R$ 457 (pagamento único, deixo tudo configurado para vocês)\n• Mensalidade: R$ 47 no plano Básico\n• Plano Premium: R$ 67 por mês, com as funções novas e as atualizações\n\nA primeira mensalidade só vence 30 dias depois da implantação. Quer que eu mostre o sistema funcionando numa chamada rápida?',
+  agradecimento:'Tudo bem, pessoal da {otica}! Obrigado pelo retorno e pela atenção. 🙏\n\nSe um dia precisarem de um sistema de gestão para a ótica, é só me chamar por aqui. Sucesso para vocês!\n\n{seu_nome}'
 };
 
 const st={tab:'crm',user:null,admin:false,leads:[],cfg:{},ac:{},loaded:false,
@@ -423,7 +425,7 @@ function vZap(){
     const sts=l?['respondeu','interessada','fechou','sem_interesse'].filter(k=>k!==l.status).map(k=>'<button class="btn sm" data-st="'+l.id+'" data-v="'+k+'">'+STATUS[k]+'</button>').join(''):'';
     main='<div class="zm"><div class="zh"><button class="btn sm zback" data-zback="1" aria-label="Voltar para a lista">‹</button><div class="grow" style="min-width:0"><b>'+esc(g.nome)+'</b><div class="small muted">'+esc(fmtFone(g.tel))+(l?' · <span class="tag '+STAG[l.status]+'">'+STATUS[l.status]+'</span>':'')+'</div></div>'+(l?'<a class="btn sm" href="'+esc(demoLink(l,true))+'" target="_blank" rel="noopener">Ver demo</a>':'')+'</div>'+
       '<div class="zt" id="zthread">'+zMsgs(g)+'</div>'+
-      '<div class="ze">'+(l?'<div class="row" style="gap:6px"><button class="btn sm" data-zfu="1">Usar o texto do follow-up</button>'+sts+'</div>':'')+
+      '<div class="ze">'+(l?'<div class="row" style="gap:6px"><button class="btn sm" data-zfu="followup">Usar o texto do follow-up</button><button class="btn sm" data-zfu="interesse">Se interessou: como funciona e valores</button><button class="btn sm" data-zfu="agradecimento">Sem interesse: agradecer</button>'+sts+'</div>':'')+
       '<div class="row" style="align-items:flex-end"><textarea id="ztxt" rows="2" placeholder="Escreva a mensagem" aria-label="Mensagem">'+esc(st.ztxt[g.k]||'')+'</textarea><button class="btn pri" data-zenv="1">Enviar</button></div></div></div>';}
   return h+'<div class="zap">'+side+main+'</div><p class="small muted" style="margin-top:8px">As respostas chegam pelo chip do CRM. O que você escreve aqui sai na hora pelo mesmo chip, fora da fila e do limite do envio automático.</p>';
 }
@@ -513,6 +515,8 @@ function vMsg(){
     '<p class="small muted" style="margin:0">Use <b>{otica}</b>, <b>{link}</b> (demo com o nome da ótica), <b>{cidade}</b> e <b>{seu_nome}</b>.</p></div>'+
     '<div class="sec"><h2>Primeira mensagem</h2><div class="card">'+f('abordagem','Texto',1)+'<label class="small muted">Prévia</label><div class="prev">'+esc(msg('abordagem',ex))+'</div></div></div>'+
     '<div class="sec"><h2>Follow-up</h2><div class="card">'+f('followup','Texto',1)+'<label class="small muted">Prévia</label><div class="prev">'+esc(msg('followup',ex))+'</div></div></div>'+
+    '<div class="sec"><h2>Quando a ótica se interessa: como funciona e valores</h2><div class="card">'+f('interesse','Texto',1)+'<label class="small muted">Prévia</label><div class="prev">'+esc(msg('interesse',ex))+'</div></div></div>'+
+    '<div class="sec"><h2>Quando não tem interesse: agradecimento</h2><div class="card">'+f('agradecimento','Texto',1)+'<label class="small muted">Prévia</label><div class="prev">'+esc(msg('agradecimento',ex))+'</div></div></div>'+
     '<div class="row sec"><button class="btn pri" data-a="salvarcfg">Salvar mensagens</button><button class="btn" data-a="padrao">Voltar ao texto padrão</button></div>';
 }
 
@@ -529,7 +533,7 @@ document.addEventListener('click',async e=>{
   if(d.zf){st.zf=d.zf;return render()}
   if(d.zback){st.zsel='';return render()}
   if(d.zenv)return zEnviar();
-  if(d.zfu){const g=zConvs().find(x=>x.k===st.zsel);if(g&&g.lead){const v=msg('followup',g.lead);st.ztxt[g.k]=v;const ta=$('#ztxt');if(ta){ta.value=v;ta.focus()}}return}
+  if(d.zfu){const g=zConvs().find(x=>x.k===st.zsel);if(g&&g.lead){const v=msg(['followup','interesse','agradecimento'].includes(d.zfu)?d.zfu:'followup',g.lead);st.ztxt[g.k]=v;const ta=$('#ztxt');if(ta){ta.value=v;ta.style.height='auto';ta.style.height=Math.min(320,ta.scrollHeight+4)+'px';ta.focus();ta.setSelectionRange(0,0);ta.scrollTop=0}}return}
   if(d.fcancl)return cancelarLead(d.fcancl);
   if(d.st){const l=st.leads.find(x=>x.id===d.st);return upd(d.st,{status:d.v,historico:hist(l,'Status: '+STATUS[d.v]),follow_up:d.v==='fechou'?null:l.follow_up})}
   if(d.copy){const l=st.leads.find(x=>x.id===d.copy);try{await navigator.clipboard.writeText(demoLink(l));toast('Link copiado')}catch(x){prompt('Copie o link:',demoLink(l))}return}
@@ -549,7 +553,7 @@ document.addEventListener('click',async e=>{
     case 'wtoken':{if(st.wst&&st.wst.tem_token&&!confirm('Gerar um novo código desconecta o programa atual até você trocar o arquivo. Continuar?'))return;const r=await sb.rpc('prosp_wa_gerar_token');if(r.error)return toast(r.error.message);st.token=r.data;await loadFila();return render()}
     case 'wbaixar':{if(!st.token)return;const b=new Blob([JSON.stringify({supabaseUrl:SB_URL,supabaseKey:SB_KEY,token:st.token,modo:'prospeccao',porta:3940},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='config.json';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);return toast('Arquivo baixado: coloque na pasta do conector de prospecção')}
     case 'salvarcfg':{const rows=[...document.querySelectorAll('[data-cfg]')].map(i=>({chave:i.dataset.cfg,valor:i.value}));const r=await sb.from('prosp_config').upsert(rows);if(r.error)return toast(r.error.message);rows.forEach(x=>st.cfg[x.chave]=x.valor);toast('Mensagens salvas');return render()}
-    case 'padrao':st.cfg.abordagem='';st.cfg.followup='';await sb.from('prosp_config').upsert([{chave:'abordagem',valor:''},{chave:'followup',valor:''}]);toast('Texto padrão restaurado');return render();
+    case 'padrao':['abordagem','followup','interesse','agradecimento'].forEach(k=>st.cfg[k]='');await sb.from('prosp_config').upsert(['abordagem','followup','interesse','agradecimento'].map(k=>({chave:k,valor:''})));toast('Texto padrão restaurado');return render();
   }
 });
 document.addEventListener('change',e=>{
