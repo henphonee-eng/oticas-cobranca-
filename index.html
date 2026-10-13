@@ -1578,7 +1578,7 @@ function clientesList(){
   if(!list.length)return '<div class="empty">'+GLASSES+'<h3>'+(Object.keys(S.clientes).length?'Nenhum cliente encontrado':'Nenhum cliente cadastrado')+'</h3><p>'+(Object.keys(S.clientes).length?'Confira os filtros e a busca.':'Cadastre pelo botão acima ou direto na hora de registrar uma venda.')+'</p></div>';
   return '<div class="gridlist">'+list.map(c=>{
     const r=clienteResumo(c);
-    const wa=c.whatsapp?'<a class="btn sm wa"'+WAT+' data-contact="bv" data-c="'+c.id+'" href="'+esc(waLink(c.whatsapp,fillTpl(tpl('cadastro'),ctx(null,null,c))))+'">'+(c.bvEm?'WhatsApp de novo':'Boas-vindas')+'</a>':'';
+    const wa=c.whatsapp?bvBtn(c,c.bvEm?'WhatsApp de novo':'Boas-vindas','btn sm wa'):'';
     return '<div class="card"><div class="sale-top"><button class="link" data-act="editcliente" data-c="'+c.id+'">'+esc(c.nome)+demoTag(c)+'</button>'+(r.late?'<span class="chip bad">Em atraso</span>':r.aberto?'<span class="chip warn">Em aberto</span>':'')+'</div>'+
     '<div class="meta">'+esc(c.whatsapp||'Sem WhatsApp')+(c.cpf?' · CPF '+esc(c.cpf):'')+'</div>'+(c.endereco?'<div class="meta">'+esc(c.endereco)+'</div>':'')+
     '<div class="meta num">'+plural(r.vs.length,'compra','compras')+(r.comprado?' · '+brl(r.comprado):'')+(r.aberto?' · em aberto '+brl(r.aberto):'')+'</div>'+(r.ultima?'<div class="meta">Última compra em '+fmtDate(r.ultima)+'</div>':'')+
@@ -1840,7 +1840,7 @@ function viewFollow(){
   const late=ps.filter(x=>x.p.venc<t).sort((a,b)=>a.p.venc.localeCompare(b.p.venc));
   const soon=ps.filter(x=>x.p.venc>=t&&diffDays(x.p.venc,t)<=3).sort((a,b)=>a.p.venc.localeCompare(b.p.venc));
   const an=aniversariantes(7),rv=revisoes(),bv=premBvFiltro(bvPend()),mp=fupPend(),mf=Object.values(fupDoc().itens).filter(x=>x.feitoEm).sort((a,b)=>b.feitoEm.localeCompare(a.feitoEm)).slice(0,5);
-  const bvRow=c=>'<article class="row"><div class="row-main"><button class="link" data-act="editcliente" data-c="'+c.id+'">'+esc(c.nome)+demoTag(c)+'</button><div class="meta">Cadastrado em '+fmtDate(new Date(c.criadoEm).toISOString().slice(0,10))+'</div><div class="chips"><span class="chip warn">Boas-vindas pendente</span></div></div><div class="row-side"><div class="acts"><a class="btn sm wa"'+WAT+' data-contact="bv" data-c="'+c.id+'" href="'+esc(waLink(c.whatsapp,fillTpl(tpl('cadastro'),ctx(null,null,c))))+'">Enviar boas-vindas</a></div></div></article>';
+  const bvRow=c=>'<article class="row"><div class="row-main"><button class="link" data-act="editcliente" data-c="'+c.id+'">'+esc(c.nome)+demoTag(c)+'</button><div class="meta">Cadastrado em '+fmtDate(new Date(c.criadoEm).toISOString().slice(0,10))+'</div><div class="chips"><span class="chip warn">Boas-vindas pendente</span></div></div><div class="row-side"><div class="acts">'+bvBtn(c,'Enviar boas-vindas','btn sm wa')+'</div></div></article>';
   const S_=[
    ['boasvindas','Boas-vindas',bv.length,'<p class="sub" style="margin:0 0 8px">Clientes cadastrados nos últimos 30 dias que ainda não receberam a mensagem de boas-vindas.</p><div class="stack">'+(bv.length?bv.map(bvRow).join(''):none('Nenhuma boas-vindas pendente.'))+'</div>'],
    ['entregas','Entregas',pend.length,'<p class="sub" style="margin:0 0 8px">Use "Avisar que chegou" quando o óculos chegar e "Entregue e agradecer" depois da retirada. As duas mensagens são opcionais.'+(semData?' Para acompanhar uma venda antiga, abra a venda e informe a data prevista.':'')+'</p><div class="stack">'+(pend.length?pend.map(v=>entRow(v,false)).join(''):none('Nenhuma entrega marcada. Ao cadastrar uma venda, informe a data de entrega.'))+'</div>'+(feitas.length?'<p class="sub" style="margin:10px 0 4px">Entregues</p><div class="stack">'+feitas.map(v=>entRow(v,true)).join('')+'</div>':'')],
@@ -1893,7 +1893,7 @@ function sheetVenda(id){
   '<div class="sec"><h3>Ordem de serviço (OS)</h3><p class="sub" style="margin:0">Imprima a OS com o grau do cliente para mandar ao laboratório.</p><div class="foot-row"><button class="btn primary" data-act="osabrir" data-v="'+v.id+'">Imprimir OS</button></div></div>'+
   '<div class="sec"><h3>Enviar ao cliente</h3><div class="foot-row"><button class="btn'+(v.aguardando?'':' primary')+'" data-act="pdf" data-v="'+v.id+'">'+(v.aguardando?'Baixar orçamento em PDF':'Baixar PDF')+'</button>'+(resumoHref?'<a class="btn wa" target="_blank" rel="noopener" href="'+resumoHref+'">'+(v.aguardando?'Enviar orçamento no WhatsApp':'Resumo no WhatsApp')+'</a>':'')+'</div>'+
   '<p class="sub">O WhatsApp abre com a mensagem pronta. Para mandar o PDF, baixe o arquivo e anexe na conversa.</p>'+
-  ((c.whatsapp&&!c.bvEm&&S.clientes[v.clienteId])?'<div><a class="btn sm"'+WAT+' data-contact="bv" data-c="'+c.id+'" href="'+esc(waLink(c.whatsapp,fillTpl(tpl('cadastro'),ctx(null,null,c))))+'">Mensagem de boas-vindas</a></div>':'')+'</div>';
+  ((c.whatsapp&&!c.bvEm&&S.clientes[v.clienteId])?'<div>'+bvBtn(c,'Mensagem de boas-vindas','btn sm')+'</div>':'')+'</div>';
   const foot=(v.aguardando?'<button class="btn primary" data-act="pagarorc" data-v="'+v.id+'">Confirmar pagamento e virar venda</button>':'')+'<div class="foot-row"><button class="btn" data-act="editvenda" data-v="'+v.id+'">'+(v.aguardando?'Editar orçamento':'Editar venda')+'</button><button class="btn danger'+(ui.confirm===v.id?' armed':'')+'" data-act="delvenda" data-v="'+v.id+'">'+(ui.confirm===v.id?'Toque de novo para excluir':v.aguardando?'Excluir orçamento':'Excluir venda')+'</button></div>';
   return sheetShell(v.aguardando?'Orçamento':'Venda',body,foot);
 }
@@ -2090,7 +2090,7 @@ function sheetRecibo(s){
 function sheetClienteOk(id){
   const c=S.clientes[id];if(!c)return null;
   const body='<div class="empty" style="border:0;background:none">'+GLASSES+'<h3>'+esc(c.nome)+' foi cadastrado</h3><p>'+(c.whatsapp?'Se quiser, abra o WhatsApp com a mensagem de boas-vindas pronta.':'Sem WhatsApp cadastrado, não dá para enviar mensagens. Complete a ficha quando tiver.')+'</p>'+(cliFalta(c).length?'<p class="hint" style="max-width:42ch">'+esc(avisoFalta(c))+'</p>':'')+'</div>';
-  const foot=(c.whatsapp?'<a class="btn wa"'+WAT+' data-contact="bv" data-c="'+c.id+'" href="'+esc(waLink(c.whatsapp,fillTpl(tpl('cadastro'),ctx(null,null,c))))+'">Abrir WhatsApp</a>':'')+'<button class="btn primary" data-act="novavenda" data-c="'+c.id+'">Registrar uma venda</button><button class="btn" data-act="closesheet">Fechar</button>';
+  const foot=(c.whatsapp?bvBtn(c,'Abrir WhatsApp','btn wa'):'')+'<button class="btn primary" data-act="novavenda" data-c="'+c.id+'">Registrar uma venda</button><button class="btn" data-act="closesheet">Fechar</button>';
   return sheetShell('Cliente cadastrado',body,foot);
 }
 
@@ -2975,7 +2975,7 @@ function waGarante(){if(WA.fila===null&&!WA.busy)setTimeout(waLoad,0)}
 setInterval(()=>{if(auth==='ok'&&modOn('wa')&&ui.tab==='whatsapp'&&!document.hidden)waLoad()},30000);
 function waEnq(tipo,c,texto,ref){
   if(!waOn()||!c||!c.whatsapp||!OTICA)return false;
-  sb.rpc('wa_enfileirar',{p_otica:OTICA.id,p_cliente:c.id||'',p_nome:c.nome||'',p_tipo:tipo,p_tel:c.whatsapp,p_texto:texto,p_ref:ref}).then(r=>{if(r&&!r.error){WA.fila=null;if(r.data==='ok')toast(waModo(tipo)==='auto'?'Mensagem na fila do WhatsApp':'Mensagem esperando sua aprovação no menu WhatsApp automático')}}).catch(()=>{});
+  sb.rpc('wa_enfileirar',{p_otica:OTICA.id,p_cliente:c.id||'',p_nome:c.nome||'',p_tipo:tipo,p_tel:c.whatsapp,p_texto:texto,p_ref:ref}).then(r=>{if(r&&!r.error){WA.fila=null;if(r.data==='ok')toast(waModo(tipo)==='auto'?'Mensagem na fila do WhatsApp':'Mensagem esperando sua aprovação no menu WhatsApp automático');else if(r.data==='dup')toast('Essa mensagem já está na fila do WhatsApp');else if(r.data==='optout')toast('Esse cliente pediu para não receber mensagens')}}).catch(()=>{});
   return true;
 }
 const waModo=t=>waDoc().modo[t]||(String(t).indexOf('exame_')===0?'auto':'aprovar');
@@ -3040,6 +3040,8 @@ function premWaAjustes(){
    '<p class="sub" style="margin:0">Programa gratuito e não oficial. Use um número só da ótica, com poucas mensagens por dia e sem texto igual para muita gente. Existe risco de o WhatsApp bloquear o número, por isso os envios têm intervalo, limite diário e a opção SAIR.</p></div>'+tk;
 }
 Object.assign(A,{
+  wabv(d){const c=S.clientes[d.c];if(!c||!c.whatsapp)return toast('Cliente sem WhatsApp');const t=todayStr();
+    if(waEnq('boasvindas',c,fillTpl(tpl('cadastro'),ctx(null,null,c)),'bvm:'+c.id+':'+t)){c.bvEm=t;persist('clientes',c.id);if(ui.sheet&&ui.sheet.kind!=='cliente')closeSheet();refresh()}},
   waent(d){const v=S.vendas[d.v];if(!v)return;const c=S.clientes[v.clienteId];if(!c||!c.whatsapp)return toast('Cliente sem WhatsApp');const t=todayStr();
     if(d.t==='cheg'){v.chegouEm=t;waEnq('chegou',c,fillTpl(tpl('chegou'),ctx(v,null,c)),'cheg:'+v.id+':'+t)}
     else{if(!v.entregueEm)v.entregueEm=t;v.agradEm=t;waEnq('agradecimento',c,fillTpl(tpl('entrega'),ctx(v,null,c)),'agr:'+v.id)}
@@ -3949,6 +3951,11 @@ Object.assign(A,{
 });
 /* ---------- ADMIN-FIM ---------- */
 
+/* boas-vindas: com o WhatsApp Automático ligado, vai para a fila (sai sozinho ou espera aprovação, conforme o menu WhatsApp Automático); sem ele, abre o WhatsApp com a mensagem pronta */
+function bvBtn(c,label,cls){
+  if(typeof waOn==='function'&&waOn())return '<button class="'+cls+'" data-act="wabv" data-c="'+c.id+'">'+esc(label==='Abrir WhatsApp'?'Enviar boas-vindas':label)+'</button>';
+  return '<a class="'+cls+'"'+WAT+' data-contact="bv" data-c="'+c.id+'" href="'+esc(waLink(c.whatsapp,fillTpl(tpl('cadastro'),ctx(null,null,c))))+'">'+label+'</a>';
+}
 function markContact(d){
   if(d.contact==='p'){const v=S.vendas[d.v];if(v){v.parcelas[+d.pi].contatoEm=todayStr();persist('vendas',v.id)}}
   else if(d.contact==='ani'){const c=S.clientes[d.c];if(c){c.aniEm=todayStr().slice(0,4);persist('clientes',c.id)}}
