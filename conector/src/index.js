@@ -219,7 +219,7 @@ async function main() {
     if (!tel) return;
     try {
       const buf = await baileys.downloadMediaMessage(m, 'buffer', {}, { logger, reuploadRequest: sock.updateMediaMessage });
-      const r = await api.midia({ telefone: tel, nome: m.pushName || '', tipo: au ? 'audio' : 'imagem', mime: (au || im).mimetype || '', legenda: (im && im.caption) || '', waId: m.key.id, base64: Buffer.from(buf).toString('base64') });
+      const r = await api.midia({ telefone: tel, nome: m.pushName || '', tipo: au ? 'audio' : 'imagem', segundos: au ? Number(au.seconds || 0) : 0, mime: (au || im).mimetype || '', legenda: (im && im.caption) || '', waId: m.key.id, base64: Buffer.from(buf).toString('base64') });
       if (r && r.off) agenteOffAte = Date.now() + 10 * 60000; // agente desligado: não baixa mídia por 10 minutos
       else log((au ? 'Áudio' : 'Foto') + ' de ' + tel + ' enviado ao Agente de IA');
     } catch (e) { log('Não consegui ler a mídia recebida: ' + e.message); }

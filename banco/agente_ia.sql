@@ -19,3 +19,9 @@ alter table public.wa_fila add column if not exists midia text;
 alter table public.prosp_leads add column if not exists campanha_em timestamptz;
 -- prosp_wa_fila.tipo aceita 'campanha'; prosp_wa_puxar envia campanha também para "sem interesse" (não para "fechou" nem repetida);
 -- prosp_wa_resultado marca campanha_em; prosp_wa_receber volta "sem interesse" para "respondeu" se responder até 30 dias após a campanha.
+
+-- Uso e custo por ótica (migrations agente_uso e agente_adm)
+-- agente_uso(otica_id, dia, respostas, tokens_in, tokens_out, audios, audio_seg, fotos, testes): gravado pela função agente-ia (ag_uso_add)
+-- agente_config.limite_mes (padrão 1500 respostas): no limite o agente para e avisa os donos
+-- adm_agente_uso(mes 'AAAA-MM') e adm_agente_limite(otica, limite): painel Adm → Agente de IA
+-- ot_mod_on(o,'agente') só vale com liberação explícita (função adicional de R$ 150/mês, fora do Premium)
