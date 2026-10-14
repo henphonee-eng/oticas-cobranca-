@@ -2990,6 +2990,7 @@ async function waLoad(){
   }catch(e){WA.fila=WA.fila||[]}
   WA.busy=false;WA.t=Date.now();
   if(ui.tab==='whatsapp'&&!fieldsOn()&&!ui.sheet)render();
+  waQrPoll();
 }
 function waGarante(){if(WA.fila===null&&!WA.busy)setTimeout(waLoad,0)}
 setInterval(()=>{if(auth==='ok'&&modOn('wa')&&ui.tab==='whatsapp'&&!document.hidden)waLoad()},30000);
@@ -3073,6 +3074,18 @@ function viewWa(){
   waGarante();const f=premFuWa();
   return pageHead('WhatsApp Automático','Mensagens que saem sozinhas pelo WhatsApp da ótica, de um programa no computador da loja')+premWaAjustes()+'<div class="panel" style="margin-top:16px"><div class="sh" style="margin-top:0"><h2>Fila de mensagens</h2><span class="sub num">'+(f?f.n:0)+'</span></div>'+(f?f.html:'')+'</div>';
 }
+// WhatsApp na nuvem: o conector roda no servidor 24h; o QR Code aparece aqui para ler com o celular da ótica.
+function waNuvemHtml(st){
+  if(!st.nuvem)return '<div class="card" style="gap:8px;border:1px solid var(--line,#ddd)"><b>☁️ WhatsApp na nuvem (24 horas)</b><p class="sub" style="margin:0">As mensagens saem mesmo com o computador da loja desligado. Você só lê um QR Code com o celular da ótica, uma vez.</p><div class="foot-row"><button class="btn primary" data-act="wanuvem">Ligar o WhatsApp na nuvem</button></div></div>';
+  const q=st.estado==='qr'&&st.qr;
+  return '<div class="card" style="gap:8px;border:1px solid var(--line,#ddd)"><b>☁️ WhatsApp na nuvem (24 horas)</b>'+
+   (st.estado==='conectado'?'<p class="sub" style="margin:0">Funcionando no servidor. Pode desligar o computador da loja à vontade.</p>':
+    q?'<p class="sub" style="margin:0"><b>Leia o QR Code</b> com o celular da ótica: WhatsApp › Configurações › Aparelhos conectados › Conectar um aparelho. Ele muda sozinho a cada minuto.</p><img alt="QR Code do WhatsApp" src="'+esc(st.qr)+'" style="width:260px;max-width:100%;height:auto;background:#fff;padding:8px;border-radius:8px">':
+    '<p class="sub" style="margin:0">Preparando o QR Code no servidor... aparece aqui em até 1 minuto.</p>')+
+   '<div class="foot-row"><button class="btn sm" data-act="waload">Atualizar</button><button class="btn sm" data-act="wanuvemoff">Desligar a nuvem</button></div></div>';
+}
+let waQrT=null;
+function waQrPoll(){clearTimeout(waQrT);if(WA.st&&WA.st.nuvem&&WA.st.estado!=='conectado'&&ui.tab==='whatsapp'&&!document.hidden)waQrT=setTimeout(()=>waLoad(),8000)}
 function premWaAjustes(){
   if(!modOn('wa'))return '';waGarante();if(ROLE!=='dono')return '';
   const D=waDoc(),e=waEstado(),st=WA.st||{};
@@ -3085,7 +3098,8 @@ function premWaAjustes(){
    '<div class="sub" style="margin:0">Para cada aviso, escolha se espera a sua aprovação ou sai sozinho. Comece com "Aprovar antes" até confiar nas mensagens. Parcelas com 15 dias ou mais de atraso sempre esperam aprovação.</div>'+
    WA_TIPOS.map(sel).join('')+
    '<div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(120px,1fr))"><div class="field"><span>Enviar a partir de</span><input type="time" data-wacfg="ini" value="'+esc(D.ini||'08:00')+'"></div><div class="field"><span>Até</span><input type="time" data-wacfg="fim" value="'+esc(D.fim||'18:30')+'"></div><div class="field"><span>Limite por dia</span><input type="number" min="1" max="80" data-wacfg="limite" value="'+(+D.limite||30)+'"></div></div>'+
-   '<div class="foot-row"><button class="btn" data-act="wagerar">'+(st.tem_token?'Gerar novo código':'Gerar código do conector')+'</button><a class="btn" href="conector.zip" download>Baixar o programa do computador</a></div>'+
+   waNuvemHtml(st)+
+   (st.nuvem?'':'<details><summary class="sub" style="cursor:pointer">Usar pelo computador da loja (sem a nuvem)</summary><div class="foot-row" style="margin-top:8px"><button class="btn" data-act="wagerar">'+(st.tem_token?'Gerar novo código':'Gerar código do conector')+'</button><a class="btn" href="conector.zip" download>Baixar o programa do computador</a></div></details>')+
    '<p class="sub" style="margin:0">Programa gratuito e não oficial. Use um número só da ótica, com poucas mensagens por dia e sem texto igual para muita gente. Existe risco de o WhatsApp bloquear o número, por isso os envios têm intervalo, limite diário e a opção SAIR.</p></div>'+tk;
 }
 Object.assign(A,{
@@ -3095,10 +3109,15 @@ Object.assign(A,{
     if(d.t==='cheg'){v.chegouEm=t;waEnq('chegou',c,fillTpl(tpl('chegou'),ctx(v,null,c)),'cheg:'+v.id+':'+t)}
     else{if(!v.entregueEm)v.entregueEm=t;v.agradEm=t;waEnq('agradecimento',c,fillTpl(tpl('entrega'),ctx(v,null,c)),'agr:'+v.id)}
     persist('vendas',v.id);refresh()},
-  async waaprovar(d){const r=await sb.rpc('wa_decidir',{p_id:d.id,p_acao:'aprovar'});if(r.error)toast('Não foi possível aprovar');else toast('Aprovada: sai quando o computador da loja estiver ligado');waLoad()},
+  async waaprovar(d){const r=await sb.rpc('wa_decidir',{p_id:d.id,p_acao:'aprovar'});if(r.error)toast('Não foi possível aprovar');else toast(WA.st&&WA.st.nuvem?'Aprovada: sai em instantes':'Aprovada: sai quando o computador da loja estiver ligado');waLoad()},
   async wacancelar(d){const r=await sb.rpc('wa_decidir',{p_id:d.id,p_acao:'cancelar'});if(r.error)toast('Não foi possível cancelar');waLoad()},
   async waaprovtodas(){const r=await sb.rpc('wa_aprovar_todas',{p_otica:OTICA.id});if(r.error)toast('Não foi possível aprovar');else toast((r.data||0)+' mensagens aprovadas');waLoad()},
   waatualizar(){waLoad()},
+  async wanuvem(){if(WA.st&&WA.st.tem_token&&!WA.st.nuvem&&!confirm('Ligar a nuvem desativa o programa do computador da loja (ele para de enviar). Continuar?'))return;
+    const r=await sb.rpc('wa_nuvem_ligar',{p_otica:OTICA.id});if(r.error){toast('Não foi possível ligar a nuvem');return}toast('Nuvem ligada. O QR Code aparece em instantes.');await waLoad();render()},
+  async wanuvemoff(){if(!confirm('Desligar o WhatsApp na nuvem? As mensagens automáticas param até você ligar de novo.'))return;
+    const r=await sb.rpc('wa_nuvem_desligar',{p_otica:OTICA.id});if(r.error){toast('Não foi possível desligar');return}await waLoad();render()},
+  async waload(){await waLoad();render()},
   async wagerar(){if(WA.st&&WA.st.tem_token&&!confirm('Gerar um novo código desconecta o programa atual até você colar o novo código. Continuar?'))return;const r=await sb.rpc('wa_gerar_token',{p_otica:OTICA.id});if(r.error){toast('Não foi possível gerar o código');return}WA.token=r.data;waLoad();render()},
   wacfgbaixar(){if(!WA.token)return;const b=new Blob([JSON.stringify({supabaseUrl:SB_URL,supabaseKey:SB_KEY,token:WA.token},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='config.json';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);toast('Arquivo baixado: coloque na pasta do conector')},
   async wacopiar(){try{await navigator.clipboard.writeText(WA.token);toast('Código copiado')}catch(e){toast('Selecione o código e copie')}}
