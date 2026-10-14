@@ -1608,12 +1608,6 @@ function viewRelatorios(){
     vendHtml+extra+
   '</div></section>';
 }
-Object.assign(A,{
-  rmprev(){ui.rm=addMonths((ui.rm||todayStr().slice(0,7))+'-01',-1).slice(0,7);render()},
-  rmnext(){const n=addMonths((ui.rm||todayStr().slice(0,7))+'-01',1).slice(0,7);if(n>todayStr().slice(0,7))return toast('Este mês ainda não começou');ui.rm=n;render()},
-  repprint(){window.print()},
-  repdet(){ui.rmes=ui.rm||todayStr().slice(0,7);ui.sheet={kind:'relatorio'};renderSheet()}
-});
 let BITIP=null;
 function biHide(){if(BITIP)BITIP.style.display='none'}
 function biShow(el,e){
@@ -2906,6 +2900,12 @@ function vdRemove(id){
   Object.values(S.clientes).forEach(c=>{if(c.vendedorId===id){c.vendedorId='';persist('clientes',c.id)}});
   persist('config','metas');premLog('Vendedor excluído',nome);ui.vd=null;ui.confirm='';ui.sheet=null;renderSheet();render();toast('Vendedor excluído. As vendas dele ficam em "Venda da ótica".');
 }
+Object.assign(A,{
+  rmprev(){ui.rm=addMonths((ui.rm||todayStr().slice(0,7))+'-01',-1).slice(0,7);render()},
+  rmnext(){const n=addMonths((ui.rm||todayStr().slice(0,7))+'-01',1).slice(0,7);if(n>todayStr().slice(0,7))return toast('Este mês ainda não começou');ui.rm=n;render()},
+  repprint(){window.print()},
+  repdet(){ui.rmes=ui.rm||todayStr().slice(0,7);ui.sheet={kind:'relatorio'};renderSheet()}
+});
 Object.assign(A,{
   vdnovo(){ui.vd=vdBlank();ui.confirm='';ui.sheet={kind:'vendedor',id:ui.vd.id};renderSheet()},
   vdedit(d){const md=metaDoc();const x=(md.vends||{})[d.k];if(!x)return;const c=md.vend[d.k]||{};const sel={};Object.values(S.clientes).forEach(cl=>{if(cl.vendedorId===x.id)sel[cl.id]=true});
