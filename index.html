@@ -3287,7 +3287,7 @@ function premWaAjustes(){
    '<label class="aguard-box" style="margin:0"><input type="checkbox" data-wacfg="pausa"'+(D.pausa?' checked':'')+'> Pausar todos os envios agora</label>'+
    '<div class="sub" style="margin:0">Para cada aviso, escolha se espera a sua aprovação ou sai sozinho. Comece com "Aprovar antes" até confiar nas mensagens. Parcelas com 15 dias ou mais de atraso sempre esperam aprovação.</div>'+
    WA_TIPOS.map(sel).join('')+
-   '<div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(120px,1fr))"><div class="field"><span>Enviar a partir de</span><input type="time" data-wacfg="ini" value="'+esc(D.ini||'08:00')+'"></div><div class="field"><span>Até</span><input type="time" data-wacfg="fim" value="'+esc(D.fim||'18:30')+'"></div><div class="field"><span>Limite por dia</span><input type="number" min="1" max="80" data-wacfg="limite" value="'+(+D.limite||30)+'"></div></div>'+
+   '<div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(120px,1fr))"><div class="field"><span>Enviar a partir de</span><input type="time" data-wacfg="ini" value="'+esc(D.ini||'08:00')+'"></div><div class="field"><span>Até</span><input type="time" data-wacfg="fim" value="'+esc(D.fim||'18:30')+'"></div><div class="field"><span>Limite por dia</span><input type="number" min="1" max="150" data-wacfg="limite" value="'+(+D.limite||30)+'"></div></div>'+
    waNuvemHtml(st)+
    (st.nuvem?'':'<details><summary class="sub" style="cursor:pointer">Usar pelo computador da loja (sem a nuvem)</summary><div class="foot-row" style="margin-top:8px"><button class="btn" data-act="wagerar">'+(st.tem_token?'Gerar novo código':'Gerar código do conector')+'</button><a class="btn" href="conector.zip" download>Baixar o programa do computador</a></div></details>')+
    '<p class="sub" style="margin:0">Programa gratuito e não oficial. Use um número só da ótica, com poucas mensagens por dia e sem texto igual para muita gente. Existe risco de o WhatsApp bloquear o número, por isso os envios têm intervalo, limite diário e a opção SAIR.</p></div>'+tk;
@@ -3317,7 +3317,7 @@ document.addEventListener('change',e=>{
   if(t.dataset.wamodo){waDoc().modo[t.dataset.wamodo]=t.value;persist('config','wa');toast('Salvo');return}
   if(t.dataset.wacfg){const D=waDoc(),k=t.dataset.wacfg;
     if(k==='on'||k==='pausa')D[k]=t.checked;
-    else if(k==='limite')D[k]=Math.max(1,Math.min(80,+t.value||30));
+    else if(k==='limite')D[k]=Math.max(1,Math.min(150,+t.value||30));
     else D[k]=t.value||(k==='ini'?'08:00':'18:30');
     persist('config','wa');toast('Salvo');if(k==='on'||k==='pausa')render()}
 });
