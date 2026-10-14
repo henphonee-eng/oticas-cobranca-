@@ -758,6 +758,30 @@ html:not(.adm) :is(.btn,.tab,.fchip,button.card,button.kpi,button.tile,.dlc):foc
 .bi-hb li:hover,.bi-hb li:focus-visible{background:color-mix(in srgb,var(--accent) 7%,transparent)}
 .bi-empty{padding:26px 8px;text-align:center;color:var(--muted);font-size:13.5px}
 .bi-op{margin-top:6px}
+/* fila do WhatsApp automático */
+.wq-box{padding:0;gap:0;margin-bottom:12px}
+.wq-box>summary{display:flex;justify-content:space-between;align-items:center;gap:6px 12px;flex-wrap:wrap;padding:14px 16px;cursor:pointer;list-style:none}
+.wq-box>summary::-webkit-details-marker{display:none}
+.wq-in{padding:0 14px 14px}
+.wq-sec h4{margin:12px 0 8px;font-size:13.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.wq-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
+@media (min-width:900px){.wq-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.wq{--wq:#64748b;border:1px solid var(--line);border-left:4px solid var(--wq);border-radius:12px;padding:12px 14px;background:var(--surface);min-width:0}
+.wq-h{display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap}
+.wq-tp{font-weight:700;font-size:14px}
+.wq-para{margin-top:6px;font-size:14px;overflow-wrap:anywhere}
+.wq-q{margin-top:2px;font-size:13px;color:var(--muted)}
+.wq-b{margin-top:8px;white-space:pre-line;font-size:13.5px;line-height:1.45;background:var(--surface-2,rgba(127,127,127,.08));border-radius:10px;padding:10px 12px;overflow-wrap:anywhere}
+.wq-msg{margin-top:8px}.wq-msg>summary{cursor:pointer;font-size:13.5px;color:var(--muted);white-space:pre-line;list-style:none}.wq-msg>summary::-webkit-details-marker{display:none}.wq-msg>summary u{color:var(--accent);text-decoration:none;font-weight:600}
+.wq-msg[open]>summary{display:none}
+.wq-vendas{--wq:#2a78d6}.wq-exame{--wq:#7c3aed}.wq-equipe{--wq:#0e9488}.wq-boasvindas{--wq:#1baf7a}.wq-entregas{--wq:#eda100}.wq-cobrar{--wq:#d9480f}.wq-relacao{--wq:#db2777}.wq-trafego{--wq:#0284c7}
+.wq-tag{display:inline-block;font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:999px;color:var(--wq,#64748b);background:color-mix(in srgb,var(--wq,#64748b) 12%,transparent)}
+.wh-s{padding:12px 14px;cursor:pointer;display:flex;gap:6px 12px;align-items:center;flex-wrap:wrap}
+.wh-n{display:flex;flex-direction:column;flex:1;min-width:170px}.wh-n small{color:var(--muted);font-size:12.5px}
+.wh-c{display:flex;gap:4px;flex-wrap:wrap}
+.wh-l{display:grid;gap:10px;padding:0 14px 14px}
+.wh-m{--wq:#64748b;border-left:3px solid var(--wq);padding-left:10px}
+.wh-mh{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:14px}
 /* ---------- relatórios ---------- */
 .rep-hero{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px 24px;padding:20px 22px;margin-bottom:12px;border-radius:18px;color:#fff;background:linear-gradient(135deg,#0b2f6b 0%,#1d5fc0 55%,#2a78d6 100%);box-shadow:0 10px 28px rgba(11,47,107,.22)}
 .rep-hero small{font-size:12.5px;font-weight:600;opacity:.82;letter-spacing:.02em}
@@ -3227,46 +3251,97 @@ function waEstado(){
   if(st.estado==='qr')return ['warn','Esperando ler o QR Code'];
   return ['bad','Computador da loja desligado ou programa fechado'];
 }
+/* ----- fila do WhatsApp automático: separada por assunto, com para quem vai, quando sai e a mensagem ----- */
+const WA_CAT=[
+  ['vendas','Vendas e recibos',['venda','orcamento','recibo']],
+  ['exame','Exame de vista',['exame_conf','exame_lembrete','exame_dia','exame_resp','exame_faltou']],
+  ['equipe','Avisos para a equipe',['exame_equipe']],
+  ['boasvindas','Boas-vindas',['boasvindas']],
+  ['entregas','Entregas',['chegou','agradecimento']],
+  ['cobrar','Cobranças',['lembrete','atraso']],
+  ['relacao','Relacionamento',['aniversario','revisao','avaliacao','followup']],
+  ['trafego','Tráfego Orgânico',['trafego']]
+];
+const waCatDe=t=>{const c=WA_CAT.find(x=>x[2].includes(t));return c?c[0]:'outros'};
+const waCatNome=k=>{const c=WA_CAT.find(x=>x[0]===k);return c?c[1]:'Outras'};
+const waTxt=m=>String(m.texto||'').replace(/\n\nPara não receber mais avisos, responda SAIR\.$/,'');
+const waDH=s=>{if(!s)return '';const d=new Date(s);return fmtDate(new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10)).slice(0,5)+' às '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
+function waQuando(m){
+  if(m.status==='enviada')return 'Enviada '+waDH(m.enviado_em||m.criado_em);
+  if(m.status==='aprovar')return 'Criada '+waDH(m.criado_em)+' · espera você aprovar';
+  if(m.status==='falhou')return 'Não saiu'+(m.erro?' ('+(m.erro==='sem_whatsapp'?'número sem WhatsApp':m.erro)+')':'');
+  if(m.status==='enviando')return 'Enviando agora';
+  if(m.status==='aguardando')return new Date(m.enviar_apos).getTime()>Date.now()+60000?'Agendada para '+waDH(m.enviar_apos):'Sai nos próximos minutos';
+  return (WA_ST[m.status]||['',m.status])[1]+' · '+waDH(m.criado_em);
+}
+function waPara(m){
+  if(m.tipo==='exame_equipe')return 'Equipe · '+maskTel(String(m.telefone||'').replace(/^55/,''));
+  return (m.cliente_nome?esc(m.cliente_nome)+' · ':'')+maskTel(String(m.telefone||'').replace(/^55/,''));
+}
+function waCard(m,dono){
+  const sp=WA_ST[m.status]||['',m.status],cat=waCatDe(m.tipo);
+  const pode=dono&&['aprovar','falhou','cancelada','expirada'].includes(m.status),canc=dono&&['aprovar','aguardando','falhou'].includes(m.status);
+  const t=waTxt(m),curto=t.length>140;
+  return '<article class="wq wq-'+cat+'"><div class="wq-h"><span class="wq-tp">'+esc(WA_NOME[m.tipo]||m.tipo)+'</span><span class="chip '+sp[0]+'">'+sp[1]+'</span></div>'+
+    '<div class="wq-para"><span class="sub" style="margin:0">Para</span> <b>'+waPara(m)+'</b></div>'+
+    '<div class="wq-q">'+esc(waQuando(m))+'</div>'+
+    (curto?'<details class="wq-msg"><summary>'+esc(t.slice(0,120))+'… <u>ver mensagem</u></summary><div class="wq-b">'+esc(t)+'</div></details>':'<div class="wq-b">'+esc(t)+'</div>')+
+    ((pode||canc)?'<div class="acts" style="margin-top:8px">'+(pode?'<button class="btn sm ok" data-act="waaprovar" data-id="'+m.id+'">'+(m.status==='aprovar'?'Aprovar':'Enviar de novo')+'</button>':'')+(canc?'<button class="btn sm ghost" data-act="wacancelar" data-id="'+m.id+'">Cancelar</button>':'')+'</div>':'')+'</article>';
+}
+function waBlocoCat(lista,dono,vazio){
+  if(!lista.length)return none(vazio);
+  const by={};lista.forEach(m=>{const k=waCatDe(m.tipo);(by[k]=by[k]||[]).push(m)});
+  const ord=WA_CAT.map(x=>x[0]).concat(['outros']).filter(k=>by[k]);
+  if(ord.length===1)return '<div class="wq-grid">'+by[ord[0]].map(m=>waCard(m,dono)).join('')+'</div>';
+  return ord.map(k=>'<div class="wq-sec"><h4>'+esc(waCatNome(k))+' <span class="sub num">'+by[k].length+'</span></h4><div class="wq-grid">'+by[k].map(m=>waCard(m,dono)).join('')+'</div></div>').join('');
+}
 function premFuWa(){
   if(!modOn('wa'))return null;waGarante();
   if(!waDoc().on)return {n:0,html:'<p class="sub" style="margin:0">O envio automático está desligado. Marque a opção "Enviar avisos automáticos pelo WhatsApp" acima para começar.</p>'};
   const st=WA.st||{},e=waEstado(),dono=ROLE==='dono',fila=WA.fila||[];
-  const linha=m=>{const sp=WA_ST[m.status]||['',m.status];
-    const pode=dono&&['aprovar','falhou','cancelada','expirada'].includes(m.status),canc=dono&&['aprovar','aguardando','falhou'].includes(m.status);
-    return '<article class="row"><div class="row-main"><b>'+esc(m.cliente_nome||m.telefone)+'</b><div class="meta">'+esc(WA_NOME[m.tipo]||m.tipo)+' · '+fmtDate(String(m.criado_em).slice(0,10))+'</div><div class="meta" style="white-space:pre-line">'+esc(String(m.texto||'').replace(/\n\nPara não receber mais avisos, responda SAIR\.$/,'').slice(0,160))+'</div><div class="chips"><span class="chip '+sp[0]+'">'+sp[1]+'</span>'+(m.erro&&m.status!=='enviada'?'<span class="chip">'+esc(m.erro)+'</span>':'')+'</div></div><div class="row-side"><div class="acts">'+(pode?'<button class="btn sm ok" data-act="waaprovar" data-id="'+m.id+'">'+(m.status==='aprovar'?'Aprovar':'Enviar')+'</button>':'')+(canc?'<button class="btn sm ghost" data-act="wacancelar" data-id="'+m.id+'">Cancelar</button>':'')+'</div></div></article>'};
   const n=+st.aprovar||0;
-  return {n:n,html:'<div class="chips" style="margin-bottom:8px"><span class="chip '+e[0]+'">'+e[1]+'</span><span class="chip">Enviadas hoje: '+(+st.enviadas_hoje||0)+'</span><span class="chip">Na fila: '+(+st.na_fila||0)+'</span>'+(+st.falhas?'<span class="chip bad">Falhas: '+st.falhas+'</span>':'')+(waDoc().pausa?'<span class="chip warn">Envios pausados</span>':'')+'</div>'+
+  return {n:n,html:'<div class="chips" style="margin-bottom:8px"><span class="chip '+e[0]+'">'+e[1]+'</span><span class="chip">Enviadas hoje: '+(+st.enviadas_hoje||0)+'</span>'+(+st.falhas?'<span class="chip bad">Falhas: '+st.falhas+'</span>':'')+(waDoc().pausa?'<span class="chip warn">Envios pausados</span>':'')+'</div>'+
    '<div class="acts" style="margin-bottom:10px">'+(dono&&n?'<button class="btn primary sm" data-act="waaprovtodas">Aprovar todas ('+n+')</button>':'')+'<button class="btn sm" data-act="waatualizar">Atualizar</button></div>'+
-   '<p class="sub" style="margin:0 0 8px">Se o computador da loja estiver desligado, as mensagens ficam guardadas aqui e saem quando ele ligar, dentro do prazo de cada aviso.</p>'+
-   (WA.fila===null?none('Carregando...'):waFilaHtml(fila,linha))};
+   (WA.fila===null?none('Carregando...'):waFilaHtml(fila,dono))};
 }
-/* fila em duas partes: o que precisa de atenção (aprovar, na fila, falhou) e o histórico agrupado por cliente */
 const WA_PEND=['aprovar','aguardando','enviando','falhou'];
+function waFilaHtml(fila,dono){
+  const cat=WA.cat||'todas',noCat=m=>cat==='todas'||waCatDe(m.tipo)===cat;
+  const cnt={};fila.forEach(m=>{const k=waCatDe(m.tipo);cnt[k]=(cnt[k]||0)+1});
+  const chips=[['todas','Todas',fila.length]].concat(WA_CAT.concat([['outros','Outras',[]]]).filter(x=>cnt[x[0]]).map(x=>[x[0],x[1],cnt[x[0]]]));
+  const F=fila.filter(noCat);
+  const apr=F.filter(m=>m.status==='aprovar').sort((a,b)=>String(a.criado_em).localeCompare(String(b.criado_em)));
+  const ag=F.filter(m=>m.status==='aguardando'||m.status==='enviando').sort((a,b)=>String(a.enviar_apos).localeCompare(String(b.enviar_apos)));
+  const fal=F.filter(m=>m.status==='falhou');
+  const sec=(k,tit,sub,lista,vazio,open)=>'<details class="card wq-box" data-wqs="'+k+'"'+((WA.sec&&WA.sec[k]!==undefined?WA.sec[k]:open)?' open':'')+'><summary><span><b>'+tit+'</b> <span class="sub num">'+lista.length+'</span></span><span class="sub" style="margin:0">'+sub+'</span></summary><div class="wq-in">'+waBlocoCat(lista,dono,vazio)+'</div></details>';
+  return '<div class="filters" style="margin:4px 0 12px">'+chips.map(c=>'<button class="fchip" data-act="wacat" data-c="'+c[0]+'" aria-pressed="'+(cat===c[0])+'">'+esc(c[1])+' ('+c[2]+')</button>').join('')+'</div>'+
+    sec('apr','Esperando sua aprovação','só saem depois que você aprovar',apr,'Nada esperando aprovação.',true)+
+    sec('ag','Na fila e agendadas','saem sozinhas no horário marcado',ag,'Nada na fila agora.',true)+
+    (fal.length?sec('fal','Com falha','não conseguiram sair',fal,'',true):'')+
+    '<h3 style="margin:18px 0 8px;font-size:15px">Histórico por cliente</h3><div class="field" style="max-width:420px;margin-bottom:10px"><input type="search" id="wa-q" placeholder="Buscar cliente pelo nome ou WhatsApp" value="'+esc(WA.q)+'" aria-label="Buscar cliente no histórico"></div>'+
+    '<div class="stack" id="wa-hist">'+waHistHtml()+'</div><p class="sub" style="margin-top:8px">Mostra as últimas 500 mensagens. Toque no nome para ver, em ordem, tudo o que foi enviado para a pessoa.</p>';
+}
 function waGrupos(fila){
   const G={};
-  fila.filter(m=>!WA_PEND.includes(m.status)).forEach(m=>{const k=String(m.telefone||'').replace(/\D/g,'').slice(-8)||m.cliente_id||m.id;
-    const g=G[k]||(G[k]={k,msgs:[],tel:m.telefone,nomes:[]});g.msgs.push(m);if(m.cliente_nome)g.nomes.push(m.cliente_nome)});
+  fila.filter(m=>!WA_PEND.includes(m.status)).forEach(m=>{const k=m.tipo==='exame_equipe'?'equipe':String(m.telefone||'').replace(/\D/g,'').slice(-8)||m.cliente_id||m.id;
+    const g=G[k]||(G[k]={k,msgs:[],tel:m.telefone,nomes:[],tels:{}});g.msgs.push(m);g.tels[String(m.telefone||'')]=1;if(m.cliente_nome)g.nomes.push(m.cliente_nome)});
   return Object.values(G).map(g=>{g.msgs.sort((a,b)=>String(b.enviado_em||b.criado_em).localeCompare(String(a.enviado_em||a.criado_em)));
-    const cli=Object.values(S.clientes).find(c=>c&&c.whatsapp&&String(c.whatsapp).replace(/\D/g,'').slice(-8)===g.k);
-    const equipe=g.msgs.every(m=>m.tipo==='exame_equipe');
-    g.nome=cli?cli.nome:equipe?'Equipe (avisos para os donos)':(g.nomes.find(n=>n&&n!=='Equipe'&&n!=='Conversa')||maskTel(String(g.tel||'').replace(/^55/,'')));
-    g.ult=String(g.msgs[0].enviado_em||g.msgs[0].criado_em);g.env=g.msgs.filter(m=>m.status==='enviada').length;return g})
+    const cli=g.k==='equipe'?null:Object.values(S.clientes).find(c=>c&&c.whatsapp&&String(c.whatsapp).replace(/\D/g,'').slice(-8)===g.k);
+    g.nome=g.k==='equipe'?'Equipe da ótica (avisos de novos exames)':cli?cli.nome:(g.nomes.find(n=>n&&n!=='Equipe'&&n!=='Conversa')||maskTel(String(g.tel||'').replace(/^55/,'')));
+    g.telTxt=Object.keys(g.tels).filter(Boolean).map(t=>maskTel(t.replace(/^55/,''))).join(', ');
+    g.ult=String(g.msgs[0].enviado_em||g.msgs[0].criado_em);g.env=g.msgs.filter(m=>m.status==='enviada').length;
+    const cs={};g.msgs.forEach(m=>{const k=waCatDe(m.tipo);cs[k]=(cs[k]||0)+1});g.cats=cs;return g})
    .sort((a,b)=>b.ult.localeCompare(a.ult));
 }
 function waHistHtml(){
-  const q=String(WA.q||'').trim().toLowerCase(),qd=q.replace(/\D/g,'');
-  const gs=waGrupos(WA.fila||[]).filter(g=>!q||g.nome.toLowerCase().includes(q)||(qd.length>=3&&String(g.tel||'').includes(qd)));
+  const q=String(WA.q||'').trim().toLowerCase(),qd=q.replace(/\D/g,''),cat=WA.cat||'todas';
+  const gs=waGrupos((WA.fila||[]).filter(m=>cat==='todas'||waCatDe(m.tipo)===cat)).filter(g=>!q||g.nome.toLowerCase().includes(q)||(qd.length>=3&&String(g.telTxt||'').replace(/\D/g,'').includes(qd)));
   if(!gs.length)return none(q?'Nenhum cliente encontrado.':'Nenhuma mensagem enviada ainda.');
-  const dh=s=>{const d=new Date(s);return fmtDate(new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10))+' às '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
-  return gs.map(g=>'<details class="card wa-cli" style="padding:0;gap:0"'+(WA.aberto===g.k?' open':'')+' data-wak="'+g.k+'"><summary style="padding:12px 14px;cursor:pointer;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><b style="flex:1;min-width:160px">'+esc(g.nome)+'</b><span class="chip ok">'+plural(g.env,'enviada','enviadas')+'</span><span class="sub" style="margin:0">Última: '+dh(g.ult)+'</span></summary>'+
-    '<div class="stack" style="padding:0 14px 12px">'+g.msgs.map(m=>{const sp=WA_ST[m.status]||['',m.status];return '<div style="border-top:1px solid var(--line);padding-top:10px"><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><b style="font-size:14px">'+esc(WA_NOME[m.tipo]||m.tipo)+'</b><span class="chip '+sp[0]+'">'+sp[1]+'</span><span class="sub" style="margin:0">'+dh(m.enviado_em||m.criado_em)+'</span></div><div class="meta" style="white-space:pre-line;margin-top:4px">'+esc(String(m.texto||'').replace(/\n\nPara não receber mais avisos, responda SAIR\.$/,''))+'</div></div>'}).join('')+'</div></details>').join('');
+  return gs.map(g=>'<details class="card wa-cli" style="padding:0;gap:0"'+(WA.aberto===g.k?' open':'')+' data-wak="'+g.k+'"><summary class="wh-s"><span class="wh-n"><b>'+esc(g.nome)+'</b><small>'+esc(g.telTxt)+'</small></span><span class="wh-c">'+Object.keys(g.cats).map(k=>'<span class="wq-tag wq-'+k+'">'+esc(waCatNome(k))+' '+g.cats[k]+'</span>').join('')+'</span><span class="sub" style="margin:0">Última: '+waDH(g.ult)+'</span></summary>'+
+    '<div class="wh-l">'+g.msgs.map(m=>{const sp=WA_ST[m.status]||['',m.status];return '<div class="wh-m wq-'+waCatDe(m.tipo)+'"><div class="wh-mh"><b>'+esc(WA_NOME[m.tipo]||m.tipo)+'</b><span class="chip '+sp[0]+'">'+sp[1]+'</span><span class="sub" style="margin:0">'+esc(waDH(m.enviado_em||m.criado_em))+'</span></div><div class="wq-b">'+esc(waTxt(m))+'</div></div>'}).join('')+'</div></details>').join('');
 }
-function waFilaHtml(fila,linha){
-  const pend=fila.filter(m=>WA_PEND.includes(m.status));
-  return '<h3 style="margin:6px 0 8px;font-size:15px">Precisa de atenção <span class="sub num">'+pend.length+'</span></h3><div class="stack">'+(pend.length?pend.map(linha).join(''):none('Nada esperando aprovação ou na fila.'))+'</div>'+
-    '<h3 style="margin:18px 0 8px;font-size:15px">Histórico por cliente</h3><div class="field" style="max-width:420px;margin-bottom:10px"><input type="search" id="wa-q" placeholder="Buscar cliente pelo nome ou WhatsApp" value="'+esc(WA.q)+'" aria-label="Buscar cliente no histórico"></div>'+
-    '<div class="stack" id="wa-hist">'+waHistHtml()+'</div><p class="sub" style="margin-top:8px">Mostra as últimas 500 mensagens. Toque no nome do cliente para ver tudo o que foi enviado para ele.</p>';
-}
+Object.assign(A,{wacat(d){WA.cat=d.c;render()}});
+document.addEventListener('toggle',e=>{const t=e.target;if(t&&t.dataset&&t.dataset.wqs){WA.sec=WA.sec||{};WA.sec[t.dataset.wqs]=t.open}},true);
 document.addEventListener('input',e=>{const t=e.target;if(t&&t.id==='wa-q'){WA.q=t.value;const h=document.getElementById('wa-hist');if(h)h.innerHTML=waHistHtml()}});
 document.addEventListener('toggle',e=>{const t=e.target;if(t&&t.dataset&&t.dataset.wak){if(t.open)WA.aberto=t.dataset.wak;else if(WA.aberto===t.dataset.wak)WA.aberto=''}},true);
 const WA_SEC={boasvindas:['boasvindas'],cobrar:['lembrete','atraso'],aniversarios:['aniversario'],revisao:['revisao']};
