@@ -5,6 +5,7 @@
 //  3) teste — a tela "Agente de IA" do sistema (dono logado) conversa com o agente sem enviar nada a ninguém.
 // A IA só pede ações; quem executa e valida é o banco (ex_*), sempre para o número que está conversando.
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { AsyncLocalStorage } from "node:async_hooks";
 
 const URL_SB = Deno.env.get("SUPABASE_URL")!;
 const db = createClient(URL_SB, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
@@ -23,6 +24,18 @@ const agoraRecife = () => new Date(Date.now() - 3 * 3600e3); // campos UTC = hor
 const fmtDia = (d: string) => { const x = new Date(d + "T12:00:00Z"); return `${DIAS[x.getUTCDay()]} (${d.slice(8, 10)}/${d.slice(5, 7)})`; };
 const s = (v: unknown, n = 600) => String(v ?? "").trim().slice(0, n);
 const brl = (c: number) => "R$ " + (c / 100).toFixed(2).replace(".", ",").replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+
+// uso da IA nesta requisição (vai para agente_uso, que o painel do Adm mostra com o custo estimado)
+type Uso = { tin: number; tout: number; aud: number; seg: number; fotos: number };
+const novoUso = (): Uso => ({ tin: 0, tout: 0, aud: 0, seg: 0, fotos: 0 });
+// cada requisição tem o seu contador (várias conversas podem estar rodando ao mesmo tempo)
+const ALS = new AsyncLocalStorage<Uso>();
+const U = (): Uso => ALS.getStore() || novoUso();
+const somar = (j: any) => { const USO = U(); USO.tin += Number(j?.usage?.prompt_tokens || 0); USO.tout += Number(j?.usage?.completion_tokens || 0); };
+async function gravarUso(otica: string, resp: number, teste: number) {
+  const USO = U();
+  await db.rpc("ag_uso_add", { p_otica: otica, p_resp: resp, p_in: USO.tin, p_out: USO.tout, p_aud: USO.aud, p_aud_seg: USO.seg, p_fotos: USO.fotos, p_testes: teste }).then(() => {}, () => {});
+}
 
 async function rpc(fn: string, args: Record<string, unknown>) {
   const { data, error } = await db.rpc(fn, args);
@@ -60,6 +73,7 @@ async function descrever(b64: string, mime: string, legenda: string) {
   });
   const j = await r.json();
   if (!r.ok) throw new Error(j?.error?.message || `OpenAI ${r.status}`);
+  somar(j); U().fotos += 1;
   return s(j.choices?.[0]?.message?.content, 1200);
 }
 async function midiaParaTexto(m: any) {
@@ -67,7 +81,10 @@ async function midiaParaTexto(m: any) {
   if (!b64 || b64.length > 9_000_000) throw new Error("arquivo grande demais");
   const mime = s(m.mime, 60).toLowerCase();
   const leg = s(m.legenda, 300);
-  if (m.tipo === "audio") return `[Áudio do cliente, transcrito]: ${await transcrever(b64, mime)}`;
+  if (m.tipo === "audio") {
+    const USO = U(); USO.aud += 1; USO.seg += Math.max(1, Math.min(600, Number(m.segundos) || Math.round(b64.length * 0.75 / 4000)));
+    return `[Áudio do cliente, transcrito]: ${await transcrever(b64, mime)}`;
+  }
   if (m.tipo === "imagem") return `[O cliente mandou uma foto${leg ? ` com a legenda "${leg}"` : ""}. O que aparece na foto]: ${await descrever(b64, mime, leg)}`;
   throw new Error("tipo de arquivo não suportado");
 }
@@ -188,6 +205,7 @@ async function rodar(sistema: string, msgs: any[], tools: any[], exec: (nome: st
     });
     const j = await r.json();
     if (!r.ok) throw new Error(j?.error?.message || `OpenAI ${r.status}`);
+    somar(j);
     const m = j.choices?.[0]?.message;
     if (!m) throw new Error("sem resposta");
     if (m.tool_calls?.length) {
@@ -256,6 +274,14 @@ async function atenderReal(otica: string, tel: string, nomeWa: string, t0: numbe
     db.from("wa_conversa").select("id", { count: "exact", head: true }).eq("otica_id", otica).eq("telefone", tel).eq("papel", "agente").gte("criado_em", desde24),
     db.from("wa_conversa").select("id", { count: "exact", head: true }).eq("otica_id", otica).eq("papel", "agente").gte("criado_em", desde24),
   ]);
+  const limMes = Number(ag.limite_mes ?? 1500);
+  const usadas = Number(await rpc("ag_uso_mes", { p_otica: otica }).catch(() => 0)) || 0;
+  if (limMes >= 0 && usadas >= limMes) {
+    const nomeL = s(alvo?.nome || contato.cliente || nomeWa, 40).split(" ")[0] || tel;
+    await rpc("ex_avisar_donos", { p_otica: otica, p_txt: `📩 ${nomeL} (${tel}) mandou mensagem, mas o Agente de IA atingiu o limite de respostas do mês. Responda pelo WhatsApp.` }).catch(() => {});
+    await db.from("wa_conversa").insert({ otica_id: otica, telefone: tel, papel: "sistema", texto: "Atendente chamado: limite mensal do agente" });
+    return { ignorado: "limite_mes" };
+  }
   const limCli = Math.max(5, Math.min(80, Number(c.limite_dia) || 25));
   const nomeCli = s(alvo?.nome || contato.cliente || nomeWa, 40).split(" ")[0] || tel;
   if ((porCli.count || 0) >= limCli || (porOt.count || 0) >= 600) {
@@ -312,6 +338,7 @@ async function atenderReal(otica: string, tel: string, nomeWa: string, t0: numbe
   let resposta = "";
   try { resposta = await rodar(sistema, msgs, ferramentas({ agenda, temExame, imagens: imgs.length > 0 }), exec); }
   catch (e: any) { console.error("agente-ia", e.message); }
+  await gravarUso(otica, resposta || enviarImgs.length ? 1 : 0, 0);
   if (!resposta && !enviarImgs.length) {
     await rpc("ex_avisar_donos", { p_otica: otica, p_txt: `📩 ${nomeCli} (${tel}) mandou mensagem e o agente não conseguiu responder: «${s(msgs[msgs.length - 1]?.content, 250)}»` }).catch(() => {});
     return { ok: false, vazio: true };
@@ -395,7 +422,8 @@ async function testeCore(otica: string, b: any) {
   };
   let resposta = "";
   try { resposta = await rodar(sistema, msgs, ferramentas({ agenda, temExame: !!alvo, imagens: imgs.length > 0 }), exec); }
-  catch (e: any) { return ok({ error: "A IA não respondeu agora: " + s(e.message, 150) }, 502); }
+  catch (e: any) { await gravarUso(otica, 0, 1); return ok({ error: "A IA não respondeu agora: " + s(e.message, 150) }, 502); }
+  await gravarUso(otica, 0, 1);
   await db.from("agente_config").update({ testado_em: new Date().toISOString() }).eq("otica_id", otica);
   return ok({ ok: true, entrada: b.midia ? entrada : undefined, resposta, acoes, imagens });
 }
@@ -415,6 +443,7 @@ async function midiaConector(b: any) {
   let texto = "";
   try { texto = await midiaParaTexto(b); }
   catch (e: any) { texto = b.tipo === "audio" ? "[O cliente mandou um áudio que não deu para entender]" : "[O cliente mandou uma foto que não deu para ver]"; console.error("midia", e.message); }
+  await gravarUso(otica as string, 0, 0);
   // a transcrição também aparece na aba Conversas
   if (b.waId) await db.from("wa_msg").update({ texto: (b.tipo === "audio" ? "🎤 Áudio: " : "📷 Foto: ") + texto.replace(/^\[[^\]]*\]:\s*/, "").slice(0, 1500) }).eq("otica_id", otica).eq("wa_id", s(b.waId, 80));
   const r = await rpc("wa_receber", { p_token: token, p_telefone: tel, p_texto: texto.slice(0, 1000), p_nome: s(b.nome, 60) || null });
@@ -423,6 +452,9 @@ async function midiaConector(b: any) {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
+  return await ALS.run(novoUso(), () => tratar(req));
+});
+async function tratar(req: Request) {
   try {
     const b = await req.json().catch(() => ({}));
     const seg = req.headers.get("x-agente");
@@ -442,4 +474,4 @@ Deno.serve(async (req) => {
     console.error("agente-ia", e.message);
     return ok({ error: s(e.message, 200) }, 500);
   }
-});
+}

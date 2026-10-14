@@ -1155,6 +1155,7 @@ const ICON={
   ajustes:I('<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>'),
   relacao:I('<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>'),
   admin:I('<path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/>'),
+  iauso:I('<rect x="5" y="8" width="14" height="11" rx="3"/><path d="M12 4v4"/><circle cx="12" cy="3.5" r="1"/><circle cx="9.5" cy="13" r="1"/><circle cx="14.5" cy="13" r="1"/><path d="M10 16.5h4"/>'),
   mensal:I('<rect x="4" y="5" width="16" height="15" rx="2.5"/><path d="M4 10h16M9 3v4M15 3v4M8.5 14.5h3"/>'),
   prosp:I('<circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/>'),
   crm:I('<rect x="3.5" y="4.5" width="5" height="15" rx="1.5"/><rect x="9.5" y="4.5" width="5" height="10" rx="1.5"/><rect x="15.5" y="4.5" width="5" height="6" rx="1.5"/>'),
@@ -1175,20 +1176,21 @@ const TGORD=['painel','vendas','aguard','os','lentes','demolentes','clientes','r
 const TGRP={painel:'',vendas:'Vendas e loja',aguard:'Vendas e loja',os:'Vendas e loja',lentes:'Vendas e loja',demolentes:'Vendas e loja',clientes:'Clientes',relacao:'Clientes',entregas:'Clientes',whatsapp:'Clientes',wachat:'Clientes',trafego:'Clientes',agente:'Clientes',campanhas:'Clientes',site:'Clientes',agenda:'Financeiro',exames:'Clientes',cobrar:'Financeiro',caixa:'Financeiro',financeiro:'Financeiro',metas:'Financeiro',ajustes:'Sistema'};
 function tabsGrp(tv,fn){let g='',o='';const ix=k=>{const n=TGORD.indexOf(k);return n<0?99:n};tv=tv.map((t,n)=>[t,n]).sort((a,b)=>ix(a[0][0])-ix(b[0][0])||a[1]-b[1]).map(x=>x[0]);tv.forEach(t=>{const k=TGRP[t[0]]||'';if(k&&k!==g){o+='<div class="tgrp'+''+'" aria-hidden="true">'+k+'</div>'}g=k;o+=fn(t)});return o}
 const saudacao=()=>{const h=new Date().getHours();return h<12?'Bom dia':h<18?'Boa tarde':'Boa noite'};
-function admTabInicial(){const q=new URLSearchParams(location.search),t=q.get('tab');if(t){q.delete('tab');history.replaceState(null,'',location.pathname+(q.toString()?'?'+q:''))}return t==='mensal'?'mensal':'admin'}
+function admTabInicial(){const q=new URLSearchParams(location.search),t=q.get('tab');if(t){q.delete('tab');history.replaceState(null,'',location.pathname+(q.toString()?'?'+q:''))}return t==='mensal'?'mensal':t==='iauso'?'iauso':'admin'}
 const ADMTAB=['admin','Administração'];
 const MENSTAB=['mensal','Mensalidades'];
+const IATAB=['iauso','Agente de IA'];
 const PROSPTABS=[['prosp','Prospecção'],['crm','CRM']];
 function tabsVis(){
-  if(!OTICA)return IS_ADMIN?[ADMTAB,MENSTAB].concat(PROSPTABS):[];
+  if(!OTICA)return IS_ADMIN?[ADMTAB,MENSTAB,IATAB].concat(PROSPTABS):[];
   let t=TABS.filter(x=>x[0]!=='whatsapp'||(ROLE==='dono'&&modOn('wa')));
   t=t.filter(x=>x[0]!=='exames'||ROLE==='dono'||modOn('exames'));
   t=t.filter(x=>ROLE==='dono'||!['caixa','lentes','ajustes','financeiro','campanhas','site'].includes(x[0]));
   if(ROLE!=='dono'){const ac=premAcTabs();if(ac){t=TABS.filter(x=>x[0]!=='ajustes'&&x[0]!=='whatsapp'&&(ac.includes(x[0])||x[0]==='demolentes'));if(!t.length)t=TABS.filter(x=>x[0]==='painel')}}
-  if(IS_ADMIN)t=t.concat([ADMTAB,MENSTAB],PROSPTABS);
+  if(IS_ADMIN)t=t.concat([ADMTAB,MENSTAB,IATAB],PROSPTABS);
   return t;
 }
-function viewTab(){const k=ui.tab;return k==='painel'?viewPainel():k==='agenda'?viewAgenda():k==='vendas'?viewVendas():k==='aguard'?viewAguard():k==='entregas'?viewFollow():k==='os'?viewOS():k==='clientes'?viewClientes():k==='cobrar'?viewCobrar():k==='relacao'?viewRelacao():k==='caixa'?viewCaixa():k==='lentes'?viewLentes():k==='demolentes'?viewDemoLentes():k==='admin'?viewAdmin():k==='mensal'?viewMensal():(k==='financeiro'||k==='metas'||k==='campanhas'||k==='premium'||k==='whatsapp'||k==='exames'||k==='wachat'||k==='site'||k==='trafego'||k==='agente')?premView(k):viewAjustes()}
+function viewTab(){const k=ui.tab;return k==='painel'?viewPainel():k==='agenda'?viewAgenda():k==='vendas'?viewVendas():k==='aguard'?viewAguard():k==='entregas'?viewFollow():k==='os'?viewOS():k==='clientes'?viewClientes():k==='cobrar'?viewCobrar():k==='relacao'?viewRelacao():k==='caixa'?viewCaixa():k==='lentes'?viewLentes():k==='demolentes'?viewDemoLentes():k==='admin'?viewAdmin():k==='iauso'?viewAdmIA():k==='mensal'?viewMensal():(k==='financeiro'||k==='metas'||k==='campanhas'||k==='premium'||k==='whatsapp'||k==='exames'||k==='wachat'||k==='site'||k==='trafego'||k==='agente')?premView(k):viewAjustes()}
 let deferredInstall=null;
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;if(auth==='ok')render()});
 const demoTag=o=>o&&o.exemplo?'<span class="demo">exemplo</span>':'';
@@ -1294,6 +1296,7 @@ function render(){
   v.innerHTML=sitBanner()+viewTab();sitLock();
   if(ui.tab==='ajustes'&&ROLE==='dono')eqLoad();
   if(ui.tab==='admin'||ui.tab==='mensal')admLoad();
+  if(ui.tab==='iauso')iauLoad();
   brandAdm();
 }
 mqWide.addEventListener('change',()=>render());
@@ -2546,7 +2549,7 @@ const MODS=[
  {k:'exames',add:true,n:'Exames de vista',d:'Uma página para o cliente agendar o exame de vista, e a confirmação e o lembrete saem sozinhos pelo WhatsApp. Função adicional, contratada à parte do Premium.',b:['Página de agendamento com o seu logo e as suas cores, pronta para divulgar','Agenda de exames: confirmar, remarcar, marcar quem veio e quem faltou','Confirmação na hora e lembrete na véspera pelo WhatsApp Automático','Link curto para colocar na bio do Instagram, no WhatsApp e nos seus anúncios','Quem agendar já aparece na agenda e vira cliente com um toque','Mensagens de confirmação e lembrete que você pode personalizar']},
  {k:'wachat',n:'WhatsApp dentro do sistema',d:'Veja e responda as conversas do WhatsApp da ótica direto no sistema, sem pegar o celular. Funciona com o conector do WhatsApp Automático ligado no computador da loja.',b:['Todas as conversas do WhatsApp da ótica em uma tela, com o nome do cliente cadastrado','Responda por texto: a mensagem sai na hora pelo WhatsApp da ótica','Mensagens novas aparecem sozinhas, com aviso de não lidas','Botão Conversar na lista de clientes']},
  {k:'trafego',n:'Tráfego Orgânico',d:'Encontre empresas perto da sua ótica e leve a sua oferta até elas pelo WhatsApp, sem depender de indicação.',b:['Busca de empresas num raio da ótica pelo Google Maps, por tipo (padarias, escolas, clínicas...) ou pelo nome, sem outras óticas','CRM das empresas: nova, abordada, respondeu, interessada, virou cliente','Mensagem de oferta pronta e envio pelo WhatsApp Automático','Painel com quantas responderam, viraram clientes e quanto venderam']},
- {k:'agente',n:'Agente de IA no WhatsApp',d:'Um atendente virtual que responde o WhatsApp da ótica 24 horas: tira dúvidas, entende áudio e foto da receita, marca o exame de vista e chama você quando precisa de uma pessoa.',b:['Responde na hora, inclusive à noite, no domingo e no feriado','Você ensina tudo: endereço, horário, preços, promoções, perguntas frequentes e imagens','Entende áudio e foto (até a receita de óculos)','Marca, remarca e confirma exames na agenda do sistema','Chama a equipe para fechar a venda ou quando não sabe a resposta','Tela de teste para conversar com ele antes de ligar']},
+ {k:'agente',add:true,preco:15000,n:'Agente de IA no WhatsApp',d:'Um atendente virtual que responde o WhatsApp da ótica 24 horas: tira dúvidas, entende áudio e foto da receita, marca o exame de vista e chama você quando precisa de uma pessoa.',b:['Responde na hora, inclusive à noite, no domingo e no feriado','Você ensina tudo: endereço, horário, preços, promoções, perguntas frequentes e imagens','Entende áudio e foto (até a receita de óculos)','Marca, remarca e confirma exames na agenda do sistema','Chama a equipe para fechar a venda ou quando não sabe a resposta','Tela de teste para conversar com ele antes de ligar']},
  {k:'site',add:true,n:'Site profissional da ótica',d:'Um site moderno com o nome, a logo e as cores da sua ótica, para os clientes acharem a loja, verem as lentes e armações e agendarem o exame de vista pelo WhatsApp. Função adicional, contratada à parte.',b:['Site com endereço próprio, pronto para celular','Botão de WhatsApp e agendamento de exame de vista','Endereço, mapa e horário da loja','Comparativo de lentes e vitrine de armações','Você pede as alterações e a gente atualiza']},
  {k:'historico',n:'Histórico de alterações e backup automático',d:'Saiba quem fez o quê no sistema e tenha uma cópia de segurança toda semana.',b:['Registro de vendas, recebimentos, edições e exclusões com data e usuário','Backup semanal baixado sozinho no aparelho','Mais segurança quando há equipe usando o sistema']}
 ];
@@ -2580,7 +2583,7 @@ function viewUpsell(k){
   return pageHead(m.n||'Plano Premium',add?'Função adicional':'Função do plano Premium')+
   '<div class="cols"><div class="panel"><div class="card" style="gap:12px"><div><span class="chip acc">'+LOCK+' '+(add?'Função adicional':'Plano Premium')+'</span></div><h2 style="margin:0">'+esc(m.n||'Funções novas para a sua ótica')+'</h2><p class="sub" style="margin:0">'+esc(m.d||'Todas as funções novas e as atualizações futuras, mais funções feitas só para a sua ótica.')+'</p>'+(m.b?'<ul class="pl">'+m.b.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':'')+'</div></div>'+
   '<div class="panel"><div class="card" style="gap:10px"><div class="sh" style="margin:0"><h2>Como liberar</h2></div>'+
-  (add?'<p style="margin:0">Esta função é <b>adicional</b> e é contratada à parte, com valor combinado com o suporte do sistema. Ela funciona tanto no plano Básico quanto no Premium.</p>':jaPrem?'<p style="margin:0">Seu plano é <b>Premium</b>, mas esta função ainda não foi liberada para a sua ótica. Fale com o suporte do sistema.</p>':
+  (add?'<p style="margin:0">Esta função é <b>adicional</b> e é contratada à parte, '+(m.preco?'por <b>'+brl(m.preco)+' por mês</b>.':'com valor combinado com o suporte do sistema.')+' Ela funciona tanto no plano Básico quanto no Premium.</p>':jaPrem?'<p style="margin:0">Seu plano é <b>Premium</b>, mas esta função ainda não foi liberada para a sua ótica. Fale com o suporte do sistema.</p>':
   '<p style="margin:0">Seu plano hoje: <b>Básico, '+brl(atual)+' por mês</b>.</p><p style="margin:0">No <b>Premium</b> a mensalidade passa a ser <b>'+brl(pv)+' por mês</b> e libera todas as funções abaixo, as novas atualizações e também funções exclusivas feitas para a sua ótica.</p>')+
   (k==='site'?'<div><a class="btn primary" target="_blank" rel="noopener" href="'+esc(sitePrevia())+'">Ver a prévia do site da '+esc(cfg().nome||'sua ótica')+'</a></div>':'')+
   (href?'<div><a class="btn wa'+(k==='site'?'':' primary')+'"'+WAT+' href="'+esc(href)+'">'+(add?'Quero contratar no WhatsApp':jaPrem?'Pedir liberação no WhatsApp':'Quero o Premium no WhatsApp')+'</a></div>':'<p class="sub" style="margin:0">Fale com o suporte do sistema para ativar.</p>')+'</div>'+
@@ -4187,8 +4190,49 @@ const menActs={
   }
 };
 Object.assign(A,menActs);
+/* ----- Adm: uso e custo do Agente de IA por ótica ----- */
+const AG_PRECO=15000; // mensalidade do agente (centavos)
+const IAU={mes:'',rows:null,busy:false,err:'',cambio:5.6,lim:{}};
+try{const c=+localStorage.getItem('iau-cambio');if(c>0)IAU.cambio=c}catch(e){}
+// preços da OpenAI em dólar (gpt-4.1-mini e gpt-4o-mini-transcribe); confira em platform.openai.com/pricing
+const IA_USD={in:0.40/1e6,out:1.60/1e6,minAudio:0.003};
+const iauCusto=r=>Math.round(((+r.tokens_in||0)*IA_USD.in+(+r.tokens_out||0)*IA_USD.out+(+r.audio_seg||0)/60*IA_USD.minAudio)*IAU.cambio*100);
+async function iauLoad(force){
+  if(!IS_ADMIN||IAU.busy||(IAU.rows&&!force))return;IAU.busy=true;if(!IAU.mes)IAU.mes=todayStr().slice(0,7);
+  try{const r=await sb.rpc('adm_agente_uso',{p_mes:IAU.mes});if(r.error)throw r.error;IAU.rows=r.data||[];IAU.err=''}catch(e){IAU.err='Não foi possível carregar: '+(e.message||e);IAU.rows=IAU.rows||[]}
+  IAU.busy=false;if(ui.tab==='iauso'&&!fieldsOn())render();
+}
+function viewAdmIA(){
+  if(!IAU.mes)IAU.mes=todayStr().slice(0,7);
+  let h=pageHead('Agente de IA','Uso e custo da IA por ótica no mês')+(IAU.err?'<p class="hint bad" role="alert">'+esc(IAU.err)+'</p>':'');
+  const meses=[];{const d=new Date(todayStr()+'T12:00:00');for(let i=0;i<12;i++){const x=new Date(d.getFullYear(),d.getMonth()-i,1);meses.push(x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0'))}}
+  h+='<div class="card" style="gap:10px;flex-direction:row;flex-wrap:wrap;align-items:flex-end"><div class="field" style="min-width:160px"><span>Mês</span><select data-iaumes>'+meses.map(m=>'<option value="'+m+'"'+(m===IAU.mes?' selected':'')+'>'+m.slice(5)+'/'+m.slice(0,4)+'</option>').join('')+'</select></div><div class="field" style="width:150px"><span>Dólar (R$)</span><input type="number" step="0.01" min="1" data-iaucambio value="'+IAU.cambio+'"></div><button class="btn" data-act="iaurecarregar">Atualizar</button><p class="sub" style="margin:0;flex:1;min-width:220px">Custo estimado pelos tokens que a OpenAI informou em cada resposta. A fatura real fica em platform.openai.com → Usage.</p></div>';
+  if(!IAU.rows)return h+none('Carregando...');
+  const R=IAU.rows,lib=R.filter(r=>r.liberado),cT=R.reduce((s,r)=>s+iauCusto(r),0),resp=R.reduce((s,r)=>s+r.respostas,0),rec=lib.length*AG_PRECO;
+  h+='<div class="kpis" style="margin:14px 0;grid-template-columns:repeat(auto-fit,minmax(160px,1fr))">'+tile('Óticas com o agente',lib.length+' <small style="font-size:13px;color:var(--muted)">'+R.filter(r=>r.ativo).length+' ligados</small>')+tile('Respostas no mês',resp.toLocaleString('pt-BR'))+tile('Custo da IA',brl(cT))+tile('Receita do agente',brl(rec))+tile('Margem',brl(rec-cT))+'</div>';
+  if(!R.length)return h+none('Nenhuma ótica com o Agente de IA ainda. Libere a função em Administração → editar a ótica → Funções liberadas.');
+  h+='<div class="stack">'+R.map(r=>{const c=iauCusto(r),mg=(r.liberado?AG_PRECO:0)-c,pct=r.limite_mes>0?Math.min(100,Math.round(r.respostas*100/r.limite_mes)):0,lim=IAU.lim[r.id]!=null?IAU.lim[r.id]:r.limite_mes;
+    const st=!r.liberado?['','Não liberado']:r.ativo?['ok','Ligado']:r.testado_em?['warn','Testado, desligado']:['','Liberado, não configurado'];
+    return '<article class="row" style="flex-wrap:wrap;gap:10px"><div class="row-main" style="min-width:220px"><b>'+esc(r.nome)+'</b><div class="chips" style="margin-top:4px"><span class="chip '+st[0]+'">'+st[1]+'</span>'+(r.plano==='premium'?'<span class="chip">Premium</span>':'')+'</div>'+
+      '<div class="meta" style="margin-top:6px">'+r.conversas+' conversas · '+r.respostas+' respostas · '+Math.round((r.audio_seg||0)/60)+' min de áudio ('+r.audios+') · '+r.fotos+' fotos · '+r.testes+' testes</div>'+
+      '<div style="height:6px;background:var(--surface-2);border-radius:99px;margin-top:8px;overflow:hidden;max-width:420px"><div style="height:100%;width:'+pct+'%;background:'+(pct>=90?'var(--bad)':pct>=70?'var(--warn,#d89b00)':'var(--accent)')+'"></div></div><div class="meta">'+pct+'% do limite do mês</div></div>'+
+      '<div class="row-side" style="display:grid;gap:6px;justify-items:end"><div style="text-align:right"><small class="sub">Custo da IA</small><div><b>'+brl(c)+'</b></div><small class="sub">'+(r.liberado?'Margem '+brl(mg):'sem mensalidade')+'</small></div>'+
+      '<div style="display:flex;gap:6px;align-items:center"><label class="sub" style="margin:0">Limite/mês</label><input type="number" min="0" step="50" data-iaulim="'+r.id+'" value="'+lim+'" style="width:96px"><button class="btn sm" data-act="iaulim" data-id="'+r.id+'">Salvar</button></div></div></article>'}).join('')+'</div>';
+  h+='<p class="sub" style="margin-top:12px">Quando a ótica chega no limite do mês, o agente para de responder e os donos recebem um aviso para atender pelo WhatsApp. Mensalidade do agente considerada: '+brl(AG_PRECO)+' por ótica liberada.</p>';
+  return h;
+}
+document.addEventListener('change',e=>{const t=e.target;if(!t||!t.dataset)return;
+  if(t.dataset.iaumes!==undefined){IAU.mes=t.value;IAU.rows=null;render();iauLoad(true);return}
+  if(t.dataset.iaucambio!==undefined){const v=+t.value;if(v>0){IAU.cambio=v;try{localStorage.setItem('iau-cambio',String(v))}catch(x){}render()}return}
+});
+document.addEventListener('input',e=>{const t=e.target;if(t&&t.dataset&&t.dataset.iaulim!==undefined)IAU.lim[t.dataset.iaulim]=t.value});
+Object.assign(A,{
+  iaurecarregar(){iauLoad(true)},
+  async iaulim(d){const v=Math.max(0,Math.round(+(IAU.lim[d.id]!=null?IAU.lim[d.id]:0)));const r=await sb.rpc('adm_agente_limite',{p_otica:d.id,p_limite:v});if(r.error)return toast('Não foi possível salvar o limite');delete IAU.lim[d.id];toast('Limite salvo: '+v+' respostas por mês');iauLoad(true)},
+});
+
 function brandAdm(){
-  const adm=ui.tab==='admin'||ui.tab==='mensal';const bl=$('#brand-logo');if(!bl)return;
+  const adm=ui.tab==='admin'||ui.tab==='mensal'||ui.tab==='iauso';const bl=$('#brand-logo');if(!bl)return;
   let ab=$('#brand-adm');if(!ab){ab=document.createElement('div');ab.id='brand-adm';ab.className='brand-adm';ab.innerHTML='Adm Óticas<small>controle geral</small>';bl.parentNode.insertBefore(ab,bl.nextSibling)}
   ab.hidden=!adm;bl.hidden=adm||!LOGO_W;
   const bs=document.querySelector('.brand-sub');if(bs)bs.hidden=adm;
