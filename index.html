@@ -2993,8 +2993,8 @@ function premFuPesq(){
 }
 Object.assign(A,{fupesq(){ui.cs='pesq';ui.tab='campanhas';render()}});
 /* ----- WhatsApp automático (conector no computador da loja) ----- */
-const WA_TIPOS=[['boasvindas','Boas-vindas ao cadastrar o cliente'],['trafego','Tráfego Orgânico: oferta para empresas da região'],['recibo','Recibo quando a parcela é recebida'],['chegou','Aviso: seu óculos chegou'],['agradecimento','Agradecimento ao entregar'],['lembrete','Lembrete na véspera do vencimento'],['atraso','Parcela em atraso (1, 7 e 15 dias)'],['aniversario','Feliz aniversário'],['revisao','Revisão do grau (11 meses)'],['exame_conf','Exame de vista: confirmação ao agendar'],['exame_lembrete','Exame de vista: lembrete na véspera'],['followup','Meus follow-ups (botão WhatsApp)'],['avaliacao','Pedido de avaliação do cliente']];
-const WA_NOME={exame_conf:'Exame de vista: confirmação',exame_lembrete:'Exame de vista: lembrete',exame_resp:'Exame de vista: resposta',exame_faltou:'Exame de vista: faltou',exame_equipe:'Aviso de novo exame para a equipe',manual:'Mensagem da conversa'};WA_TIPOS.forEach(x=>WA_NOME[x[0]]=x[1]);
+const WA_TIPOS=[['boasvindas','Boas-vindas ao cadastrar o cliente'],['trafego','Tráfego Orgânico: oferta para empresas da região'],['recibo','Recibo quando a parcela é recebida'],['chegou','Aviso: seu óculos chegou'],['agradecimento','Agradecimento ao entregar'],['lembrete','Lembrete na véspera do vencimento'],['atraso','Parcela em atraso (1, 7 e 15 dias)'],['aniversario','Feliz aniversário'],['revisao','Revisão do grau (11 meses)'],['exame_conf','Exame de vista: confirmação ao agendar'],['exame_lembrete','Exame de vista: lembrete na véspera'],['exame_dia','Exame de vista: no dia, 3 horas antes'],['followup','Meus follow-ups (botão WhatsApp)'],['avaliacao','Pedido de avaliação do cliente']];
+const WA_NOME={exame_conf:'Exame de vista: confirmação',exame_lembrete:'Exame de vista: lembrete',exame_dia:'Exame de vista: no dia (3h antes)',exame_resp:'Exame de vista: resposta',exame_faltou:'Exame de vista: faltou',exame_equipe:'Aviso de novo exame para a equipe',manual:'Mensagem da conversa'};WA_TIPOS.forEach(x=>WA_NOME[x[0]]=x[1]);
 const WA_ST={aprovar:['warn','Espera sua aprovação'],aguardando:['acc','Na fila'],enviando:['acc','Enviando'],enviada:['ok','Enviada'],falhou:['bad','Falhou'],cancelada:['','Cancelada'],expirada:['','Venceu o prazo']};
 const waDoc=()=>{if(!S.config.wa)S.config.wa={id:'wa',on:false,pausa:false,ini:'08:00',fim:'18:30',limite:30,modo:{}};if(!S.config.wa.modo)S.config.wa.modo={};return S.config.wa};
 const waOn=()=>modOn('wa')&&!!waDoc().on;
@@ -3268,6 +3268,7 @@ function exPagina(){
    f('endereco','Endereço')+f('cidade','Cidade')+f('maps_url','Link do Google Maps (opcional)')+f('whatsapp','WhatsApp da ótica')+exLocaisEd(D)+
       '<div class="field"><span>Mensagem de confirmação (sai na hora)</span><textarea rows="5" data-exf="tpl_conf" placeholder="Deixe vazio para usar a mensagem padrão">'+esc(D.tpl.conf||'')+'</textarea></div>'+
    '<div class="field"><span>Mensagem de lembrete (véspera, às 17h)</span><textarea rows="5" data-exf="tpl_lemb" placeholder="Deixe vazio para usar a mensagem padrão">'+esc(D.tpl.lemb||'')+'</textarea></div>'+
+   '<div class="field"><span>Mensagem no dia do exame (3 horas antes)</span><textarea rows="5" data-exf="tpl_dia" placeholder="Deixe vazio para usar a mensagem padrão">'+esc(D.tpl.dia||'')+'</textarea></div>'+
    '<div class="field"><span>Mensagem para quem faltou (sai 1 hora depois de marcar "Faltou")</span><textarea rows="5" data-exf="tpl_falt" placeholder="Deixe vazio para usar a mensagem padrão">'+esc(D.tpl.falt||'')+'</textarea></div>'+
    '<label class="aguard-box" style="margin:0"><input type="checkbox" data-exf="tpl_ia"'+(D.tpl.ia==='true'?' checked':'')+'> Agente de IA responde os clientes sobre o exame (remarcar, cancelar, dúvidas simples)</label>'+
    '<p class="sub" style="margin:0">SIM, CANCELAR e REMARCAR já funcionam sem o agente. Com o agente ligado, quem escrever outras coisas sobre o exame também é atendido, e os donos são chamados quando o assunto é outro.</p>'+
@@ -3326,7 +3327,7 @@ Object.assign(A,{
   exlocdel(d){const D=exDraft();D.locais.splice(+d.i,1);render()},
   async exsalvarpag(){
     const D=exDraft();EX.saving=true;render();
-    const tpl={};if((D.tpl.conf||'').trim())tpl.conf=D.tpl.conf.trim();if((D.tpl.lemb||'').trim())tpl.lemb=D.tpl.lemb.trim();if((D.tpl.falt||'').trim())tpl.falt=D.tpl.falt.trim();if(D.tpl.ia==='true')tpl.ia='true';
+    const tpl={};if((D.tpl.conf||'').trim())tpl.conf=D.tpl.conf.trim();if((D.tpl.lemb||'').trim())tpl.lemb=D.tpl.lemb.trim();if((D.tpl.dia||'').trim())tpl.dia=D.tpl.dia.trim();if((D.tpl.falt||'').trim())tpl.falt=D.tpl.falt.trim();if(D.tpl.ia==='true')tpl.ia='true';
     const av=String(D.tpl.avisar||'').split(/\n|,|;/).map(x=>exSoDig(x)).filter(x=>x.length>=10&&x.length<=13).map(x=>x.length<=11?'55'+x:x);if(av.length)tpl.avisar=Array.from(new Set(av));
     const hOk=h=>/^([01]?\d|2[0-3]):[0-5]\d$/.test(h);let locErr='';
     const locais=(D.locais||[]).filter(l=>(l.nome||'').trim()||(l.endereco||'').trim()).map((l,i)=>{const hs=String(l.horas||'').split(/[,;\s]+/).map(x=>x.trim().replace(/h$/i,':00')).filter(Boolean);
@@ -3347,7 +3348,7 @@ document.addEventListener('input',e=>{const t=e.target;if(!t||!t.dataset)return;
     else if(F.cliente_id){F.cliente_id=''}return}
   if(t.dataset.exfm!==undefined&&EX.form){EX.form[t.dataset.exfm]=t.value;if(t.dataset.exfm==='nome'||t.dataset.exfm==='whatsapp')EX.form.cliente_id='';return}
   if(t.dataset.exl&&EX.dr){const [i,k]=t.dataset.exl.split('|');if(EX.dr.locais[+i])EX.dr.locais[+i][k]=t.value;return}
-  if(t.dataset.exf&&EX.dr&&t.type!=='checkbox'){const k=t.dataset.exf;if(k==='tpl_conf')EX.dr.tpl.conf=t.value;else if(k==='tpl_lemb')EX.dr.tpl.lemb=t.value;else if(k==='tpl_falt')EX.dr.tpl.falt=t.value;else if(k==='tpl_avisar')EX.dr.tpl.avisar=t.value;else EX.dr[k]=t.value;return}
+  if(t.dataset.exf&&EX.dr&&t.type!=='checkbox'){const k=t.dataset.exf;if(k==='tpl_conf')EX.dr.tpl.conf=t.value;else if(k==='tpl_lemb')EX.dr.tpl.lemb=t.value;else if(k==='tpl_dia')EX.dr.tpl.dia=t.value;else if(k==='tpl_falt')EX.dr.tpl.falt=t.value;else if(k==='tpl_avisar')EX.dr.tpl.avisar=t.value;else EX.dr[k]=t.value;return}
 });
 document.addEventListener('change',async e=>{const t=e.target;if(!t||!t.dataset)return;
   if(t.dataset.exloc!==undefined&&EX.form){const F=EX.form;F.loc=+t.dataset.exloc;const dl=exDiasDoGrupo(F.loc);if(!dl.includes(F.data))F.data=dl[0]||'';F.hora='';render();return}
