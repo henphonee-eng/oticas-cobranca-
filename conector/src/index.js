@@ -7,13 +7,15 @@ const { criarApi, criarRobo } = require('./fila');
 
 const RAIZ = path.join(__dirname, '..');
 const ARQ_CFG = path.join(RAIZ, 'config.json');
-const PASTA_SESSAO = path.join(RAIZ, 'sessao');
+// Modo nuvem: o servidor (src/servidor.js) passa tudo por variáveis de ambiente, sem config.json nem painel local.
+const NUVEM = process.env.CONECTOR_NUVEM === '1';
+const PASTA_SESSAO = process.env.CONECTOR_SESSAO || path.join(RAIZ, 'sessao');
 let PORTA = 3939;
 
 function log(t) {
-  const linha = '[' + new Date().toLocaleString('pt-BR') + '] ' + t;
+  const linha = '[' + new Date().toLocaleString('pt-BR') + '] ' + (NUVEM ? '[' + (process.env.CONECTOR_NOME || process.env.CONECTOR_ID || '') + '] ' : '') + t;
   console.log(linha);
-  try { fs.appendFileSync(path.join(RAIZ, 'conector.log'), linha + '\n'); } catch (e) { /* ignora */ }
+  if (!NUVEM) { try { fs.appendFileSync(path.join(RAIZ, 'conector.log'), linha + '\n'); } catch (e) { /* ignora */ } }
 }
 // Conteúdo de uma mensagem do WhatsApp em texto simples (fotos, áudios etc. viram uma descrição curta).
 function conteudo(msg) {
@@ -47,6 +49,11 @@ function numeroDaConversa(key) {
 const perguntar = (q) => new Promise((res) => { const rl = readline.createInterface({ input: process.stdin, output: process.stdout }); rl.question(q, (a) => { rl.close(); res(a.trim()); }); });
 
 async function lerConfig() {
+  if (NUVEM) {
+    const ex = JSON.parse(fs.readFileSync(path.join(RAIZ, 'config.exemplo.json'), 'utf8'));
+    return { supabaseUrl: process.env.SUPABASE_URL || ex.supabaseUrl, supabaseKey: process.env.SUPABASE_KEY || ex.supabaseKey,
+      token: String(process.env.CONECTOR_TOKEN || ''), modo: process.env.CONECTOR_MODO || '' };
+  }
   let cfg = {};
   if (fs.existsSync(ARQ_CFG)) cfg = JSON.parse(fs.readFileSync(ARQ_CFG, 'utf8'));
   else cfg = JSON.parse(fs.readFileSync(path.join(RAIZ, 'config.exemplo.json'), 'utf8'));
@@ -81,7 +88,7 @@ async function main() {
   MODO = cfg.modo || '';
   if (MODO === 'prospeccao') log('Modo prospecção (CRM): mensagens do chip de prospecção.');
   const api = criarApi(cfg);
-  paginaLocal();
+  if (!NUVEM) paginaLocal();
   // A biblioteca do WhatsApp (Baileys 7) é um módulo ESM, então é carregada com import().
   let baileys;
   try { baileys = await import('@whiskeysockets/baileys'); }
@@ -114,7 +121,12 @@ async function main() {
     sock = makeWASocket({ auth, version, logger, browser: ['Otica', 'Chrome', '1.0'], markOnlineOnConnect: false, syncFullHistory: false, getMessage: async (key) => enviadas.get(key.id) });
     sock.ev.on('creds.update', saveCreds);
     sock.ev.on('connection.update', async (u) => {
-      if (u.qr) { estado.estado = 'qr'; estado.qr = u.qr; estado.msg = 'Aguardando a leitura do QR Code.'; api.ping('qr').catch(() => {}); log('QR Code pronto: abra http://localhost:' + PORTA); }
+      if (u.qr) { estado.estado = 'qr'; estado.qr = u.qr; estado.msg = 'Aguardando a leitura do QR Code.'; api.ping('qr').catch(() => {});
+        if (NUVEM) {
+          // o QR vai para o sistema, que mostra a imagem no menu do WhatsApp
+          require('qrcode').toDataURL(u.qr, { width: 300, margin: 1 }).then((img) => api.qr(img)).catch((e) => log('Não consegui mandar o QR Code: ' + e.message));
+          log('QR Code enviado para o sistema.');
+        } else log('QR Code pronto: abra http://localhost:' + PORTA); }
       if (u.connection === 'open') {
         aberto = true; estado.estado = 'conectado'; estado.qr = '';
         estado.numero = String((sock.user && sock.user.id) || '').split(':')[0].split('@')[0];
@@ -214,6 +226,7 @@ async function main() {
   const robo = criarRobo(api, wa, log);
   await robo.rodar();
   log('Encerrado. Feche esta janela e gere um novo código no sistema.');
+  if (NUVEM) process.exit(3);
 }
 
 main().catch((e) => { console.error(e); setTimeout(() => process.exit(1), 15000); });

@@ -18,6 +18,7 @@ function criarApi(cfg, fetchFn) {
   if (cfg.modo === 'prospeccao') {
     return {
       puxar: () => rpc('prosp_wa_puxar', { p_token: cfg.token }),
+      qr: (img) => rpc('prosp_wa_qr', { p_token: cfg.token, p_qr: img }),
       resultado: (id, ok, erro) => rpc('prosp_wa_resultado', { p_token: cfg.token, p_id: id, p_ok: ok, p_erro: erro || null }),
       ping: (estado, numero) => rpc('prosp_wa_ping', { p_token: cfg.token, p_estado: estado, p_numero: numero || null }),
       sair: (telefone) => rpc('prosp_wa_sair', { p_token: cfg.token, p_telefone: telefone }),
@@ -28,6 +29,7 @@ function criarApi(cfg, fetchFn) {
   }
   return {
     puxar: () => rpc('wa_puxar', { p_token: cfg.token }),
+    qr: (img) => rpc('wa_qr', { p_token: cfg.token, p_qr: img }),
     puxarManual: () => rpc('wa_puxar_manual', { p_token: cfg.token }),
     // guarda a mensagem na conversa do sistema (WhatsApp dentro do sistema, função Premium)
     registrar: (m) => rpc('wa_registrar', { p_token: cfg.token, p_tel: m.telefone, p_nome: m.nome || null, p_de_mim: !!m.deMim, p_texto: m.texto, p_tipo: m.tipo || 'texto', p_wa_id: m.waId || null, p_origem: m.origem || null }),
@@ -76,7 +78,7 @@ function criarRobo(api, wa, log, opc) {
     if (!wa.conectado()) return 'desconectado';
     const r = await api.puxar();
     if (!r || r.ok === false) {
-      if (r && r.erro === 'token_invalido') { try { require('fs').unlinkSync(require('path').join(__dirname, '..', 'config.json')); } catch (e) { /* ignora */ } throw Object.assign(new Error('Código inválido. O arquivo config.json foi apagado. Gere um código novo no sistema e abra o iniciar.bat de novo.'), { fatal: true }); }
+      if (r && r.erro === 'token_invalido') { if (!process.env.CONECTOR_NUVEM) try { require('fs').unlinkSync(require('path').join(__dirname, '..', 'config.json')); } catch (e) { /* ignora */ } throw Object.assign(new Error('Código inválido. O arquivo config.json foi apagado. Gere um código novo no sistema e abra o iniciar.bat de novo.'), { fatal: true }); }
       return 'erro';
     }
     if (!r.msg) { ultimoMotivo = r.motivo || ''; return 'vazio'; }
