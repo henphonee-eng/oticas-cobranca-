@@ -252,7 +252,7 @@ async function load(){
     const exp=(sd.session.expires_at||0)*1000;if(exp&&exp-Date.now()<120000){const r=await sb.auth.refreshSession();if(r.error){st.user=false;st.loaded=false;render();return}}}catch(e){}
   const [lr,cr,ar]=await Promise.all([sb.from('prosp_leads').select('*').order('criado_em',{ascending:false}),sb.from('prosp_config').select('*'),sb.from('prosp_acessos').select('lead_id,em,aparelho,tipo').order('em',{ascending:false}).limit(5000)]);
   if(lr.error){toast('Erro ao carregar: '+lr.error.message);return}
-  st.leads=lr.data||[];st.cfg={};(cr.data||[]).forEach(r=>st.cfg[r.chave]=r.valor);
+  st.leads=(lr.data||[]).filter(l=>!l.arquivado_em);st.arq=(lr.data||[]).filter(l=>l.arquivado_em);st.cfg={};(cr.data||[]).forEach(r=>st.cfg[r.chave]=r.valor);
   st.ac={};((ar&&ar.data)||[]).forEach(a=>{(st.ac[a.lead_id]=st.ac[a.lead_id]||[]).push(a)});
   await loadFila();
   st.loaded=true;const qt=new URLSearchParams(location.search).get('tab');if(qt&&['crm','buscar','msg','auto','zap','camp'].includes(qt))st.tab=qt;else if(!st.leads.length)st.tab='buscar';render();
@@ -264,9 +264,13 @@ async function loadFila(){
   try{const desde=new Date(Date.now()-45*864e5).toISOString();
     const [fr,sr]=await Promise.all([sb.from('prosp_wa_fila').select('*').gte('criado_em',desde).order('criado_em',{ascending:false}).limit(2000),sb.rpc('prosp_wa_status')]);
     st.fila=fr.error?st.fila:(fr.data||[]);st.wst=sr.error?st.wst:sr.data;st.filaErr=!!(fr.error||sr.error)}catch(e){st.filaErr=true}
+  arquivarFalhas();
   try{const mr=await sb.from('prosp_wa_msg').select('id,lead_id,telefone,nome,de_mim,texto,tipo,origem,lido,criado_em').gte('criado_em',new Date(Date.now()-60*864e5).toISOString()).order('criado_em',{ascending:false}).limit(3000);if(!mr.error)st.msgs=mr.data||[]}catch(e){}
 }
 const ATIVOS=['espera','aguardando','enviando'];
+/* mensagem automática com erro: a ótica sai do CRM (o banco já arquiva) e não volta mais na busca */
+function arquivarFalhas(){if(!st.leads||!st.fila)return;const f=new Set(st.fila.filter(x=>x.status==='falhou'&&x.tipo!=='manual'&&x.lead_id).map(x=>x.lead_id));if(!f.size)return;
+  const sai=st.leads.filter(l=>f.has(l.id));if(!sai.length)return;st.arq=(st.arq||[]).concat(sai.map(l=>Object.assign(l,{arquivado_em:l.arquivado_em||new Date().toISOString()})));st.leads=st.leads.filter(l=>!f.has(l.id))}
 /* seções que abrem e fecham (Envio automático e Campanha); o que você abriu ou fechou fica lembrado */
 let SECS={};try{SECS=JSON.parse(localStorage.getItem('crm-secs')||'{}')}catch(e){}
 const secOpen=(k,def)=>((k in SECS)?SECS[k]:def)?' open':'';
@@ -320,7 +324,7 @@ function vAuto(){
   if(!w.nuvem)h+='<details class="card sec cx" data-sec="programa"'+secOpen('programa',false)+'><summary><h2>Programa do computador</h2><span class="cx-i" aria-hidden="true"></span></summary><div class="cx-b"><p class="small muted" style="margin:0 0 10px">É o mesmo conector da ótica, em outra pasta, ligado ao chip do CRM. '+(w.tem_token?'Já existe um código; gerar outro desconecta o atual.':'Gere o código e baixe o arquivo de configuração.')+'</p>'+
     (st.token?'<div class="note" style="margin-bottom:10px">Código gerado. Baixe o arquivo agora (por segurança ele aparece só desta vez) e coloque na pasta do conector de prospecção.</div><div class="row" style="margin-bottom:10px"><button class="btn pri" data-a="wbaixar">Baixar config.json</button></div>':'')+
     '<div class="row"><button class="btn" data-a="wtoken">'+(w.tem_token?'Gerar novo código':'Gerar código do conector')+'</button><a class="btn" href="/conector.zip" download>Baixar o programa</a></div></div></details>';
-  const at=st.fila.filter(x=>ATIVOS.includes(x.status)||x.status==='falhou').sort((a,b)=>String(a.enviar_apos).localeCompare(String(b.enviar_apos)));
+  const at=st.fila.filter(x=>ATIVOS.includes(x.status)).sort((a,b)=>String(a.enviar_apos).localeCompare(String(b.enviar_apos)));
   const env=st.fila.filter(x=>x.status==='enviada').sort((a,b)=>String(b.enviado_em).localeCompare(String(a.enviado_em))).slice(0,40);
   const row=(x,act)=>{const s=FST[x.status]||['',x.status];return '<div class="card" style="padding:10px 12px"><div class="row"><b class="grow">'+esc(nm(x.lead_id))+'</b><span class="tag '+s[0]+'">'+s[1]+'</span></div><div class="small muted" style="margin-top:4px">'+(x.tipo==='abordagem'?'Abordagem':x.tipo==='campanha'?'Campanha':'Follow-up')+' · '+(x.status==='enviada'?'enviada '+dh(x.enviado_em):x.status==='espera'?'sai alguns dias depois da abordagem':'a partir de '+dh(x.enviar_apos))+(x.erro&&x.status!=='enviada'?' · '+esc(x.erro):'')+'</div>'+(act?'<div class="acts" style="margin-top:8px"><button class="btn sm" data-fcanc="'+x.id+'">Cancelar</button></div>':'')+'</div>'};
   h+='<div class="sec"><h2>Fila ('+at.length+')</h2>'+(at.length?'<div class="list two">'+at.map(x=>row(x,true)).join('')+'</div>':'<div class="empty">Nada na fila. No CRM, marque as óticas novas e coloque na fila automática.</div>')+'</div>';
@@ -336,7 +340,7 @@ async function upd(id,patch){
 function hist(l,txt){return [...(l.historico||[]),{em:new Date().toISOString(),txt}]}
 
 /* ---------- busca no Google ---------- */
-function noCrm(){const ids=new Set(),fones=new Set();st.leads.forEach(l=>{if(l.place_id)ids.add(l.place_id);[l.telefone,l.whatsapp].forEach(f=>{const d=brNumber(f);if(d)fones.add(d.slice(-8))})});return p=>ids.has(p.place_id)||(p.telefone&&fones.has(brNumber(p.telefone).slice(-8)))}
+function noCrm(){const ids=new Set(),fones=new Set();st.leads.concat(st.arq||[]).forEach(l=>{if(l.place_id)ids.add(l.place_id);[l.telefone,l.whatsapp].forEach(f=>{const d=brNumber(f);if(d)fones.add(d.slice(-8))})});return p=>ids.has(p.place_id)||(p.telefone&&fones.has(brNumber(p.telefone).slice(-8)))}
 /* óticas da busca que ainda não estão no CRM (sem repetir telefone) */
 function novasDaBusca(){const ja=noCrm(),vist=new Set(),out=[];st.res.forEach(p=>{if(ja(p))return;const k=p.telefone?brNumber(p.telefone).slice(-8):p.place_id;if(vist.has(k))return;vist.add(k);out.push(p)});return out}
 async function buscar(more){
