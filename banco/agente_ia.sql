@@ -32,3 +32,6 @@ alter table public.prosp_leads add column if not exists campanha_em timestamptz;
 -- ag_contato_novo(otica, tel): true para empresas do Tráfego Orgânico e contatos que nunca falaram com a ótica;
 --   false para clientes cadastrados, exames, avisos já enviados, SAIR, base do WhatsApp e quem conversou antes de ligar o agente.
 -- wa_receber só chama o agente quando ag_contato_novo é true (ou cfg.publico = 'todos'); o resto segue o fluxo antigo (exames/equipe).
+
+-- Demonstração pública do agente (página /demo, modo 'demo' da função agente-ia) — migration demo_ia_limite
+-- demo_ia(chave=IP, dia, n, tokens): no máximo 30 mensagens por IP por dia e 3000 no total por dia

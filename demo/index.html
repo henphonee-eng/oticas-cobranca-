@@ -2532,30 +2532,45 @@ Object.assign(A,{
 });
 document.addEventListener('change',e=>{const t=e.target;if(t&&t.dataset&&t.dataset.tdsel){TD.sel[t.dataset.tdsel]=t.checked;render()}});
 
-/* ---------- Agente de IA (demonstração com conversa de exemplo) ---------- */
-const AGD={chat:[],dig:false,passo:0};
-const AGD_R={
-  horario:['Qual o horário de vocês?',()=>'Oi! 😊 A '+DEMO_NOME+' abre de segunda a sexta, das 9h às 18h, e no sábado das 9h às 13h. Posso te ajudar com mais alguma coisa?'],
-  preco:['Quanto custa um óculos multifocal?',()=>'As lentes multifocais começam em *R$ 390* o par, e as armações a partir de *R$ 99*. Se quiser, me manda uma foto da sua receita que eu te digo as opções certinhas para ela!'],
-  receita:['📷 Foto da receita',()=>'Recebi sua receita! Ela tem grau para longe e *adição +2,00*, então a lente indicada é a *multifocal*. Temos opções a partir de R$ 390. Quer que eu chame alguém da equipe para montar o orçamento?',null,'Leu a foto da receita: OD -2,00 / OE -1,75, adição +2,00'],
-  audio:['🎤 Áudio (0:07): «Oi, vocês fazem exame de vista? Queria marcar pra sábado»',()=>'Fazemos sim! O exame é *grátis* na compra do óculos completo. Para sábado tenho estes horários livres: *9h*, *9h30* ou *10h*. Qual fica melhor pra você?',null,'Entendeu o áudio e consultou a agenda de exames'],
-  marcar:['9h30! Meu nome é Carla Mendes',()=>'Prontinho, Carla! Seu exame está marcado para *sábado às 9h30*, na Rua Exemplo, 123. Você recebe um lembrete na véspera. 👓',null,'Marcou o exame na agenda do sistema'],
-  cartao:['Vocês aceitam cartão?',()=>'Aceitamos Pix, dinheiro e cartão, com parcelamento em até *10x sem juros*. 😉'],
-  pessoa:['Quero falar com uma pessoa',()=>'Claro! Já chamei alguém da equipe, só um instante. 😊',null,'Avisou a equipe no WhatsApp e ficou quieto nessa conversa'],
-};
+/* ---------- Agente de IA (demonstração: conversa de verdade com o agente, dados de uma ótica de exemplo) ---------- */
+const AGD={chat:[],dig:false,txt:''};
+const AGD_URL='https://ovynkeifzhavhjdkjjui.supabase.co/functions/v1/agente-ia';
+const agdHora=()=>{const d=new Date();return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
+function agdBolha(m){
+  if(m.acao)return '<div style="text-align:center"><span class="chip">⚙️ '+esc(m.acao)+'</span></div>';
+  const eu=m.eu;
+  return '<div style="max-width:82%;align-self:'+(eu?'flex-end':'flex-start')+';background:'+(eu?'linear-gradient(120deg,#7C3AED,#2F80FF)':'var(--surface)')+';color:'+(eu?'#fff':'var(--fg)')+';border:1px solid '+(eu?'transparent':'var(--line)')+';border-radius:'+(eu?'16px 16px 4px 16px':'16px 16px 16px 4px')+';padding:9px 12px;white-space:pre-wrap;font-size:14.5px;box-shadow:0 6px 16px -10px rgba(40,25,120,.35)">'+esc(m.t).replace(/\*([^*\n]+)\*/g,'<b>$1</b>')+'<small style="display:block;text-align:right;opacity:.7;font-size:11px;margin-top:3px">'+(eu?'Você':'Agente de IA')+' · '+m.h+'</small></div>';
+}
 function viewAgenteDemo(){
-  const b=(t,eu)=>'<div style="max-width:80%;align-self:'+(eu?'flex-end':'flex-start')+';background:'+(eu?'var(--accent-soft)':'var(--surface)')+';border:1px solid '+(eu?'transparent':'var(--line)')+';border-radius:'+(eu?'14px 14px 4px 14px':'14px 14px 14px 4px')+';padding:8px 11px;white-space:pre-wrap;font-size:14.5px">'+esc(t).replace(/\*([^*\n]+)\*/g,'<b>$1</b>')+'<small style="display:block;text-align:right;color:var(--muted);font-size:11px;margin-top:2px">'+(eu?'Cliente · 23:47':'Agente de IA · 23:47')+'</small></div>';
-  const msgs=AGD.chat.map(m=>m.acao?'<div style="text-align:center"><span class="chip">⚙️ '+esc(m.acao)+'</span></div>':b(m.t,m.eu)).join('')+(AGD.dig?'<div style="align-self:flex-start;color:var(--muted);font-size:13px">digitando...</div>':'');
-  const sug=Object.keys(AGD_R).filter(k=>k!=='marcar'||AGD.chat.some(m=>m.k==='audio')).map(k=>'<button class="fchip" data-act="agdemo" data-k="'+k+'"'+(AGD.dig?' disabled':'')+'>'+esc(k==='receita'?'📷 Mandar foto da receita':k==='audio'?'🎤 Mandar áudio':AGD_R[k][0])+'</button>').join('');
-  const intro='<div class="card" style="gap:8px;margin-bottom:14px;border-left:4px solid var(--accent)"><b>Um atendente que nunca dorme</b><p class="sub" style="margin:0">O Agente de IA responde o WhatsApp da '+esc(DEMO_NOME)+' 24 horas: tira dúvidas de preço, horário e promoções, entende áudio e foto da receita, marca o exame de vista na agenda e chama vocês quando o cliente quer fechar. Toque nas mensagens abaixo como se fosse um cliente às 23h47, com a loja fechada.</p></div>';
-  const chat='<div class="card" style="padding:0;overflow:hidden"><div style="padding:10px 14px;border-bottom:1px solid var(--line);display:flex;gap:10px;align-items:center"><b style="flex:1">WhatsApp da '+esc(DEMO_NOME)+'</b><span class="chip ok">● Agente ligado</span></div><div id="agd-thread" style="display:flex;flex-direction:column;gap:8px;padding:14px;min-height:300px;max-height:56vh;overflow:auto;background:var(--bg)">'+(msgs||'<p class="sub" style="margin:auto;text-align:center">Escolha uma mensagem abaixo para começar</p>')+'</div><div style="padding:12px;border-top:1px solid var(--line)"><div class="chips">'+sug+'</div>'+(AGD.chat.length?'<div style="margin-top:8px"><button class="btn sm" data-act="agdemolimpar">Recomeçar</button></div>':'')+'</div></div>';
-  const conf='<div class="card" style="gap:8px;margin-top:14px"><b>A ótica ensina tudo numa tela simples</b><div class="chips">'+['Endereço e horário','Preços e produtos','Promoções','Perguntas frequentes','Imagens do catálogo','Quando chamar a equipe','Tela de teste antes de ligar'].map(x=>'<span class="chip">✓ '+x+'</span>').join('')+'</div><p class="sub" style="margin:0">Ele só responde com o que a ótica cadastrou, nunca inventa preço e nunca dá orientação de saúde.</p></div>';
+  const msgs=AGD.chat.map(agdBolha).join('')+(AGD.dig?'<div style="align-self:flex-start;color:var(--muted);font-size:13px;padding:4px 8px">Ana está digitando…</div>':'');
+  const vazio='<div style="margin:auto;text-align:center;max-width:360px"><div style="font-size:34px">💬</div><b style="display:block;margin:6px 0 4px">Converse com a Ana, a atendente virtual</b><p class="sub" style="margin:0">Escreva como se fosse um cliente da '+esc(DEMO_NOME)+': pergunte o preço de um óculos, o horário, as formas de pagamento ou peça para marcar um exame de vista.</p></div>';
+  const intro='<div class="card" style="gap:8px;margin-bottom:14px;border-left:4px solid var(--accent)"><b>Um atendente que nunca dorme</b><p class="sub" style="margin:0">O Agente de IA responde o WhatsApp da '+esc(DEMO_NOME)+' 24 horas: tira dúvidas de preço, horário e promoções, entende áudio e foto da receita, marca o exame de vista na agenda e chama vocês quando o cliente quer fechar. Teste agora: a conversa abaixo é com o agente de verdade, usando dados de uma ótica de exemplo.</p></div>';
+  const chat='<div class="card" style="padding:0;overflow:hidden;gap:0"><div style="padding:12px 16px;border-bottom:1px solid var(--line);display:flex;gap:10px;align-items:center"><span style="width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(120deg,#7C3AED,#2F80FF);color:#fff;font-weight:800">A</span><div style="flex:1;min-width:0"><b style="display:block">Ana · '+esc(DEMO_NOME)+'</b><small class="sub" style="margin:0">'+(AGD.dig?'digitando…':'online agora')+'</small></div><span class="chip ok">● Agente ligado</span></div>'+
+    '<div id="agd-thread" style="display:flex;flex-direction:column;gap:9px;padding:16px;min-height:340px;max-height:58vh;overflow:auto;background:var(--bg)">'+(msgs||vazio)+'</div>'+
+    '<div style="display:flex;gap:8px;padding:12px;border-top:1px solid var(--line);align-items:flex-end;background:var(--surface)"><textarea id="agd-txt" rows="1" placeholder="Escreva sua mensagem…" style="flex:1;resize:none;min-height:46px;max-height:140px;border-radius:14px">'+esc(AGD.txt)+'</textarea><button class="btn primary" data-act="agdenviar"'+(AGD.dig?' disabled':'')+' style="min-height:46px">Enviar</button></div></div>'+
+    (AGD.chat.length?'<div style="margin-top:8px"><button class="btn sm" data-act="agdemolimpar">Recomeçar conversa</button></div>':'');
+  const conf='<div class="card" style="gap:8px;margin-top:14px"><b>A ótica ensina tudo numa tela simples</b><div class="chips">'+['Endereço e horário','Preços e produtos','Promoções','Perguntas frequentes','Imagens do catálogo','Quando chamar a equipe','Tela de teste antes de ligar'].map(x=>'<span class="chip">✓ '+x+'</span>').join('')+'</div><p class="sub" style="margin:0">Ele só responde com o que a ótica cadastrou, nunca inventa preço e nunca dá orientação de saúde. Atende só contatos novos: os clientes da casa continuam com a equipe.</p></div>';
   return pageHead('Agente de IA','Atendimento no WhatsApp 24 horas, com áudio, foto e agendamento de exames')+intro+chat+conf;
 }
+function agdRolar(){const t=document.getElementById('agd-thread');if(t)t.scrollTop=t.scrollHeight;const x=document.getElementById('agd-txt');if(x&&!AGD.dig)x.focus()}
+async function agdEnviar(){
+  const el=document.getElementById('agd-txt');const t=String((el&&el.value)||AGD.txt||'').trim();if(!t||AGD.dig)return;
+  const hist=AGD.chat.filter(m=>!m.acao).map(m=>({papel:m.eu?'cliente':'agente',texto:m.t}));
+  AGD.chat.push({eu:true,t,h:agdHora()});AGD.txt='';AGD.dig=true;render();agdRolar();
+  try{
+    const r=await fetch(AGD_URL,{method:'POST',headers:{'Content-Type':'application/json',apikey:'sb_publishable_7RunIjZPQDCuWNSuPrD10w_Gy_lIUFl'},body:JSON.stringify({modo:'demo',otica_nome:DEMO_NOME,mensagens:hist,texto:t})});
+    const d=await r.json().catch(()=>({}));
+    if(d.error)throw new Error(d.error);
+    (d.acoes||[]).forEach(a=>AGD.chat.push({acao:a.txt}));
+    if(d.resposta)AGD.chat.push({eu:false,t:d.resposta,h:agdHora()});
+  }catch(e){AGD.chat.push({acao:'O agente não respondeu agora. Tente de novo.'})}
+  AGD.dig=false;render();agdRolar();
+}
+document.addEventListener('input',e=>{const t=e.target;if(t&&t.id==='agd-txt'){AGD.txt=t.value;t.style.height='auto';t.style.height=Math.min(140,t.scrollHeight)+'px'}});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&e.target&&e.target.id==='agd-txt'){e.preventDefault();agdEnviar()}});
 Object.assign(A,{
-  agdemo(d){const r=AGD_R[d.k];if(!r||AGD.dig)return;AGD.chat.push({t:r[0],eu:true,k:d.k});AGD.dig=true;render();const th=document.getElementById('agd-thread');if(th)th.scrollTop=th.scrollHeight;
-    setTimeout(()=>{if(r[3])AGD.chat.push({acao:r[3]});AGD.chat.push({t:r[1](),eu:false});AGD.dig=false;render();const t2=document.getElementById('agd-thread');if(t2)t2.scrollTop=t2.scrollHeight},1400)},
-  agdemolimpar(){AGD.chat=[];render()},
+  agdenviar(){agdEnviar()},
+  agdemolimpar(){AGD.chat=[];AGD.txt='';render();agdRolar()},
 });
 
 /* ---------- início ---------- */

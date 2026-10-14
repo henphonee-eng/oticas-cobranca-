@@ -450,6 +450,63 @@ async function midiaConector(b: any) {
   return ok({ ok: true, r });
 }
 
+/* ---------------- demonstração pública (página /demo): ótica de exemplo, nada é marcado ---------------- */
+const DEMO_CFG = {
+  nome_agente: "Ana", tom: "simpatico", emojis: true,
+  sobre: "Ótica de bairro com exame de vista no local, mais de 300 modelos de armação e entrega rápida.",
+  endereco: "Rua Exemplo, 123 - Centro", referencia: "ao lado da farmácia", dias: [1, 2, 3, 4, 5, 6], abre: "09:00", fecha: "18:00", sab_abre: "09:00", sab_fecha: "13:00",
+  exame_info: "Exame de vista grátis na compra do óculos completo. Só o exame: R$ 80. Dura uns 20 minutos.",
+  produtos: [
+    { nome: "Armação de grau", preco: "a partir de R$ 99", obs: "mais de 300 modelos" },
+    { nome: "Lentes visão simples com antirreflexo", preco: "a partir de R$ 180 o par" },
+    { nome: "Lentes multifocais", preco: "a partir de R$ 390 o par" },
+    { nome: "Óculos de sol", preco: "a partir de R$ 89" },
+    { nome: "Lentes de contato", preco: "sob consulta, com receita" },
+  ],
+  pagamento: "Pix, dinheiro, cartão de débito e crédito", parcelamento: "até 10x sem juros no cartão", crediario: "carnê próprio com entrada, sujeito a análise",
+  entrega_prazo: "de 3 a 7 dias úteis", garantia: "90 dias contra defeito de fabricação",
+  promocoes: [{ titulo: "Mês do óculos", texto: "armação grátis na compra das lentes com antirreflexo" }],
+  faq: [{ p: "Vocês fazem conserto?", r: "Fazemos sim! Traga o óculos na loja que avaliamos na hora, sem custo." }, { p: "Aceitam receita de qualquer médico?", r: "Aceitamos sim, de oftalmologista com até 1 ano." }],
+  msg_atendente: "Vou chamar alguém da equipe para te ajudar, só um instante! 😊",
+};
+function demoHorarios(de?: string) {
+  const out: any[] = []; const base = agoraRecife(); let d = new Date(Date.UTC(base.getUTCFullYear(), base.getUTCMonth(), base.getUTCDate()));
+  if (dataOk(de)) { const x = new Date(de + "T00:00:00Z"); if (x > d) d = x; }
+  for (let i = 0; i < 14 && out.length < 5; i++) {
+    const dia = new Date(d.getTime() + i * 864e5), w = dia.getUTCDay(); if (w === 0) continue;
+    const horas = w === 6 ? ["09:00", "09:30", "10:00", "11:00"] : ["09:30", "10:30", "14:00", "15:30", "16:30"];
+    out.push({ data: dia.toISOString().slice(0, 10), dia: DIAS[w], horas });
+  }
+  return out;
+}
+async function demo(req: Request, b: any) {
+  if (!OPENAI) return ok({ error: "Demonstração indisponível agora." }, 503);
+  const ip = (req.headers.get("x-forwarded-for") || "").split(",")[0].trim() || "sem-ip";
+  const texto = s(b.texto, 600);
+  if (!texto) return ok({ error: "Escreva uma mensagem." }, 400);
+  const pode = await rpc("demo_ia_conta", { p_chave: ip, p_lim: 30, p_lim_total: 3000 }).catch(() => false);
+  if (!pode) return ok({ ok: true, resposta: "Por hoje a demonstração chegou no limite de mensagens 😊 Para ver o agente na sua ótica, toque em *Quero para minha ótica* e fale com a gente!", acoes: [] });
+  const nomeOtica = s(b.otica_nome, 40).replace(/[<>{}]/g, "") || "Sua Ótica";
+  const hist = (Array.isArray(b.mensagens) ? b.mensagens : []).slice(-12)
+    .filter((m: any) => m && m.texto && (m.papel === "cliente" || m.papel === "agente"))
+    .map((m: any) => ({ role: m.papel === "cliente" ? "user" : "assistant", content: s(m.texto, 800) }));
+  const msgs = [...hist, { role: "user", content: texto }];
+  const sistema = montarSistema({ nomeOtica, c: DEMO_CFG, ex: null, link: "https://oticas-cobranca.vercel.app/exame/demo", contato: {}, alvo: null, lentes: "", teste: false, agenda: true })
+    + "\n(Esta é uma demonstração pública do Agente de IA para donos de ótica: atenda como se fosse um cliente de verdade, com os dados de exemplo acima.)";
+  const acoes: any[] = [];
+  const exec = async (nome: string, a: any): Promise<unknown> => {
+    if (nome === "horarios_livres") { acoes.push({ txt: "Consultou a agenda de exames" }); return demoHorarios(a.a_partir_de); }
+    if (nome === "agendar_exame") { acoes.push({ txt: `Marcou o exame de ${s(a.nome, 40) || "cliente"} para ${dataOk(a.data) ? fmtDia(a.data) : "o dia escolhido"}, às ${s(a.hora, 5)}` }); return { ok: true }; }
+    if (nome === "chamar_atendente") { acoes.push({ txt: "Avisou a equipe no WhatsApp para continuar a conversa" }); return { ok: true }; }
+    return { ok: false, erro: "indisponível na demonstração" };
+  };
+  let resposta = "";
+  try { resposta = await rodar(sistema, msgs, ferramentas({ agenda: true, temExame: false, imagens: false }), exec); }
+  catch (e: any) { console.error("demo", e.message); return ok({ error: "O agente não respondeu agora. Tente de novo." }, 502); }
+  const u = U(); await db.rpc("demo_ia_tokens", { p_chave: ip, p_in: u.tin, p_out: u.tout }).then(() => {}, () => {});
+  return ok({ ok: true, resposta, acoes });
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   return await ALS.run(novoUso(), () => tratar(req));
@@ -469,6 +526,7 @@ async function tratar(req: Request) {
       return ok(await atenderReal(otica, tel, s(b.nome, 60), t0));
     }
     if (b.modo === "midia") return await midiaConector(b);
+    if (b.modo === "demo") return await demo(req, b);
     return await teste(req, b);
   } catch (e: any) {
     console.error("agente-ia", e.message);
