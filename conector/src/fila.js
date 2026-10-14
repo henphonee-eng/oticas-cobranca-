@@ -30,6 +30,7 @@ function criarApi(cfg, fetchFn) {
   return {
     puxar: () => rpc('wa_puxar', { p_token: cfg.token }),
     qr: (img) => rpc('wa_qr', { p_token: cfg.token, p_qr: img }),
+    conhecidos: (tels) => rpc('wa_conhecidos_add', { p_token: cfg.token, p_tels: tels }),
     // áudio ou foto recebidos: o Agente de IA (Premium) transforma em texto e responde
     midia: async (corpo) => {
       const r = await f(cfg.supabaseUrl + '/functions/v1/agente-ia', {

@@ -120,6 +120,18 @@ async function main() {
     const auth = makeCacheableSignalKeyStore ? { creds: state.creds, keys: makeCacheableSignalKeyStore(state.keys, logger) } : state;
     sock = makeWASocket({ auth, version, logger, browser: ['Otica', 'Chrome', '1.0'], markOnlineOnConnect: false, syncFullHistory: false, getMessage: async (key) => enviadas.get(key.id) });
     sock.ev.on('creds.update', saveCreds);
+    // Ao conectar (leitura do QR Code) o WhatsApp manda a lista de conversas que já existiam.
+    // Esses números são a "base" da ótica: o Agente de IA não conversa com eles, só com contatos novos.
+    if (MODO !== 'prospeccao' && api.conhecidos) sock.ev.on('messaging-history.set', ({ chats, contacts, messages }) => {
+      const tels = new Set();
+      const add = (j) => { j = String(j || ''); if (j.endsWith('@s.whatsapp.net')) { const t = j.split('@')[0].split(':')[0].replace(/\D/g, ''); if (t.length >= 10 && t.length <= 15) tels.add(t); } };
+      for (const c of chats || []) { add(c.id); add(c.pnJid); add(c.phoneNumber); }
+      for (const c of contacts || []) { add(c.id); add(c.phoneNumber); add(c.jid); }
+      for (const m of messages || []) { const k = (m && m.key) || {}; add(k.remoteJid); add(k.remoteJidAlt); add(k.senderPn); }
+      const lista = [...tels];
+      if (!lista.length) return;
+      (async () => { for (let i = 0; i < lista.length; i += 500) await api.conhecidos(lista.slice(i, i + 500)).catch(() => {}); log('Base do WhatsApp: ' + lista.length + ' contatos registrados (o Agente de IA não fala com eles).'); })();
+    });
     sock.ev.on('connection.update', async (u) => {
       if (u.qr) { estado.estado = 'qr'; estado.qr = u.qr; estado.msg = 'Aguardando a leitura do QR Code.'; api.ping('qr').catch(() => {});
         if (NUVEM) {

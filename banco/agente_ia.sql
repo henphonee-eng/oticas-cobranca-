@@ -25,3 +25,10 @@ alter table public.prosp_leads add column if not exists campanha_em timestamptz;
 -- agente_config.limite_mes (padrão 1500 respostas): no limite o agente para e avisa os donos
 -- adm_agente_uso(mes 'AAAA-MM') e adm_agente_limite(otica, limite): painel Adm → Agente de IA
 -- ot_mod_on(o,'agente') só vale com liberação explícita (função adicional de R$ 150/mês, fora do Premium)
+
+-- Só contatos novos (padrão para todas as óticas) — migrations wa_conhecidos, wa_conhecidos_add, agente_ativado_em, ag_contato_novo
+-- wa_conhecidos: lista de conversas que já existiam no WhatsApp, enviada pelo conector quando o QR Code é lido (messaging-history.set)
+-- agente_config.ativado_em: quando o agente foi ligado pela primeira vez
+-- ag_contato_novo(otica, tel): true para empresas do Tráfego Orgânico e contatos que nunca falaram com a ótica;
+--   false para clientes cadastrados, exames, avisos já enviados, SAIR, base do WhatsApp e quem conversou antes de ligar o agente.
+-- wa_receber só chama o agente quando ag_contato_novo é true (ou cfg.publico = 'todos'); o resto segue o fluxo antigo (exames/equipe).
