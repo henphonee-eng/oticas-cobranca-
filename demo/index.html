@@ -867,6 +867,50 @@ html.demo .demo-note .btn{background:#fff;color:#3B1FD1;border:0;font-weight:800
 html.demo .kpi b{font-size:26px;white-space:nowrap}
 @media (min-width:900px){html.demo .kpi b{font-size:clamp(20px,1.75vw,28px)}html.demo .kpi:first-child b{font-size:clamp(26px,2.4vw,38px)}}
 html.demo{background:#F5F4FF}
+
+/* ===== demonstração: organização e celular ===== */
+html.demo .demo-note{flex-direction:row;align-items:center;gap:14px;padding:14px 18px}
+html.demo .demo-note .dn-t{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0;position:relative;z-index:1}
+html.demo .demo-note b{font-size:15.5px}
+html.demo .demo-note .btn{margin:0;flex:none;position:relative;z-index:1}
+html.demo .ph{align-items:flex-end;margin-bottom:16px}
+html.demo .ph .acts{display:flex;gap:8px;flex-wrap:wrap}
+@media (max-width:899px){
+  html.demo .side .brand-name{font-size:15px;line-height:1.1;letter-spacing:.02em;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;max-width:46vw}
+  html.demo .side .brand-name small,html.demo .side .brand-sub{display:none}
+  html.demo .side .sync span{display:none}
+  html.demo .demo-note,html.demo .dhero{padding:12px 14px;border-radius:18px;gap:10px;margin-bottom:12px}
+  html.demo .demo-note b,html.demo .dh-main b{font-size:14px}
+  html.demo .demo-note span,html.demo .dh-main span{font-size:12px}
+  html.demo .demo-note .btn,html.demo .dhero .btn{min-height:36px;padding:0 12px;font-size:12.5px}
+  html.demo .ph{flex-direction:column;align-items:stretch;gap:10px;margin-bottom:14px}
+  html.demo .ph h1{font-size:27px}
+  html.demo .ph .sub{font-size:13.5px;margin-top:2px}
+  html.demo .ph .acts{display:flex;flex-wrap:wrap;gap:8px;width:100%}
+  html.demo .ph .acts .btn{flex:1 1 auto}
+  html.demo .ph .acts .btn.primary{flex:1 1 55%;order:-1}
+  html.demo .ph .acts .ib,html.demo .ph .acts .btn.ic{flex:none}
+  html.demo .demo-note{flex-wrap:wrap}
+  html.demo .demo-note .dn-t{flex-basis:100%}
+  html.demo .demo-note .btn{width:100%}
+  /* números: o principal ocupa a linha toda; os outros em 2 colunas, sem cortar valor */
+  html.demo .kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  html.demo .kpi{padding:14px;border-radius:16px}
+  html.demo .kpi:first-child{grid-column:1/-1}
+  html.demo .kpi small{font-size:12px}
+  html.demo .kpi b{font-size:clamp(17px,5.3vw,21px)!important;white-space:nowrap}
+  html.demo .kpi:first-child b{font-size:30px!important}
+  html.demo .kpi span{font-size:11.5px}
+  /* filtros em uma linha que desliza para o lado */
+  html.demo .filters,html.demo .ex-nav,html.demo .seg{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;margin-left:-16px;margin-right:-16px;padding:2px 16px 4px}
+  html.demo .filters::-webkit-scrollbar,html.demo .ex-nav::-webkit-scrollbar,html.demo .seg::-webkit-scrollbar{display:none}
+  html.demo .filters>*,html.demo .ex-nav>*,html.demo .seg>*{flex:none}
+  html.demo .card,html.demo .row{border-radius:16px}
+  html.demo .card p.sub{font-size:13px}
+  html.demo .row{flex-wrap:wrap}
+  html.demo .row-side{width:100%}
+  html.demo .row-side .acts{justify-content:flex-start}
+}
 </style>
 <script>if(/^\/adm(\/|$)/.test(location.pathname)){document.documentElement.classList.add('adm');var q=function(x){return document.querySelector(x)};if(q('link[rel=manifest]'))q('link[rel=manifest]').href='/adm.webmanifest';if(q('link[rel=apple-touch-icon]'))q('link[rel=apple-touch-icon]').href='/icons/adm-apple-touch-icon.png';if(q('meta[name=apple-mobile-web-app-title]'))q('meta[name=apple-mobile-web-app-title]').content='Adm Óticas';if(q('meta[name=theme-color]'))q('meta[name=theme-color]').content='#191A23';document.title='Adm Óticas';var f=document.createElement('link');f.rel='stylesheet';f.href='https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap';document.head.appendChild(f)}</script>
 
@@ -1001,7 +1045,7 @@ function demoHero(){
 }
 
 const ctaHref=()=>'https://wa.me/'+CTA_NUM+'?text='+encodeURIComponent((DEMO_PERSONAL?'Olá! Sou da '+DEMO_NOME+'. ':'Olá! ')+'Vi a demonstração do Tráfego Orgânico e do Agente de IA e quero para a minha ótica.');
-const demoNote=()=>(!ui.dhHide&&ui.tab==='painel')?'':'<div class="demo-note"><b>Demonstração</b><span>Você está vendo dados de exemplo. Pode clicar em tudo, cadastrar clientes e simular vendas. Nada fica salvo: ao recarregar a página, volta ao início.</span><a class="btn wa sm" target="_blank" rel="noopener" href="'+ctaHref()+'">Quero para minha ótica</a></div>';
+const demoNote=()=>(!ui.dhHide&&ui.tab==='painel')?'':'<div class="demo-note"><div class="dn-t"><b>Demonstração da '+esc(DEMO_NOME)+'</b><span>Dados de exemplo: clique em tudo, nada fica salvo.</span></div><a class="btn wa sm" target="_blank" rel="noopener" href="'+ctaHref()+'">Quero para minha ótica</a></div>';
 
 /* ---------- modelo ---------- */
 function makeCliente(o){const c={receitas:(o.receitas||[]).filter(r=>!receitaVazia(r)),id:uid(),nome:String(o.nome||'').trim(),cpf:maskCpf(o.cpf),whatsapp:maskTel(o.whatsapp),endereco:String(o.endereco||'').trim(),vendedorId:o.vendedorId||'',nascimento:o.nascimento||'',obs:String(o.obs||'').trim(),criadoEm:Date.now(),bvEm:null};premCliOrigem(c);return c}
