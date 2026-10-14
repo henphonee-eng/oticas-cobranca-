@@ -1148,6 +1148,7 @@ const ICON={
   caixa:I('<rect x="3.5" y="6" width="17" height="13" rx="2.5"/><path d="M3.5 10h17M16 14.5h1.5"/>'),
   lentes:I('<circle cx="12" cy="12" r="7.5"/><path d="M8.5 10.5a4 4 0 0 1 3-2.6"/>'),
   site:I('<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.6 2.4 3.8 5.2 3.8 8.5s-1.2 6.1-3.8 8.5c-2.6-2.4-3.8-5.2-3.8-8.5s1.2-6.1 3.8-8.5z"/>'),
+  agente:I('<rect x="5" y="8" width="14" height="11" rx="3"/><path d="M12 4v4"/><circle cx="12" cy="3.5" r="1"/><circle cx="9.5" cy="13" r="1"/><circle cx="14.5" cy="13" r="1"/><path d="M10 16.5h4"/><path d="M3 12v3M21 12v3"/>'),
   trafego:I('<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1"/><path d="M12 12l6-6"/>'),
   wachat:I('<path d="M4 5.5h16v10H9l-4 3.5v-3.5H4z"/><path d="M8 9.5h8M8 12.5h5"/>'),
   whatsapp:I('<path d="M5 19l1.2-3.6A7.5 7.5 0 1 1 9 18z"/><path d="M9.5 9.5c.3 2 2 3.7 4 4l1-1-1.6-1-.8.6a3 3 0 0 1-1.3-1.3l.6-.8-1-1.6z"/>'),
@@ -1168,10 +1169,10 @@ const ICON={
   sair:I('<path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4M15 8l4 4-4 4M19 12H9"/>')
 };
 const GLASSES='<svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11.5" cy="23" r="7"/><circle cx="28.5" cy="23" r="7"/><path d="M18.5 22c1-1.3 2-1.3 3 0M4.5 21 7 12M35.5 21 33 12"/></svg>';
-const TABS=[['painel','Painel'],['vendas','Vendas'],['aguard','Orçamentos'],['clientes','Clientes'],['cobrar','Cobrar'],['entregas','Follow-up'],['agenda','Agenda financeira'],['os','Ordens de serviço'],['relacao','Relacionamento'],['caixa','Caixa'],['lentes','Lentes'],['demolentes','Demonstração de lentes'],['campanhas','Campanhas'],['financeiro','Financeiro'],['metas','Metas'],['trafego','Tráfego Orgânico'],['whatsapp','WhatsApp Automático'],['wachat','Conversas do WhatsApp'],['exames','Exames de vista'],['ajustes','Ajustes']];
+const TABS=[['painel','Painel'],['vendas','Vendas'],['aguard','Orçamentos'],['clientes','Clientes'],['cobrar','Cobrar'],['entregas','Follow-up'],['agenda','Agenda financeira'],['os','Ordens de serviço'],['relacao','Relacionamento'],['caixa','Caixa'],['lentes','Lentes'],['demolentes','Demonstração de lentes'],['campanhas','Campanhas'],['financeiro','Financeiro'],['metas','Metas'],['trafego','Tráfego Orgânico'],['whatsapp','WhatsApp Automático'],['agente','Agente de IA'],['wachat','Conversas do WhatsApp'],['exames','Exames de vista'],['ajustes','Ajustes']];
 /* grupos do menu por finalidade: vendas e loja, clientes (follow-up, WhatsApp, campanhas, exames), financeiro (cobrar, agenda financeira, caixa...) e sistema */
-const TGORD=['painel','vendas','aguard','os','lentes','demolentes','clientes','relacao','entregas','trafego','wachat','whatsapp','campanhas','site','exames','cobrar','agenda','caixa','financeiro','metas','ajustes'];
-const TGRP={painel:'',vendas:'Vendas e loja',aguard:'Vendas e loja',os:'Vendas e loja',lentes:'Vendas e loja',demolentes:'Vendas e loja',clientes:'Clientes',relacao:'Clientes',entregas:'Clientes',whatsapp:'Clientes',wachat:'Clientes',trafego:'Clientes',campanhas:'Clientes',site:'Clientes',agenda:'Financeiro',exames:'Clientes',cobrar:'Financeiro',caixa:'Financeiro',financeiro:'Financeiro',metas:'Financeiro',ajustes:'Sistema'};
+const TGORD=['painel','vendas','aguard','os','lentes','demolentes','clientes','relacao','entregas','trafego','wachat','whatsapp','agente','campanhas','site','exames','cobrar','agenda','caixa','financeiro','metas','ajustes'];
+const TGRP={painel:'',vendas:'Vendas e loja',aguard:'Vendas e loja',os:'Vendas e loja',lentes:'Vendas e loja',demolentes:'Vendas e loja',clientes:'Clientes',relacao:'Clientes',entregas:'Clientes',whatsapp:'Clientes',wachat:'Clientes',trafego:'Clientes',agente:'Clientes',campanhas:'Clientes',site:'Clientes',agenda:'Financeiro',exames:'Clientes',cobrar:'Financeiro',caixa:'Financeiro',financeiro:'Financeiro',metas:'Financeiro',ajustes:'Sistema'};
 function tabsGrp(tv,fn){let g='',o='';const ix=k=>{const n=TGORD.indexOf(k);return n<0?99:n};tv=tv.map((t,n)=>[t,n]).sort((a,b)=>ix(a[0][0])-ix(b[0][0])||a[1]-b[1]).map(x=>x[0]);tv.forEach(t=>{const k=TGRP[t[0]]||'';if(k&&k!==g){o+='<div class="tgrp'+''+'" aria-hidden="true">'+k+'</div>'}g=k;o+=fn(t)});return o}
 const saudacao=()=>{const h=new Date().getHours();return h<12?'Bom dia':h<18?'Boa tarde':'Boa noite'};
 function admTabInicial(){const q=new URLSearchParams(location.search),t=q.get('tab');if(t){q.delete('tab');history.replaceState(null,'',location.pathname+(q.toString()?'?'+q:''))}return t==='mensal'?'mensal':'admin'}
@@ -1187,7 +1188,7 @@ function tabsVis(){
   if(IS_ADMIN)t=t.concat([ADMTAB,MENSTAB],PROSPTABS);
   return t;
 }
-function viewTab(){const k=ui.tab;return k==='painel'?viewPainel():k==='agenda'?viewAgenda():k==='vendas'?viewVendas():k==='aguard'?viewAguard():k==='entregas'?viewFollow():k==='os'?viewOS():k==='clientes'?viewClientes():k==='cobrar'?viewCobrar():k==='relacao'?viewRelacao():k==='caixa'?viewCaixa():k==='lentes'?viewLentes():k==='demolentes'?viewDemoLentes():k==='admin'?viewAdmin():k==='mensal'?viewMensal():(k==='financeiro'||k==='metas'||k==='campanhas'||k==='premium'||k==='whatsapp'||k==='exames'||k==='wachat'||k==='site'||k==='trafego')?premView(k):viewAjustes()}
+function viewTab(){const k=ui.tab;return k==='painel'?viewPainel():k==='agenda'?viewAgenda():k==='vendas'?viewVendas():k==='aguard'?viewAguard():k==='entregas'?viewFollow():k==='os'?viewOS():k==='clientes'?viewClientes():k==='cobrar'?viewCobrar():k==='relacao'?viewRelacao():k==='caixa'?viewCaixa():k==='lentes'?viewLentes():k==='demolentes'?viewDemoLentes():k==='admin'?viewAdmin():k==='mensal'?viewMensal():(k==='financeiro'||k==='metas'||k==='campanhas'||k==='premium'||k==='whatsapp'||k==='exames'||k==='wachat'||k==='site'||k==='trafego'||k==='agente')?premView(k):viewAjustes()}
 let deferredInstall=null;
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;if(auth==='ok')render()});
 const demoTag=o=>o&&o.exemplo?'<span class="demo">exemplo</span>':'';
@@ -2545,11 +2546,12 @@ const MODS=[
  {k:'exames',add:true,n:'Exames de vista',d:'Uma página para o cliente agendar o exame de vista, e a confirmação e o lembrete saem sozinhos pelo WhatsApp. Função adicional, contratada à parte do Premium.',b:['Página de agendamento com o seu logo e as suas cores, pronta para divulgar','Agenda de exames: confirmar, remarcar, marcar quem veio e quem faltou','Confirmação na hora e lembrete na véspera pelo WhatsApp Automático','Link curto para colocar na bio do Instagram, no WhatsApp e nos seus anúncios','Quem agendar já aparece na agenda e vira cliente com um toque','Mensagens de confirmação e lembrete que você pode personalizar']},
  {k:'wachat',n:'WhatsApp dentro do sistema',d:'Veja e responda as conversas do WhatsApp da ótica direto no sistema, sem pegar o celular. Funciona com o conector do WhatsApp Automático ligado no computador da loja.',b:['Todas as conversas do WhatsApp da ótica em uma tela, com o nome do cliente cadastrado','Responda por texto: a mensagem sai na hora pelo WhatsApp da ótica','Mensagens novas aparecem sozinhas, com aviso de não lidas','Botão Conversar na lista de clientes']},
  {k:'trafego',n:'Tráfego Orgânico',d:'Encontre empresas perto da sua ótica e leve a sua oferta até elas pelo WhatsApp, sem depender de indicação.',b:['Busca de empresas num raio da ótica pelo Google Maps, por tipo (padarias, escolas, clínicas...) ou pelo nome, sem outras óticas','CRM das empresas: nova, abordada, respondeu, interessada, virou cliente','Mensagem de oferta pronta e envio pelo WhatsApp Automático','Painel com quantas responderam, viraram clientes e quanto venderam']},
+ {k:'agente',n:'Agente de IA no WhatsApp',d:'Um atendente virtual que responde o WhatsApp da ótica 24 horas: tira dúvidas, entende áudio e foto da receita, marca o exame de vista e chama você quando precisa de uma pessoa.',b:['Responde na hora, inclusive à noite, no domingo e no feriado','Você ensina tudo: endereço, horário, preços, promoções, perguntas frequentes e imagens','Entende áudio e foto (até a receita de óculos)','Marca, remarca e confirma exames na agenda do sistema','Chama a equipe para fechar a venda ou quando não sabe a resposta','Tela de teste para conversar com ele antes de ligar']},
  {k:'site',add:true,n:'Site profissional da ótica',d:'Um site moderno com o nome, a logo e as cores da sua ótica, para os clientes acharem a loja, verem as lentes e armações e agendarem o exame de vista pelo WhatsApp. Função adicional, contratada à parte.',b:['Site com endereço próprio, pronto para celular','Botão de WhatsApp e agendamento de exame de vista','Endereço, mapa e horário da loja','Comparativo de lentes e vitrine de armações','Você pede as alterações e a gente atualiza']},
  {k:'historico',n:'Histórico de alterações e backup automático',d:'Saiba quem fez o quê no sistema e tenha uma cópia de segurança toda semana.',b:['Registro de vendas, recebimentos, edições e exclusões com data e usuário','Backup semanal baixado sozinho no aparelho','Mais segurança quando há equipe usando o sistema']}
 ];
 const MOD=k=>MODS.find(m=>m.k===k)||{};
-const PREMTAB={trafego:'trafego',financeiro:'financeiro',metas:'metas',campanhas:'campanhas',exames:'exames',wachat:'wachat',site:'site'};
+const PREMTAB={agente:'agente',trafego:'trafego',financeiro:'financeiro',metas:'metas',campanhas:'campanhas',exames:'exames',wachat:'wachat',site:'site'};
 const modEfet=o=>{const r={},m=(o&&o.modulos)||{};MODS.forEach(x=>{r[x.k]=Object.prototype.hasOwnProperty.call(m,x.k)?m[x.k]===true:(!x.add&&!!o&&o.plano==='premium')});return r};
 const modOn=k=>!!OTICA&&modEfet(OTICA)[k]===true;
 const premValor=()=>+(OTICA&&OTICA.premium_valor)||6700;
@@ -2592,6 +2594,7 @@ function premView(k){
   if(k==='wachat')return modOn('wachat')?viewWaChat():viewUpsell('wachat');
   if(k==='site')return viewSite();
   if(k==='trafego')return viewTrafego();
+  if(k==='agente')return viewAgente();
   if(!modOn(k))return viewUpsell(k);
   return k==='financeiro'?viewFin():viewMetas();
 }
@@ -2985,7 +2988,7 @@ const WA={st:null,fila:null,busy:false,token:'',err:'',t:0,q:''};
 async function waLoad(){
   if(WA.busy||!OTICA||!modOn('wa'))return;WA.busy=true;
   try{
-    const r=await Promise.all([sb.rpc('wa_status',{p_otica:OTICA.id}),sb.from('wa_fila').select('id,cliente_id,cliente_nome,tipo,telefone,texto,status,enviar_apos,expira_em,erro,enviado_em,criado_em').eq('otica_id',OTICA.id).neq('tipo','manual').order('criado_em',{ascending:false}).limit(500)]);
+    const r=await Promise.all([sb.rpc('wa_status',{p_otica:OTICA.id}),sb.from('wa_fila').select('id,cliente_id,cliente_nome,tipo,telefone,texto,status,enviar_apos,expira_em,erro,enviado_em,criado_em').eq('otica_id',OTICA.id).not('tipo','in','(manual,agente)').order('criado_em',{ascending:false}).limit(500)]);
     WA.st=(r[0]&&r[0].data)||null;WA.fila=(r[1]&&r[1].data)||[];
   }catch(e){WA.fila=WA.fila||[]}
   WA.busy=false;WA.t=Date.now();
@@ -3486,7 +3489,17 @@ const tfDoc=()=>{if(!S.config.trafego)S.config.trafego={id:'trafego',msg:'',fu:'
 const tfK8=t=>String(t||'').replace(/\D/g,'').slice(-8);
 const tfCel=t=>{let d=String(t||'').replace(/\D/g,'');if(d.startsWith('55')&&d.length>11)d=d.slice(2);return d.length===11&&d[2]==='9'};
 const tfBairro=()=>{const D=tfDoc();return (D.bairro||'').trim()||'bairro'};
-function tfTexto(l,fu){const D=tfDoc(),t=(fu?(D.fu||'').trim()||TF_FU:(D.msg||'').trim()||TF_MSG);return t.replace(/\{otica\}/g,cfg().nome||'nossa ótica').replace(/\{bairro\}/g,(l&&l.bairro)||tfBairro()).replace(/\{empresa\}/g,(l&&l.nome)||'').replace(/\n{3,}/g,'\n\n')}
+// Público da mensagem conforme o tipo da empresa: escola, farmácia, padaria... (padrão: empresas)
+const TF_PUB=[[/escola|col[eé]gio|creche|faculdade|universidade|curso|ensino/,'escolas','escola','a'],[/farm[aá]cia|drogaria/,'farmácias','farmácia','a'],[/padaria|panifica/,'padarias','padaria','a'],
+  [/restaurante|lanchonete|pizzaria|hamburgu|bar\b|churrascaria|cafeteria|a[cç]a[ií]/,'restaurantes e lanchonetes','restaurante','o'],[/supermercado|mercad|atacad|hortifruti|a[cç]ougue/,'mercados','mercado','o'],
+  [/academia|crossfit|pilates/,'academias','academia','a'],[/barbearia/,'barbearias','barbearia','a'],[/sal[aã]o|beleza|est[eé]tica|manicure|cabeleireir/,'salões de beleza','salão','o'],
+  [/cl[ií]nica|consult[oó]rio|odonto|dentista|laborat[oó]rio|fisioterap|hospital|sa[uú]de/,'clínicas e consultórios','clínica','a'],[/igreja|templo|par[oó]quia/,'igrejas','igreja','a'],
+  [/oficina|mec[aâ]nica|auto ?pe[cç]as|borracharia|lava.?jato/,'oficinas','oficina','a'],[/condom[ií]nio/,'condomínios','condomínio','o'],[/contabil|advocacia|advogad|escrit[oó]rio|imobili/,'escritórios','escritório','o'],
+  [/posto|combust[ií]vel/,'postos','posto','o'],[/transport|log[ií]stica|transportadora/,'transportadoras','transportadora','a'],[/loja|com[eé]rcio|magazine|boutique|confec/,'lojistas','loja','a']];
+function tfPublico(l){const t=String(((l&&l.categoria)||'')+' '+((l&&l.nome)||'')).toLowerCase();const m=TF_PUB.find(x=>x[0].test(t));return m?{pl:m[1],s:m[2],g:m[3]}:null}
+function tfTexto(l,fu){const D=tfDoc(),p=tfPublico(l);let t=(fu?(D.fu||'').trim()||TF_FU:(D.msg||'').trim()||TF_MSG);
+  if(p)t=t.replace(/empres[aá]rios/gi,m=>m[0]==='E'?p.pl[0].toUpperCase()+p.pl.slice(1):p.pl).replace(/a sua empresa/gi,(p.g==='a'?'a sua ':'o seu ')+p.s).replace(/sua empresa/gi,(p.g==='a'?'sua ':'seu ')+p.s).replace(/da mesma empresa/gi,(p.g==='a'?'da mesma ':'do mesmo ')+p.s).replace(/para empresas/gi,'para '+p.pl);
+  return t.replace(/\{otica\}/g,cfg().nome||'nossa ótica').replace(/\{bairro\}/g,(l&&l.bairro)||tfBairro()).replace(/\{empresa\}/g,(l&&l.nome)||'').replace(/\n{3,}/g,'\n\n')}
 async function tfLoad(){
   if(TF.busy||!OTICA||!modOn('trafego'))return;TF.busy=true;
   try{const r=await sb.from('trafego_leads').select('*').eq('otica_id',OTICA.id).neq('status','removida').order('criado_em',{ascending:false}).limit(3000);TF.leads=r.error?(TF.leads||[]):(r.data||[])}catch(e){TF.leads=TF.leads||[]}
@@ -3562,7 +3575,7 @@ function tfLinha(l){
 function tfMsgView(){
   const D=tfDoc(),ex={nome:'Mercadinho Exemplo',bairro:tfBairro()};
   return '<div class="card" style="gap:12px"><b>Mensagem da oferta (primeira abordagem)</b><p class="sub" style="margin:0">Use {bairro}, {otica} e {empresa}. No fim da mensagem entra sozinho o aviso para responder SAIR, para quem não quiser receber mais.</p>'+
-    '<textarea rows="10" data-tfmsg="msg">'+esc((D.msg||'').trim()||TF_MSG)+'</textarea><div class="sub" style="margin:0">Prévia</div><div class="card" style="white-space:pre-wrap;background:var(--surface-2)">'+esc(tfTexto(ex))+'</div></div>'+
+    '<textarea rows="10" data-tfmsg="msg">'+esc((D.msg||'').trim()||TF_MSG)+'</textarea><div class="sub" style="margin:0">Prévia</div><div class="card" style="white-space:pre-wrap;background:var(--surface-2)">'+esc(tfTexto(ex))+'</div><p class="sub" style="margin:0">A mensagem se adapta ao tipo da empresa: para uma escola, "empresários" vira "escolas" e "a sua empresa" vira "a sua escola". O mesmo vale para farmácias, padarias, mercados, clínicas, academias, salões, oficinas e outros.</p></div>'+
     '<div class="card" style="gap:12px;margin-top:12px"><b>Mensagem de retorno (para quem foi abordado e não respondeu)</b><textarea rows="5" data-tfmsg="fu">'+esc((D.fu||'').trim()||TF_FU)+'</textarea></div>'+
     '<div class="foot-row" style="margin-top:12px"><button class="btn primary" data-act="tfsalvarmsg">Salvar mensagens</button><button class="btn" data-act="tfpadrao">Voltar ao texto padrão</button></div>'+
     '<p class="sub" style="margin-top:10px">Dica: o WhatsApp pode bloquear números que mandam muitas mensagens para quem não conhece. Comece com poucas por dia (10 a 20) e use o limite do WhatsApp Automático.</p>';
@@ -3619,6 +3632,210 @@ document.addEventListener('change',e=>{const t=e.target;if(!t||!t.dataset)return
   if(t.dataset.tfraio!==undefined){tfDoc().raio=+t.value;persist('config','trafego');return}
 });
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target&&e.target.dataset&&e.target.dataset.tfqlivre!==undefined){e.preventDefault();A.tfbuscar()}});
+/* ----- Agente de IA (função Premium "agente") ----- */
+/* A ótica cadastra tudo o que o agente precisa saber, testa numa conversa de mentira e liga.
+   Ligado, ele responde o WhatsApp da ótica (texto, áudio e foto), marca exames e chama a equipe quando precisa. */
+const AG={sub:'config',row:null,cfg:null,busy:false,salvando:false,dirty:false,chat:[],enviando:false,sim:'novo',txt:'',rec:null,recT:0,t:0,subindo:false};
+const AG_SUGS=['Qual o horário de vocês?','Onde fica a loja?','Quanto custa um óculos multifocal?','Quero marcar um exame de vista','Vocês aceitam cartão? Parcelam?','Tem alguma promoção?','Quero falar com uma pessoa'];
+const AG_SIMS=[['novo','Contato novo'],['cliente','Cliente cadastrado'],['exame','Cliente com exame marcado'],['empresa','Empresa do Tráfego Orgânico']];
+const agId=()=>Math.random().toString(36).slice(2,10);
+function agPadrao(c){
+  const o=cfg()||{};
+  return Object.assign({nome_agente:'',tom:'simpatico',emojis:true,boas_vindas:'',horario_modo:'24h',dias:[1,2,3,4,5,6],abre:'09:00',fecha:'18:00',sab_abre:'',sab_fecha:'',horario_obs:'',
+    publico:'todos',ignorar:'',pausa_h:12,limite_dia:25,sobre:'',endereco:o.endereco||'',referencia:'',maps:'',telefone:o.whatsapp||'',instagram:'',site:'',
+    exame_info:'',exame_agendar:true,usar_lentes:false,produtos:[],pagamento:'',parcelamento:'',crediario:'',entrega_prazo:'',garantia:'',convenios:'',
+    promocoes:[],faq:[],imagens:[],chamar:'',nunca:'',msg_atendente:''},c||{});
+}
+async function agLoad(){
+  if(AG.busy||!OTICA||!modOn('agente'))return;AG.busy=true;
+  try{const r=await sb.from('agente_config').select('*').eq('otica_id',OTICA.id).maybeSingle();if(!r.error){AG.row=r.data||null;if(!AG.dirty)AG.cfg=agPadrao(r.data&&r.data.cfg)}}catch(e){}
+  if(!AG.cfg)AG.cfg=agPadrao();
+  AG.busy=false;AG.t=Date.now();if(ui.tab==='agente'&&!fieldsOn()&&!ui.sheet)render();
+}
+function agGarante(){if(!AG.cfg&&!AG.busy)setTimeout(agLoad,0);if(modOn('wa'))waGarante()}
+function agChecks(){
+  const c=AG.cfg||agPadrao(),st=(typeof WA!=='undefined'&&WA.st)||{};
+  const con=st.estado==='conectado';
+  return [
+    {ok:con,obrig:true,t:'WhatsApp da ótica conectado',d:con?(st.nuvem?'Na nuvem: o agente responde 24 horas.':'Pelo computador da loja: o agente só responde com ele ligado. Ligue a nuvem no WhatsApp Automático para 24 horas.'):'Conecte em WhatsApp Automático (de preferência na nuvem, para funcionar 24 horas).',act:'premopen',k:'wa'},
+    {ok:!!(c.endereco&&c.endereco.trim()&&(c.dias||[]).length),obrig:true,t:'Endereço e horário de funcionamento',d:'Em "Sobre a ótica".'},
+    {ok:!!((c.sobre||'').trim()||(c.exame_info||'').trim()),obrig:true,t:'Apresentação da ótica ou informação do exame de vista',d:'Para o agente saber falar da loja.'},
+    {ok:(c.produtos||[]).some(p=>p.nome)||!!c.usar_lentes,obrig:false,t:'Produtos e preços',d:'Sem preços, o agente passa essas perguntas para a equipe.'},
+    {ok:!!((c.pagamento||'').trim()),obrig:false,t:'Formas de pagamento',d:'Pergunta muito comum no WhatsApp.'},
+    {ok:(c.faq||[]).filter(f=>f.p&&f.r).length>=3,obrig:false,t:'Pelo menos 3 perguntas frequentes',d:'Ensina o jeito da ótica responder.'},
+    {ok:!AG.dirty&&!!AG.row,obrig:true,t:'Configuração salva',d:AG.dirty?'Há alterações sem salvar.':'Toque em Salvar.'},
+    {ok:!!(AG.row&&AG.row.testado_em),obrig:true,t:'Testado na aba Teste',d:'Converse com o agente antes de ligar para os clientes.'},
+  ];
+}
+function viewAgente(){
+  if(!modOn('agente'))return viewUpsell('agente');
+  if(ROLE!=='dono')return pageHead('Agente de IA','Atendente virtual do WhatsApp da ótica')+'<div class="card"><p class="sub" style="margin:0">Só o dono da ótica pode configurar o agente.</p></div>';
+  agGarante();
+  if(!AG.cfg)return pageHead('Agente de IA','Atendente virtual do WhatsApp da ótica, 24 horas')+'<div class="card"><p class="sub" style="margin:0">Carregando...</p></div>';
+  const on=!!(AG.row&&AG.row.ativo),ck=agChecks(),falta=ck.filter(x=>x.obrig&&!x.ok);
+  const st='<div class="card" style="gap:10px"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="chip '+(on?'ok':'warn')+'" style="font-size:14px">'+(on?'● Ligado: atendendo os clientes':'○ Desligado')+'</span><span class="sub" style="margin:0;flex:1;min-width:200px">'+(on?'Responde mensagens, áudios e fotos no WhatsApp da ótica.':falta.length?'Falta '+falta.length+' item'+(falta.length>1?'s':'')+' obrigatório'+(falta.length>1?'s':'')+' para ligar.':'Tudo pronto. Pode ligar quando quiser.')+'</span>'+
+    (on?'<button class="btn" data-act="agligar" data-v="0">Desligar o agente</button>':'<button class="btn primary" data-act="agligar" data-v="1"'+(falta.length?' disabled':'')+'>Ligar o agente</button>')+'</div></div>';
+  const nav='<div class="seg ex-nav" role="tablist" aria-label="Agente de IA" style="margin-top:14px">'+[['config','Configuração'],['teste','Teste do agente'],['check','O que falta']].map(s=>'<button class="btn sm'+(AG.sub===s[0]?' primary':'')+'" role="tab" aria-selected="'+(AG.sub===s[0])+'" data-act="agsub" data-s="'+s[0]+'">'+s[1]+(s[0]==='check'&&falta.length?' ('+falta.length+')':'')+'</button>').join('')+'</div>';
+  const corpo=AG.sub==='teste'?agTeste():AG.sub==='check'?agCheckView(ck):agConfig();
+  return pageHead('Agente de IA','Atendente virtual do WhatsApp da ótica: responde 24 horas, entende áudio e foto e marca exames')+st+nav+corpo;
+}
+function agCheckView(ck){
+  return '<div class="card" style="gap:4px;margin-top:12px">'+ck.map(x=>'<div style="display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line)"><span style="font-size:18px;line-height:1.2">'+(x.ok?'✅':x.obrig?'⛔':'⚠️')+'</span><div style="flex:1"><b>'+esc(x.t)+'</b>'+(x.obrig?'':' <span class="sub">(recomendado)</span>')+'<div class="sub" style="margin:2px 0 0">'+esc(x.d)+'</div></div>'+(x.act&&!x.ok?'<button class="btn sm" data-act="'+x.act+'" data-k="'+(x.k||'')+'">Abrir</button>':'')+'</div>').join('')+
+  '<p class="sub" style="margin:10px 0 0">Como o agente trabalha: responde só com o que está cadastrado aqui, nunca dá orientação de saúde, e chama a equipe (aviso no WhatsApp dos donos) quando o cliente quer comprar, reclamar, negociar ou quando não sabe a resposta. Se alguém da equipe responder um cliente, o agente fica quieto nessa conversa pelo tempo escolhido.</p></div>';
+}
+/* ---- formulário ---- */
+const agF=(k,lbl,ph,tipo)=>{const c=AG.cfg,v=c[k]==null?'':c[k];return '<div class="field"><span>'+lbl+'</span>'+(tipo==='area'?'<textarea data-agf="'+k+'" rows="3" placeholder="'+esc(ph||'')+'">'+esc(v)+'</textarea>':'<input type="'+(tipo||'text')+'" data-agf="'+k+'" value="'+esc(v)+'" placeholder="'+esc(ph||'')+'">')+'</div>'};
+const agSel=(k,lbl,ops)=>'<div class="field"><span>'+lbl+'</span><select data-agf="'+k+'">'+ops.map(o=>'<option value="'+o[0]+'"'+(String(AG.cfg[k])===String(o[0])?' selected':'')+'>'+o[1]+'</option>').join('')+'</select></div>';
+const agChk=(k,lbl)=>'<label class="aguard-box" style="margin:0"><input type="checkbox" data-agf="'+k+'"'+(AG.cfg[k]?' checked':'')+'> '+lbl+'</label>';
+const agSec=(t,sub,body,aberto)=>'<details class="card" style="gap:10px;margin-top:12px"'+(aberto?' open':'')+'><summary style="cursor:pointer;font-weight:700;font-size:16px">'+t+'</summary>'+(sub?'<p class="sub" style="margin:4px 0 0">'+sub+'</p>':'')+'<div style="display:grid;gap:10px;margin-top:10px">'+body+'</div></details>';
+function agLista(k,cols,addTxt){
+  const L=AG.cfg[k]||[];
+  return (L.length?L.map((it,i)=>'<div class="card" style="gap:8px;padding:12px;background:var(--bg)"><div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">'+cols.map(c=>'<div class="field"'+(c[3]==='area'?' style="grid-column:1/-1"':'')+'><span>'+c[1]+'</span>'+(c[3]==='area'?'<textarea rows="2" data-agl="'+k+'" data-i="'+i+'" data-k="'+c[0]+'" placeholder="'+esc(c[2]||'')+'">'+esc(it[c[0]]||'')+'</textarea>':'<input type="'+(c[3]||'text')+'" data-agl="'+k+'" data-i="'+i+'" data-k="'+c[0]+'" value="'+esc(it[c[0]]||'')+'" placeholder="'+esc(c[2]||'')+'">')+'</div>').join('')+'</div><div class="foot-row"><button class="btn sm" data-act="agdel" data-l="'+k+'" data-i="'+i+'">Remover</button></div></div>').join(''):'')+
+    '<div class="foot-row"><button class="btn sm" data-act="agadd" data-l="'+k+'">+ '+addTxt+'</button></div>';
+}
+function agConfig(){
+  const c=AG.cfg;
+  const salvar='<div class="card" style="position:sticky;bottom:10px;z-index:5;margin-top:14px;flex-direction:row;align-items:center;gap:10px;box-shadow:0 6px 24px rgba(0,0,0,.12)"><span id="ag-st" class="sub" style="margin:0;flex:1">'+(AG.dirty?'Alterações não salvas':AG.row?'Tudo salvo':'Ainda não salvo')+'</span><button class="btn" data-act="agsub" data-s="teste">Testar</button><button class="btn primary" data-act="agsalvar"'+(AG.salvando?' disabled':'')+'>'+(AG.salvando?'Salvando...':'Salvar')+'</button></div>';
+  const dias=[[1,'Seg'],[2,'Ter'],[3,'Qua'],[4,'Qui'],[5,'Sex'],[6,'Sáb'],[0,'Dom']].map(d=>'<label class="fchip" style="display:inline-flex;gap:6px;align-items:center"><input type="checkbox" data-agdia="'+d[0]+'"'+((c.dias||[]).includes(d[0])?' checked':'')+'> '+d[1]+'</label>').join('');
+  const lentes=Object.values(S.lentes||{}).filter(l=>l&&l.nome).length;
+  const imgs=(c.imagens||[]).map((im,i)=>'<div class="card" style="gap:8px;padding:12px;background:var(--bg);flex-direction:row;align-items:flex-start"><img src="'+esc(im.url)+'" alt="" style="width:88px;height:88px;object-fit:cover;border-radius:10px;flex:none"><div style="flex:1;display:grid;gap:8px"><div class="field"><span>Nome da imagem</span><input type="text" data-agl="imagens" data-i="'+i+'" data-k="titulo" value="'+esc(im.titulo||'')+'" placeholder="Ex.: Catálogo de armações"></div><div class="field"><span>Quando o agente deve enviar</span><input type="text" data-agl="imagens" data-i="'+i+'" data-k="quando" value="'+esc(im.quando||'')+'" placeholder="Ex.: quando perguntarem pelos modelos de armação"></div><div class="field"><span>Legenda (opcional)</span><input type="text" data-agl="imagens" data-i="'+i+'" data-k="legenda" value="'+esc(im.legenda||'')+'"></div><div class="foot-row"><button class="btn sm" data-act="agdel" data-l="imagens" data-i="'+i+'">Remover</button></div></div></div>').join('');
+  let h='';
+  h+=agSec('1. Identidade do agente','Como ele se apresenta e o jeito de falar.',
+    '<div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">'+agF('nome_agente','Nome do agente','Ex.: Ana')+agSel('tom','Jeito de falar',[['simpatico','Simpático e acolhedor'],['profissional','Educado e profissional'],['descontraido','Leve e descontraído']])+'</div>'+
+    agChk('emojis','Pode usar emojis (no máximo um por mensagem)')+agF('boas_vindas','Saudação para contatos novos (opcional)','Ex.: Oi! Aqui é a Ana, da Óticas DK. Como posso te ajudar?','area'),true);
+  h+=agSec('2. Quando e com quem ele fala','',
+    agSel('horario_modo','Quando o agente responde',[['24h','24 horas, todos os dias'],['fora','Só quando a loja está fechada (a equipe atende no horário)'],['dentro','Só no horário de funcionamento']])+
+    agSel('publico','Quem ele atende',[['todos','Todo mundo que mandar mensagem'],['clientes','Só clientes cadastrados, quem tem exame marcado e empresas do Tráfego Orgânico']])+
+    '<div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">'+agF('pausa_h','Se a equipe responder um cliente, o agente fica quieto nessa conversa por (horas)','12','number')+agF('limite_dia','Máximo de respostas do agente por cliente por dia','25','number')+'</div>'+
+    agF('ignorar','Números que o agente nunca responde (equipe, fornecedores), separados por vírgula','Ex.: 81999990000, 81988880000','area'));
+  h+=agSec('3. Sobre a ótica','O básico que todo cliente pergunta.',
+    agF('sobre','Apresentação da ótica','Ex.: Ótica de bairro há 10 anos, com exame de vista no local, armações a partir de R$ 99 e entrega rápida.','area')+
+    '<div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">'+agF('endereco','Endereço','Rua, número, bairro, cidade')+agF('referencia','Ponto de referência','Ex.: em frente à padaria Pão Quente')+agF('maps','Link do Google Maps','https://maps.app.goo.gl/...')+agF('telefone','Telefone','(81) 99999-9999')+agF('instagram','Instagram','@suaotica')+agF('site','Site','')+'</div>'+
+    '<div class="field"><span>Dias de funcionamento</span><div class="chips">'+dias+'</div></div>'+
+    '<div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr))">'+agF('abre','Abre','','time')+agF('fecha','Fecha','','time')+agF('sab_abre','Sábado abre (se diferente)','','time')+agF('sab_fecha','Sábado fecha (se diferente)','','time')+'</div>'+
+    agF('horario_obs','Observações do horário','Ex.: fechamos para almoço das 12h às 13h; feriados só pela manhã'),true);
+  h+=agSec('4. Exame de vista','',
+    agF('exame_info','Como funciona o exame','Ex.: Exame grátis na compra do óculos completo. Só o exame: R$ 100. Dura uns 20 minutos.','area')+
+    agChk('exame_agendar','O agente pode ver os horários livres e marcar o exame sozinho (usa a agenda do menu Exames de vista)')+
+    (modOn('exames')?'':'<p class="sub" style="margin:0">A agenda de exames é uma função adicional. Sem ela, o agente só explica e chama a equipe para marcar.</p>'));
+  h+=agSec('5. Produtos e preços','Coloque faixas de preço ("a partir de"). O agente nunca inventa preço: o que não estiver aqui ele passa para a equipe.',
+    agChk('usar_lentes','Usar a tabela de lentes do sistema'+(lentes?' ('+lentes+' lentes cadastradas)':' (nenhuma lente cadastrada ainda)'))+
+    agLista('produtos',[['nome','Produto','Ex.: Armação de grau'],['preco','Preço','Ex.: a partir de R$ 99'],['obs','Detalhes','Ex.: mais de 300 modelos na loja']],'Adicionar produto'));
+  h+=agSec('6. Pagamento, entrega e garantia','',
+    '<div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr))">'+agF('pagamento','Formas de pagamento','Pix, dinheiro, cartão de débito e crédito')+agF('parcelamento','Parcelamento','Ex.: até 10x sem juros no cartão')+agF('crediario','Crediário / carnê','Ex.: carnê próprio com entrada, sujeito a análise')+agF('entrega_prazo','Prazo de entrega dos óculos','Ex.: de 3 a 7 dias úteis')+agF('garantia','Garantia e trocas','Ex.: 90 dias de garantia contra defeito')+agF('convenios','Convênios e parcerias','Ex.: desconto para servidores da prefeitura')+'</div>');
+  h+=agSec('7. Promoções','Promoções vencidas saem sozinhas da conversa.',
+    agLista('promocoes',[['titulo','Promoção','Ex.: Outubro Rosa'],['validade','Válida até','', 'date'],['texto','Como funciona','Ex.: armação grátis na compra das lentes antirreflexo','area']],'Adicionar promoção'));
+  h+=agSec('8. Perguntas frequentes','Escreva a pergunta e a resposta do jeito que a ótica responderia.',
+    agLista('faq',[['p','Pergunta','Ex.: Vocês fazem conserto?'],['r','Resposta','Ex.: Fazemos sim! Traga o óculos na loja que avaliamos na hora, sem custo.','area']],'Adicionar pergunta'));
+  h+=agSec('9. Imagens','Catálogo, tabela de preços, fachada da loja, promoções. O agente envia quando fizer sentido.',
+    imgs+'<div class="foot-row"><label class="btn sm"'+(AG.subindo?' aria-disabled="true"':'')+'>'+(AG.subindo?'Enviando...':'+ Adicionar imagem')+'<input type="file" accept="image/*" data-agimg hidden'+(AG.subindo?' disabled':'')+'></label></div>');
+  h+=agSec('10. Regras e passagem para a equipe','',
+    agF('chamar','Quando chamar a equipe, além do padrão','Ex.: pedidos de orçamento com receita, lentes de contato, óculos para criança','area')+
+    agF('nunca','O que o agente nunca deve fazer ou dizer','Ex.: não prometer prazo menor que 3 dias; não falar de marcas que não vendemos','area')+
+    agF('msg_atendente','Mensagem ao passar para a equipe','Ex.: Vou chamar alguém da equipe para te ajudar, só um instante! 😊','area')+
+    '<p class="sub" style="margin:0">Sempre que chamar a equipe, os donos recebem um aviso no WhatsApp (os números do menu Exames de vista) e a conversa fica na aba Conversas do WhatsApp.</p>');
+  return h+salvar;
+}
+/* ---- teste ---- */
+function agTeste(){
+  const L=AG.chat.map(m=>{
+    if(m.papel==='acao')return '<div class="wc-dia"><span>⚙️ '+esc(m.texto)+'</span></div>';
+    const eu=m.papel==='cliente';
+    return '<div class="wc-b'+(eu?' eu':'')+'">'+(m.foto?'<img src="'+m.foto+'" alt="Foto enviada" style="max-width:220px;border-radius:10px;display:block;margin-bottom:6px">':'')+(m.img?'<img src="'+esc(m.img)+'" alt="" style="max-width:240px;border-radius:10px;display:block">':'')+(m.texto?'<div class="wc-txt">'+esc(m.texto).replace(/\*([^*\n]+)\*/g,'<b>$1</b>')+'</div>':'')+'<small>'+(eu?'Cliente (teste)':esc(AG.cfg.nome_agente||'Agente'))+'</small></div>';
+  }).join('');
+  const vazio='<div class="wc-dia" style="margin:auto"><span>Escreva como se fosse um cliente. Nada é enviado de verdade.</span></div>';
+  const rec=AG.rec;
+  return '<div class="card" style="gap:10px;margin-top:12px"><div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"><label class="sub" style="margin:0;display:flex;gap:6px;align-items:center;max-width:100%">Simular <select data-agsim style="width:auto;max-width:220px">'+AG_SIMS.map(s=>'<option value="'+s[0]+'"'+(AG.sim===s[0]?' selected':'')+'>'+s[1]+'</option>').join('')+'</select></label><span class="sub" style="margin:0;flex:1">O teste usa o que está na Configuração, mesmo sem salvar.</span><button class="btn sm" data-act="aglimpar">Recomeçar conversa</button></div>'+
+    '<div class="chips">'+AG_SUGS.map(s=>'<button class="fchip" data-act="agsug" data-t="'+esc(s)+'">'+esc(s)+'</button>').join('')+'</div></div>'+
+    '<div class="wc" style="grid-template-columns:minmax(0,1fr);margin-top:12px;height:min(68vh,620px)"><div class="wc-main"><div class="wc-thread" id="ag-thread">'+(L||vazio)+(AG.enviando?'<div class="wc-b"><div class="wc-txt">digitando...</div></div>':'')+'</div>'+
+    '<div class="wc-env"><label class="btn" title="Mandar foto (ex.: receita)" aria-label="Mandar foto">📷<input type="file" accept="image/*" data-agfoto hidden'+(AG.enviando?' disabled':'')+'></label>'+
+    '<button class="btn'+(rec?' primary':'')+'" data-act="agrec" title="Gravar áudio" aria-label="Gravar áudio"'+(AG.enviando?' disabled':'')+'>'+(rec?'⏹ Parar ('+Math.max(0,Math.round((Date.now()-AG.recT)/1000))+'s)':'🎤')+'</button>'+
+    '<textarea id="ag-txt" rows="1" placeholder="Mensagem do cliente...">'+esc(AG.txt)+'</textarea><button class="btn primary" data-act="agenviar"'+(AG.enviando?' disabled':'')+'>Enviar</button></div></div></div>';
+}
+function agScroll(){const t=document.getElementById('ag-thread');if(t)t.scrollTop=t.scrollHeight}
+async function agMandar(corpo,bolha){
+  if(AG.enviando)return;AG.enviando=true;
+  const hist=AG.chat.filter(m=>m.papel==='cliente'||m.papel==='agente').map(m=>({papel:m.papel,texto:m.texto}));
+  AG.chat.push(bolha);render();agScroll();
+  try{
+    const sim=AG.sim==='novo'?{}:{[AG.sim]:true,nome:'Maria Souza'};
+    const {data,error}=await sb.functions.invoke('agente-ia',{body:Object.assign({otica:OTICA.id,cfg:AG.cfg,mensagens:hist,simular:sim},corpo)});
+    let d=data;if(error){let m=error.message;try{const b=await error.context.json();m=b.error||m}catch(e){}throw new Error(m)}
+    if(d&&d.error)throw new Error(d.error);
+    if(d.entrada)bolha.texto=d.entrada.replace(/^\[[^\]]*\]:\s*/,(bolha.foto?'📷 ':'🎤 '));
+    (d.acoes||[]).forEach(a=>AG.chat.push({papel:'acao',texto:a.txt}));
+    if(d.resposta)AG.chat.push({papel:'agente',texto:d.resposta});
+    (d.imagens||[]).forEach(im=>AG.chat.push({papel:'agente',texto:'',img:im.url}));
+    if(AG.row&&!AG.row.testado_em)AG.row.testado_em=new Date().toISOString();
+  }catch(e){AG.chat.push({papel:'acao',texto:'Erro: '+(e.message||e)})}
+  AG.enviando=false;render();agScroll();
+}
+function agArquivoB64(blob){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(',')[1]||'');r.onerror=rej;r.readAsDataURL(blob)})}
+function agReduzir(file,max){return new Promise((res,rej)=>{const img=new Image(),u=URL.createObjectURL(file);img.onload=()=>{const k=Math.min(1,max/Math.max(img.width,img.height)),cv=document.createElement('canvas');cv.width=Math.round(img.width*k);cv.height=Math.round(img.height*k);cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);URL.revokeObjectURL(u);cv.toBlob(b=>b?res(b):rej(new Error('imagem inválida')),'image/jpeg',.85)};img.onerror=()=>rej(new Error('imagem inválida'));img.src=u})}
+async function agSalvar(){
+  if(!AG.cfg||AG.salvando)return;AG.salvando=true;render();
+  const c=JSON.parse(JSON.stringify(AG.cfg));
+  ['produtos','promocoes','faq'].forEach(k=>c[k]=(c[k]||[]).filter(x=>Object.values(x).some(v=>String(v||'').trim())));
+  c.pausa_h=Math.max(0,Math.min(72,+c.pausa_h||0));c.limite_dia=Math.max(5,Math.min(80,+c.limite_dia||25));
+  const r=await sb.from('agente_config').upsert({otica_id:OTICA.id,cfg:c,ativo:!!(AG.row&&AG.row.ativo),atualizado_em:new Date().toISOString()}).select().maybeSingle();
+  AG.salvando=false;
+  if(r.error){toast('Não foi possível salvar: '+r.error.message);render();return}
+  AG.row=r.data;AG.cfg=agPadrao(r.data.cfg);AG.dirty=false;toast('Configuração do agente salva');render();
+}
+document.addEventListener('input',e=>{const t=e.target;if(!t||!t.dataset||!AG.cfg)return;
+  if(t.id==='ag-txt'){AG.txt=t.value;return}
+  let mud=false;
+  if(t.dataset.agf!==undefined){const k=t.dataset.agf;AG.cfg[k]=t.type==='checkbox'?t.checked:t.type==='number'?(t.value===''?'':+t.value):t.value;mud=true}
+  else if(t.dataset.agl!==undefined){const L=AG.cfg[t.dataset.agl]||[],it=L[+t.dataset.i];if(it){it[t.dataset.k]=t.value;mud=true}}
+  else if(t.dataset.agdia!==undefined){const d=+t.dataset.agdia,s=new Set(AG.cfg.dias||[]);if(t.checked)s.add(d);else s.delete(d);AG.cfg.dias=[...s].sort();mud=true}
+  if(mud){AG.dirty=true;const h=document.getElementById('ag-st');if(h)h.textContent='Alterações não salvas'}
+});
+document.addEventListener('change',async e=>{const t=e.target;if(!t||!t.dataset)return;
+  if(t.dataset.agsim!==undefined){AG.sim=t.value;AG.chat=[];render();return}
+  if(t.dataset.agf!==undefined&&(t.tagName==='SELECT'||t.type==='checkbox')){AG.cfg[t.dataset.agf]=t.type==='checkbox'?t.checked:t.value;AG.dirty=true;const h=document.getElementById('ag-st');if(h)h.textContent='Alterações não salvas';return}
+  if(t.dataset.agimg!==undefined&&t.files&&t.files[0]){
+    const f=t.files[0];t.value='';AG.subindo=true;render();
+    try{const b=await agReduzir(f,1600),id=agId(),path=OTICA.id+'/'+id+'.jpg';
+      const up=await sb.storage.from('agente').upload(path,b,{contentType:'image/jpeg',upsert:true});if(up.error)throw up.error;
+      const url=sb.storage.from('agente').getPublicUrl(path).data.publicUrl;
+      (AG.cfg.imagens=AG.cfg.imagens||[]).push({id,url,titulo:f.name.replace(/\.[^.]+$/,'').slice(0,60),quando:'',legenda:''});AG.dirty=true;toast('Imagem adicionada. Dê um nome e salve.');
+    }catch(er){toast('Não foi possível enviar a imagem: '+(er.message||er))}
+    AG.subindo=false;render();return}
+  if(t.dataset.agfoto!==undefined&&t.files&&t.files[0]){
+    const f=t.files[0];t.value='';
+    try{const b=await agReduzir(f,1600),b64=await agArquivoB64(b),leg=AG.txt.trim();AG.txt='';
+      agMandar({midia:{tipo:'imagem',mime:'image/jpeg',base64:b64,legenda:leg}},{papel:'cliente',texto:leg||'',foto:'data:image/jpeg;base64,'+b64});
+    }catch(er){toast('Não foi possível ler a foto')}
+  }
+});
+Object.assign(A,{
+  agsub(d){AG.sub=d.s;render();if(d.s==='teste')agScroll()},
+  agsalvar(){agSalvar()},
+  agadd(d){const k=d.l,L=(AG.cfg[k]=AG.cfg[k]||[]);L.push(k==='faq'?{p:'',r:''}:k==='promocoes'?{titulo:'',texto:'',validade:''}:{nome:'',preco:'',obs:''});AG.dirty=true;render()},
+  agdel(d){const L=AG.cfg[d.l]||[];L.splice(+d.i,1);AG.dirty=true;render()},
+  async agligar(d){const v=d.v==='1';
+    if(v){const falta=agChecks().filter(x=>x.obrig&&!x.ok);if(falta.length){AG.sub='check';render();return toast('Falta: '+falta.map(x=>x.t).join(', '))}
+      if(!confirm('Ligar o agente? A partir de agora ele responde as mensagens que chegarem no WhatsApp da ótica.'))return}
+    const r=await sb.from('agente_config').update({ativo:v,atualizado_em:new Date().toISOString()}).eq('otica_id',OTICA.id).select().maybeSingle();
+    if(r.error||!r.data)return toast('Não foi possível '+(v?'ligar':'desligar'));
+    AG.row=r.data;toast(v?'Agente ligado! Ele já responde no WhatsApp.':'Agente desligado');render()},
+  aglimpar(){AG.chat=[];render()},
+  agsug(d){if(AG.enviando)return;agMandar({texto:d.t},{papel:'cliente',texto:d.t})},
+  agenviar(){const t=(document.getElementById('ag-txt')||{}).value||AG.txt;if(!t.trim()||AG.enviando)return;AG.txt='';agMandar({texto:t.trim()},{papel:'cliente',texto:t.trim()})},
+  async agrec(){
+    if(AG.rec){try{AG.rec.stop()}catch(e){}return}
+    if(!navigator.mediaDevices||!window.MediaRecorder)return toast('Este navegador não grava áudio');
+    let stream;try{stream=await navigator.mediaDevices.getUserMedia({audio:true})}catch(e){return toast('Permita o uso do microfone para gravar')}
+    const mr=new MediaRecorder(stream),partes=[];AG.rec=mr;AG.recT=Date.now();
+    const tick=setInterval(()=>{if(!AG.rec)return clearInterval(tick);if(Date.now()-AG.recT>120000)try{mr.stop()}catch(e){};const b=document.querySelector('[data-act="agrec"]');if(b)b.textContent='⏹ Parar ('+Math.round((Date.now()-AG.recT)/1000)+'s)'},500);
+    mr.ondataavailable=ev=>{if(ev.data&&ev.data.size)partes.push(ev.data)};
+    mr.onstop=async()=>{clearInterval(tick);stream.getTracks().forEach(t=>t.stop());AG.rec=null;const blob=new Blob(partes,{type:mr.mimeType||'audio/webm'});
+      if(blob.size<800){render();return toast('Áudio muito curto')}
+      const b64=await agArquivoB64(blob);agMandar({midia:{tipo:'audio',mime:blob.type,base64:b64}},{papel:'cliente',texto:'🎤 Áudio...'})};
+    mr.start();render()},
+});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&e.target&&e.target.id==='ag-txt'){e.preventDefault();A.agenviar()}});
+
 
 /* ---------- PREMIUM-FIM ---------- */
 /* ---------- ADMIN-INICIO (somente sistema real) ---------- */

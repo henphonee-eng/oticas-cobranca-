@@ -928,7 +928,7 @@ function demoHero(){
     '<div class="dh-acts"><a class="btn gold sm" target="_blank" rel="noopener" href="'+ctaHref()+'">Quero para minha ótica</a><button class="dh-x" data-act="dhx" aria-label="Fechar aviso" title="Fechar">&times;</button></div></section>';
 }
 
-const ctaHref=()=>'https://wa.me/'+CTA_NUM+'?text='+encodeURIComponent((DEMO_PERSONAL?'Olá! Sou da '+DEMO_NOME+'. ':'Olá! ')+'Vi a demonstração do Tráfego Orgânico e do sistema de gestão e quero para a minha ótica.');
+const ctaHref=()=>'https://wa.me/'+CTA_NUM+'?text='+encodeURIComponent((DEMO_PERSONAL?'Olá! Sou da '+DEMO_NOME+'. ':'Olá! ')+'Vi a demonstração do Tráfego Orgânico e do Agente de IA e quero para a minha ótica.');
 const demoNote=()=>(!ui.dhHide&&ui.tab==='painel')?'':'<div class="demo-note"><b>Demonstração</b><span>Você está vendo dados de exemplo. Pode clicar em tudo, cadastrar clientes e simular vendas. Nada fica salvo: ao recarregar a página, volta ao início.</span><a class="btn wa sm" target="_blank" rel="noopener" href="'+ctaHref()+'">Quero para minha ótica</a></div>';
 
 /* ---------- modelo ---------- */
@@ -1003,6 +1003,7 @@ const ICON={
   cobrar:I('<path d="M6 16v-5a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 21h4"/>'),
   caixa:I('<rect x="3.5" y="6" width="17" height="13" rx="2.5"/><path d="M3.5 10h17M16 14.5h1.5"/>'),
   lentes:I('<circle cx="12" cy="12" r="7.5"/><path d="M8.5 10.5a4 4 0 0 1 3-2.6"/>'),
+  agente:I('<rect x="5" y="8" width="14" height="11" rx="3"/><path d="M12 4v4"/><circle cx="12" cy="3.5" r="1"/><circle cx="9.5" cy="13" r="1"/><circle cx="14.5" cy="13" r="1"/><path d="M10 16.5h4"/><path d="M3 12v3M21 12v3"/>'),
   trafego:I('<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1"/><path d="M12 12l6-6"/>'),
   whatsapp:I('<path d="M5 19l1.2-3.6A7.5 7.5 0 1 1 9 18z"/><path d="M9.5 9.5c.3 2 2 3.7 4 4l1-1-1.6-1-.8.6a3 3 0 0 1-1.3-1.3l.6-.8-1-1.6z"/>'),
   ajustes:I('<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>'),
@@ -1022,10 +1023,10 @@ const ICON={
   sair:I('<path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4M15 8l4 4-4 4M19 12H9"/>')
 };
 const GLASSES='<svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11.5" cy="23" r="7"/><circle cx="28.5" cy="23" r="7"/><path d="M18.5 22c1-1.3 2-1.3 3 0M4.5 21 7 12M35.5 21 33 12"/></svg>';
-const TABS=[['painel','Painel'],['vendas','Vendas'],['aguard','Orçamentos'],['clientes','Clientes'],['cobrar','Cobrar'],['entregas','Follow-up'],['agenda','Agenda'],['os','Ordens de serviço'],['relacao','Relacionamento'],['caixa','Caixa'],['lentes','Lentes'],['demolentes','Demonstração de lentes'],['trafego','Tráfego Orgânico'],['whatsapp','WhatsApp Automático'],['ajustes','Ajustes']];
+const TABS=[['painel','Painel'],['vendas','Vendas'],['aguard','Orçamentos'],['clientes','Clientes'],['cobrar','Cobrar'],['entregas','Follow-up'],['agenda','Agenda'],['os','Ordens de serviço'],['relacao','Relacionamento'],['caixa','Caixa'],['lentes','Lentes'],['demolentes','Demonstração de lentes'],['trafego','Tráfego Orgânico'],['agente','Agente de IA'],['whatsapp','WhatsApp Automático'],['ajustes','Ajustes']];
 /* grupos do menu por finalidade: vendas e loja, clientes (follow-up, WhatsApp, campanhas, agenda, exames), financeiro e sistema */
-const TGORD=['trafego','painel','vendas','aguard','os','lentes','demolentes','clientes','relacao','entregas','whatsapp','campanhas','agenda','exames','cobrar','caixa','financeiro','metas','ajustes'];
-const TGRP={trafego:'Captação de clientes',painel:'',vendas:'Vendas e loja',aguard:'Vendas e loja',os:'Vendas e loja',lentes:'Vendas e loja',demolentes:'Vendas e loja',clientes:'Clientes',relacao:'Clientes',entregas:'Clientes',whatsapp:'Clientes',campanhas:'Clientes',agenda:'Clientes',exames:'Clientes',cobrar:'Financeiro',caixa:'Financeiro',financeiro:'Financeiro',metas:'Financeiro',ajustes:'Sistema'};
+const TGORD=['trafego','agente','painel','vendas','aguard','os','lentes','demolentes','clientes','relacao','entregas','whatsapp','campanhas','agenda','exames','cobrar','caixa','financeiro','metas','ajustes'];
+const TGRP={trafego:'Captação de clientes',agente:'Captação de clientes',painel:'',vendas:'Vendas e loja',aguard:'Vendas e loja',os:'Vendas e loja',lentes:'Vendas e loja',demolentes:'Vendas e loja',clientes:'Clientes',relacao:'Clientes',entregas:'Clientes',whatsapp:'Clientes',campanhas:'Clientes',agenda:'Clientes',exames:'Clientes',cobrar:'Financeiro',caixa:'Financeiro',financeiro:'Financeiro',metas:'Financeiro',ajustes:'Sistema'};
 function tabsGrp(tv,fn){let g='',o='';const ix=k=>{const n=TGORD.indexOf(k);return n<0?99:n};tv=tv.map((t,n)=>[t,n]).sort((a,b)=>ix(a[0][0])-ix(b[0][0])||a[1]-b[1]).map(x=>x[0]);tv.forEach(t=>{const k=TGRP[t[0]]||'';if(k&&k!==g){o+='<div class="tgrp'+''+'" aria-hidden="true">'+k+'</div>'}g=k;o+=fn(t)});return o}
 const saudacao=()=>{const h=new Date().getHours();return h<12?'Bom dia':h<18?'Boa tarde':'Boa noite'};
 function admTabInicial(){const q=new URLSearchParams(location.search),t=q.get('tab');if(t){q.delete('tab');history.replaceState(null,'',location.pathname+(q.toString()?'?'+q:''))}return t==='mensal'?'mensal':'admin'}
@@ -1041,7 +1042,7 @@ function tabsVis(){
   if(IS_ADMIN)t=t.concat([ADMTAB,MENSTAB],PROSPTABS);
   return t;
 }
-function viewTab(){const k=ui.tab;return k==='trafego'?viewTrafegoDemo():k==='painel'?viewPainel():k==='agenda'?viewAgenda():k==='vendas'?viewVendas():k==='aguard'?viewAguard():k==='entregas'?viewFollow():k==='os'?viewOS():k==='clientes'?viewClientes():k==='cobrar'?viewCobrar():k==='relacao'?viewRelacao():k==='caixa'?viewCaixa():k==='lentes'?viewLentes():k==='demolentes'?viewDemoLentes():k==='admin'?viewAdmin():k==='mensal'?viewMensal():(k==='financeiro'||k==='metas'||k==='campanhas'||k==='premium'||k==='whatsapp'||k==='exames')?premView(k):viewAjustes()}
+function viewTab(){const k=ui.tab;return k==='trafego'?viewTrafegoDemo():k==='agente'?viewAgenteDemo():k==='painel'?viewPainel():k==='agenda'?viewAgenda():k==='vendas'?viewVendas():k==='aguard'?viewAguard():k==='entregas'?viewFollow():k==='os'?viewOS():k==='clientes'?viewClientes():k==='cobrar'?viewCobrar():k==='relacao'?viewRelacao():k==='caixa'?viewCaixa():k==='lentes'?viewLentes():k==='demolentes'?viewDemoLentes():k==='admin'?viewAdmin():k==='mensal'?viewMensal():(k==='financeiro'||k==='metas'||k==='campanhas'||k==='premium'||k==='whatsapp'||k==='exames')?premView(k):viewAjustes()}
 let deferredInstall=null;
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;if(auth==='ok')render()});
 const demoTag=o=>o&&o.exemplo?'<span class="demo">exemplo</span>':'';
@@ -2459,6 +2460,32 @@ Object.assign(A,{
 });
 document.addEventListener('change',e=>{const t=e.target;if(t&&t.dataset&&t.dataset.tdsel){TD.sel[t.dataset.tdsel]=t.checked;render()}});
 
+/* ---------- Agente de IA (demonstração com conversa de exemplo) ---------- */
+const AGD={chat:[],dig:false,passo:0};
+const AGD_R={
+  horario:['Qual o horário de vocês?',()=>'Oi! 😊 A '+DEMO_NOME+' abre de segunda a sexta, das 9h às 18h, e no sábado das 9h às 13h. Posso te ajudar com mais alguma coisa?'],
+  preco:['Quanto custa um óculos multifocal?',()=>'As lentes multifocais começam em *R$ 390* o par, e as armações a partir de *R$ 99*. Se quiser, me manda uma foto da sua receita que eu te digo as opções certinhas para ela!'],
+  receita:['📷 Foto da receita',()=>'Recebi sua receita! Ela tem grau para longe e *adição +2,00*, então a lente indicada é a *multifocal*. Temos opções a partir de R$ 390. Quer que eu chame alguém da equipe para montar o orçamento?',null,'Leu a foto da receita: OD -2,00 / OE -1,75, adição +2,00'],
+  audio:['🎤 Áudio (0:07): «Oi, vocês fazem exame de vista? Queria marcar pra sábado»',()=>'Fazemos sim! O exame é *grátis* na compra do óculos completo. Para sábado tenho estes horários livres: *9h*, *9h30* ou *10h*. Qual fica melhor pra você?',null,'Entendeu o áudio e consultou a agenda de exames'],
+  marcar:['9h30! Meu nome é Carla Mendes',()=>'Prontinho, Carla! Seu exame está marcado para *sábado às 9h30*, na Rua Exemplo, 123. Você recebe um lembrete na véspera. 👓',null,'Marcou o exame na agenda do sistema'],
+  cartao:['Vocês aceitam cartão?',()=>'Aceitamos Pix, dinheiro e cartão, com parcelamento em até *10x sem juros*. 😉'],
+  pessoa:['Quero falar com uma pessoa',()=>'Claro! Já chamei alguém da equipe, só um instante. 😊',null,'Avisou a equipe no WhatsApp e ficou quieto nessa conversa'],
+};
+function viewAgenteDemo(){
+  const b=(t,eu)=>'<div style="max-width:80%;align-self:'+(eu?'flex-end':'flex-start')+';background:'+(eu?'var(--accent-soft)':'var(--surface)')+';border:1px solid '+(eu?'transparent':'var(--line)')+';border-radius:'+(eu?'14px 14px 4px 14px':'14px 14px 14px 4px')+';padding:8px 11px;white-space:pre-wrap;font-size:14.5px">'+esc(t).replace(/\*([^*\n]+)\*/g,'<b>$1</b>')+'<small style="display:block;text-align:right;color:var(--muted);font-size:11px;margin-top:2px">'+(eu?'Cliente · 23:47':'Agente de IA · 23:47')+'</small></div>';
+  const msgs=AGD.chat.map(m=>m.acao?'<div style="text-align:center"><span class="chip">⚙️ '+esc(m.acao)+'</span></div>':b(m.t,m.eu)).join('')+(AGD.dig?'<div style="align-self:flex-start;color:var(--muted);font-size:13px">digitando...</div>':'');
+  const sug=Object.keys(AGD_R).filter(k=>k!=='marcar'||AGD.chat.some(m=>m.k==='audio')).map(k=>'<button class="fchip" data-act="agdemo" data-k="'+k+'"'+(AGD.dig?' disabled':'')+'>'+esc(k==='receita'?'📷 Mandar foto da receita':k==='audio'?'🎤 Mandar áudio':AGD_R[k][0])+'</button>').join('');
+  const intro='<div class="card" style="gap:8px;margin-bottom:14px;border-left:4px solid var(--accent)"><b>Um atendente que nunca dorme</b><p class="sub" style="margin:0">O Agente de IA responde o WhatsApp da '+esc(DEMO_NOME)+' 24 horas: tira dúvidas de preço, horário e promoções, entende áudio e foto da receita, marca o exame de vista na agenda e chama vocês quando o cliente quer fechar. Toque nas mensagens abaixo como se fosse um cliente às 23h47, com a loja fechada.</p></div>';
+  const chat='<div class="card" style="padding:0;overflow:hidden"><div style="padding:10px 14px;border-bottom:1px solid var(--line);display:flex;gap:10px;align-items:center"><b style="flex:1">WhatsApp da '+esc(DEMO_NOME)+'</b><span class="chip ok">● Agente ligado</span></div><div id="agd-thread" style="display:flex;flex-direction:column;gap:8px;padding:14px;min-height:300px;max-height:56vh;overflow:auto;background:var(--bg)">'+(msgs||'<p class="sub" style="margin:auto;text-align:center">Escolha uma mensagem abaixo para começar</p>')+'</div><div style="padding:12px;border-top:1px solid var(--line)"><div class="chips">'+sug+'</div>'+(AGD.chat.length?'<div style="margin-top:8px"><button class="btn sm" data-act="agdemolimpar">Recomeçar</button></div>':'')+'</div></div>';
+  const conf='<div class="card" style="gap:8px;margin-top:14px"><b>A ótica ensina tudo numa tela simples</b><div class="chips">'+['Endereço e horário','Preços e produtos','Promoções','Perguntas frequentes','Imagens do catálogo','Quando chamar a equipe','Tela de teste antes de ligar'].map(x=>'<span class="chip">✓ '+x+'</span>').join('')+'</div><p class="sub" style="margin:0">Ele só responde com o que a ótica cadastrou, nunca inventa preço e nunca dá orientação de saúde.</p></div>';
+  return pageHead('Agente de IA','Atendimento no WhatsApp 24 horas, com áudio, foto e agendamento de exames')+intro+chat+conf;
+}
+Object.assign(A,{
+  agdemo(d){const r=AGD_R[d.k];if(!r||AGD.dig)return;AGD.chat.push({t:r[0],eu:true,k:d.k});AGD.dig=true;render();const th=document.getElementById('agd-thread');if(th)th.scrollTop=th.scrollHeight;
+    setTimeout(()=>{if(r[3])AGD.chat.push({acao:r[3]});AGD.chat.push({t:r[1](),eu:false});AGD.dig=false;render();const t2=document.getElementById('agd-thread');if(t2)t2.scrollTop=t2.scrollHeight},1400)},
+  agdemolimpar(){AGD.chat=[];render()},
+});
+
 /* ---------- início ---------- */
 function init(){
   if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});
@@ -2470,7 +2497,7 @@ function init(){
   const sf=document.querySelector('.side-foot');if(sf)sf.insertBefore(sc,sf.firstChild);
   S.config.otica={id:'otica',nome:DEMO_NOME,whatsapp:'',endereco:'Rua Exemplo, 123 · Sua cidade',pix:'seu-pix@exemplo.com',autolock:0};
   loadDemo();
-  if(DEMO_PERSONAL||/[?&]tab=trafego/.test(location.search)){ui.tab='trafego';render()}
+  if(/[?&]tab=agente/.test(location.search)){ui.tab='agente';render()}else if(DEMO_PERSONAL||/[?&]tab=trafego/.test(location.search)){ui.tab='trafego';render()}
 }
 /* link curto /d/<código>: busca o nome da ótica e o lead antes de montar o demo */
 function nomeCurtoDemo(n){const s=String(n||'').trim(),c=s.split(/\s*(?::|\||\s[-–—]\s)\s*/)[0].trim();return (c.length>=3?c:s).slice(0,40)}

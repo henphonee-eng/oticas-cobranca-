@@ -50,5 +50,16 @@ const { criarApi, criarRobo } = require('./fila');
   // QR Code da nuvem (modo da ótica)
   const n0 = chamadas.length; await api.qr('data:image/png;base64,AA');
   assert.deepStrictEqual(chamadas[n0], ['wa_qr', { p_token: 'wa_t', p_qr: 'data:image/png;base64,AA' }]);
+  // resposta do Agente de IA com imagem: passa a mídia e não faz a pausa dos avisos automáticos
+  const envAg = []; const waAg = { conectado: () => true, existe: async () => true, enviar: async (t, x, tp, md) => { envAg.push([t, x, tp, md]); } };
+  const apiAg = criarApi({ supabaseUrl: 'http://x', supabaseKey: 'k', token: 'wa_t' }, async (url) => ({ ok: true, status: 200, json: async () => (url.endsWith('wa_puxar') ? { ok: true, msg: { id: 'z', telefone: '5581999990009', texto: 'Olha', tipo: 'agente', midia: 'https://x/a.jpg' } } : { ok: true }) }));
+  const roboAg = criarRobo(apiAg, waAg, () => {}, { pausaMin: 60000, pausaMax: 60000, digitarMin: 1, digitarMax: 2 });
+  const tAg = Date.now(); assert.strictEqual(await roboAg.umaVez(), 'enviada'); assert.ok(Date.now() - tAg < 2000, 'agente não pausa');
+  assert.deepStrictEqual(envAg[0], ['5581999990009', 'Olha', 'agente', 'https://x/a.jpg']);
+  // mídia recebida vai para a função agente-ia
+  let urlMidia = '', corpoMidia = null;
+  const apiMd = criarApi({ supabaseUrl: 'http://x', supabaseKey: 'k', token: 'wa_t' }, async (url, o) => { urlMidia = url; corpoMidia = JSON.parse(o.body); return { ok: true, status: 200, json: async () => ({ ok: true, off: true }) }; });
+  assert.deepStrictEqual(await apiMd.midia({ telefone: '5581', tipo: 'audio', base64: 'AA' }), { ok: true, off: true });
+  assert.strictEqual(urlMidia, 'http://x/functions/v1/agente-ia'); assert.strictEqual(corpoMidia.modo, 'midia'); assert.strictEqual(corpoMidia.token, 'wa_t');
   console.log('Teste ok');
 })().catch((e) => { console.error('FALHOU', e); process.exit(1); });

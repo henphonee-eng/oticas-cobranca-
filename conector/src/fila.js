@@ -30,6 +30,15 @@ function criarApi(cfg, fetchFn) {
   return {
     puxar: () => rpc('wa_puxar', { p_token: cfg.token }),
     qr: (img) => rpc('wa_qr', { p_token: cfg.token, p_qr: img }),
+    // áudio ou foto recebidos: o Agente de IA (Premium) transforma em texto e responde
+    midia: async (corpo) => {
+      const r = await f(cfg.supabaseUrl + '/functions/v1/agente-ia', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', apikey: cfg.supabaseKey, Authorization: 'Bearer ' + cfg.supabaseKey },
+        body: JSON.stringify(Object.assign({ modo: 'midia', token: cfg.token }, corpo)),
+      });
+      return r.json().catch(() => ({}));
+    },
     puxarManual: () => rpc('wa_puxar_manual', { p_token: cfg.token }),
     // guarda a mensagem na conversa do sistema (WhatsApp dentro do sistema, função Premium)
     registrar: (m) => rpc('wa_registrar', { p_token: cfg.token, p_tel: m.telefone, p_nome: m.nome || null, p_de_mim: !!m.deMim, p_texto: m.texto, p_tipo: m.tipo || 'texto', p_wa_id: m.waId || null, p_origem: m.origem || null }),
@@ -53,7 +62,7 @@ function criarRobo(api, wa, log, opc) {
     try {
       if (!(await wa.existe(m.telefone))) { await api.resultado(m.id, false, 'sem_whatsapp'); log('Número sem WhatsApp: ' + m.telefone); return 'sem_whatsapp'; }
       await sleep(manual ? rand(o.manualMin, o.manualMax) : rand(o.digitarMin, o.digitarMax));
-      await wa.enviar(m.telefone, m.texto, m.tipo);
+      await wa.enviar(m.telefone, m.texto, m.tipo, m.midia);
       await api.resultado(m.id, true);
       log((manual ? 'Mensagem da conversa enviada para ' : 'Enviada para ') + m.telefone);
       return 'enviada';
@@ -84,7 +93,7 @@ function criarRobo(api, wa, log, opc) {
     if (!r.msg) { ultimoMotivo = r.motivo || ''; return 'vazio'; }
     const m = r.msg;
     const res = await enviarUma(m);
-    if (res === 'enviada' && m.tipo !== 'manual') await pausa(rand(o.pausaMin, o.pausaMax));
+    if (res === 'enviada' && m.tipo !== 'manual' && m.tipo !== 'agente') await pausa(rand(o.pausaMin, o.pausaMax));
     return res;
   }
 
