@@ -1148,6 +1148,7 @@ const ICON={
   caixa:I('<rect x="3.5" y="6" width="17" height="13" rx="2.5"/><path d="M3.5 10h17M16 14.5h1.5"/>'),
   lentes:I('<circle cx="12" cy="12" r="7.5"/><path d="M8.5 10.5a4 4 0 0 1 3-2.6"/>'),
   site:I('<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.6 2.4 3.8 5.2 3.8 8.5s-1.2 6.1-3.8 8.5c-2.6-2.4-3.8-5.2-3.8-8.5s1.2-6.1 3.8-8.5z"/>'),
+  trafego:I('<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1"/><path d="M12 12l6-6"/>'),
   wachat:I('<path d="M4 5.5h16v10H9l-4 3.5v-3.5H4z"/><path d="M8 9.5h8M8 12.5h5"/>'),
   whatsapp:I('<path d="M5 19l1.2-3.6A7.5 7.5 0 1 1 9 18z"/><path d="M9.5 9.5c.3 2 2 3.7 4 4l1-1-1.6-1-.8.6a3 3 0 0 1-1.3-1.3l.6-.8-1-1.6z"/>'),
   ajustes:I('<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>'),
@@ -1167,10 +1168,10 @@ const ICON={
   sair:I('<path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4M15 8l4 4-4 4M19 12H9"/>')
 };
 const GLASSES='<svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11.5" cy="23" r="7"/><circle cx="28.5" cy="23" r="7"/><path d="M18.5 22c1-1.3 2-1.3 3 0M4.5 21 7 12M35.5 21 33 12"/></svg>';
-const TABS=[['painel','Painel'],['vendas','Vendas'],['aguard','Orçamentos'],['clientes','Clientes'],['cobrar','Cobrar'],['entregas','Follow-up'],['agenda','Agenda financeira'],['os','Ordens de serviço'],['relacao','Relacionamento'],['caixa','Caixa'],['lentes','Lentes'],['demolentes','Demonstração de lentes'],['campanhas','Campanhas'],['financeiro','Financeiro'],['metas','Metas'],['whatsapp','WhatsApp Automático'],['wachat','Conversas do WhatsApp'],['site','Site da ótica'],['exames','Exames de vista'],['ajustes','Ajustes']];
+const TABS=[['painel','Painel'],['vendas','Vendas'],['aguard','Orçamentos'],['clientes','Clientes'],['cobrar','Cobrar'],['entregas','Follow-up'],['agenda','Agenda financeira'],['os','Ordens de serviço'],['relacao','Relacionamento'],['caixa','Caixa'],['lentes','Lentes'],['demolentes','Demonstração de lentes'],['campanhas','Campanhas'],['financeiro','Financeiro'],['metas','Metas'],['trafego','Tráfego Orgânico'],['whatsapp','WhatsApp Automático'],['wachat','Conversas do WhatsApp'],['exames','Exames de vista'],['ajustes','Ajustes']];
 /* grupos do menu por finalidade: vendas e loja, clientes (follow-up, WhatsApp, campanhas, exames), financeiro (cobrar, agenda financeira, caixa...) e sistema */
-const TGORD=['painel','vendas','aguard','os','lentes','demolentes','clientes','relacao','entregas','wachat','whatsapp','campanhas','site','exames','cobrar','agenda','caixa','financeiro','metas','ajustes'];
-const TGRP={painel:'',vendas:'Vendas e loja',aguard:'Vendas e loja',os:'Vendas e loja',lentes:'Vendas e loja',demolentes:'Vendas e loja',clientes:'Clientes',relacao:'Clientes',entregas:'Clientes',whatsapp:'Clientes',wachat:'Clientes',campanhas:'Clientes',site:'Clientes',agenda:'Financeiro',exames:'Clientes',cobrar:'Financeiro',caixa:'Financeiro',financeiro:'Financeiro',metas:'Financeiro',ajustes:'Sistema'};
+const TGORD=['painel','vendas','aguard','os','lentes','demolentes','clientes','relacao','entregas','trafego','wachat','whatsapp','campanhas','site','exames','cobrar','agenda','caixa','financeiro','metas','ajustes'];
+const TGRP={painel:'',vendas:'Vendas e loja',aguard:'Vendas e loja',os:'Vendas e loja',lentes:'Vendas e loja',demolentes:'Vendas e loja',clientes:'Clientes',relacao:'Clientes',entregas:'Clientes',whatsapp:'Clientes',wachat:'Clientes',trafego:'Clientes',campanhas:'Clientes',site:'Clientes',agenda:'Financeiro',exames:'Clientes',cobrar:'Financeiro',caixa:'Financeiro',financeiro:'Financeiro',metas:'Financeiro',ajustes:'Sistema'};
 function tabsGrp(tv,fn){let g='',o='';const ix=k=>{const n=TGORD.indexOf(k);return n<0?99:n};tv=tv.map((t,n)=>[t,n]).sort((a,b)=>ix(a[0][0])-ix(b[0][0])||a[1]-b[1]).map(x=>x[0]);tv.forEach(t=>{const k=TGRP[t[0]]||'';if(k&&k!==g){o+='<div class="tgrp'+''+'" aria-hidden="true">'+k+'</div>'}g=k;o+=fn(t)});return o}
 const saudacao=()=>{const h=new Date().getHours();return h<12?'Bom dia':h<18?'Boa tarde':'Boa noite'};
 function admTabInicial(){const q=new URLSearchParams(location.search),t=q.get('tab');if(t){q.delete('tab');history.replaceState(null,'',location.pathname+(q.toString()?'?'+q:''))}return t==='mensal'?'mensal':'admin'}
@@ -1186,7 +1187,7 @@ function tabsVis(){
   if(IS_ADMIN)t=t.concat([ADMTAB,MENSTAB],PROSPTABS);
   return t;
 }
-function viewTab(){const k=ui.tab;return k==='painel'?viewPainel():k==='agenda'?viewAgenda():k==='vendas'?viewVendas():k==='aguard'?viewAguard():k==='entregas'?viewFollow():k==='os'?viewOS():k==='clientes'?viewClientes():k==='cobrar'?viewCobrar():k==='relacao'?viewRelacao():k==='caixa'?viewCaixa():k==='lentes'?viewLentes():k==='demolentes'?viewDemoLentes():k==='admin'?viewAdmin():k==='mensal'?viewMensal():(k==='financeiro'||k==='metas'||k==='campanhas'||k==='premium'||k==='whatsapp'||k==='exames'||k==='wachat'||k==='site')?premView(k):viewAjustes()}
+function viewTab(){const k=ui.tab;return k==='painel'?viewPainel():k==='agenda'?viewAgenda():k==='vendas'?viewVendas():k==='aguard'?viewAguard():k==='entregas'?viewFollow():k==='os'?viewOS():k==='clientes'?viewClientes():k==='cobrar'?viewCobrar():k==='relacao'?viewRelacao():k==='caixa'?viewCaixa():k==='lentes'?viewLentes():k==='demolentes'?viewDemoLentes():k==='admin'?viewAdmin():k==='mensal'?viewMensal():(k==='financeiro'||k==='metas'||k==='campanhas'||k==='premium'||k==='whatsapp'||k==='exames'||k==='wachat'||k==='site'||k==='trafego')?premView(k):viewAjustes()}
 let deferredInstall=null;
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;if(auth==='ok')render()});
 const demoTag=o=>o&&o.exemplo?'<span class="demo">exemplo</span>':'';
@@ -2543,11 +2544,12 @@ const MODS=[
  {k:'wa',n:'WhatsApp automático',d:'Os avisos de boas-vindas, recibo, óculos chegou, agradecimento, lembrete e atraso saem sozinhos pelo WhatsApp da ótica, de um programa no computador da loja.',b:['Você escolhe, aviso por aviso, se sai sozinho ou se espera a sua aprovação','Fila guardada na nuvem: se o computador estiver desligado, nada se perde','Limite por dia, horário comercial e pausa com um clique','Quem responder SAIR não recebe mais avisos']},
  {k:'exames',add:true,n:'Exames de vista',d:'Uma página para o cliente agendar o exame de vista, e a confirmação e o lembrete saem sozinhos pelo WhatsApp. Função adicional, contratada à parte do Premium.',b:['Página de agendamento com o seu logo e as suas cores, pronta para divulgar','Agenda de exames: confirmar, remarcar, marcar quem veio e quem faltou','Confirmação na hora e lembrete na véspera pelo WhatsApp Automático','Link curto para colocar na bio do Instagram, no WhatsApp e nos seus anúncios','Quem agendar já aparece na agenda e vira cliente com um toque','Mensagens de confirmação e lembrete que você pode personalizar']},
  {k:'wachat',n:'WhatsApp dentro do sistema',d:'Veja e responda as conversas do WhatsApp da ótica direto no sistema, sem pegar o celular. Funciona com o conector do WhatsApp Automático ligado no computador da loja.',b:['Todas as conversas do WhatsApp da ótica em uma tela, com o nome do cliente cadastrado','Responda por texto: a mensagem sai na hora pelo WhatsApp da ótica','Mensagens novas aparecem sozinhas, com aviso de não lidas','Botão Conversar na lista de clientes']},
+ {k:'trafego',n:'Tráfego Orgânico',d:'Encontre empresas perto da sua ótica e leve a sua oferta até elas pelo WhatsApp, sem depender de indicação.',b:['Busca de empresas num raio da ótica pelo Google Maps, sem outras óticas','Consulta de empresas pelo CNPJ','CRM das empresas: nova, abordada, respondeu, interessada, virou cliente','Mensagem de oferta pronta e envio pelo WhatsApp Automático','Painel com quantas responderam, viraram clientes e quanto venderam']},
  {k:'site',add:true,n:'Site profissional da ótica',d:'Um site moderno com o nome, a logo e as cores da sua ótica, para os clientes acharem a loja, verem as lentes e armações e agendarem o exame de vista pelo WhatsApp. Função adicional, contratada à parte.',b:['Site com endereço próprio, pronto para celular','Botão de WhatsApp e agendamento de exame de vista','Endereço, mapa e horário da loja','Comparativo de lentes e vitrine de armações','Você pede as alterações e a gente atualiza']},
  {k:'historico',n:'Histórico de alterações e backup automático',d:'Saiba quem fez o quê no sistema e tenha uma cópia de segurança toda semana.',b:['Registro de vendas, recebimentos, edições e exclusões com data e usuário','Backup semanal baixado sozinho no aparelho','Mais segurança quando há equipe usando o sistema']}
 ];
 const MOD=k=>MODS.find(m=>m.k===k)||{};
-const PREMTAB={financeiro:'financeiro',metas:'metas',campanhas:'campanhas',exames:'exames',wachat:'wachat',site:'site'};
+const PREMTAB={trafego:'trafego',financeiro:'financeiro',metas:'metas',campanhas:'campanhas',exames:'exames',wachat:'wachat',site:'site'};
 const modEfet=o=>{const r={},m=(o&&o.modulos)||{};MODS.forEach(x=>{r[x.k]=Object.prototype.hasOwnProperty.call(m,x.k)?m[x.k]===true:(!x.add&&!!o&&o.plano==='premium')});return r};
 const modOn=k=>!!OTICA&&modEfet(OTICA)[k]===true;
 const premValor=()=>+(OTICA&&OTICA.premium_valor)||6700;
@@ -2589,6 +2591,7 @@ function premView(k){
   if(k==='whatsapp')return modOn('wa')&&ROLE==='dono'?viewWa():viewUpsell('wa');
   if(k==='wachat')return modOn('wachat')?viewWaChat():viewUpsell('wachat');
   if(k==='site')return viewSite();
+  if(k==='trafego')return viewTrafego();
   if(!modOn(k))return viewUpsell(k);
   return k==='financeiro'?viewFin():viewMetas();
 }
@@ -2973,7 +2976,7 @@ function premFuPesq(){
 }
 Object.assign(A,{fupesq(){ui.cs='pesq';ui.tab='campanhas';render()}});
 /* ----- WhatsApp automático (conector no computador da loja) ----- */
-const WA_TIPOS=[['boasvindas','Boas-vindas ao cadastrar o cliente'],['recibo','Recibo quando a parcela é recebida'],['chegou','Aviso: seu óculos chegou'],['agradecimento','Agradecimento ao entregar'],['lembrete','Lembrete na véspera do vencimento'],['atraso','Parcela em atraso (1, 7 e 15 dias)'],['aniversario','Feliz aniversário'],['revisao','Revisão do grau (11 meses)'],['exame_conf','Exame de vista: confirmação ao agendar'],['exame_lembrete','Exame de vista: lembrete na véspera']];
+const WA_TIPOS=[['boasvindas','Boas-vindas ao cadastrar o cliente'],['trafego','Tráfego Orgânico: oferta para empresas da região'],['recibo','Recibo quando a parcela é recebida'],['chegou','Aviso: seu óculos chegou'],['agradecimento','Agradecimento ao entregar'],['lembrete','Lembrete na véspera do vencimento'],['atraso','Parcela em atraso (1, 7 e 15 dias)'],['aniversario','Feliz aniversário'],['revisao','Revisão do grau (11 meses)'],['exame_conf','Exame de vista: confirmação ao agendar'],['exame_lembrete','Exame de vista: lembrete na véspera']];
 const WA_NOME={exame_conf:'Exame de vista: confirmação',exame_lembrete:'Exame de vista: lembrete',exame_resp:'Exame de vista: resposta',exame_faltou:'Exame de vista: faltou',exame_equipe:'Aviso de novo exame para a equipe',manual:'Mensagem da conversa'};WA_TIPOS.forEach(x=>WA_NOME[x[0]]=x[1]);
 const WA_ST={aprovar:['warn','Espera sua aprovação'],aguardando:['acc','Na fila'],enviando:['acc','Enviando'],enviada:['ok','Enviada'],falhou:['bad','Falhou'],cancelada:['','Cancelada'],expirada:['','Venceu o prazo']};
 const waDoc=()=>{if(!S.config.wa)S.config.wa={id:'wa',on:false,pausa:false,ini:'08:00',fim:'18:30',limite:30,modo:{}};if(!S.config.wa.modo)S.config.wa.modo={};return S.config.wa};
@@ -3451,6 +3454,159 @@ document.addEventListener('input',e=>{const t=e.target;if(!t)return;
 });
 document.addEventListener('keydown',e=>{if(e.target&&e.target.id==='wc-txt'&&e.key==='Enter'&&!e.shiftKey&&!isMobile){e.preventDefault();A.wcenviar()}});
 setInterval(()=>{if(auth==='ok'&&OTICA&&modOn('wachat')&&!document.hidden&&(ui.tab==='wachat'||!WC.chan)&&Date.now()-WC.t>25000)wcLoad()},30000);
+
+/* ----- Tráfego Orgânico (função Premium "trafego") ----- */
+/* A ótica acha empresas num raio da loja (Google Maps, sem outras óticas) ou por CNPJ, guarda num CRM próprio
+   e oferece os óculos pelo WhatsApp Automático (com aprovação). Respostas e envios atualizam o CRM sozinhos. */
+const TF={sub:'buscar',leads:null,busy:false,res:[],next:null,sel:{},q:'empresas',qLivre:'',err:'',fil:'novo',cnpj:'',cnpjRes:null,buscando:false,t:0};
+const TF_ST={novo:['','Nova'],enviado:['acc','Abordada'],respondeu:['warn','Respondeu'],interessada:['acc','Interessada'],cliente:['ok','Virou cliente'],sem_interesse:['bad','Sem interesse']};
+const TF_CATS=[['empresas','Todas as empresas'],['lojas comércio','Comércio e lojas'],['escritório','Escritórios'],['clínica consultório','Saúde'],['restaurante lanchonete','Alimentação'],['salão de beleza barbearia','Beleza'],['escola colégio','Escolas'],['oficina mecânica','Oficinas'],['supermercado mercadinho','Mercados'],['academia','Academias'],['igreja','Igrejas'],['condomínio','Condomínios']];
+const TF_MSG='Atenção, empresários do {bairro} e região! 👋\n\nSomos da {otica} e temos uma super oferta para a sua empresa:\n\n👓 Na compra do seu óculos completo, você paga só as lentes. A armação e o exame de vista são por nossa conta!\n\n👥 Acima de 3 pessoas da mesma empresa, desconto especial para toda a equipe.\n\nQuer saber mais? É só responder esta mensagem.';
+const TF_FU='Oi, pessoal da {empresa}! Passando para lembrar da nossa oferta para empresas do {bairro}: óculos completo pagando só as lentes, com armação e exame de vista grátis. Posso reservar um horário para a sua equipe?';
+const tfDoc=()=>{if(!S.config.trafego)S.config.trafego={id:'trafego',msg:'',fu:'',raio:3000};return S.config.trafego};
+const tfK8=t=>String(t||'').replace(/\D/g,'').slice(-8);
+const tfCel=t=>{let d=String(t||'').replace(/\D/g,'');if(d.startsWith('55')&&d.length>11)d=d.slice(2);return d.length===11&&d[2]==='9'};
+const tfBairro=()=>{const D=tfDoc();return (D.bairro||'').trim()||'bairro'};
+function tfTexto(l,fu){const D=tfDoc(),t=(fu?(D.fu||'').trim()||TF_FU:(D.msg||'').trim()||TF_MSG);return t.replace(/\{otica\}/g,cfg().nome||'nossa ótica').replace(/\{bairro\}/g,(l&&l.bairro)||tfBairro()).replace(/\{empresa\}/g,(l&&l.nome)||'').replace(/\n{3,}/g,'\n\n')}
+async function tfLoad(){
+  if(TF.busy||!OTICA||!modOn('trafego'))return;TF.busy=true;
+  try{const r=await sb.from('trafego_leads').select('*').eq('otica_id',OTICA.id).neq('status','removida').order('criado_em',{ascending:false}).limit(3000);TF.leads=r.error?(TF.leads||[]):(r.data||[])}catch(e){TF.leads=TF.leads||[]}
+  TF.busy=false;TF.t=Date.now();if(ui.tab==='trafego'&&!fieldsOn()&&!ui.sheet)render();
+}
+function tfGarante(){if(TF.leads===null&&!TF.busy)setTimeout(tfLoad,0)}
+setInterval(()=>{if(auth==='ok'&&OTICA&&modOn('trafego')&&ui.tab==='trafego'&&!document.hidden&&Date.now()-TF.t>25000)tfLoad()},30000);
+async function tfApi(body){
+  const {data,error}=await sb.functions.invoke('trafego-busca',{body:Object.assign({otica:OTICA.id},body)});
+  if(error){let m=error.message;try{const b=await error.context.json();m=b.error||m}catch(e){}throw new Error(m)}
+  if(data&&data.error)throw new Error(data.error);return data;
+}
+/* clientes que vieram do tráfego: mesmo telefone de uma empresa abordada; vendas feitas depois da abordagem */
+function tfResultado(){
+  const L=TF.leads||[],ab=L.filter(l=>l.enviado_em),resp=L.filter(l=>['respondeu','interessada','cliente'].includes(l.status));
+  const porTel={};ab.forEach(l=>{const k=tfK8(l.telefone);if(k)porTel[k]=l});
+  const cli=Object.values(S.clientes).filter(c=>c&&porTel[tfK8(c.whatsapp)]);
+  const ids=new Set(cli.map(c=>c.id));L.filter(l=>l.status==='cliente').forEach(l=>{});
+  const vend=vendasOk().filter(v=>{if(!ids.has(v.clienteId))return false;const c=S.clientes[v.clienteId],l=porTel[tfK8(c.whatsapp)];return !l.enviado_em||v.data>=String(l.enviado_em).slice(0,10)});
+  return {total:L.length,ab:ab.length,resp:resp.length,cli:Math.max(cli.length,L.filter(l=>l.status==='cliente').length),vendas:vend.reduce((s,v)=>s+v.total,0),nVendas:vend.length};
+}
+function viewTrafego(){
+  if(!modOn('trafego'))return viewUpsell('trafego');
+  tfGarante();const R=TF.leads?tfResultado():null;
+  const nav='<div class="seg ex-nav" role="tablist" aria-label="Tráfego Orgânico">'+[['buscar','Buscar empresas'],['crm','Empresas no CRM'+(TF.leads?' ('+TF.leads.length+')':'')],['msg','Mensagem da oferta']].map(s=>'<button class="btn sm'+(TF.sub===s[0]?' primary':'')+'" role="tab" aria-selected="'+(TF.sub===s[0])+'" data-act="tfsub" data-s="'+s[0]+'">'+s[1]+'</button>').join('')+'</div>';
+  const kpis=R?'<div class="kpis" style="margin-bottom:14px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">'+tile('Empresas no CRM',R.total)+tile('Abordadas',R.ab)+tile('Responderam',R.resp+(R.ab?' <small style="font-size:13px;color:var(--muted)">('+Math.round(R.resp*100/R.ab)+'%)</small>':''))+tile('Viraram clientes',R.cli)+tile('Vendas geradas',brl(R.vendas))+'</div>':'';
+  const aviso=!waOn()?'<p class="sub" style="margin:0 0 12px">Para as abordagens saírem sozinhas, ligue o WhatsApp Automático. Sem ele, cada abordagem abre o WhatsApp com a mensagem pronta.</p>':'';
+  const corpo=TF.sub==='crm'?tfCrm():TF.sub==='msg'?tfMsgView():tfBuscar();
+  return pageHead('Tráfego Orgânico','Encontre empresas perto da ótica e leve a sua oferta até elas, sem depender de indicação')+kpis+nav+aviso+corpo;
+}
+function tfBuscar(){
+  const D=tfDoc(),loc=D.lat?'<b>'+esc(D.label||'Localização da ótica')+'</b>':'<b>Defina de onde partir a busca</b>';
+  const raios=[1000,2000,3000,5000].map(r=>'<option value="'+r+'"'+(+(D.raio||3000)===r?' selected':'')+'>'+(r/1000)+' km</option>').join('');
+  let h='<div class="card" style="gap:10px"><b>Ponto de partida</b><div class="sub" style="margin:0">'+loc+(D.lat?' · bairro usado na mensagem: '+esc(tfBairro()):'')+'</div>'+
+    '<div class="foot-row"><button class="btn sm" data-act="tfgeo">Usar o endereço da ótica</button><button class="btn sm" data-act="tfgps">Usar minha localização agora</button><label class="sub" style="display:flex;align-items:center;gap:6px;margin:0">Raio <select data-tfraio style="width:auto">'+raios+'</select></label></div>'+
+    '<div class="field"><span>Bairro que aparece na mensagem</span><input type="text" data-tfbairro value="'+esc(D.bairro||'')+'" placeholder="Ex.: Arruda"></div></div>';
+  h+='<div class="card" style="gap:10px;margin-top:12px"><b>Que tipo de empresa?</b><div class="chips">'+TF_CATS.map(c=>'<button class="fchip" aria-pressed="'+(TF.q===c[0]&&!TF.qLivre)+'" data-act="tfcat" data-q="'+esc(c[0])+'">'+c[1]+'</button>').join('')+'</div>'+
+    '<div class="foot-row"><input type="search" data-tfqlivre value="'+esc(TF.qLivre)+'" placeholder="Ou digite: construtora, contabilidade, transportadora..." style="flex:1;min-width:200px"><button class="btn primary" data-act="tfbuscar"'+(TF.buscando||!D.lat?' disabled':'')+'>'+(TF.buscando?'Buscando...':'Buscar empresas')+'</button></div>'+
+    (TF.err?'<p class="sub" style="margin:0;color:var(--bad)">'+esc(TF.err)+'</p>':'')+'</div>';
+  if(TF.res.length){
+    const ja=tfJa(),vt=new Set(),novas=TF.res.filter(p=>{if(ja(p))return false;const k=tfK8(p.telefone);if(k){if(vt.has(k))return false;vt.add(k)}return true}),n=novas.filter(p=>TF.sel[p.place_id]).length;
+    h+='<div class="sh" style="margin-top:16px"><h2>'+plural(novas.length,'empresa nova','empresas novas')+'</h2><button class="btn primary sm" data-act="tfadd"'+(n?'':' disabled')+'>Adicionar '+n+' ao CRM</button></div>'+
+      '<p class="sub" style="margin:0 0 8px">Óticas ficam de fora da busca. Empresas que já estão no seu CRM, ou com o mesmo telefone de uma que já está, não aparecem de novo. Marquei as que têm celular.</p><div class="stack">';
+    novas.forEach(p=>{h+='<label class="row" style="cursor:pointer;align-items:center"><input type="checkbox" data-tfsel="'+esc(p.place_id)+'"'+(TF.sel[p.place_id]?' checked':'')+' style="width:20px;height:20px;flex:none"><div class="row-main"><b>'+esc(p.nome)+'</b><div class="meta">'+esc(p.categoria||'Empresa')+' · '+(p.distancia_m<1000?p.distancia_m+' m':(p.distancia_m/1000).toFixed(1).replace('.',',')+' km')+(p.bairro?' · '+esc(p.bairro):'')+'</div><div class="chips">'+(p.telefone?(tfCel(p.telefone)?'<span class="chip ok">Celular</span>':'<span class="chip warn">Telefone fixo</span>'):'<span class="chip bad">Sem telefone</span>')+'<span class="chip">'+esc(p.telefone||'')+'</span></div></div></label>'});
+    h+='</div>'+(TF.next?'<div class="foot-row" style="margin-top:10px"><button class="btn" data-act="tfmais"'+(TF.buscando?' disabled':'')+'>Carregar mais empresas</button></div>':'');
+  }
+  h+='<div class="card" style="gap:10px;margin-top:16px"><b>Buscar pelo CNPJ</b><p class="sub" style="margin:0">Tem o CNPJ de uma empresa? Puxe nome, telefone e endereço do cadastro público.</p><div class="foot-row"><input type="text" inputmode="numeric" data-tfcnpj value="'+esc(TF.cnpj)+'" placeholder="00.000.000/0000-00" style="flex:1;min-width:180px"><button class="btn" data-act="tfcnpj">Consultar</button></div>';
+  const e=TF.cnpjRes;if(e)h+='<div class="row"><div class="row-main"><b>'+esc(e.nome)+'</b><div class="meta">'+esc(e.categoria||'')+'</div><div class="meta">'+esc(e.endereco||'')+'</div><div class="chips">'+(e.telefone?'<span class="chip">'+esc(e.telefone)+'</span>':'<span class="chip bad">Sem telefone no cadastro</span>')+(e.situacao&&e.situacao!=='ATIVA'?'<span class="chip bad">'+esc(e.situacao)+'</span>':'')+'</div></div><div class="row-side"><button class="btn sm primary" data-act="tfcnpjadd">Adicionar ao CRM</button></div></div>';
+  return h+'</div>';
+}
+function tfJa(){const ids=new Set(),tels=new Set();(TF.leads||[]).forEach(l=>{if(l.place_id)ids.add(l.place_id);const k=tfK8(l.telefone);if(k)tels.add(k)});return p=>ids.has(p.place_id)||(p.telefone&&tels.has(tfK8(p.telefone)))}
+function tfCrm(){
+  const L=TF.leads;if(!L)return none('Carregando...');
+  if(!L.length)return '<div class="empty" style="margin-top:12px"><h3>Nenhuma empresa ainda</h3><p>Busque empresas perto da ótica e adicione ao CRM para abordar.</p><button class="btn primary" data-act="tfsub" data-s="buscar">Buscar empresas</button></div>';
+  const c={};L.forEach(l=>c[l.status]=(c[l.status]||0)+1);
+  const fb=Object.keys(TF_ST).map(k=>'<button class="fchip" aria-pressed="'+(TF.fil===k)+'" data-act="tffil" data-f="'+k+'">'+TF_ST[k][1]+' '+(c[k]||0)+'</button>').join('')+'<button class="fchip" aria-pressed="'+(TF.fil==='todas')+'" data-act="tffil" data-f="todas">Todas '+L.length+'</button>';
+  const lista=L.filter(l=>TF.fil==='todas'||l.status===TF.fil);
+  const novasCel=L.filter(l=>l.status==='novo'&&tfCel(l.telefone)).length;
+  let h='<div class="filters" style="margin-top:4px">'+fb+'</div>';
+  if(TF.fil==='novo'&&novasCel)h+='<div class="card" style="gap:8px;margin:10px 0"><b>Abordar as novas</b><p class="sub" style="margin:0">'+(waOn()?'As mensagens entram na fila do WhatsApp Automático'+(waModo('trafego')==='auto'?' e saem sozinhas, dentro do limite por dia.':' e esperam a sua aprovação.'):'Ligue o WhatsApp Automático para abordar várias de uma vez.')+'</p>'+(waOn()?'<div class="foot-row"><button class="btn primary" data-act="tflote">Abordar '+Math.min(novasCel,20)+' empresas com celular</button></div>':'')+'</div>';
+  h+='<div class="stack" style="margin-top:8px">'+(lista.length?lista.map(tfLinha).join(''):none('Nenhuma empresa nesta lista.'))+'</div>';
+  return h;
+}
+function tfLinha(l){
+  const st=TF_ST[l.status]||['',l.status],cel=tfCel(l.telefone),wa=l.telefone?waLink(l.telefone,tfTexto(l,l.status!=='novo')):'';
+  const prox={novo:[],enviado:['respondeu','sem_interesse'],respondeu:['interessada','cliente','sem_interesse'],interessada:['cliente','sem_interesse'],cliente:[],sem_interesse:['novo']}[l.status]||[];
+  return '<article class="row"><div class="row-main"><b>'+esc(l.nome)+'</b><div class="meta">'+esc(l.categoria||'Empresa')+(l.distancia_m!=null?' · '+(l.distancia_m<1000?l.distancia_m+' m':(l.distancia_m/1000).toFixed(1).replace('.',',')+' km'):'')+(l.bairro?' · '+esc(l.bairro):'')+(l.telefone?' · '+esc(l.telefone):'')+'</div>'+
+    '<div class="chips"><span class="chip '+st[0]+'">'+st[1]+'</span>'+(l.cnpj?'<span class="chip">CNPJ</span>':'')+(!cel&&l.telefone?'<span class="chip warn">Fixo</span>':'')+(l.enviado_em?'<span class="chip">Abordada em '+fmtDate(String(l.enviado_em).slice(0,10)).slice(0,5)+'</span>':'')+'</div>'+
+    ((l.historico||[]).length?'<details class="ex-more"><summary class="sub">Histórico</summary><div class="sub" style="margin-top:6px">'+(l.historico||[]).slice().reverse().map(x=>fmtDate(String(x.em).slice(0,10)).slice(0,5)+' · '+esc(x.txt)).join('<br>')+'</div></details>':'')+'</div>'+
+    '<div class="row-side"><div class="acts">'+(l.status==='novo'&&l.telefone?(waOn()&&cel?'<button class="btn sm wa" data-act="tfabordar" data-id="'+l.id+'">Abordar</button>':'<a class="btn sm wa"'+WAT+' href="'+esc(wa)+'" data-act="tfmanual" data-id="'+l.id+'">Abordar</a>'):'')+
+    (['enviado','respondeu','interessada'].includes(l.status)&&l.telefone?(modOn('wachat')&&cel?'<button class="btn sm" data-act="tfconversa" data-id="'+l.id+'">Conversa</button>':'<a class="btn sm wa"'+WAT+' href="'+esc(wa)+'">WhatsApp</a>'):'')+
+    prox.map(k=>'<button class="btn sm" data-act="tfst" data-id="'+l.id+'" data-s="'+k+'">'+(k==='novo'?'Voltar para nova':TF_ST[k][1])+'</button>').join('')+
+    '<button class="btn sm ghost" data-act="tfdel" data-id="'+l.id+'">Remover</button></div></div></article>';
+}
+function tfMsgView(){
+  const D=tfDoc(),ex={nome:'Mercadinho Exemplo',bairro:tfBairro()};
+  return '<div class="card" style="gap:12px"><b>Mensagem da oferta (primeira abordagem)</b><p class="sub" style="margin:0">Use {bairro}, {otica} e {empresa}. No fim da mensagem entra sozinho o aviso para responder SAIR, para quem não quiser receber mais.</p>'+
+    '<textarea rows="10" data-tfmsg="msg">'+esc((D.msg||'').trim()||TF_MSG)+'</textarea><div class="sub" style="margin:0">Prévia</div><div class="card" style="white-space:pre-wrap;background:var(--surface-2)">'+esc(tfTexto(ex))+'</div></div>'+
+    '<div class="card" style="gap:12px;margin-top:12px"><b>Mensagem de retorno (para quem foi abordado e não respondeu)</b><textarea rows="5" data-tfmsg="fu">'+esc((D.fu||'').trim()||TF_FU)+'</textarea></div>'+
+    '<div class="foot-row" style="margin-top:12px"><button class="btn primary" data-act="tfsalvarmsg">Salvar mensagens</button><button class="btn" data-act="tfpadrao">Voltar ao texto padrão</button></div>'+
+    '<p class="sub" style="margin-top:10px">Dica: o WhatsApp pode bloquear números que mandam muitas mensagens para quem não conhece. Comece com poucas por dia (10 a 20) e use o limite do WhatsApp Automático.</p>';
+}
+async function tfEnfileirar(l){
+  if(!l.telefone)return false;
+  const r=await sb.rpc('wa_enfileirar',{p_otica:OTICA.id,p_cliente:l.id,p_nome:l.nome,p_tipo:'trafego',p_tel:l.telefone,p_texto:tfTexto(l),p_ref:'tf:'+l.id});
+  return !r.error&&(r.data==='ok'||r.data==='dup');
+}
+async function tfStatus(l,s,txt){
+  const hist=(l.historico||[]).concat([{em:new Date().toISOString(),txt:txt||('Status: '+TF_ST[s][1])}]);
+  const patch={status:s,historico:hist};if(s==='enviado'&&!l.enviado_em)patch.enviado_em=new Date().toISOString();
+  Object.assign(l,patch);render();const r=await sb.from('trafego_leads').update(patch).eq('id',l.id).eq('otica_id',OTICA.id);if(r.error)toast('Não foi possível salvar');
+}
+Object.assign(A,{
+  tfsub(d){TF.sub=d.s;render()},
+  tfcat(d){TF.q=d.q;TF.qLivre='';render()},
+  tffil(d){TF.fil=d.f;render()},
+  async tfgeo(){const e=(cfg().endereco||'').trim();if(e.length<5)return toast('Cadastre o endereço da ótica em Ajustes');
+    try{const g=await tfApi({modo:'geo',endereco:e});const D=tfDoc();D.lat=g.lat;D.lng=g.lng;D.label=g.label;if(!D.bairro&&g.bairro)D.bairro=g.bairro;persist('config','trafego');toast('Localização definida');render()}catch(x){toast(x.message)}},
+  tfgps(){if(!navigator.geolocation)return toast('Este aparelho não informa a localização');
+    navigator.geolocation.getCurrentPosition(p=>{const D=tfDoc();D.lat=p.coords.latitude;D.lng=p.coords.longitude;D.label='Minha localização ('+p.coords.latitude.toFixed(4)+', '+p.coords.longitude.toFixed(4)+')';persist('config','trafego');toast('Localização definida');render()},()=>toast('Não foi possível pegar a localização. Permita o acesso ou use o endereço da ótica.'),{enableHighAccuracy:true,timeout:15000})},
+  async tfbuscar(){await tfBuscarPag(false)},
+  async tfmais(){await tfBuscarPag(true)},
+  async tfadd(){const ja=tfJa(),vt=new Set(),rows=TF.res.filter(p=>{if(!TF.sel[p.place_id]||ja(p))return false;const k=tfK8(p.telefone);if(k){if(vt.has(k))return false;vt.add(k)}return true}).map(p=>({otica_id:OTICA.id,place_id:p.place_id,nome:p.nome,telefone:p.telefone||null,endereco:p.endereco,bairro:p.bairro||tfDoc().bairro||null,categoria:p.categoria||null,distancia_m:p.distancia_m,site:p.site||null,historico:[{em:new Date().toISOString(),txt:'Encontrada na busca "'+(TF.qLivre||TF.q)+'"'}]}));
+    if(!rows.length)return;const r=await sb.from('trafego_leads').insert(rows).select();if(r.error)return toast('Não foi possível adicionar: '+r.error.message);
+    TF.leads=(r.data||[]).concat(TF.leads||[]);TF.sel={};toast(rows.length+' empresa(s) no CRM');render()},
+  async tfcnpj(){const c=String(TF.cnpj||'').replace(/\D/g,'');if(c.length!==14)return toast('Digite os 14 números do CNPJ');try{const r=await tfApi({modo:'cnpj',cnpj:c});TF.cnpjRes=r.empresa;render()}catch(x){toast(x.message)}},
+  async tfcnpjadd(){const e=TF.cnpjRes;if(!e)return;if((TF.leads||[]).some(l=>l.cnpj===e.cnpj||(e.telefone&&tfK8(l.telefone)===tfK8(e.telefone))))return toast('Essa empresa já está no CRM');
+    const r=await sb.from('trafego_leads').insert({otica_id:OTICA.id,cnpj:e.cnpj,nome:e.nome,telefone:e.telefone||null,endereco:e.endereco,bairro:e.bairro||null,categoria:e.categoria||null,historico:[{em:new Date().toISOString(),txt:'Adicionada pelo CNPJ'}]}).select();
+    if(r.error)return toast('Não foi possível adicionar');TF.leads=(r.data||[]).concat(TF.leads||[]);TF.cnpjRes=null;TF.cnpj='';toast('Empresa adicionada ao CRM');render()},
+  async tfabordar(d){const l=(TF.leads||[]).find(x=>x.id===d.id);if(!l)return;if(await tfEnfileirar(l)){l.historico=(l.historico||[]).concat([{em:new Date().toISOString(),txt:'Abordagem na fila do WhatsApp'}]);await sb.from('trafego_leads').update({historico:l.historico}).eq('id',l.id);toast(waModo('trafego')==='auto'?'Abordagem na fila do WhatsApp':'Abordagem esperando sua aprovação no WhatsApp Automático');render()}else toast('Não foi possível colocar na fila')},
+  tfmanual(d){const l=(TF.leads||[]).find(x=>x.id===d.id);if(l)setTimeout(()=>tfStatus(l,'enviado','Abordagem enviada pelo WhatsApp'),300)},
+  async tflote(){const L=(TF.leads||[]).filter(l=>l.status==='novo'&&tfCel(l.telefone)).slice(0,20);if(!L.length)return;if(!confirm('Colocar '+L.length+' abordagens na fila do WhatsApp Automático?'))return;let n=0;for(const l of L){if(await tfEnfileirar(l))n++}toast(n+' abordagens na fila'+(waModo('trafego')==='auto'?'':' esperando sua aprovação'));tfLoad()},
+  tfst(d){const l=(TF.leads||[]).find(x=>x.id===d.id);if(l)tfStatus(l,d.s)},
+  async tfdel(d){const l=(TF.leads||[]).find(x=>x.id===d.id);if(!l||!confirm('Remover '+l.nome+' do CRM?'))return;await sb.from('trafego_leads').update({status:'removida'}).eq('id',l.id);TF.leads=TF.leads.filter(x=>x!==l);render()},
+  tfconversa(d){const l=(TF.leads||[]).find(x=>x.id===d.id);if(!l||typeof wcK!=='function')return;const t=String(l.telefone).replace(/\D/g,''),tel=t.length<=11?'55'+t:t;const ns=wcNomes();if(!ns[wcK(tel)]){ns[wcK(tel)]=l.nome;persist('config','wachat')}WC.sel=wcK(tel);if(WC.msgs&&!wcConvs().some(x=>x.k===WC.sel))WC.pend.push({id:'novo',telefone:tel,texto:'',status:'novo',criado_em:new Date().toISOString()});ui.tab='wachat';render()},
+  tfsalvarmsg(){const D=tfDoc();document.querySelectorAll('[data-tfmsg]').forEach(t=>{D[t.dataset.tfmsg]=t.value.trim()});persist('config','trafego');toast('Mensagens salvas');render()},
+  tfpadrao(){const D=tfDoc();D.msg='';D.fu='';persist('config','trafego');render()},
+});
+async function tfBuscarPag(mais){
+  const D=tfDoc();if(!D.lat)return toast('Defina a localização primeiro');TF.buscando=true;TF.err='';if(!mais){TF.res=[];TF.next=null;TF.sel={}}render();
+  try{let pag=0;const antes=TF.res.filter(p=>!tfJa()(p)).length;
+    do{const r=await tfApi({modo:'mapa',lat:D.lat,lng:D.lng,raio:+D.raio||3000,consulta:TF.qLivre||TF.q,pageToken:(mais||pag>0)?TF.next:undefined});
+      const ids=new Set(TF.res.map(x=>x.place_id));TF.res=TF.res.concat((r.empresas||[]).filter(x=>!ids.has(x.place_id)));TF.next=r.nextPageToken;pag++;
+    }while(TF.next&&pag<2&&TF.res.filter(p=>!tfJa()(p)).length-antes<8);
+    const ja=tfJa();TF.res.forEach(p=>{if(TF.sel[p.place_id]===undefined&&!ja(p)&&tfCel(p.telefone))TF.sel[p.place_id]=true});
+    if(!TF.res.length)TF.err='Nenhuma empresa encontrada nesse raio. Tente outro tipo ou aumente o raio.';
+  }catch(x){TF.err=x.message}
+  TF.buscando=false;render();
+}
+document.addEventListener('input',e=>{const t=e.target;if(!t||!t.dataset)return;
+  if(t.dataset.tfqlivre!==undefined){TF.qLivre=t.value;return}
+  if(t.dataset.tfcnpj!==undefined){TF.cnpj=t.value;return}
+  if(t.dataset.tfbairro!==undefined){tfDoc().bairro=t.value;clearTimeout(TF.bt);TF.bt=setTimeout(()=>persist('config','trafego'),800);return}
+});
+document.addEventListener('change',e=>{const t=e.target;if(!t||!t.dataset)return;
+  if(t.dataset.tfsel){TF.sel[t.dataset.tfsel]=t.checked;const b=document.querySelector('[data-act="tfadd"]');if(b){const n=Object.keys(TF.sel).filter(k=>TF.sel[k]&&TF.res.some(p=>p.place_id===k)&&!tfJa()(TF.res.find(p=>p.place_id===k))).length;b.textContent='Adicionar '+n+' ao CRM';b.disabled=!n}return}
+  if(t.dataset.tfraio!==undefined){tfDoc().raio=+t.value;persist('config','trafego');return}
+});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target&&e.target.dataset&&e.target.dataset.tfqlivre!==undefined){e.preventDefault();A.tfbuscar()}});
 
 /* ---------- PREMIUM-FIM ---------- */
 /* ---------- ADMIN-INICIO (somente sistema real) ---------- */
