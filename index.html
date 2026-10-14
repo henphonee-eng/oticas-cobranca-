@@ -758,6 +758,33 @@ html:not(.adm) :is(.btn,.tab,.fchip,button.card,button.kpi,button.tile,.dlc):foc
 .bi-hb li:hover,.bi-hb li:focus-visible{background:color-mix(in srgb,var(--accent) 7%,transparent)}
 .bi-empty{padding:26px 8px;text-align:center;color:var(--muted);font-size:13.5px}
 .bi-op{margin-top:6px}
+/* ---------- relatórios ---------- */
+.rep-hero{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px 24px;padding:20px 22px;margin-bottom:12px;border-radius:18px;color:#fff;background:linear-gradient(135deg,#0b2f6b 0%,#1d5fc0 55%,#2a78d6 100%);box-shadow:0 10px 28px rgba(11,47,107,.22)}
+.rep-hero small{font-size:12.5px;font-weight:600;opacity:.82;letter-spacing:.02em}
+.rep-hero h2{margin:2px 0 4px;font-size:24px;color:#fff;line-height:1.15}
+.rep-hero p{margin:0;font-size:12.5px;opacity:.85}
+.rep-hn{display:flex;flex-wrap:wrap;gap:10px}
+.rep-hn div{display:flex;flex-direction:column;gap:2px;padding:10px 14px;border-radius:12px;background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.2);min-width:120px}
+.rep-hn b{font-size:18px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.rep-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;margin-bottom:12px}
+@media (min-width:900px){.rep-grid.g2{grid-template-columns:repeat(2,minmax(0,1fr))}.rep-grid.g3{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (min-width:1180px){.rep-grid.g3{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.rep-grid>.bi-card{grid-column:auto!important}
+.rep-ins{margin:0;padding:0 0 0 18px;display:grid;gap:9px;font-size:14px;line-height:1.45}
+.rep-ins li::marker{color:var(--c1)}
+.rep-tb td:nth-child(n+2),.rep-tb th:nth-child(n+2){text-align:right;white-space:nowrap}
+.rep-tb .rep-up{color:var(--ok);font-weight:600}.rep-tb .rep-dn{color:var(--bad);font-weight:600}
+@media (max-width:560px){.rep-hero{padding:16px}.rep-hero h2{font-size:20px}.rep-hn{width:100%}.rep-hn div{flex:1 1 0;min-width:0;padding:8px 10px}.rep-hn b{font-size:15px}.rep .bi-card{padding:14px 10px 12px}.rep-tb th,.rep-tb td{padding:7px 4px;font-size:11.5px}.rep-tb td:first-child{min-width:96px;padding-left:8px}.rep-tb th:first-child{padding-left:8px}.rep-tb td:last-child,.rep-tb th:last-child{padding-right:8px}}
+@media print{
+  body *{visibility:hidden}
+  .rep,.rep *{visibility:visible}
+  .rep{position:absolute;left:0;top:0;width:100%;margin:0}
+  .rep-noprint,.bi-det{display:none!important}
+  .rep-hero{-webkit-print-color-adjust:exact;print-color-adjust:exact;box-shadow:none}
+  .bi-card,.bi-k{break-inside:avoid;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .rep-grid.g2,.rep-grid.g3{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .bi-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
 .bi-tip{position:fixed;z-index:120;display:none;max-width:min(320px,calc(100vw - 12px));padding:8px 11px;border-radius:9px;background:var(--fg);color:var(--bg);font-size:12.5px;line-height:1.4;pointer-events:none;box-shadow:0 6px 18px rgba(0,0,0,.28)}
 @media (max-width:520px){.bi-plot{height:170px}}
 
@@ -1163,6 +1190,7 @@ const ICON={
   os:I('<path d="M7 3h8l4 4v14H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/>'),
   entregas:I('<path d="M4 8l8-4 8 4v8l-8 4-8-4z"/><path d="M4 8l8 4 8-4M12 12v8"/>'),
   financeiro:I('<path d="M4 19V9M10 19V5M16 19v-7M21 19H3"/>'),
+  relatorios:I('<path d="M14 3.5H7A2.5 2.5 0 0 0 4.5 6v12A2.5 2.5 0 0 0 7 20.5h10a2.5 2.5 0 0 0 2.5-2.5V9z"/><path d="M14 3.5V9h5.5M8.5 17v-3M12 17v-5M15.5 17v-2"/>'),
   metas:I('<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="0.8"/>'),
   campanhas:I('<path d="M4 11v3l11 4V7z"/><path d="M15 9.5a3 3 0 0 1 0 5M7 14.5v3.5"/>'),
   menu:I('<path d="M4 6.5h16M4 12h16M4 17.5h16"/>'),
@@ -1170,10 +1198,10 @@ const ICON={
   sair:I('<path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4M15 8l4 4-4 4M19 12H9"/>')
 };
 const GLASSES='<svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11.5" cy="23" r="7"/><circle cx="28.5" cy="23" r="7"/><path d="M18.5 22c1-1.3 2-1.3 3 0M4.5 21 7 12M35.5 21 33 12"/></svg>';
-const TABS=[['painel','Painel'],['vendas','Vendas'],['aguard','Orçamentos'],['clientes','Clientes'],['cobrar','Cobrar'],['entregas','Follow-up'],['agenda','Agenda financeira'],['os','Ordens de serviço'],['relacao','Relacionamento'],['caixa','Caixa'],['lentes','Lentes'],['demolentes','Demonstração de lentes'],['campanhas','Campanhas'],['financeiro','Financeiro'],['metas','Metas'],['trafego','Tráfego Orgânico'],['whatsapp','WhatsApp Automático'],['agente','Agente de IA'],['wachat','Conversas do WhatsApp'],['exames','Exames de vista'],['ajustes','Ajustes']];
+const TABS=[['painel','Painel'],['vendas','Vendas'],['aguard','Orçamentos'],['clientes','Clientes'],['cobrar','Cobrar'],['entregas','Follow-up'],['agenda','Agenda financeira'],['os','Ordens de serviço'],['relacao','Relacionamento'],['caixa','Caixa'],['lentes','Lentes'],['demolentes','Demonstração de lentes'],['campanhas','Campanhas'],['financeiro','Financeiro'],['metas','Metas'],['relatorios','Relatórios'],['trafego','Tráfego Orgânico'],['whatsapp','WhatsApp Automático'],['agente','Agente de IA'],['wachat','Conversas do WhatsApp'],['exames','Exames de vista'],['ajustes','Ajustes']];
 /* grupos do menu por finalidade: vendas e loja, clientes (follow-up, WhatsApp, campanhas, exames), financeiro (cobrar, agenda financeira, caixa...) e sistema */
-const TGORD=['painel','vendas','aguard','os','lentes','demolentes','clientes','relacao','entregas','trafego','wachat','whatsapp','agente','campanhas','site','exames','cobrar','agenda','caixa','financeiro','metas','ajustes'];
-const TGRP={painel:'',vendas:'Vendas e loja',aguard:'Vendas e loja',os:'Vendas e loja',lentes:'Vendas e loja',demolentes:'Vendas e loja',clientes:'Clientes',relacao:'Clientes',entregas:'Clientes',whatsapp:'Clientes',wachat:'Clientes',trafego:'Clientes',agente:'Clientes',campanhas:'Clientes',site:'Clientes',agenda:'Financeiro',exames:'Clientes',cobrar:'Financeiro',caixa:'Financeiro',financeiro:'Financeiro',metas:'Financeiro',ajustes:'Sistema'};
+const TGORD=['painel','vendas','aguard','os','lentes','demolentes','clientes','relacao','entregas','trafego','wachat','whatsapp','agente','campanhas','site','exames','cobrar','agenda','caixa','financeiro','metas','relatorios','ajustes'];
+const TGRP={painel:'',vendas:'Vendas e loja',aguard:'Vendas e loja',os:'Vendas e loja',lentes:'Vendas e loja',demolentes:'Vendas e loja',clientes:'Clientes',relacao:'Clientes',entregas:'Clientes',whatsapp:'Clientes',wachat:'Clientes',trafego:'Clientes',agente:'Clientes',campanhas:'Clientes',site:'Clientes',agenda:'Financeiro',exames:'Clientes',cobrar:'Financeiro',caixa:'Financeiro',financeiro:'Financeiro',metas:'Financeiro',relatorios:'Financeiro',ajustes:'Sistema'};
 function tabsGrp(tv,fn){let g='',o='';const ix=k=>{const n=TGORD.indexOf(k);return n<0?99:n};tv=tv.map((t,n)=>[t,n]).sort((a,b)=>ix(a[0][0])-ix(b[0][0])||a[1]-b[1]).map(x=>x[0]);tv.forEach(t=>{const k=TGRP[t[0]]||'';if(k&&k!==g){o+='<div class="tgrp'+''+'" aria-hidden="true">'+k+'</div>'}g=k;o+=fn(t)});return o}
 const saudacao=()=>{const h=new Date().getHours();return h<12?'Bom dia':h<18?'Boa tarde':'Boa noite'};
 function admTabInicial(){const q=new URLSearchParams(location.search),t=q.get('tab');if(t){q.delete('tab');history.replaceState(null,'',location.pathname+(q.toString()?'?'+q:''))}return t==='mensal'?'mensal':t==='iauso'?'iauso':'admin'}
@@ -1185,12 +1213,12 @@ function tabsVis(){
   if(!OTICA)return IS_ADMIN?[ADMTAB,MENSTAB,IATAB].concat(PROSPTABS):[];
   let t=TABS.filter(x=>x[0]!=='whatsapp'||(ROLE==='dono'&&modOn('wa')));
   t=t.filter(x=>x[0]!=='exames'||ROLE==='dono'||modOn('exames'));
-  t=t.filter(x=>ROLE==='dono'||!['caixa','lentes','ajustes','financeiro','campanhas','site'].includes(x[0]));
+  t=t.filter(x=>ROLE==='dono'||!['caixa','lentes','ajustes','financeiro','campanhas','site','relatorios'].includes(x[0]));
   if(ROLE!=='dono'){const ac=premAcTabs();if(ac){t=TABS.filter(x=>x[0]!=='ajustes'&&x[0]!=='whatsapp'&&(ac.includes(x[0])||x[0]==='demolentes'));if(!t.length)t=TABS.filter(x=>x[0]==='painel')}}
   if(IS_ADMIN)t=t.concat([ADMTAB,MENSTAB,IATAB],PROSPTABS);
   return t;
 }
-function viewTab(){const k=ui.tab;return k==='painel'?viewPainel():k==='agenda'?viewAgenda():k==='vendas'?viewVendas():k==='aguard'?viewAguard():k==='entregas'?viewFollow():k==='os'?viewOS():k==='clientes'?viewClientes():k==='cobrar'?viewCobrar():k==='relacao'?viewRelacao():k==='caixa'?viewCaixa():k==='lentes'?viewLentes():k==='demolentes'?viewDemoLentes():k==='admin'?viewAdmin():k==='iauso'?viewAdmIA():k==='mensal'?viewMensal():(k==='financeiro'||k==='metas'||k==='campanhas'||k==='premium'||k==='whatsapp'||k==='exames'||k==='wachat'||k==='site'||k==='trafego'||k==='agente')?premView(k):viewAjustes()}
+function viewTab(){const k=ui.tab;return k==='painel'?viewPainel():k==='agenda'?viewAgenda():k==='vendas'?viewVendas():k==='aguard'?viewAguard():k==='entregas'?viewFollow():k==='os'?viewOS():k==='clientes'?viewClientes():k==='cobrar'?viewCobrar():k==='relacao'?viewRelacao():k==='caixa'?viewCaixa():k==='lentes'?viewLentes():k==='demolentes'?viewDemoLentes():k==='admin'?viewAdmin():k==='iauso'?viewAdmIA():k==='mensal'?viewMensal():k==='relatorios'?viewRelatorios():(k==='financeiro'||k==='metas'||k==='campanhas'||k==='premium'||k==='whatsapp'||k==='exames'||k==='wachat'||k==='site'||k==='trafego'||k==='agente')?premView(k):viewAjustes()}
 let deferredInstall=null;
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;if(auth==='ok')render()});
 const demoTag=o=>o&&o.exemplo?'<span class="demo">exemplo</span>':'';
@@ -1441,6 +1469,151 @@ function biSection(){
       '<div class="bi-card"><div class="bi-ch"><h3>A receber nos próximos meses</h3></div>'+biHBars(futRows.filter(x=>x.v>0),'c1','Nada a receber nos próximos meses.')+'</div>'+
     '</div></section>';
 }
+/* ---------- Relatórios: balanço do mês, comparado com o mês anterior ---------- */
+const REP={k:'',ex:null,wa:null,busy:false};
+function repRange(m){
+  const t=todayStr(),a=m+'-01',last=m+'-'+pad(new Date(+m.slice(0,4),+m.slice(5,7),0).getDate());
+  const atual=t.slice(0,7)===m,b=atual?t:last;
+  const pm=addMonths(a,-1).slice(0,7),pa=pm+'-01',plast=pm+'-'+pad(new Date(+pm.slice(0,4),+pm.slice(5,7),0).getDate());
+  let pb=plast;if(atual){const d=pm+'-'+t.slice(8,10);pb=d<plast?d:plast}
+  return {m:m,a:a,b:b,last:last,atual:atual,pm:pm,pa:pa,pb:pb,t:t};
+}
+function repCalc(a,b){
+  const t=todayStr(),vs=vendasOk().filter(v=>biIn(v.data,a,b)),ps=allP();
+  const rec=ps.filter(x=>x.p.pago&&biIn(x.p.pagoEm,a,b));
+  const fin=Object.values(finDoc().itens||{}),pagas=fin.filter(x=>x.pago&&biIn(x.pagoEm,a,b));
+  const vencMes=ps.filter(x=>biIn(x.p.venc,a,b>t?t:b)),vencPagas=vencMes.filter(x=>x.p.pago);
+  const novos=Object.values(S.clientes).filter(c=>c.criadoEm&&biIn(ymd(new Date(c.criadoEm)),a,b));
+  const compr={};vs.forEach(v=>{compr[v.clienteId]=1});
+  const antes={};vendasOk().forEach(v=>{if(v.data<a)antes[v.clienteId]=1});
+  const recor=Object.keys(compr).filter(k=>antes[k]).length;
+  const orc=Object.values(S.vendas).filter(v=>v.aguardando&&biIn(v.data,a,b));
+  const vend=sumT(vs),recb=sumV(rec),desp=pagas.reduce((s,x)=>s+(+x.valor||0),0);
+  return {vs:vs,rec:rec,pagas:pagas,vend:vend,recb:recb,desp:desp,lucro:recb-desp,n:vs.length,ticket:vs.length?Math.round(vend/vs.length):0,
+    itens:vs.reduce((s,v)=>s+(v.itens||[]).reduce((q,i)=>q+(+i.qtd||1),0),0),novos:novos.length,clientes:Object.keys(compr).length,recor:recor,
+    orc:orc.length,orcV:sumT(orc),vencN:vencMes.length,vencOk:vencPagas.length,vencV:sumV(vencMes),vencAberto:sumV(vencMes.filter(x=>!x.p.pago)),
+    adimp:vencMes.length?Math.round(vencPagas.length/vencMes.length*100):null};
+}
+async function repLoad(r){
+  const k=r.m;if(REP.busy||REP.k===k||!OTICA)return;REP.busy=true;REP.k=k;REP.ex=null;REP.wa=null;
+  try{
+    const q=[];
+    q.push(modOn('exames')?sb.from('ex_agend').select('status,data,origem').eq('otica_id',OTICA.id).gte('data',r.pa).lte('data',r.last).limit(5000):Promise.resolve(null));
+    q.push(modOn('wa')?sb.from('wa_fila').select('tipo,enviado_em').eq('otica_id',OTICA.id).eq('status','enviada').gte('enviado_em',r.pa+'T00:00:00-03:00').lte('enviado_em',r.last+'T23:59:59-03:00').limit(10000):Promise.resolve(null));
+    const res=await Promise.all(q);
+    REP.ex=res[0]&&!res[0].error?res[0].data:null;REP.wa=res[1]&&!res[1].error?res[1].data:null;
+  }catch(e){}
+  REP.busy=false;if(ui.tab==='relatorios'&&!ui.sheet&&!fieldsOn())render();
+}
+function repDelta(cur,prev,inv,pct){
+  if(cur==null||prev==null)return '';
+  if(!prev&&!cur)return '<span class="bi-d">sem movimento nos dois meses</span>';
+  if(pct){const d=cur-prev;if(!d)return '<span class="bi-d">igual ao mês anterior</span>';const good=inv?d<0:d>0;return '<span class="bi-d"><i class="bi-ar '+(good?'g':'b')+'">'+(d>0?'▲':'▼')+'</i>'+(d>0?'+':'')+d+' pontos <small>vs. mês anterior</small></span>'}
+  if(!prev)return '<span class="bi-d">novo neste mês</span>';
+  const p=Math.round((cur-prev)/Math.abs(prev)*100);if(!p)return '<span class="bi-d">igual ao mês anterior</span>';
+  const up=p>0,good=inv?!up:up;
+  return '<span class="bi-d"><i class="bi-ar '+(good?'g':'b')+'">'+(up?'▲':'▼')+'</i>'+(up?'+':'')+p+'% <small>vs. mês anterior</small></span>';
+}
+function repVar(cur,prev,inv,money,pct){
+  const f=v=>v==null?'-':pct?v+'%':money?brl(v):String(v);
+  let d='';if(cur!=null&&prev!=null){if(pct){const x=cur-prev;d=x?(x>0?'+':'')+x+' p.p.':'='}else if(prev){const p=Math.round((cur-prev)/Math.abs(prev)*100);d=p?(p>0?'+':'')+p+'%':'='}else d=cur?'novo':'='}
+  const good=d&&d!=='='&&d!=='novo'?((d[0]==='+')!==!!inv):null;
+  return '<td>'+f(prev)+'</td><td><b>'+f(cur)+'</b></td><td class="'+(good===null?'':good?'rep-up':'rep-dn')+'">'+d+'</td>';
+}
+const repMesC=mm=>cap(MES3[+mm.slice(5,7)-1])+'/'+mm.slice(2,4);
+function viewRelatorios(){
+  const m=ui.rm||(ui.rm=todayStr().slice(0,7)),r=repRange(m),cur=repCalc(r.a,r.b),prev=repCalc(r.pa,r.pb);
+  repLoad(r);
+  const pmN=fmtMes(r.pm);
+  // vendas por dia do mês
+  const dias=[];for(let d=r.a;d<=r.last;d=addDays(d,1))dias.push({a:d,b:d,lbl:d.slice(8,10),tip:fmtDate(d)});
+  const sv=dias.map(x=>sumT(cur.vs.filter(v=>v.data===x.a))),sr=dias.map(x=>sumV(cur.rec.filter(y=>y.p.pagoEm===x.a)));
+  // evolução de 6 meses
+  const ms=[];for(let i=5;i>=0;i--){const mm=addMonths(r.a,-i).slice(0,7),rr=repRange(mm),d=parseYmd(mm+'-01');ms.push({a:rr.a,b:rr.b,lbl:MES3[d.getMonth()],tip:cap(MES3[d.getMonth()])+'/'+d.getFullYear()})}
+  const ev=ms.map(x=>repCalc(x.a,x.b)),ev1=ev.map(x=>x.vend),ev2=ev.map(x=>x.recb);
+  const evTab='<details class="bi-det"><summary>Ver os 6 meses em tabela</summary><div class="bi-tbw"><table><thead><tr><th>Mês</th><th>Vendido</th><th>Recebido</th><th>Contas pagas</th><th>Lucro</th></tr></thead><tbody>'+ms.map((x,i)=>'<tr><td>'+esc(x.tip)+'</td><td>'+brl(ev[i].vend)+'</td><td>'+brl(ev[i].recb)+'</td><td>'+brl(ev[i].desp)+'</td><td>'+brl(ev[i].lucro)+'</td></tr>').join('')+'</tbody></table></div></details>';
+  // mais vendidos
+  const it={};cur.vs.forEach(v=>(v.itens||[]).forEach(i=>{const nm=String(i.nome||'').trim()||'Sem nome',k=nm.toLowerCase();const e=it[k]||(it[k]={n:nm,v:0,q:0});e.v+=(+i.qtd||1)*(+i.valor||0);e.q+=(+i.qtd||1)}));
+  const top=Object.values(it).sort((a,b)=>b.v-a.v).slice(0,6).map(x=>({n:x.n,v:x.v,l:brl(x.v),t:x.n+' · '+brl(x.v)+' · '+x.q+' un.'}));
+  // despesas por tipo
+  const dc={};cur.pagas.forEach(x=>{const k=x.cat||'Outros';dc[k]=(dc[k]||0)+(+x.valor||0)});
+  const desp=Object.keys(dc).map(k=>({n:k,v:dc[k],l:brl(dc[k]),t:k+' · '+brl(dc[k])})).sort((a,b)=>b.v-a.v);
+  // vendedores
+  let vendHtml='';
+  if(modOn('metas')&&vendList().length){const vv={};cur.vs.forEach(v=>{const k=vendKey(v)||'-';const e=vv[k]||(vv[k]={n:k==='-'?'Venda da ótica':vendNome(k),v:0,q:0});e.v+=v.total;e.q++});
+    const rows=Object.values(vv).sort((a,b)=>b.v-a.v).map(x=>({n:x.n,v:x.v,l:brl(x.v),t:x.n+' · '+brl(x.v)+' · '+plural(x.q,'venda','vendas')}));
+    vendHtml='<div class="bi-card"><div class="bi-ch"><h3>Vendas por vendedor</h3></div>'+biHBars(rows,'c1','Nenhuma venda neste mês.')+'</div>'}
+  // exames e WhatsApp (vêm do servidor)
+  const exIn=(l,a,b)=>(l||[]).filter(x=>biIn(x.data,a,b));
+  const exC=REP.ex?exIn(REP.ex,r.a,r.b):null,exP=REP.ex?exIn(REP.ex,r.pa,r.pb):null;
+  const exN=l=>l?l.filter(x=>x.status!=='cancelado').length:null,exV=l=>l?l.filter(x=>x.status==='compareceu').length:null,exF=l=>l?l.filter(x=>x.status==='faltou').length:null;
+  const waIn=(a,b)=>REP.wa?REP.wa.filter(x=>x.enviado_em&&biIn(ymd(new Date(x.enviado_em)),a,b)).length:null;
+  const waC=waIn(r.a,r.b),waP=waIn(r.pa,r.pb);
+  let extra='';
+  if(modOn('exames')){
+    const st=exC?[['Agendados',exC.filter(x=>x.status==='agendado'||x.status==='confirmado').length],['Compareceram',exV(exC)],['Faltaram',exF(exC)],['Cancelados',exC.filter(x=>x.status==='cancelado').length]]:[];
+    const tx=exC&&exN(exC)?Math.round(exV(exC)/Math.max(1,exV(exC)+exF(exC))*100):null;
+    extra+='<div class="bi-card"><div class="bi-ch"><h3>Exames de vista</h3>'+(tx!=null&&(exV(exC)+exF(exC))?'<span class="sub" style="margin:0">'+tx+'% de comparecimento</span>':'')+'</div>'+(exC?biHBars(st.filter(x=>x[1]).map(x=>({n:x[0],v:x[1],l:String(x[1]),t:x[0]+' · '+x[1]})),'c1','Nenhum exame neste mês.'):'<div class="bi-empty">Carregando...</div>')+'</div>';
+  }
+  if(modOn('wa')){
+    const tp={};(REP.wa||[]).filter(x=>x.enviado_em&&biIn(ymd(new Date(x.enviado_em)),r.a,r.b)).forEach(x=>{const n=WA_NOME[x.tipo]||x.tipo;tp[n]=(tp[n]||0)+1});
+    const rows=Object.keys(tp).map(k=>({n:k,v:tp[k],l:String(tp[k]),t:k+' · '+tp[k]})).sort((a,b)=>b.v-a.v).slice(0,7);
+    extra+='<div class="bi-card"><div class="bi-ch"><h3>Mensagens automáticas enviadas</h3>'+(waC!=null?'<span class="sub" style="margin:0">'+waC+' no mês</span>':'')+'</div>'+(REP.wa?biHBars(rows,'c2','Nenhuma mensagem enviada neste mês.'):'<div class="bi-empty">Carregando...</div>')+'</div>';
+  }
+  // resumo escrito
+  const ins=[];
+  const pv=(c,p)=>p?Math.round((c-p)/Math.abs(p)*100):null;
+  const x1=pv(cur.vend,prev.vend);
+  ins.push(cur.n?'Foram '+plural(cur.n,'venda','vendas')+', somando '+brl(cur.vend)+(x1!=null&&x1?' ('+(x1>0?'+':'')+x1+'% em relação a '+pmN.toLowerCase()+')':'')+'.':'Nenhuma venda registrada no mês.');
+  const mx=Math.max.apply(null,sv.concat([0]));if(mx>0){const i=sv.indexOf(mx);ins.push('O melhor dia de vendas foi '+fmtDate(dias[i].a)+', com '+brl(mx)+'.')}
+  if(top.length)ins.push('O item que mais vendeu foi '+top[0].n+' ('+top[0].l+').');
+  const fp={};cur.rec.forEach(x=>{const f=pForma(x.p,x.v)||'Outros';fp[f]=(fp[f]||0)+recv(x.p)});const fpk=Object.keys(fp).sort((a,b)=>fp[b]-fp[a])[0];
+  if(fpk)ins.push('A forma de pagamento mais usada foi '+fpk+' ('+Math.round(fp[fpk]/Math.max(1,cur.recb)*100)+'% do que entrou).');
+  if(cur.adimp!=null)ins.push(cur.adimp+'% das parcelas que venceram no mês foram pagas'+(cur.vencAberto?'; ficaram '+brl(cur.vencAberto)+' em aberto':'')+'.');
+  if(cur.desp)ins.push('O lucro do mês (recebido menos contas pagas) foi de '+brl(cur.lucro)+(desp.length?'. A maior despesa foi '+desp[0].n+' ('+desp[0].l+')':'')+'.');
+  if(cur.novos)ins.push(plural(cur.novos,'cliente novo cadastrado','clientes novos cadastrados')+(cur.recor?' e '+plural(cur.recor,'cliente voltou','clientes voltaram')+' a comprar':'')+'.');
+  // tabela comparativa
+  const linhas=[['Vendido',cur.vend,prev.vend,0,1],['Recebido',cur.recb,prev.recb,0,1],['Contas pagas',cur.desp,prev.desp,1,1],['Lucro (recebido menos contas)',cur.lucro,prev.lucro,0,1],['Quantidade de vendas',cur.n,prev.n,0,0],['Ticket médio',cur.ticket,prev.ticket,0,1],['Peças vendidas',cur.itens,prev.itens,0,0],['Clientes que compraram',cur.clientes,prev.clientes,0,0],['Clientes novos cadastrados',cur.novos,prev.novos,0,0],['Clientes que voltaram a comprar',cur.recor,prev.recor,0,0],['Orçamentos em aberto criados',cur.orc,prev.orc,0,0],['Parcelas que venceram',cur.vencN,prev.vencN,0,0],['Parcelas pagas das que venceram',cur.adimp,prev.adimp,0,0,1],['Ficou em aberto das que venceram',cur.vencAberto,prev.vencAberto,1,1]];
+  if(modOn('exames')&&exC)linhas.push(['Exames agendados',exN(exC),exN(exP),0,0],['Clientes que vieram ao exame',exV(exC),exV(exP),0,0],['Faltas no exame',exF(exC),exF(exP),1,0]);
+  if(modOn('wa')&&REP.wa)linhas.push(['Mensagens automáticas enviadas',waC,waP,0,0]);
+  const tabela='<div class="bi-tbw rep-tb" style="max-height:none"><table><thead><tr><th>Indicador</th><th>'+repMesC(r.pm)+'</th><th>'+repMesC(m)+'</th><th>Var.</th></tr></thead><tbody>'+linhas.map(l=>'<tr><td>'+l[0]+'</td>'+repVar(l[1],l[2],l[3],l[4],l[5])+'</tr>').join('')+'</tbody></table></div>';
+  const kpi=(cls,lab,val,sub,extra)=>'<div class="bi-k '+cls+'"><small>'+lab+'</small><b>'+val+'</b>'+(sub||'')+(extra||'')+'</div>';
+  const kpis=
+    kpi('','Vendido',brl(cur.vend),repDelta(cur.vend,prev.vend),biSpark(sv,'c1'))+
+    kpi('','Recebido',brl(cur.recb),repDelta(cur.recb,prev.recb),biSpark(sr,'c3'))+
+    kpi('','Ticket médio',brl(cur.ticket),repDelta(cur.ticket,prev.ticket),'<span class="bi-n">'+plural(cur.n,'venda','vendas')+'</span>')+
+    kpi('','Clientes novos',String(cur.novos),repDelta(cur.novos,prev.novos),'<span class="bi-n">'+plural(cur.clientes,'cliente comprou','clientes compraram')+'</span>')+
+    kpi(cur.lucro<0?'neg':'','Lucro do mês',brl(cur.lucro),repDelta(cur.lucro,prev.lucro),'<span class="bi-n">'+brl(cur.desp)+' em contas pagas</span>')+
+    kpi(cur.adimp!=null&&cur.adimp<80?'neg':'','Parcelas pagas em dia',cur.adimp==null?'-':cur.adimp+'%',repDelta(cur.adimp,prev.adimp,false,true),'<span class="bi-n">'+cur.vencOk+' de '+plural(cur.vencN,'parcela','parcelas')+' que venceram</span>');
+  const hero='<div class="rep-hero"><div class="rep-hl"><small>'+esc(cfg().nome||'Sua ótica')+'</small><h2>Balanço de '+esc(fmtMes(m).toLowerCase())+'</h2><p>'+fmtDate(r.a)+' a '+fmtDate(r.b)+(r.atual?' · mês em andamento, comparado com o mesmo período de '+esc(pmN.toLowerCase()):' · comparado com '+esc(pmN.toLowerCase()))+'</p></div>'+
+    '<div class="rep-hn"><div><small>Vendido</small><b>'+brl(cur.vend)+'</b></div><div><small>Recebido</small><b>'+brl(cur.recb)+'</b></div><div><small>Lucro</small><b>'+brl(cur.lucro)+'</b></div></div></div>';
+  return pageHead('Relatórios','Balanço do mês, comparado com o mês anterior','<div class="acts rep-noprint">'+mesNav(m,'rm')+'</div>')+
+  '<div class="acts rep-noprint" style="margin:-4px 0 14px;flex-wrap:wrap"><button class="btn" data-act="repprint">Imprimir ou salvar em PDF</button><button class="btn" data-act="repdet">Relatório detalhado (PDF e planilha)</button></div>'+
+  '<section class="bi rep" aria-label="Relatório do mês">'+hero+
+  '<div class="bi-kpis">'+kpis+'</div>'+
+  '<div class="rep-grid g2">'+
+    '<div class="bi-card"><div class="bi-ch"><h3>Resumo do mês</h3></div><ul class="rep-ins">'+ins.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul></div>'+
+    '<div class="bi-card"><div class="bi-ch"><h3>Comparativo com '+esc(pmN.toLowerCase())+'</h3></div>'+tabela+'</div>'+
+  '</div>'+
+  '<div class="rep-grid">'+
+    '<div class="bi-card"><div class="bi-ch"><h3>Vendido e recebido, dia a dia</h3><div class="bi-lg"><span><i style="background:var(--c1)"></i>Vendido</span><span><i style="background:var(--c3)"></i>Recebido</span></div></div>'+biBarsChart(dias,sv,sr,'30d')+'</div>'+
+  '</div>'+
+  '<div class="rep-grid g2">'+
+    '<div class="bi-card"><div class="bi-ch"><h3>Evolução dos últimos 6 meses</h3><div class="bi-lg"><span><i style="background:var(--c1)"></i>Vendido</span><span><i style="background:var(--c3)"></i>Recebido</span></div></div>'+biBarsChart(ms,ev1,ev2,'12m')+evTab+'</div>'+
+    '<div class="bi-card"><div class="bi-ch"><h3>Como os clientes pagaram</h3></div>'+biDonut(cur.rec)+'</div>'+
+  '</div>'+
+  '<div class="rep-grid g3">'+
+    '<div class="bi-card"><div class="bi-ch"><h3>Mais vendidos</h3></div>'+biHBars(top,'c1','Nenhuma venda neste mês.')+'</div>'+
+    '<div class="bi-card"><div class="bi-ch"><h3>Contas pagas por tipo</h3></div>'+biHBars(desp,'c2',modOn('financeiro')?'Nenhuma conta paga neste mês.':'Lance as contas no Financeiro para ver as despesas e o lucro.')+'</div>'+
+    vendHtml+extra+
+  '</div></section>';
+}
+Object.assign(A,{
+  rmprev(){ui.rm=addMonths((ui.rm||todayStr().slice(0,7))+'-01',-1).slice(0,7);render()},
+  rmnext(){const n=addMonths((ui.rm||todayStr().slice(0,7))+'-01',1).slice(0,7);if(n>todayStr().slice(0,7))return toast('Este mês ainda não começou');ui.rm=n;render()},
+  repprint(){window.print()},
+  repdet(){ui.rmes=ui.rm||todayStr().slice(0,7);ui.sheet={kind:'relatorio'};renderSheet()}
+});
 let BITIP=null;
 function biHide(){if(BITIP)BITIP.style.display='none'}
 function biShow(el,e){
@@ -2555,7 +2728,7 @@ const MODS=[
  {k:'campanhas',n:'Campanhas por grupo de clientes',d:'Escolha um grupo e envie a mensagem pelo WhatsApp com poucos toques, sem digitar o nome de ninguém.',b:['Grupos prontos: sem comprar há 1 ano, grau antigo, em atraso, aniversariantes','Mensagem editável com o nome do cliente já preenchido','Marca quem já recebeu para não repetir']},
  {k:'pesquisa',n:'Pesquisa de satisfação e avaliação no Google',d:'Alguns dias depois da compra, peça ao cliente uma avaliação com o link da sua ótica no Google.',b:['Lista de quem comprou há alguns dias e ainda não foi chamado','Mensagem pronta com o seu link de avaliação','Marca quem já foi chamado']},
  {k:'wa',n:'WhatsApp automático',d:'Os avisos de boas-vindas, recibo, óculos chegou, agradecimento, lembrete e atraso saem sozinhos pelo WhatsApp da ótica, de um programa no computador da loja.',b:['Você escolhe, aviso por aviso, se sai sozinho ou se espera a sua aprovação','Fila guardada na nuvem: se o computador estiver desligado, nada se perde','Limite por dia, horário comercial e pausa com um clique','Quem responder SAIR não recebe mais avisos']},
- {k:'exames',add:true,n:'Exames de vista',d:'Uma página para o cliente agendar o exame de vista, e a confirmação e o lembrete saem sozinhos pelo WhatsApp. Função adicional, contratada à parte do Premium.',b:['Página de agendamento com o seu logo e as suas cores, pronta para divulgar','Agenda de exames: confirmar, remarcar, marcar quem veio e quem faltou','Confirmação na hora e lembrete na véspera pelo WhatsApp Automático','Link curto para colocar na bio do Instagram, no WhatsApp e nos seus anúncios','Quem agendar já aparece na agenda e vira cliente com um toque','Mensagens de confirmação e lembrete que você pode personalizar']},
+ {k:'exames',add:true,n:'Exames de vista',d:'Uma página para o cliente agendar o exame de vista, e a confirmação e o lembrete saem sozinhos pelo WhatsApp. Função adicional, contratada à parte do Premium.',b:['Página de agendamento com o seu logo e as suas cores, pronta para divulgar','Agenda de exames: confirmar, remarcar, marcar quem veio e quem faltou','Confirmação na hora, lembrete 24h depois e aviso 3 horas antes do exame pelo WhatsApp Automático','Link curto para colocar na bio do Instagram, no WhatsApp e nos seus anúncios','Quem agendar já aparece na agenda e vira cliente com um toque','Mensagens de confirmação e lembrete que você pode personalizar']},
  {k:'wachat',n:'WhatsApp dentro do sistema',d:'Veja e responda as conversas do WhatsApp da ótica direto no sistema, sem pegar o celular. Funciona com o conector do WhatsApp Automático ligado no computador da loja.',b:['Todas as conversas do WhatsApp da ótica em uma tela, com o nome do cliente cadastrado','Responda por texto: a mensagem sai na hora pelo WhatsApp da ótica','Mensagens novas aparecem sozinhas, com aviso de não lidas','Botão Conversar na lista de clientes']},
  {k:'trafego',n:'Tráfego Orgânico',d:'Encontre empresas perto da sua ótica e leve a sua oferta até elas pelo WhatsApp, sem depender de indicação.',b:['Busca de empresas num raio da ótica pelo Google Maps, por tipo (padarias, escolas, clínicas...) ou pelo nome, sem outras óticas','CRM das empresas: nova, abordada, respondeu, interessada, virou cliente','Mensagem de oferta pronta e envio pelo WhatsApp Automático','Painel com quantas responderam, viraram clientes e quanto venderam']},
  {k:'agente',add:true,preco:15000,n:'Agente de IA no WhatsApp',d:'Um atendente virtual que responde o WhatsApp da ótica 24 horas: tira dúvidas, entende áudio e foto da receita, marca o exame de vista e chama você quando precisa de uma pessoa.',b:['Responde na hora, inclusive à noite, no domingo e no feriado','Você ensina tudo: endereço, horário, preços, promoções, perguntas frequentes e imagens','Entende áudio e foto (até a receita de óculos)','Marca, remarca e confirma exames na agenda do sistema','Chama a equipe para fechar a venda ou quando não sabe a resposta','Tela de teste para conversar com ele antes de ligar']},
@@ -2993,7 +3166,7 @@ function premFuPesq(){
 }
 Object.assign(A,{fupesq(){ui.cs='pesq';ui.tab='campanhas';render()}});
 /* ----- WhatsApp automático (conector no computador da loja) ----- */
-const WA_TIPOS=[['boasvindas','Boas-vindas ao cadastrar o cliente'],['trafego','Tráfego Orgânico: oferta para empresas da região'],['recibo','Recibo quando a parcela é recebida'],['chegou','Aviso: seu óculos chegou'],['agradecimento','Agradecimento ao entregar'],['lembrete','Lembrete na véspera do vencimento'],['atraso','Parcela em atraso (1, 7 e 15 dias)'],['aniversario','Feliz aniversário'],['revisao','Revisão do grau (11 meses)'],['exame_conf','Exame de vista: confirmação ao agendar'],['exame_lembrete','Exame de vista: lembrete na véspera'],['exame_dia','Exame de vista: no dia, 3 horas antes'],['followup','Meus follow-ups (botão WhatsApp)'],['avaliacao','Pedido de avaliação do cliente']];
+const WA_TIPOS=[['boasvindas','Boas-vindas ao cadastrar o cliente'],['trafego','Tráfego Orgânico: oferta para empresas da região'],['recibo','Recibo quando a parcela é recebida'],['chegou','Aviso: seu óculos chegou'],['agradecimento','Agradecimento ao entregar'],['lembrete','Lembrete na véspera do vencimento'],['atraso','Parcela em atraso (1, 7 e 15 dias)'],['aniversario','Feliz aniversário'],['revisao','Revisão do grau (11 meses)'],['exame_conf','Exame de vista: confirmação ao agendar'],['exame_lembrete','Exame de vista: lembrete 24h depois de agendar'],['exame_dia','Exame de vista: no dia, 3 horas antes'],['followup','Meus follow-ups (botão WhatsApp)'],['avaliacao','Pedido de avaliação do cliente']];
 const WA_NOME={exame_conf:'Exame de vista: confirmação',exame_lembrete:'Exame de vista: lembrete',exame_dia:'Exame de vista: no dia (3h antes)',exame_resp:'Exame de vista: resposta',exame_faltou:'Exame de vista: faltou',exame_equipe:'Aviso de novo exame para a equipe',manual:'Mensagem da conversa'};WA_TIPOS.forEach(x=>WA_NOME[x[0]]=x[1]);
 const WA_ST={aprovar:['warn','Espera sua aprovação'],aguardando:['acc','Na fila'],enviando:['acc','Enviando'],enviada:['ok','Enviada'],falhou:['bad','Falhou'],cancelada:['','Cancelada'],expirada:['','Venceu o prazo']};
 const waDoc=()=>{if(!S.config.wa)S.config.wa={id:'wa',on:false,pausa:false,ini:'08:00',fim:'18:30',limite:30,modo:{}};if(!S.config.wa.modo)S.config.wa.modo={};return S.config.wa};
@@ -3267,7 +3440,7 @@ function exPagina(){
    '<div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(120px,1fr))">'+f('hora_ini','Abre às','time')+f('hora_fim','Último exame termina às','time')+f('duracao_min','Duração (min)','number',' min="10" max="180" step="5"')+f('vagas','Exames ao mesmo tempo','number',' min="1" max="20"')+f('antecedencia_h','Antecedência mínima (horas)','number',' min="0" max="168"')+f('janela_dias','Mostrar os próximos (dias)','number',' min="1" max="60"')+'</div>'+
    f('endereco','Endereço')+f('cidade','Cidade')+f('maps_url','Link do Google Maps (opcional)')+f('whatsapp','WhatsApp da ótica')+exLocaisEd(D)+
       '<div class="field"><span>Mensagem de confirmação (sai na hora)</span><textarea rows="5" data-exf="tpl_conf" placeholder="Deixe vazio para usar a mensagem padrão">'+esc(D.tpl.conf||'')+'</textarea></div>'+
-   '<div class="field"><span>Mensagem de lembrete (véspera, às 17h)</span><textarea rows="5" data-exf="tpl_lemb" placeholder="Deixe vazio para usar a mensagem padrão">'+esc(D.tpl.lemb||'')+'</textarea></div>'+
+   '<div class="field"><span>Mensagem de lembrete (24 horas depois do agendamento)</span><textarea rows="5" data-exf="tpl_lemb" placeholder="Deixe vazio para usar a mensagem padrão">'+esc(D.tpl.lemb||'')+'</textarea></div>'+
    '<div class="field"><span>Mensagem no dia do exame (3 horas antes)</span><textarea rows="5" data-exf="tpl_dia" placeholder="Deixe vazio para usar a mensagem padrão">'+esc(D.tpl.dia||'')+'</textarea></div>'+
    '<div class="field"><span>Mensagem para quem faltou (sai 1 hora depois de marcar "Faltou")</span><textarea rows="5" data-exf="tpl_falt" placeholder="Deixe vazio para usar a mensagem padrão">'+esc(D.tpl.falt||'')+'</textarea></div>'+
    '<label class="aguard-box" style="margin:0"><input type="checkbox" data-exf="tpl_ia"'+(D.tpl.ia==='true'?' checked':'')+'> Agente de IA responde os clientes sobre o exame (remarcar, cancelar, dúvidas simples)</label>'+
