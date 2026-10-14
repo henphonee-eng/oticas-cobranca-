@@ -2079,7 +2079,7 @@ function sheetVenda(id){
   (v.aguardando?'<div class="sec"><h3>Plano combinado</h3><div class="stack">'+v.parcelas.map(p=>'<div class="sum-row"><span>'+esc(pLabel(v,p))+' · '+(p.tipo==='entrada'?'na confirmação':fmtDate(p.venc))+'</span><b class="num">'+brl(p.valor)+'</b></div>').join('')+'</div><p class="sub">Nada disso conta como venda ainda. Ao confirmar o pagamento, a venda é criada e a entrada é registrada como recebida.</p></div>':'<div class="sec"><h3>Parcelas</h3><div class="stack">'+v.parcelas.map((p,i)=>pRow({v:v,p:p,i:i,c:c},{sheet:true})).join('')+'</div></div>')+
   (v.aguardando?'':entregaSec(v,c))+
   '<div class="sec"><h3>Ordem de serviço (OS)</h3><p class="sub" style="margin:0">Imprima a OS com o grau do cliente para mandar ao laboratório.</p><div class="foot-row"><button class="btn primary" data-act="osabrir" data-v="'+v.id+'">Imprimir OS</button></div></div>'+
-  '<div class="sec"><h3>Enviar ao cliente</h3><div class="foot-row"><button class="btn'+(v.aguardando?'':' primary')+'" data-act="pdf" data-v="'+v.id+'">'+(v.aguardando?'Baixar orçamento em PDF':'Baixar PDF')+'</button>'+(resumoHref?'<a class="btn wa" target="_blank" rel="noopener" href="'+resumoHref+'">'+(v.aguardando?'Enviar orçamento no WhatsApp':'Resumo no WhatsApp')+'</a>':'')+'</div>'+
+  '<div class="sec"><h3>Enviar ao cliente</h3><div class="foot-row"><button class="btn'+(v.aguardando?'':' primary')+'" data-act="pdf" data-v="'+v.id+'">'+(v.aguardando?'Baixar orçamento em PDF':'Baixar PDF')+'</button>'+(resumoHref?(typeof waOn==='function'&&waOn()?'<button class="btn wa" data-act="waresumo" data-v="'+v.id+'">'+(v.aguardando?'Enviar orçamento no WhatsApp':'Enviar resumo no WhatsApp')+'</button>':'<a class="btn wa" target="_blank" rel="noopener" href="'+resumoHref+'">'+(v.aguardando?'Enviar orçamento no WhatsApp':'Resumo no WhatsApp')+'</a>'):'')+'</div>'+
   '<p class="sub">O WhatsApp abre com a mensagem pronta. Para mandar o PDF, baixe o arquivo e anexe na conversa.</p>'+
   ((c.whatsapp&&!c.bvEm&&S.clientes[v.clienteId])?'<div>'+bvBtn(c,'Mensagem de boas-vindas','btn sm')+'</div>':'')+'</div>';
   const foot=(v.aguardando?'<button class="btn primary" data-act="pagarorc" data-v="'+v.id+'">Confirmar pagamento e virar venda</button>':'')+'<div class="foot-row"><button class="btn" data-act="editvenda" data-v="'+v.id+'">'+(v.aguardando?'Editar orçamento':'Editar venda')+'</button><button class="btn danger'+(ui.confirm===v.id?' armed':'')+'" data-act="delvenda" data-v="'+v.id+'">'+(ui.confirm===v.id?'Toque de novo para excluir':v.aguardando?'Excluir orçamento':'Excluir venda')+'</button></div>';
@@ -2189,6 +2189,7 @@ function salvarVenda(){
   if(old&&old.os)v.os=old.os;
   if(old&&old.entregueEm){v.entregueEm=old.entregueEm;if(old.agradEm)v.agradEm=old.agradEm}
   S.vendas[v.id]=v;persist('vendas',v.id);
+  if(!v.exemplo&&(!old||(old.aguardando&&!v.aguardando)))waResumo(v,true);
   premLog(old?'Venda editada':(v.aguardando?'Orçamento criado':'Venda criada'),((S.clientes[cid]||{}).nome||'')+' · '+brl(v.total));
   ui.draft=null;ui.sheet={kind:'venda',id:v.id};if(!old)ui.tab=v.aguardando?'aguard':'vendas';render();renderSheet();toast(v.aguardando?(old?'Orçamento atualizado':'Orçamento salvo em Orçamentos'):(old?'Venda atualizada':'Venda registrada'));
 }
@@ -2651,7 +2652,7 @@ const A={
     const par=v.parcelas.filter(p=>p.tipo==='parcela');
     if(par.length&&par[0].venc<=venc){const f=addMonths(venc,1);par.forEach((p,k)=>{p.venc=addMonths(f,k)})}
     premLog('Orçamento virou venda (pagamento parcial)',((S.clientes[v.clienteId]||{}).nome||'')+' · '+brl(val)+' de '+brl(ent.valor));
-    persist('vendas',v.id);ui.pg=null;ui.tab='vendas';ui.sheet={kind:'venda',id:v.id};render();renderSheet();
+    persist('vendas',v.id);if(!v.exemplo)waResumo(v,true);ui.pg=null;ui.tab='vendas';ui.sheet={kind:'venda',id:v.id};render();renderSheet();
     toast('Recebido '+brl(val)+'. Restante de '+brl(resto)+' vence em '+fmtDate(venc)+'.')},
   entregar(d){const v=S.vendas[d.v];if(!v||v.aguardando)return;v.entregueEm=todayStr();persist('vendas',v.id);refresh();toast('Venda marcada como entregue')},
   desentregar(d){const v=S.vendas[d.v];if(!v)return;delete v.entregueEm;delete v.agradEm;persist('vendas',v.id);refresh();toast('Entrega desfeita')},
@@ -2660,7 +2661,7 @@ const A={
     v.parcelas.forEach(p=>{if(p.tipo==='entrada'){p.pago=true;p.pagoEm=t;p.venc=t;p.forma=p.forma||v.forma}});
     const par=v.parcelas.filter(p=>p.tipo==='parcela');
     if(par.length&&par[0].venc<t){const f=addMonths(t,1);par.forEach((p,i)=>{p.venc=addMonths(f,i)})}
-    premLog('Orçamento virou venda',((S.clientes[v.clienteId]||{}).nome||'')+' · '+brl(v.total));persist('vendas',v.id);confeteDe(b);ui.tab='vendas';ui.sheet={kind:'venda',id:v.id};render();renderSheet();toast('Pagamento confirmado. O orçamento virou venda.')},
+    premLog('Orçamento virou venda',((S.clientes[v.clienteId]||{}).nome||'')+' · '+brl(v.total));persist('vendas',v.id);if(!v.exemplo)waResumo(v,true);confeteDe(b);ui.tab='vendas';ui.sheet={kind:'venda',id:v.id};render();renderSheet();toast('Pagamento confirmado. O orçamento virou venda.')},
   editvenda(d){const v=S.vendas[d.v];if(!v)return;ui.confirm='';ui.draft=editDraft(v);ui.sheet={kind:'nova',id:v.id};renderSheet()},
   additem(d){ui.draft.itens.push(newItem(d.t));renderItems();updateVenda()},
   rmitem(d){ui.draft.itens.splice(+d.i,1);renderItems();updateVenda()},
@@ -3179,7 +3180,7 @@ function premFuPesq(){
 }
 Object.assign(A,{fupesq(){ui.cs='pesq';ui.tab='campanhas';render()}});
 /* ----- WhatsApp automático (conector no computador da loja) ----- */
-const WA_TIPOS=[['boasvindas','Boas-vindas ao cadastrar o cliente'],['trafego','Tráfego Orgânico: oferta para empresas da região'],['recibo','Recibo quando a parcela é recebida'],['chegou','Aviso: seu óculos chegou'],['agradecimento','Agradecimento ao entregar'],['lembrete','Lembrete na véspera do vencimento'],['atraso','Parcela em atraso (1, 7 e 15 dias)'],['aniversario','Feliz aniversário'],['revisao','Revisão do grau (11 meses)'],['exame_conf','Exame de vista: confirmação ao agendar'],['exame_lembrete','Exame de vista: lembrete 24h depois de agendar'],['exame_dia','Exame de vista: no dia, 3 horas antes'],['followup','Meus follow-ups (botão WhatsApp)'],['avaliacao','Pedido de avaliação do cliente']];
+const WA_TIPOS=[['boasvindas','Boas-vindas ao cadastrar o cliente'],['venda','Resumo da venda (valor e parcelas)'],['orcamento','Orçamento ao salvar'],['trafego','Tráfego Orgânico: oferta para empresas da região'],['recibo','Recibo quando a parcela é recebida'],['chegou','Aviso: seu óculos chegou'],['agradecimento','Agradecimento ao entregar'],['lembrete','Lembrete na véspera do vencimento'],['atraso','Parcela em atraso (1, 7 e 15 dias)'],['aniversario','Feliz aniversário'],['revisao','Revisão do grau (11 meses)'],['exame_conf','Exame de vista: confirmação ao agendar'],['exame_lembrete','Exame de vista: lembrete 24h depois de agendar'],['exame_dia','Exame de vista: no dia, 3 horas antes'],['followup','Meus follow-ups (botão WhatsApp)'],['avaliacao','Pedido de avaliação do cliente']];
 const WA_NOME={exame_conf:'Exame de vista: confirmação',exame_lembrete:'Exame de vista: lembrete',exame_dia:'Exame de vista: no dia (3h antes)',exame_resp:'Exame de vista: resposta',exame_faltou:'Exame de vista: faltou',exame_equipe:'Aviso de novo exame para a equipe',manual:'Mensagem da conversa'};WA_TIPOS.forEach(x=>WA_NOME[x[0]]=x[1]);
 const WA_ST={aprovar:['warn','Espera sua aprovação'],aguardando:['acc','Na fila'],enviando:['acc','Enviando'],enviada:['ok','Enviada'],falhou:['bad','Falhou'],cancelada:['','Cancelada'],expirada:['','Venceu o prazo']};
 const waDoc=()=>{if(!S.config.wa)S.config.wa={id:'wa',on:false,pausa:false,ini:'08:00',fim:'18:30',limite:30,modo:{}};if(!S.config.wa.modo)S.config.wa.modo={};return S.config.wa};
@@ -3201,6 +3202,12 @@ function waEnq(tipo,c,texto,ref){
   if(!waOn()||!c||!c.whatsapp||!OTICA)return false;
   sb.rpc('wa_enfileirar',{p_otica:OTICA.id,p_cliente:c.id||'',p_nome:c.nome||'',p_tipo:tipo,p_tel:c.whatsapp,p_texto:texto,p_ref:ref}).then(r=>{if(r&&!r.error){WA.fila=null;if(r.data==='ok')toast(waModo(tipo)==='auto'?'Mensagem na fila do WhatsApp':'Mensagem esperando sua aprovação no menu WhatsApp automático');else if(r.data==='dup')toast('Essa mensagem já está na fila do WhatsApp');else if(r.data==='optout')toast('Esse cliente pediu para não receber mensagens');else if(r.data==='off')toast('Esse tipo de mensagem está desligado no menu WhatsApp automático')}}).catch(()=>{});
   return true;
+}
+/* resumo da venda (valor e parcelas) ou do orçamento: entra na fila do WhatsApp Automático */
+function waResumo(v,auto){
+  if(!waOn())return false;const c=S.clientes[v.clienteId];if(!c||!c.whatsapp)return false;
+  const tp=v.aguardando?'orcamento':'venda';if(auto&&waModo(tp)==='off')return false;
+  return waEnq(tp,c,fillTpl(tpl(tp),ctx(v,null,c)),(v.aguardando?'orc:':'vnd:')+v.id+':'+v.total);
 }
 const waModo=t=>waDoc().modo[t]||(String(t).indexOf('exame_')===0?'auto':'aprovar');
 function premWaHook(ev,v,p,c){
@@ -3306,8 +3313,9 @@ function premWaAjustes(){
    '<p class="sub" style="margin:0">Programa gratuito e não oficial. Use um número só da ótica, com poucas mensagens por dia e sem texto igual para muita gente. Existe risco de o WhatsApp bloquear o número, por isso os envios têm intervalo, limite diário e a opção SAIR.</p></div>'+tk;
 }
 Object.assign(A,{
+  waresumo(d){const v=S.vendas[d.v];if(!v)return;if(!waResumo(v,false))toast('Cliente sem WhatsApp')},
   wabv(d){const c=S.clientes[d.c];if(!c||!c.whatsapp)return toast('Cliente sem WhatsApp');const t=todayStr();
-    if(waEnq('boasvindas',c,fillTpl(tpl('cadastro'),ctx(null,null,c)),'bvm:'+c.id+':'+t)){c.bvEm=t;persist('clientes',c.id);if(ui.sheet&&ui.sheet.kind!=='cliente')closeSheet();refresh()}},
+    if(waEnq('boasvindas',c,fillTpl(tpl('cadastro'),ctx(null,null,c)),'bv:'+c.id)){c.bvEm=t;persist('clientes',c.id);if(ui.sheet&&ui.sheet.kind!=='cliente')closeSheet();refresh()}},
   waent(d){const v=S.vendas[d.v];if(!v)return;const c=S.clientes[v.clienteId];if(!c||!c.whatsapp)return toast('Cliente sem WhatsApp');const t=todayStr();
     if(d.t==='cheg'){v.chegouEm=t;waEnq('chegou',c,fillTpl(tpl('chegou'),ctx(v,null,c)),'cheg:'+v.id+':'+t)}
     else{if(!v.entregueEm)v.entregueEm=t;v.agradEm=t;waEnq('agradecimento',c,fillTpl(tpl('entrega'),ctx(v,null,c)),'agr:'+v.id)}
