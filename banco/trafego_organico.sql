@@ -1,0 +1,8 @@
+-- Tráfego Orgânico (função Premium "trafego" do sistema da ótica).
+-- trafego_leads: CRM das empresas que a ótica encontrou (Google Maps no raio da loja, sem óticas, ou por CNPJ).
+--   status: novo, enviado, respondeu, interessada, cliente, sem_interesse, removida. RLS por ótica (minha_otica).
+-- trafego_buscas: conta as buscas (limite de 60 por dia por ótica) — trafego_pode_buscar(p_otica, p_tipo).
+-- wa_enfileirar aceita o tipo 'trafego' (só com o módulo ligado); a mensagem passa pela aprovação do WhatsApp Automático.
+-- Gatilhos: trafego_fila (wa_fila enviada -> empresa "Abordada") e trafego_msg (resposta no WhatsApp -> "Respondeu").
+-- Edge function: supabase/functions/trafego-busca (modos geo, mapa e cnpj; CNPJ pela BrasilAPI).
+-- Definições aplicadas nas migrações trafego_leads, trafego_pode_buscar, wa_enfileirar_trafego, trafego_gatilho_fila e trafego_gatilho_resposta.
