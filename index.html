@@ -1828,7 +1828,7 @@ function fupRow(x){
   const c=S.clientes[x.clienteId],t=todayStr();
   const chip=x.feitoEm?'<span class="chip ok">Feito em '+fmtShort(x.feitoEm)+'</span>':x.data<t?'<span class="chip bad">Atrasado '+plural(diffDays(t,x.data),'dia','dias')+'</span>':x.data===t?'<span class="chip warn">Hoje</span>':'<span class="chip">Em '+plural(diffDays(x.data,t),'dia','dias')+'</span>';
   const first=c?String(c.nome).split(' ')[0]:'';
-  const wa=(c&&c.whatsapp)?'<a class="btn sm wa"'+WAT+' href="'+esc(waLink(c.whatsapp,'Olá, '+first+'! Aqui é da '+cfg().nome+'. '+(x.nota||x.titulo)))+'">WhatsApp</a>':'';
+  const wa=(c&&c.whatsapp)?'<a class="btn sm wa"'+WAT+' data-contact="fup" data-id="'+x.id+'" href="'+esc(waLink(c.whatsapp,'Olá, '+first+'! Aqui é da '+cfg().nome+'. '+(x.nota||x.titulo)))+'">WhatsApp</a>':'';
   const arm=ui.confirm==='fup'+x.id;
   return '<article class="row"><div class="row-main"><b>'+esc(x.titulo)+'</b><div class="meta">'+(c?esc(c.nome)+' · ':'')+fmtDate(x.data)+(x.nota?' · '+esc(x.nota):'')+'</div><div class="chips">'+chip+'</div></div><div class="row-side"><div class="acts">'+wa+
     '<button class="btn sm '+(x.feitoEm?'ghost':'ok')+'" data-act="fupfeito" data-id="'+x.id+'">'+(x.feitoEm?'Reabrir':'Feito')+'</button><button class="btn sm ghost" data-act="fupedit" data-id="'+x.id+'">Editar</button><button class="btn sm ghost danger'+(arm?' armed':'')+'" data-act="fupdel" data-id="'+x.id+'">'+(arm?'Toque de novo':'Excluir')+'</button></div></div></article>';
@@ -2940,6 +2940,8 @@ document.addEventListener('change',async e=>{
 });
 document.addEventListener('click',e=>{
   const a=e.target.closest&&e.target.closest('[data-camp],[data-pesq]');if(!a)return;const t=todayStr();
+  if(a.dataset.pesq&&typeof waOn==='function'&&waOn()&&waModo('avaliacao')!=='off'){const v=S.vendas[a.dataset.pesq];const c=v&&S.clientes[v.clienteId];
+    if(c&&c.whatsapp){const P=pm();if(waEnq('avaliacao',c,fillTpl(P.pesqTpl||PESQ_TPL,{cliente:firstName(c.nome),otica:cfg().nome,link:P.gLink||''}),'mav:'+v.id)){e.preventDefault();v.pesqEm=t;persist('vendas',v.id);setTimeout(render,300);return}}}
   if(a.dataset.camp){const c=S.clientes[a.dataset.c];if(c){a.href=waLink(c.whatsapp,fillTpl(campTpl(a.dataset.camp),{cliente:firstName(c.nome),otica:cfg().nome}));(c.campEm=c.campEm||{})[a.dataset.camp]=t;persist('clientes',c.id)}}
   else{const v=S.vendas[a.dataset.pesq];if(v){const c=S.clientes[v.clienteId]||{},P=pm();a.href=waLink(c.whatsapp,fillTpl(P.pesqTpl||PESQ_TPL,{cliente:firstName(c.nome),otica:cfg().nome,link:P.gLink||''}));v.pesqEm=t;persist('vendas',v.id)}}
   setTimeout(render,500);
@@ -2991,7 +2993,7 @@ function premFuPesq(){
 }
 Object.assign(A,{fupesq(){ui.cs='pesq';ui.tab='campanhas';render()}});
 /* ----- WhatsApp automático (conector no computador da loja) ----- */
-const WA_TIPOS=[['boasvindas','Boas-vindas ao cadastrar o cliente'],['trafego','Tráfego Orgânico: oferta para empresas da região'],['recibo','Recibo quando a parcela é recebida'],['chegou','Aviso: seu óculos chegou'],['agradecimento','Agradecimento ao entregar'],['lembrete','Lembrete na véspera do vencimento'],['atraso','Parcela em atraso (1, 7 e 15 dias)'],['aniversario','Feliz aniversário'],['revisao','Revisão do grau (11 meses)'],['exame_conf','Exame de vista: confirmação ao agendar'],['exame_lembrete','Exame de vista: lembrete na véspera']];
+const WA_TIPOS=[['boasvindas','Boas-vindas ao cadastrar o cliente'],['trafego','Tráfego Orgânico: oferta para empresas da região'],['recibo','Recibo quando a parcela é recebida'],['chegou','Aviso: seu óculos chegou'],['agradecimento','Agradecimento ao entregar'],['lembrete','Lembrete na véspera do vencimento'],['atraso','Parcela em atraso (1, 7 e 15 dias)'],['aniversario','Feliz aniversário'],['revisao','Revisão do grau (11 meses)'],['exame_conf','Exame de vista: confirmação ao agendar'],['exame_lembrete','Exame de vista: lembrete na véspera'],['followup','Meus follow-ups (botão WhatsApp)'],['avaliacao','Pedido de avaliação do cliente']];
 const WA_NOME={exame_conf:'Exame de vista: confirmação',exame_lembrete:'Exame de vista: lembrete',exame_resp:'Exame de vista: resposta',exame_faltou:'Exame de vista: faltou',exame_equipe:'Aviso de novo exame para a equipe',manual:'Mensagem da conversa'};WA_TIPOS.forEach(x=>WA_NOME[x[0]]=x[1]);
 const WA_ST={aprovar:['warn','Espera sua aprovação'],aguardando:['acc','Na fila'],enviando:['acc','Enviando'],enviada:['ok','Enviada'],falhou:['bad','Falhou'],cancelada:['','Cancelada'],expirada:['','Venceu o prazo']};
 const waDoc=()=>{if(!S.config.wa)S.config.wa={id:'wa',on:false,pausa:false,ini:'08:00',fim:'18:30',limite:30,modo:{}};if(!S.config.wa.modo)S.config.wa.modo={};return S.config.wa};
@@ -3011,7 +3013,7 @@ function waGarante(){if(WA.fila===null&&!WA.busy)setTimeout(waLoad,0)}
 setInterval(()=>{if(auth==='ok'&&modOn('wa')&&ui.tab==='whatsapp'&&!document.hidden)waLoad()},30000);
 function waEnq(tipo,c,texto,ref){
   if(!waOn()||!c||!c.whatsapp||!OTICA)return false;
-  sb.rpc('wa_enfileirar',{p_otica:OTICA.id,p_cliente:c.id||'',p_nome:c.nome||'',p_tipo:tipo,p_tel:c.whatsapp,p_texto:texto,p_ref:ref}).then(r=>{if(r&&!r.error){WA.fila=null;if(r.data==='ok')toast(waModo(tipo)==='auto'?'Mensagem na fila do WhatsApp':'Mensagem esperando sua aprovação no menu WhatsApp automático');else if(r.data==='dup')toast('Essa mensagem já está na fila do WhatsApp');else if(r.data==='optout')toast('Esse cliente pediu para não receber mensagens')}}).catch(()=>{});
+  sb.rpc('wa_enfileirar',{p_otica:OTICA.id,p_cliente:c.id||'',p_nome:c.nome||'',p_tipo:tipo,p_tel:c.whatsapp,p_texto:texto,p_ref:ref}).then(r=>{if(r&&!r.error){WA.fila=null;if(r.data==='ok')toast(waModo(tipo)==='auto'?'Mensagem na fila do WhatsApp':'Mensagem esperando sua aprovação no menu WhatsApp automático');else if(r.data==='dup')toast('Essa mensagem já está na fila do WhatsApp');else if(r.data==='optout')toast('Esse cliente pediu para não receber mensagens');else if(r.data==='off')toast('Esse tipo de mensagem está desligado no menu WhatsApp automático')}}).catch(()=>{});
   return true;
 }
 const waModo=t=>waDoc().modo[t]||(String(t).indexOf('exame_')===0?'auto':'aprovar');
@@ -3083,7 +3085,7 @@ function premFuAuto(k,html){
   const modos=tp.map(t=>waModo(t)==='auto'?'sai sozinho':'espera a sua aprovação');
   const txt='<p class="sub" style="margin:0 0 8px"><b>Automático:</b> '+(k==='cobrar'?'lembrete na véspera e atraso com 1, 7 e 15 dias':k==='boasvindas'?'a mensagem sai ao cadastrar o cliente':k==='aniversarios'?'o parabéns sai no dia':'o convite sai quando completa 11 meses')+' ('+modos[0]+'). '+env+' enviadas, '+fila+' na fila, '+esp+' esperando aprovação. <button class="btn sm" data-act="premopen" data-k="wa">Ver a fila</button></p>';
   if(k==='boasvindas')return txt+(html.indexOf('class="row"')>=0?'<p class="sub" style="margin:0 0 6px">Ainda sem mensagem automática (cadastrados antes de ligar):</p>'+html:'');
-  return txt+'<details><summary class="sub" style="cursor:pointer">Ver a lista e chamar manualmente</summary><div style="margin-top:8px">'+html+'</div></details>';
+  return txt+'<details><summary class="sub" style="cursor:pointer">Ver a lista e enviar pela fila</summary><div style="margin-top:8px">'+html+'</div></details>';
 }
 function viewWa(){
   waGarante();const f=premFuWa();
@@ -4440,6 +4442,24 @@ function bvBtn(c,label,cls){
   if(typeof waOn==='function'&&waOn())return '<button class="'+cls+'" data-act="wabv" data-c="'+c.id+'">'+esc(label==='Abrir WhatsApp'?'Enviar boas-vindas':label)+'</button>';
   return '<a class="'+cls+'"'+WAT+' data-contact="bv" data-c="'+c.id+'" href="'+esc(waLink(c.whatsapp,fillTpl(tpl('cadastro'),ctx(null,null,c))))+'">'+label+'</a>';
 }
+/* follow-up: com o WhatsApp Automático ligado, os botões que abririam o WhatsApp colocam a mensagem na fila da automação */
+function waFilaContato(d){
+  if(typeof waOn!=='function'||!waOn())return false;const t=todayStr();
+  const TP={cheg:'chegou',ent:'agradecimento',bv:'boasvindas',ani:'aniversario',rev:'revisao',fup:'followup'};
+  if(d.contact!=='p'&&(!TP[d.contact]||waModo(TP[d.contact])==='off'))return false;
+  if(d.contact==='p'){const v=S.vendas[d.v];const p=v&&v.parcelas[+d.pi];if(!p||waModo(pStatus(p)==='atraso'?'atraso':'lembrete')==='off')return false}
+  if(d.contact==='cheg'||d.contact==='ent'){const v=S.vendas[d.v];const c=v&&S.clientes[v.clienteId];if(!c||!c.whatsapp)return false;A.waent({t:d.contact,v:d.v});return true}
+  if(d.contact==='bv'){const c=S.clientes[d.c];if(!c||!c.whatsapp)return false;A.wabv({c:d.c});return true}
+  let ok=false;
+  if(d.contact==='p'){const v=S.vendas[d.v];const p=v&&v.parcelas[+d.pi];const c=v&&S.clientes[v.clienteId];if(!p||!c)return false;
+    const kind=pStatus(p)==='atraso'?'atraso':'lembrete';ok=waEnq(kind,c,fillTpl(tpl(kind),ctx(v,p,c)),'m'+kind+':'+v.id+':'+d.pi+':'+t)}
+  else if(d.contact==='ani'){const c=S.clientes[d.c];if(!c)return false;ok=waEnq('aniversario',c,fillTpl(tpl('aniversario'),ctx(null,null,c)),'mani:'+c.id+':'+t)}
+  else if(d.contact==='rev'){const c=S.clientes[d.c];if(!c)return false;ok=waEnq('revisao',c,fillTpl(tpl('revisao'),ctx(null,null,c)),'mrev:'+c.id+':'+t)}
+  else if(d.contact==='fup'){const x=fupDoc().itens[d.id];const c=x&&S.clientes[x.clienteId];if(!c)return false;
+    ok=waEnq('followup',c,'Olá, '+String(c.nome).split(' ')[0]+'! Aqui é da '+cfg().nome+'. '+(x.nota||x.titulo),'mfup:'+x.id+':'+t)}
+  if(ok)markContact(d);
+  return ok;
+}
 function markContact(d){
   if(d.contact==='p'){const v=S.vendas[d.v];if(v){v.parcelas[+d.pi].contatoEm=todayStr();persist('vendas',v.id)}}
   else if(d.contact==='ani'){const c=S.clientes[d.c];if(c){c.aniEm=todayStr().slice(0,4);persist('clientes',c.id)}}
@@ -4467,7 +4487,7 @@ Object.assign(A,{
   fupdel(d){if(ui.confirm!=='fup'+d.id){ui.confirm='fup'+d.id;render();return}ui.confirm='';delete fupDoc().itens[d.id];persist('config','fups');render();toast('Follow-up excluído')}
 });
 document.addEventListener('click',e=>{
-  const a=e.target.closest('a[data-contact]');if(a){markContact(a.dataset);return}
+  const a=e.target.closest('a[data-contact]');if(a){if(waFilaContato(a.dataset)){e.preventDefault();return}markContact(a.dataset);return}
   const b=e.target.closest('[data-act]');if(!b)return;const f=A[b.dataset.act];if(f)f(b.dataset,b,e);
 });
 document.addEventListener('submit',e=>{
