@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="pt-BR" class="adm">
+<html lang="pt-BR" class="demo">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -795,10 +795,82 @@ html.adm .btn.ok{background:var(--surface);border-color:var(--edge);color:var(--
 .dhero{border-left-color:#fff}
 html.adm .tab[aria-current=page] svg{box-shadow:inset 0 0 0 1px var(--edge)}
 @media (min-width:900px){html.adm .tab[aria-current=page]{background:#fff;color:#191A23}}
+
+/* ===== Tema da demonstração: noite + violeta/azul elétrico, cartões leves com brilho. Desperta desejo, sem cara de planilha ===== */
+:root.demo{
+  --bg:#F5F4FF; --surface:#FFFFFF; --surface-2:#EEEBFF; --fg:#120F2E; --muted:#5E5A82; --line:#E3DFFA;
+  --accent:#6A3BFF; --accent-fg:#FFFFFF; --accent-soft:#EEE8FF; --brand-1:#6A3BFF; --brand-2:#2563EB;
+  --side-a:#0E0B2B; --side-b:#1A1150; --tabline:#8B6CFF;
+  --ok:#0E9F6E; --ok-bg:#DDF7EC; --warn:#A15C00; --warn-bg:#FFF1D6; --bad:#D92D4B; --bad-bg:#FFE3E8;
+  --wa:#16A34A; --wa-fg:#FFFFFF;
+  --grad:linear-gradient(120deg,#7C3AED 0%,#5B5BFF 45%,#2F80FF 100%);
+  --glow:0 18px 40px -18px rgba(91,59,255,.55);
+  --soft:0 1px 2px rgba(18,15,46,.04),0 12px 32px -14px rgba(40,25,120,.18);
+  --f-display:'Plus Jakarta Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-body:'Plus Jakarta Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  color-scheme:light;
+}
+html.demo body{background:radial-gradient(900px 500px at 85% -10%,rgba(124,58,237,.16),transparent 60%),radial-gradient(700px 420px at 10% 0%,rgba(47,128,255,.12),transparent 60%),var(--bg);background-attachment:fixed;letter-spacing:-.005em}
+html.demo h1,html.demo h2,html.demo h3{font-weight:800;letter-spacing:-.025em}
+html.demo .ph h1{font-size:34px;background:linear-gradient(90deg,#120F2E,#4B2BD6);-webkit-background-clip:text;background-clip:text;color:transparent}
+html.demo .ph .sub,html.demo .ph p{font-size:15px}
+html.demo .sh h2{font-size:20px}
+/* menu lateral */
+html.demo .side{background:radial-gradient(120% 45% at 0% 0%,rgba(124,58,237,.55),transparent 60%),radial-gradient(90% 40% at 100% 100%,rgba(47,128,255,.35),transparent 60%),linear-gradient(180deg,var(--side-a),var(--side-b))}
+html.demo .tgrp{color:rgba(214,206,255,.55);letter-spacing:.08em;text-transform:uppercase;font-size:11px}
+@media (min-width:900px){
+  html.demo .tab{color:rgba(232,228,255,.82);border-radius:12px}
+  html.demo .tab:hover{background:rgba(255,255,255,.07);color:#fff}
+  html.demo .tab[aria-current=page]{background:var(--grad);color:#fff;box-shadow:0 10px 24px -10px rgba(124,58,237,.9),inset 0 1px 0 rgba(255,255,255,.25);font-weight:700}
+}
+/* cartões */
+html.demo .card,html.demo .row,html.demo .tile,html.demo details,html.demo .empty{border:1px solid var(--line);border-radius:18px;box-shadow:var(--soft);background:var(--surface)}
+html.demo .row{transition:transform .15s ease,box-shadow .15s ease}
+html.demo .row:hover{transform:translateY(-1px);box-shadow:0 1px 2px rgba(18,15,46,.05),0 18px 36px -16px rgba(40,25,120,.28)}
+/* números */
+html.demo .kpis{gap:12px;background:none;border:0;border-radius:0;overflow:visible}
+html.demo .kpi{border:1px solid var(--line);border-radius:18px;box-shadow:var(--soft);background:var(--surface);padding:18px}
+html.demo .kpi small{font-weight:600;color:var(--muted)}
+html.demo .kpi b{font-weight:800;font-size:30px;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+html.demo .kpi span{color:var(--muted)}
+html.demo .kpi:first-child{background:var(--grad);border-color:transparent;box-shadow:var(--glow)}
+html.demo .kpi:first-child small,html.demo .kpi:first-child span{color:rgba(255,255,255,.85)}
+html.demo .kpi:first-child b{background:none;-webkit-background-clip:initial;background-clip:initial;color:#fff}
+html.demo .tile b{font-weight:800}
+/* botões e filtros */
+html.demo .btn{border-radius:12px;font-weight:700;border-color:var(--line);box-shadow:0 1px 2px rgba(18,15,46,.06)}
+html.demo .btn:hover{border-color:#C9BFFF}
+html.demo .btn.primary{background:var(--grad);border-color:transparent;color:#fff;box-shadow:var(--glow)}
+html.demo .btn.primary:hover{filter:brightness(1.06)}
+html.demo .btn.wa{background:linear-gradient(120deg,#16A34A,#22C55E);border-color:transparent;color:#fff;box-shadow:0 14px 28px -14px rgba(22,163,74,.8)}
+html.demo .fchip{border-radius:999px;border-color:var(--line);background:var(--surface);color:var(--muted);font-weight:600}
+html.demo .fchip[aria-pressed=true]{background:var(--grad);border-color:transparent;color:#fff;box-shadow:var(--glow)}
+html.demo .chip{border-radius:999px;font-weight:700}
+html.demo .chip.ok{background:var(--ok-bg);color:var(--ok)}
+html.demo input,html.demo select,html.demo textarea{border-radius:12px}
+/* faixa da demonstração */
+html.demo .dhero{position:relative;overflow:hidden;background:var(--grad);border:0;border-left:0;border-radius:22px;padding:18px 18px 18px 22px;box-shadow:var(--glow)}
+html.demo .dhero::after{content:'';position:absolute;right:-60px;top:-80px;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.28),transparent 65%);pointer-events:none}
+html.demo .dh-main b{font-size:16px;font-weight:800}
+html.demo .dh-main span{color:rgba(255,255,255,.88);font-size:13.5px}
+html.demo .dhero .btn{background:#fff;color:#3B1FD1;border-color:#fff;box-shadow:0 10px 24px -12px rgba(0,0,0,.45)}
+html.demo .dh-x{color:rgba(255,255,255,.85)}
+/* destaques dentro das telas (cartão de abertura das funções) */
+html.demo .card[style*="border-left:4px solid var(--accent)"]{border:1px solid transparent!important;background:linear-gradient(#fff,#fff) padding-box,var(--grad) border-box;box-shadow:var(--glow)}
+html.demo .side-cta{background:linear-gradient(120deg,#22C55E,#16A34A);border:0;color:#fff;font-weight:800;box-shadow:0 14px 28px -12px rgba(34,197,94,.75);border-radius:14px}
+@media (prefers-color-scheme:dark){:root.demo:not([data-theme="dark"]){color-scheme:light}}
+
+html.demo .demo-note{position:relative;overflow:hidden;background:var(--grad);border:0;border-radius:22px;padding:20px 22px;color:rgba(255,255,255,.9);box-shadow:var(--glow);font-size:14px}
+html.demo .demo-note::after{content:'';position:absolute;right:-70px;top:-90px;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.3),transparent 65%);pointer-events:none}
+html.demo .demo-note b{color:#fff;font-size:17px;font-weight:800}
+html.demo .demo-note .btn{background:#fff;color:#3B1FD1;border:0;font-weight:800;min-height:44px;padding:0 20px;box-shadow:0 12px 26px -12px rgba(0,0,0,.5)}
+html.demo .kpi b{font-size:26px;white-space:nowrap}
+@media (min-width:900px){html.demo .kpi b{font-size:clamp(20px,1.75vw,28px)}html.demo .kpi:first-child b{font-size:clamp(26px,2.4vw,38px)}}
+html.demo{background:#F5F4FF}
 </style>
 <script>if(/^\/adm(\/|$)/.test(location.pathname)){document.documentElement.classList.add('adm');var q=function(x){return document.querySelector(x)};if(q('link[rel=manifest]'))q('link[rel=manifest]').href='/adm.webmanifest';if(q('link[rel=apple-touch-icon]'))q('link[rel=apple-touch-icon]').href='/icons/adm-apple-touch-icon.png';if(q('meta[name=apple-mobile-web-app-title]'))q('meta[name=apple-mobile-web-app-title]').content='Adm Óticas';if(q('meta[name=theme-color]'))q('meta[name=theme-color]').content='#191A23';document.title='Adm Óticas';var f=document.createElement('link');f.rel='stylesheet';f.href='https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap';document.head.appendChild(f)}</script>
 
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"></head>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"></head>
 <body>
 <div id="app" class="shell" hidden>
   <aside class="side">
