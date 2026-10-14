@@ -3150,6 +3150,8 @@ Object.assign(A,{
 
 /* vendedor: cliente cadastrado por ele já entra como dele; painel com salário e comissão */
 function premCliOrigem(c){
+  // quem cadastrou o cliente: o vendedor só enxerga os clientes dele (e os das vendas dele)
+  const e0=typeof meEmail==='function'?meEmail():'';if(e0&&!c.por)c.por=e0;
   if(!OTICA||ROLE==='dono'||!modOn('metas'))return;
   const e=meEmail();if(!e)return;c.por=e;
   if(!c.vendedorId){const hit=vendList().find(x=>x.email&&String(x.email).toLowerCase()===e);if(hit)c.vendedorId=hit.id}
