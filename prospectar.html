@@ -556,7 +556,7 @@ function cardLead(l){
 }
 
 /* ---------- campanha: Tráfego Orgânico + Agente de IA para quem já foi abordado ---------- */
-const campAlvo=l=>l.status!=='novo'&&l.status!=='fechou'&&!!(l.enviado_em||l.status!=='enviado');
+const campAlvo=l=>!['novo','fechou','interessada'].includes(l.status)&&!!(l.enviado_em||l.status!=='enviado');
 const campFila=l=>st.fila.some(x=>x.lead_id===l.id&&x.tipo==='campanha'&&ATIVOS.includes(x.status));
 const campPode=l=>campAlvo(l)&&!l.campanha_em&&!campFila(l)&&tipoFone(foneDe(l))==='cel';
 function vCamp(){
@@ -568,7 +568,7 @@ function vCamp(){
     '<div class="fld"><textarea data-cfg="campanha" style="min-height:220px">'+esc(cfg('campanha'))+'</textarea></div><div class="row" style="margin-top:8px"><button class="btn sm pri" data-a="salvarcfg">Salvar texto</button><button class="btn sm" data-a="camppadrao">Voltar ao texto padrão</button></div>'+
     '<label class="small muted" style="display:block;margin-top:10px">Prévia</label><div class="prev">'+esc(msg('campanha',ex))+'</div></div></details>';
   h+='<div class="row sec" style="gap:6px;flex-wrap:wrap">'+[['falta','Ainda não receberam ('+A.filter(l=>!l.campanha_em).length+')'],['feitas','Já receberam ('+feitas.length+')'],['todas','Todas ('+A.length+')']].map(x=>'<button class="chip '+(f===x[0]?'on':'')+'" data-a="campf" data-v="'+x[0]+'">'+x[1]+'</button>').join('')+'</div>';
-  h+='<div class="card sec" style="position:sticky;top:8px;z-index:5"><div class="row" style="gap:8px;flex-wrap:wrap"><b class="grow">'+n+' marcada(s)</b><button class="btn sm" data-a="campmarcar">Marcar as próximas '+(+cfg('wa_limite')||20)+'</button><button class="btn sm" data-a="campdesm">Desmarcar</button><button class="btn sm pri" data-a="campfila"'+(n?'':' disabled')+'>Colocar na fila automática</button></div><p class="small muted" style="margin:6px 0 0">Sai pelo chip do CRM, no horário e com o intervalo do Envio automático'+(cfg('wa_on')==='true'?'':' (o envio está desligado: ligue na aba Envio automático)')+'. Óticas que já fecharam não entram.</p></div>';
+  h+='<div class="card sec" style="position:sticky;top:8px;z-index:5"><div class="row" style="gap:8px;flex-wrap:wrap"><b class="grow">'+n+' marcada(s)</b><button class="btn sm" data-a="campmarcar">Marcar as próximas '+(+cfg('wa_limite')||20)+'</button><button class="btn sm" data-a="campdesm">Desmarcar</button><button class="btn sm pri" data-a="campfila"'+(n?'':' disabled')+'>Colocar na fila automática</button></div><p class="small muted" style="margin:6px 0 0">Sai pelo chip do CRM, no horário e com o intervalo do Envio automático'+(cfg('wa_on')==='true'?'':' (o envio está desligado: ligue na aba Envio automático)')+'. Óticas marcadas como interessadas ou que já fecharam não entram, e saem da fila se estiverem nela.</p></div>';
   if(!L.length)return h+'<div class="empty">Nenhuma ótica aqui.</div>';
   h+=L.map(l=>{const fone=foneDe(l),pode=campPode(l),nf=campFila(l);
     return '<div class="card lead"><div class="row" style="gap:10px;align-items:flex-start">'+(pode?'<input type="checkbox" data-cmarca="'+l.id+'"'+(sel[l.id]?' checked':'')+' aria-label="Marcar para a campanha" style="width:20px;height:20px;margin-top:3px">':'<span style="width:20px"></span>')+
@@ -615,7 +615,9 @@ document.addEventListener('click',async e=>{
   if(d.zenv)return zEnviar();
   if(d.zfu){const g=zConvs().find(x=>x.k===st.zsel);if(g&&g.lead){const v=msg(['followup','interesse','agradecimento'].includes(d.zfu)?d.zfu:'followup',g.lead);st.ztxt[g.k]=v;const ta=$('#ztxt');if(ta){ta.value=v;ta.style.height='auto';ta.style.height=Math.min(320,ta.scrollHeight+4)+'px';ta.focus();ta.setSelectionRange(0,0);ta.scrollTop=0}}return}
   if(d.fcancl)return cancelarLead(d.fcancl);
-  if(d.st){const l=st.leads.find(x=>x.id===d.st);return upd(d.st,{status:d.v,historico:hist(l,'Status: '+STATUS[d.v]),follow_up:d.v==='fechou'?null:l.follow_up})}
+  if(d.st){const l=st.leads.find(x=>x.id===d.st);
+    // interessada ou fechou: sai da campanha (cancela o que ainda estiver na fila)
+    if(d.v==='interessada'||d.v==='fechou'){const fq=st.fila.filter(x=>x.lead_id===d.st&&x.tipo==='campanha'&&ATIVOS.includes(x.status));if(fq.length){sb.from('prosp_wa_fila').update({status:'cancelada',erro:'marcada como '+STATUS[d.v].toLowerCase()}).eq('lead_id',d.st).eq('tipo','campanha').in('status',ATIVOS).then(()=>{fq.forEach(x=>{x.status='cancelada'});render()})}}return upd(d.st,{status:d.v,historico:hist(l,'Status: '+STATUS[d.v]),follow_up:d.v==='fechou'?null:l.follow_up})}
   if(d.copysite){const l=st.leads.find(x=>x.id===d.copysite);try{await navigator.clipboard.writeText(siteLink(l));toast('Link do site copiado')}catch(x){prompt('Copie o link:',siteLink(l))}return}
   if(d.copy){const l=st.leads.find(x=>x.id===d.copy);try{await navigator.clipboard.writeText(demoLink(l));toast('Link copiado')}catch(x){prompt('Copie o link:',demoLink(l))}return}
   if(d.del){if(!confirm('Remover essa ótica do CRM?'))return;const r=await sb.from('prosp_leads').delete().eq('id',d.del);if(r.error)return toast(r.error.message);st.leads=st.leads.filter(l=>l.id!==d.del);return render()}
