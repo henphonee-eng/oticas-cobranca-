@@ -782,6 +782,24 @@ html:not(.adm) :is(.btn,.tab,.fchip,button.card,button.kpi,button.tile,.dlc):foc
 .wh-l{display:grid;gap:10px;padding:0 14px 14px}
 .wh-m{--wq:#64748b;border-left:3px solid var(--wq);padding-left:10px}
 .wh-mh{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:14px}
+/* kanban da fila e configurações recolhidas */
+.wq-cfg{padding:0;gap:0}
+.wq-cfg>summary{display:flex;justify-content:space-between;align-items:center;gap:8px 14px;flex-wrap:wrap;padding:14px 16px;cursor:pointer;list-style:none}
+.wq-cfg>summary::-webkit-details-marker{display:none}
+.wq-cfg>summary::after{content:'';width:9px;height:9px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);margin:0 4px 4px auto;transition:transform .15s}
+.wq-cfg[open]>summary::after{transform:rotate(225deg);margin-bottom:-4px}
+.wq-cfgb{display:flex;flex-direction:column;gap:12px;padding:0 16px 16px}
+.kb{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(270px,1fr);gap:12px;overflow-x:auto;padding-bottom:6px;scroll-snap-type:x mandatory}
+.kb-col{background:var(--surface-2,rgba(127,127,127,.08));border:1px solid var(--line);border-radius:14px;display:flex;flex-direction:column;min-width:0;scroll-snap-align:start;max-height:78vh}
+.kb-col>header{display:grid;grid-template-columns:1fr auto;gap:2px 8px;padding:12px 12px 10px;border-bottom:1px solid var(--line);border-top:4px solid var(--kb,#64748b);border-radius:14px 14px 0 0}
+.kb-col>header small{grid-column:1/-1;color:var(--muted);font-size:12px}
+.kb-n{font-weight:700;font-size:13px;min-width:24px;text-align:center;padding:1px 8px;border-radius:999px;background:color-mix(in srgb,var(--kb,#64748b) 15%,transparent);color:var(--kb,#64748b)}
+.kb-apr{--kb:#d97706}.kb-ag{--kb:#2a78d6}.kb-env{--kb:#1baf7a}.kb-fal{--kb:#dc2626}
+.kb-list{display:flex;flex-direction:column;gap:10px;padding:10px;overflow-y:auto}
+.kb-list .wq{padding:10px 12px}
+.kb-list .wq-tp{margin-top:6px}
+.kb-empty{color:var(--muted);font-size:13px;text-align:center;padding:18px 6px}
+@media (max-width:560px){.kb{grid-auto-columns:86%}}
 /* ---------- relatórios ---------- */
 .rep-hero{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px 24px;padding:20px 22px;margin-bottom:12px;border-radius:18px;color:#fff;background:linear-gradient(135deg,#0b2f6b 0%,#1d5fc0 55%,#2a78d6 100%);box-shadow:0 10px 28px rgba(11,47,107,.22)}
 .rep-hero small{font-size:12.5px;font-weight:600;opacity:.82;letter-spacing:.02em}
@@ -3282,7 +3300,7 @@ function waCard(m,dono){
   const sp=WA_ST[m.status]||['',m.status],cat=waCatDe(m.tipo);
   const pode=dono&&['aprovar','falhou','cancelada','expirada'].includes(m.status),canc=dono&&['aprovar','aguardando','falhou'].includes(m.status);
   const t=waTxt(m),curto=t.length>140;
-  return '<article class="wq wq-'+cat+'"><div class="wq-h"><span class="wq-tp">'+esc(WA_NOME[m.tipo]||m.tipo)+'</span><span class="chip '+sp[0]+'">'+sp[1]+'</span></div>'+
+  return '<article class="wq wq-'+cat+'"><div class="wq-h"><span class="wq-tag wq-'+cat+'">'+esc(waCatNome(cat))+'</span>'+(m.status==='enviando'?'<span class="chip acc">Enviando</span>':'')+'</div><div class="wq-tp">'+esc(WA_NOME[m.tipo]||m.tipo)+'</div>'+
     '<div class="wq-para"><span class="sub" style="margin:0">Para</span> <b>'+waPara(m)+'</b></div>'+
     '<div class="wq-q">'+esc(waQuando(m))+'</div>'+
     (curto?'<details class="wq-msg"><summary>'+esc(t.slice(0,120))+'… <u>ver mensagem</u></summary><div class="wq-b">'+esc(t)+'</div></details>':'<div class="wq-b">'+esc(t)+'</div>')+
@@ -3313,11 +3331,13 @@ function waFilaHtml(fila,dono){
   const apr=F.filter(m=>m.status==='aprovar').sort((a,b)=>String(a.criado_em).localeCompare(String(b.criado_em)));
   const ag=F.filter(m=>m.status==='aguardando'||m.status==='enviando').sort((a,b)=>String(a.enviar_apos).localeCompare(String(b.enviar_apos)));
   const fal=F.filter(m=>m.status==='falhou');
-  const sec=(k,tit,sub,lista,vazio,open)=>'<details class="card wq-box" data-wqs="'+k+'"'+((WA.sec&&WA.sec[k]!==undefined?WA.sec[k]:open)?' open':'')+'><summary><span><b>'+tit+'</b> <span class="sub num">'+lista.length+'</span></span><span class="sub" style="margin:0">'+sub+'</span></summary><div class="wq-in">'+waBlocoCat(lista,dono,vazio)+'</div></details>';
+  const env=F.filter(m=>m.status==='enviada').sort((a,b)=>String(b.enviado_em||b.criado_em).localeCompare(String(a.enviado_em||a.criado_em))).slice(0,30);
+  const col=(k,tit,sub,lista,vazio)=>'<section class="kb-col kb-'+k+'"><header><b>'+tit+'</b><span class="kb-n">'+lista.length+'</span><small>'+sub+'</small></header><div class="kb-list">'+(lista.length?lista.map(m=>waCard(m,dono)).join(''):'<div class="kb-empty">'+vazio+'</div>')+'</div></section>';
   return '<div class="filters" style="margin:4px 0 12px">'+chips.map(c=>'<button class="fchip" data-act="wacat" data-c="'+c[0]+'" aria-pressed="'+(cat===c[0])+'">'+esc(c[1])+' ('+c[2]+')</button>').join('')+'</div>'+
-    sec('apr','Esperando sua aprovação','só saem depois que você aprovar',apr,'Nada esperando aprovação.',true)+
-    sec('ag','Na fila e agendadas','saem sozinhas no horário marcado',ag,'Nada na fila agora.',true)+
-    (fal.length?sec('fal','Com falha','não conseguiram sair',fal,'',true):'')+
+    '<div class="kb">'+col('apr','Esperando aprovação','só saem depois que você aprovar',apr,'Nada esperando aprovação.')+
+    col('ag','Na fila e agendadas','saem sozinhas no horário',ag,'Nada na fila agora.')+
+    col('env','Enviadas','as últimas 30',env,'Nenhuma enviada ainda.')+
+    (fal.length?col('fal','Com falha','não conseguiram sair',fal,''):'')+'</div>'+
     '<h3 style="margin:18px 0 8px;font-size:15px">Histórico por cliente</h3><div class="field" style="max-width:420px;margin-bottom:10px"><input type="search" id="wa-q" placeholder="Buscar cliente pelo nome ou WhatsApp" value="'+esc(WA.q)+'" aria-label="Buscar cliente no histórico"></div>'+
     '<div class="stack" id="wa-hist">'+waHistHtml()+'</div><p class="sub" style="margin-top:8px">Mostra as últimas 500 mensagens. Toque no nome para ver, em ordem, tudo o que foi enviado para a pessoa.</p>';
 }
@@ -3341,7 +3361,7 @@ function waHistHtml(){
     '<div class="wh-l">'+g.msgs.map(m=>{const sp=WA_ST[m.status]||['',m.status];return '<div class="wh-m wq-'+waCatDe(m.tipo)+'"><div class="wh-mh"><b>'+esc(WA_NOME[m.tipo]||m.tipo)+'</b><span class="chip '+sp[0]+'">'+sp[1]+'</span><span class="sub" style="margin:0">'+esc(waDH(m.enviado_em||m.criado_em))+'</span></div><div class="wq-b">'+esc(waTxt(m))+'</div></div>'}).join('')+'</div></details>').join('');
 }
 Object.assign(A,{wacat(d){WA.cat=d.c;render()}});
-document.addEventListener('toggle',e=>{const t=e.target;if(t&&t.dataset&&t.dataset.wqs){WA.sec=WA.sec||{};WA.sec[t.dataset.wqs]=t.open}},true);
+document.addEventListener('toggle',e=>{const t=e.target;if(t&&t.dataset&&t.dataset.wacfgbox){WA.cfgOpen=t.open;return}if(t&&t.dataset&&t.dataset.wqs){WA.sec=WA.sec||{};WA.sec[t.dataset.wqs]=t.open}},true);
 document.addEventListener('input',e=>{const t=e.target;if(t&&t.id==='wa-q'){WA.q=t.value;const h=document.getElementById('wa-hist');if(h)h.innerHTML=waHistHtml()}});
 document.addEventListener('toggle',e=>{const t=e.target;if(t&&t.dataset&&t.dataset.wak){if(t.open)WA.aberto=t.dataset.wak;else if(WA.aberto===t.dataset.wak)WA.aberto=''}},true);
 const WA_SEC={boasvindas:['boasvindas'],cobrar:['lembrete','atraso'],aniversarios:['aniversario'],revisao:['revisao']};
@@ -3376,8 +3396,7 @@ function premWaAjustes(){
   const D=waDoc(),e=waEstado(),st=WA.st||{};
   const sel=x=>'<div class="sum-row"><span>'+esc(x[1])+'</span><select data-wamodo="'+x[0]+'" aria-label="'+esc(x[1])+'"><option value="aprovar"'+(waModo(x[0])==='aprovar'?' selected':'')+'>Aprovar antes</option><option value="auto"'+(waModo(x[0])==='auto'?' selected':'')+'>Enviar sozinho</option><option value="off"'+(waModo(x[0])==='off'?' selected':'')+'>Desligado</option></select></div>';
   const tk=WA.token?'<div class="card" style="gap:8px;background:var(--bg2,transparent)"><b>Seu código do conector</b><p class="sub" style="margin:0">Copie agora. Por segurança ele aparece só desta vez. Cole no programa do computador da loja.</p><input type="text" readonly value="'+esc(WA.token)+'" onclick="this.select()" style="font-family:monospace"><div class="foot-row"><button class="btn sm primary" data-act="wacfgbaixar">Baixar arquivo de configuração</button><button class="btn sm" data-act="wacopiar">Copiar código</button></div><p class="sub" style="margin:0">Mais seguro: baixe o arquivo e coloque dentro da pasta conector-whatsapp, sem precisar colar o código.</p></div>':'';
-  return '<div class="card" style="gap:12px"><b>WhatsApp Automático</b>'+
-   '<div class="chips"><span class="chip '+e[0]+'">'+e[1]+'</span><span class="chip">Enviadas hoje: '+(+st.enviadas_hoje||0)+'</span><span class="chip">Na fila: '+(+st.na_fila||0)+'</span></div>'+
+  return '<details class="card wq-cfg" data-wacfgbox="1"'+(WA.cfgOpen?' open':'')+'><summary><span><b>Configurações e aprovações</b><span class="sub" style="margin:2px 0 0;display:block">Ligar e pausar, o que espera aprovação e o que sai sozinho, horário, limite e conexão</span></span><span class="chips" style="margin:0"><span class="chip '+e[0]+'">'+e[1]+'</span>'+(D.pausa?'<span class="chip warn">Pausado</span>':'')+(D.on?'':'<span class="chip bad">Desligado</span>')+'</span></summary><div class="wq-cfgb">'+
    '<label class="aguard-box" style="margin:0"><input type="checkbox" data-wacfg="on"'+(D.on?' checked':'')+'> Enviar avisos automáticos pelo WhatsApp</label>'+
    '<label class="aguard-box" style="margin:0"><input type="checkbox" data-wacfg="pausa"'+(D.pausa?' checked':'')+'> Pausar todos os envios agora</label>'+
    '<div class="sub" style="margin:0">Para cada aviso, escolha se espera a sua aprovação ou sai sozinho. Comece com "Aprovar antes" até confiar nas mensagens. Parcelas com 15 dias ou mais de atraso sempre esperam aprovação.</div>'+
@@ -3385,7 +3404,7 @@ function premWaAjustes(){
    '<div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(120px,1fr))"><div class="field"><span>Enviar a partir de</span><input type="time" data-wacfg="ini" value="'+esc(D.ini||'08:00')+'"></div><div class="field"><span>Até</span><input type="time" data-wacfg="fim" value="'+esc(D.fim||'18:30')+'"></div><div class="field"><span>Limite por dia</span><input type="number" min="1" max="150" data-wacfg="limite" value="'+(+D.limite||30)+'"></div></div>'+
    waNuvemHtml(st)+
    (st.nuvem?'':'<details><summary class="sub" style="cursor:pointer">Usar pelo computador da loja (sem a nuvem)</summary><div class="foot-row" style="margin-top:8px"><button class="btn" data-act="wagerar">'+(st.tem_token?'Gerar novo código':'Gerar código do conector')+'</button><a class="btn" href="conector.zip" download>Baixar o programa do computador</a></div></details>')+
-   '<p class="sub" style="margin:0">Programa gratuito e não oficial. Use um número só da ótica, com poucas mensagens por dia e sem texto igual para muita gente. Existe risco de o WhatsApp bloquear o número, por isso os envios têm intervalo, limite diário e a opção SAIR.</p></div>'+tk;
+   '<p class="sub" style="margin:0">Programa gratuito e não oficial. Use um número só da ótica, com poucas mensagens por dia e sem texto igual para muita gente. Existe risco de o WhatsApp bloquear o número, por isso os envios têm intervalo, limite diário e a opção SAIR.</p></div></details>'+tk;
 }
 Object.assign(A,{
   waresumo(d){const v=S.vendas[d.v];if(!v)return;if(!waResumo(v,false))toast('Cliente sem WhatsApp')},
