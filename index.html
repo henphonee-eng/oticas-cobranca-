@@ -1920,7 +1920,7 @@ function editDraft(v){
   const par=v.parcelas.filter(p=>p.tipo==='parcela'&&p.parte!==2);const pct=x=>x?String(x).replace('.',','):'';const ent=v.parcelas.find(p=>p.tipo==='entrada');
   return {editId:v.id,clienteId:v.clienteId,novo:{nome:'',cpf:'',whatsapp:'',endereco:''},
     itens:v.itens.map(i=>({tipo:i.tipo,nome:i.nome,qtd:String(i.qtd),valor:centsToStr(i.valor),juros:pct(i.juros),lenteId:i.lenteId||''})),
-    jurosVenda:pct(v.jurosVenda),entrada:v.entrada?centsToStr(v.entrada):'',formaEntrada:(ent&&ent.forma)||'Pix',n:String(par.length),primeira:par.length?par[0].venc:addMonths(todayStr(),1),forma:v.forma,data:v.data,obs:v.obs||'',aguardando:!!v.aguardando,vendedorId:v.vendedorId||'',entrega:v.entregaPrev||''};
+    jurosVenda:pct(v.jurosVenda),entrada:v.entrada?centsToStr(v.entrada):'',formaEntrada:(ent&&ent.forma)||'Pix',n:String(par.length),primeira:par.length?par[0].venc:addMonths(todayStr(),1),forma:v.forma,legPix:v.forma==='Pix'&&par.length>0,data:v.data,obs:v.obs||'',aguardando:!!v.aguardando,vendedorId:v.vendedorId||'',entrega:v.entregaPrev||''};
 }
 function sheetNova(){
   const D=ui.draft;const cs=Object.values(S.clientes).sort((a,b)=>a.nome.localeCompare(b.nome));
@@ -1933,11 +1933,12 @@ function sheetNova(){
   '<p class="hint warn-soft" id="novo-aviso" style="margin:0" hidden></p>'+
   '<details><summary>Grau do cliente (opcional)</summary><div style="margin-top:10px">'+receitaForm((D.novo.receitas||(D.novo.receitas=[blankReceita()]))[0],0,'bind','novo.receitas.',false)+'</div></details></div></div>'+
   '<div class="sec"><h3>Itens da venda</h3><div id="items" class="stack"></div><div class="foot-row"><button class="btn" data-act="additem" data-t="produto">+ Produto</button><button class="btn" data-act="additem" data-t="lente">+ Lente</button></div>'+
-  '<div class="field"><span>Juros sobre o total da venda (%), opcional</span><input type="text" inputmode="decimal" data-bind="jurosVenda" value="'+esc(D.jurosVenda)+'" placeholder="0"></div></div>'+
-  premVendSale(D)+'<div class="sec"><h3>Pagamento</h3>'+((!D.editId||(S.vendas[D.editId]&&S.vendas[D.editId].aguardando))?'<label class="aguard-box"><input type="checkbox" data-aguard'+(D.aguardando?' checked':'')+'><span><b>Aguardando pagamento</b><small>Use para orçamento: o cliente ainda vai pagar ou dar a entrada. Não conta como venda, nem no caixa, nem nas cobranças. Vira venda quando você marcar como pago.</small></span></label>':'')+'<div class="field"><span>Forma de cobrança das parcelas</span><div class="seg" role="radiogroup" aria-label="Forma de cobrança"><label><input type="radio" name="forma" value="Pix" data-bind="forma"'+(D.forma==='Pix'?' checked':'')+'><span>Pix</span></label><label><input type="radio" name="forma" value="Boleto" data-bind="forma"'+(D.forma==='Boleto'?' checked':'')+'><span>Boleto</span></label></div></div>'+
+  '<div class="field" data-pgparc'+(isAvista(D)?' hidden':'')+'><span>Juros sobre o total da venda (%), opcional</span><input type="text" inputmode="decimal" data-bind="jurosVenda" value="'+esc(D.jurosVenda)+'" placeholder="0"></div></div>'+
+  premVendSale(D)+'<div class="sec"><h3>Pagamento</h3>'+((!D.editId||(S.vendas[D.editId]&&S.vendas[D.editId].aguardando))?'<label class="aguard-box"><input type="checkbox" data-aguard'+(D.aguardando?' checked':'')+'><span><b>Aguardando pagamento</b><small>Use para orçamento: o cliente ainda vai pagar ou dar a entrada. Não conta como venda, nem no caixa, nem nas cobranças. Vira venda quando você marcar como pago.</small></span></label>':'')+'<div class="field"><span>Forma de pagamento</span><div class="seg" role="radiogroup" aria-label="Forma de pagamento"><label><input type="radio" name="forma" value="Pix" data-bind="forma"'+(D.forma==='Pix'?' checked':'')+'><span>'+(D.legPix?'Pix':'Pix à vista')+'</span></label><label><input type="radio" name="forma" value="Boleto" data-bind="forma"'+(D.forma==='Boleto'?' checked':'')+'><span>Boleto parcelado</span></label></div></div>'+
+  '<p class="sub" data-pgav'+(isAvista(D)?'':' hidden')+' style="margin:0 0 10px">Pagamento à vista no Pix: o valor total entra como recebido na data da venda, sem parcelas.</p>'+
   '<div class="grid2"><div class="field"><span>Data da venda</span><input type="date" data-bind="data" value="'+esc(D.data)+'"></div><div class="field"><span>Data de entrega (opcional)</span><input type="date" data-bind="entrega" value="'+esc(D.entrega||'')+'"></div></div>'+
-  '<div class="grid2"><div class="field"><span>Entrada (R$)</span><input type="text" inputmode="decimal" data-bind="entrada" value="'+esc(D.entrada)+'" placeholder="0,00"></div><div class="field"><span>Entrada paga em</span><select data-bind="formaEntrada">'+FORMAS.map(f=>'<option'+(D.formaEntrada===f?' selected':'')+'>'+f+'</option>').join('')+'</select></div></div>'+
-  '<div class="grid2"><div class="field"><span>Parcelas</span><input type="number" min="0" max="36" inputmode="numeric" data-bind="n" value="'+esc(D.n)+'"></div><div class="field"><span>Vencimento da 1ª parcela</span><input type="date" data-bind="primeira" value="'+esc(D.primeira)+'"></div></div>'+
+  '<div class="grid2" data-pgparc'+(isAvista(D)?' hidden':'')+'><div class="field"><span>Entrada (R$)</span><input type="text" inputmode="decimal" data-bind="entrada" value="'+esc(D.entrada)+'" placeholder="0,00"></div><div class="field"><span>Entrada paga em</span><select data-bind="formaEntrada">'+FORMAS.map(f=>'<option'+(D.formaEntrada===f?' selected':'')+'>'+f+'</option>').join('')+'</select></div></div>'+
+  '<div class="grid2" data-pgparc'+(isAvista(D)?' hidden':'')+'><div class="field"><span>Parcelas</span><input type="number" min="0" max="36" inputmode="numeric" data-bind="n" value="'+esc(D.n)+'"></div><div class="field"><span>Vencimento da 1ª parcela</span><input type="date" data-bind="primeira" value="'+esc(D.primeira)+'"></div></div>'+
   '<div class="field"><span>Observações (opcional)</span><textarea data-bind="obs" placeholder="Receita, prazo de entrega, combinados com o cliente">'+esc(D.obs)+'</textarea></div></div>'+
   '<div class="sec"><h3>Resumo</h3><div id="sum" class="sum"></div></div>';
   const foot=(D.editId?'<p class="sub">Ao salvar, as parcelas são recalculadas. As que já foram recebidas continuam como recebidas.</p>':'')+'<button type="button" class="hintbtn" id="vhint" data-act="vfix" hidden></button><button class="btn primary" id="vsave" data-act="salvarvenda">'+(D.editId?'Salvar alterações':D.aguardando?'Salvar orçamento':'Fechar venda')+'</button>';
@@ -1950,33 +1951,41 @@ function renderItems(){
       ?'<select data-lente="'+i+'" aria-label="Lente"><option value="">'+(it.nome&&!S.lentes[it.lenteId]?esc(it.nome):ls.length?'Escolha a lente':'Nenhuma lente cadastrada')+'</option>'+ls.map(l=>'<option value="'+l.id+'"'+(l.id===it.lenteId?' selected':'')+'>'+esc(l.nome)+(l.tipo?' · '+esc(l.tipo):'')+' · '+brl(l.valor)+'</option>').join('')+'</select>'
       :'<input type="text" data-item="'+i+'" data-f="nome" value="'+esc(it.nome)+'" placeholder="Ex.: Armação, óculos de sol" aria-label="Produto" autocomplete="off">';
     return '<div class="item"><div class="item-top"><span class="chip acc">'+(it.tipo==='lente'?'Lente':'Produto')+'</span><button class="ib" style="width:36px;height:36px" data-act="rmitem" data-i="'+i+'" aria-label="Remover item">&#215;</button></div>'+nm+
-    '<div class="grid3"><div class="field"><span>Qtd</span><input type="number" min="1" inputmode="numeric" data-item="'+i+'" data-f="qtd" value="'+esc(it.qtd)+'"></div><div class="field"><span>Valor (R$)</span><input type="text" inputmode="decimal" data-item="'+i+'" data-f="valor" value="'+esc(it.valor)+'" placeholder="0,00"></div><div class="field"><span>Juros %</span><input type="text" inputmode="decimal" data-item="'+i+'" data-f="juros" value="'+esc(it.juros)+'" placeholder="0"></div></div>'+
+    '<div class="grid3"><div class="field"><span>Qtd</span><input type="number" min="1" inputmode="numeric" data-item="'+i+'" data-f="qtd" value="'+esc(it.qtd)+'"></div><div class="field"><span>Valor (R$)</span><input type="text" inputmode="decimal" data-item="'+i+'" data-f="valor" value="'+esc(it.valor)+'" placeholder="0,00"></div><div class="field" data-pgparc'+(isAvista(ui.draft)?' hidden':'')+'><span>Juros %</span><input type="text" inputmode="decimal" data-item="'+i+'" data-f="juros" value="'+esc(it.juros)+'" placeholder="0"></div></div>'+
     '<div class="item-bot"><span>Total do item</span><b data-line="'+i+'">R$ 0,00</b></div></div>';
   }).join('')+((D.itens.some(i=>i.tipo==='lente')&&!ls.length)?'<p class="sub">Cadastre suas lentes na aba Lentes e volte aqui.</p>':'');
 }
+// Pix = à vista (sem parcelas e sem juros); Boleto = parcelado. Vendas antigas parceladas no Pix continuam como estavam.
+const isAvista=D=>!!D&&D.forma==='Pix'&&!D.legPix;
+function pgToggle(){const av=isAvista(ui.draft);document.querySelectorAll('[data-pgparc]').forEach(el=>el.hidden=av);document.querySelectorAll('[data-pgav]').forEach(el=>el.hidden=!av)}
 function draftState(){
   const D=ui.draft;const errs=[],targets=[];const E=(m,sel)=>{errs.push(m);targets.push(sel||'')};
   if(D.clienteId==='__novo'){if(!D.novo.nome.trim())E('Informe o nome do cliente','[data-bind="novo.nome"]');else if(cpfDup(D.novo.cpf))E('Já existe cliente com este CPF: '+cpfDup(D.novo.cpf).nome,'[data-bind="novo.cpf"]')}
   else if(!D.clienteId)E('Escolha o cliente','#f-cli');
-  const itens=D.itens.map(it=>({tipo:it.tipo,nome:(it.nome||'').trim(),qtd:Math.max(1,parseInt(it.qtd,10)||1),valor:parseMoney(it.valor),juros:parsePct(it.juros),lenteId:it.lenteId||''}));
+  const av0=isAvista(D);
+  const itens=D.itens.map(it=>({tipo:it.tipo,nome:(it.nome||'').trim(),qtd:Math.max(1,parseInt(it.qtd,10)||1),valor:parseMoney(it.valor),juros:av0?0:parsePct(it.juros),lenteId:it.lenteId||''}));
   if(!itens.length)errs.push('Adicione ao menos um item');
   itens.forEach((it,i)=>{if(!it.nome)E('Item '+(i+1)+': '+(it.tipo==='lente'?'escolha a lente':'informe o nome do produto'),it.tipo==='lente'?'[data-lente="'+i+'"]':'[data-item="'+i+'"][data-f="nome"]');else if(it.valor<=0)E('Item '+(i+1)+': informe o valor','[data-item="'+i+'"][data-f="valor"]')});
-  const entradaIn=parseMoney(D.entrada);const c=calcVenda(itens,parsePct(D.jurosVenda),entradaIn);
-  const n=Math.min(36,Math.max(0,parseInt(D.n,10)||0));
+  const av=isAvista(D),jv=av?0:parsePct(D.jurosVenda);
+  let entradaIn=parseMoney(D.entrada);let c=calcVenda(itens,jv,entradaIn);
+  if(av){entradaIn=c.total;c=calcVenda(itens,jv,entradaIn)}
+  const n=av?0:Math.min(36,Math.max(0,parseInt(D.n,10)||0));
   if(c.total>0&&entradaIn>c.total)errs.push('A entrada é maior que o total');
   if(!/^\d{4}-\d{2}-\d{2}$/.test(D.data))errs.push('Informe a data da venda');
   if(c.saldo>0&&n<1)errs.push('Informe o número de parcelas');
   if(c.saldo>0&&!/^\d{4}-\d{2}-\d{2}$/.test(D.primeira))errs.push('Informe o vencimento da 1ª parcela');
-  return {errs:errs,targets:targets,itens:itens,c:c,n:n,parc:splitParcelas(c.saldo,n,D.primeira)};
+  return {errs:errs,targets:targets,itens:itens,c:c,n:n,av:av,jv:jv,entrada:entradaIn,parc:splitParcelas(c.saldo,n,D.primeira)};
 }
 function updateVenda(){
   if(!ui.draft||!$('#sum'))return;const st=draftState();const c=st.c;
   document.querySelectorAll('[data-line]').forEach(el=>{const l=c.linhas[+el.dataset.line];el.textContent=brl(l?l.t:0)});
   let h='<div class="sum-row"><span>Itens sem juros</span><span>'+brl(c.base)+'</span></div>';
   if(c.juros>0)h+='<div class="sum-row"><span>Juros aplicados</span><span>'+brl(c.juros)+'</span></div>';
-  h+='<div class="sum-row big"><span>Total</span><span>'+brl(c.total)+'</span></div><div class="sum-row"><span>Entrada</span><span>'+brl(c.entrada)+'</span></div>';
+  h+='<div class="sum-row big"><span>Total</span><span>'+brl(c.total)+'</span></div>';
+  if(st.av)h+='<div class="sum-row hl"><span>À vista no Pix</span><span>'+brl(c.total)+'</span></div>';
+  else{h+='<div class="sum-row"><span>Entrada</span><span>'+brl(c.entrada)+'</span></div>';
   h+='<div class="sum-row hl"><span>Saldo parcelado</span><span>'+(st.parc.length?st.parc.length+'x de '+brl(st.parc[0].valor):brl(c.saldo))+'</span></div>';
-  if(st.parc.length){h+='<div class="meta">Vencimentos: '+st.parc.slice(0,4).map(p=>fmtShort(p.venc)).join(', ')+(st.parc.length>4?' ... '+fmtDate(st.parc[st.parc.length-1].venc):'')+'</div>';if(st.parc[st.parc.length-1].valor!==st.parc[0].valor)h+='<div class="meta">A última parcela leva a diferença dos centavos: '+brl(st.parc[st.parc.length-1].valor)+'</div>'}
+  if(st.parc.length){h+='<div class="meta">Vencimentos: '+st.parc.slice(0,4).map(p=>fmtShort(p.venc)).join(', ')+(st.parc.length>4?' ... '+fmtDate(st.parc[st.parc.length-1].venc):'')+'</div>';if(st.parc[st.parc.length-1].valor!==st.parc[0].valor)h+='<div class="meta">A última parcela leva a diferença dos centavos: '+brl(st.parc[st.parc.length-1].valor)+'</div>'}}
   $('#sum').innerHTML=h;
   const na=$('#novo-aviso');if(na){const tx=(ui.draft.clienteId==='__novo'&&ui.draft.novo.nome.trim())?avisoFalta(ui.draft.novo):'';na.textContent=tx;na.hidden=!tx}
   ui.vTarget=st.targets[0]||'';const vh=$('#vhint');vh.textContent=st.errs.length?'Falta preencher: '+st.errs[0]+(st.errs.length>1?' (e mais '+(st.errs.length-1)+')':''):'';vh.hidden=!st.errs.length;$('#vsave').disabled=st.errs.length>0;
@@ -1987,7 +1996,7 @@ function salvarVenda(){
   if(!ui.draft)return;const st=draftState();if(st.errs.length){toast(st.errs[0]);return}
   const D=ui.draft;let cid=D.clienteId;
   if(cid==='__novo'){const cl=makeCliente(D.novo);cid=cl.id;S.clientes[cid]=cl;persist('clientes',cid);premWaHook('bv',null,null,cl)}
-  const v=makeVenda(cid,{itens:st.itens,jurosVenda:parsePct(D.jurosVenda),entrada:parseMoney(D.entrada),formaEntrada:D.formaEntrada,n:st.n,primeira:D.primeira,forma:D.forma,data:D.data,obs:D.obs});
+  const v=makeVenda(cid,{itens:st.itens,jurosVenda:st.jv,entrada:st.entrada,formaEntrada:st.av?'Pix':D.formaEntrada,n:st.n,primeira:D.primeira,forma:D.forma,data:D.data,obs:D.obs});
   const old=D.editId?S.vendas[D.editId]:null;
   if(D.aguardando&&(!old||old.aguardando)){v.aguardando=true;v.parcelas.forEach(p=>{if(p.tipo==='entrada'){p.pago=false;p.pagoEm=null;p.forma=null}})}
   if(old){
@@ -4473,6 +4482,7 @@ function onField(e){
   if(t.dataset.bind&&ui.draft){
     setPath(ui.draft,t.dataset.bind,t.value);
     if(t.dataset.bind==='clienteId'){const nc=$('#novo-cli');if(nc)nc.hidden=ui.draft.clienteId!=='__novo'}
+    if(t.dataset.bind==='forma')pgToggle();
     updateVenda();
   }
   if(t.dataset.aguard!==undefined&&ui.draft){ui.draft.aguardando=t.checked;updateVenda()}
