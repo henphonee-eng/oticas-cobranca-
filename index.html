@@ -3645,7 +3645,7 @@ const agId=()=>Math.random().toString(36).slice(2,10);
 function agPadrao(c){
   const o=cfg()||{};
   return Object.assign({nome_agente:'',tom:'simpatico',emojis:true,boas_vindas:'',horario_modo:'24h',dias:[1,2,3,4,5,6],abre:'09:00',fecha:'18:00',sab_abre:'',sab_fecha:'',horario_obs:'',
-    publico:'todos',ignorar:'',pausa_h:12,limite_dia:25,sobre:'',endereco:o.endereco||'',referencia:'',maps:'',telefone:o.whatsapp||'',instagram:'',site:'',
+    publico:'novos',ignorar:'',pausa_h:12,limite_dia:25,sobre:'',endereco:o.endereco||'',referencia:'',maps:'',telefone:o.whatsapp||'',instagram:'',site:'',
     exame_info:'',exame_agendar:true,usar_lentes:false,produtos:[],pagamento:'',parcelamento:'',crediario:'',entrega_prazo:'',garantia:'',convenios:'',
     promocoes:[],faq:[],imagens:[],chamar:'',nunca:'',msg_atendente:''},c||{});
 }
@@ -3684,7 +3684,7 @@ function viewAgente(){
 }
 function agCheckView(ck){
   return '<div class="card" style="gap:4px;margin-top:12px">'+ck.map(x=>'<div style="display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line)"><span style="font-size:18px;line-height:1.2">'+(x.ok?'✅':x.obrig?'⛔':'⚠️')+'</span><div style="flex:1"><b>'+esc(x.t)+'</b>'+(x.obrig?'':' <span class="sub">(recomendado)</span>')+'<div class="sub" style="margin:2px 0 0">'+esc(x.d)+'</div></div>'+(x.act&&!x.ok?'<button class="btn sm" data-act="'+x.act+'" data-k="'+(x.k||'')+'">Abrir</button>':'')+'</div>').join('')+
-  '<p class="sub" style="margin:10px 0 0">Como o agente trabalha: responde só com o que está cadastrado aqui, nunca dá orientação de saúde, e chama a equipe (aviso no WhatsApp dos donos) quando o cliente quer comprar, reclamar, negociar ou quando não sabe a resposta. Se alguém da equipe responder um cliente, o agente fica quieto nessa conversa pelo tempo escolhido.</p></div>';
+  '<p class="sub" style="margin:10px 0 0">Como o agente trabalha: responde só com o que está cadastrado aqui, nunca dá orientação de saúde, e chama a equipe (aviso no WhatsApp dos donos) quando o cliente quer comprar, reclamar, negociar ou quando não sabe a resposta. Se alguém da equipe responder um cliente, o agente fica quieto nessa conversa pelo tempo escolhido. Por padrão ele só conversa com contatos novos e empresas do Tráfego Orgânico; a base de clientes da ótica continua com a equipe.</p></div>';
 }
 /* ---- formulário ---- */
 const agF=(k,lbl,ph,tipo)=>{const c=AG.cfg,v=c[k]==null?'':c[k];return '<div class="field"><span>'+lbl+'</span>'+(tipo==='area'?'<textarea data-agf="'+k+'" rows="3" placeholder="'+esc(ph||'')+'">'+esc(v)+'</textarea>':'<input type="'+(tipo||'text')+'" data-agf="'+k+'" value="'+esc(v)+'" placeholder="'+esc(ph||'')+'">')+'</div>'};
@@ -3708,7 +3708,8 @@ function agConfig(){
     agChk('emojis','Pode usar emojis (no máximo um por mensagem)')+agF('boas_vindas','Saudação para contatos novos (opcional)','Ex.: Oi! Aqui é a Ana, da Óticas DK. Como posso te ajudar?','area'),true);
   h+=agSec('2. Quando e com quem ele fala','',
     agSel('horario_modo','Quando o agente responde',[['24h','24 horas, todos os dias'],['fora','Só quando a loja está fechada (a equipe atende no horário)'],['dentro','Só no horário de funcionamento']])+
-    agSel('publico','Quem ele atende',[['todos','Todo mundo que mandar mensagem'],['clientes','Só clientes cadastrados, quem tem exame marcado e empresas do Tráfego Orgânico']])+
+    agSel('publico','Com quem ele conversa',[['novos','Só contatos novos e empresas do Tráfego Orgânico (recomendado)'],['todos','Todo mundo que mandar mensagem']])+
+    '<p class="sub" style="margin:0">No modo recomendado, quem já é da base da ótica fica com a equipe: clientes cadastrados, quem tem exame marcado, quem já recebeu avisos e quem já conversava no WhatsApp antes de o agente ser ligado. O agente atende só quem chega pela primeira vez (Tráfego Orgânico, anúncios, indicação) para tirar dúvidas. A lista de conversas do WhatsApp entra sozinha quando o QR Code é lido.</p>'+
     '<div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">'+agF('pausa_h','Se a equipe responder um cliente, o agente fica quieto nessa conversa por (horas)','12','number')+agF('limite_dia','Máximo de respostas do agente por cliente por dia','25','number')+'</div>'+
     agF('ignorar','Números que o agente nunca responde (equipe, fornecedores), separados por vírgula','Ex.: 81999990000, 81988880000','area'));
   h+=agSec('3. Sobre a ótica','O básico que todo cliente pergunta.',
