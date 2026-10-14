@@ -45,7 +45,10 @@ const { criarApi, criarRobo } = require('./fila');
   const nomes = [];
   const apiP = criarApi({ supabaseUrl: 'http://x', supabaseKey: 'k', token: 'wa_t', modo: 'prospeccao' }, async (url) => { nomes.push(url.split('/rpc/')[1]); return { ok: true, status: 200, json: async () => ({ ok: true, msg: null }) }; });
   await apiP.puxar(); await apiP.resultado('x', true); await apiP.ping('conectado'); await apiP.receber('5581', 'oi'); await apiP.sair('5581'); await apiP.registrar({});
-  await apiP.puxarManual();
-  assert.deepStrictEqual(nomes, ['prosp_wa_puxar', 'prosp_wa_resultado', 'prosp_wa_ping', 'prosp_wa_receber', 'prosp_wa_sair', 'prosp_wa_registrar', 'prosp_wa_puxar_manual']);
+  await apiP.puxarManual(); await apiP.qr('data:x');
+  assert.deepStrictEqual(nomes, ['prosp_wa_puxar', 'prosp_wa_resultado', 'prosp_wa_ping', 'prosp_wa_receber', 'prosp_wa_sair', 'prosp_wa_registrar', 'prosp_wa_puxar_manual', 'prosp_wa_qr']);
+  // QR Code da nuvem (modo da ótica)
+  const n0 = chamadas.length; await api.qr('data:image/png;base64,AA');
+  assert.deepStrictEqual(chamadas[n0], ['wa_qr', { p_token: 'wa_t', p_qr: 'data:image/png;base64,AA' }]);
   console.log('Teste ok');
 })().catch((e) => { console.error('FALHOU', e); process.exit(1); });
