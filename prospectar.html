@@ -201,11 +201,12 @@ const isMobile=/Android|iPhone|iPad|iPod|Mobi/i.test(navigator.userAgent)||(navi
 const STATUS={novo:'Novo',enviado:'Mensagem enviada',respondeu:'Respondeu',interessada:'Interessada',fechou:'Fechou',sem_interesse:'Sem interesse'};
 const STAG={novo:'',enviado:'acc',respondeu:'warn',interessada:'hot',fechou:'ok',sem_interesse:'bad'};
 const DEF={
+  campanha:'Oi, pessoal da {otica}! Tudo bem? Aqui é o {seu_nome}, falei com vocês há um tempo sobre um sistema para óticas.\n\nHoje venho com duas novidades que estão trazendo clientes novos para as óticas, sem depender de indicação:\n\n🎯 *Tráfego Orgânico*: o sistema encontra empresas, escolas e comércios num raio de até 3 km da {otica} e leva a oferta de vocês pelo WhatsApp. Quem responde fica num CRM, e vocês veem quantos viraram clientes e quanto venderam.\n\n🤖 *Agente de IA 24 horas*: responde o WhatsApp da ótica a qualquer hora, até de madrugada e no domingo. Tira dúvidas de preço e horário, entende áudio e foto da receita e já marca o exame de vista. Quando precisa de uma pessoa, chama vocês.\n\nPreparei um teste com o nome de vocês, podem mexer à vontade:\n{link}\n\nPosso mostrar funcionando em 10 minutos?',
   seu_nome:'Éder Henrique',
   limite:'25',
-  abordagem:'Olá, equipe da {otica}! Tudo bem?\n\nMe chamo {seu_nome} e trabalho com sistemas personalizados para empresas.\n\nJá pensaram em captar os próprios clientes, sem esperar que eles cheguem até a ótica?\n\nCriei o Tráfego Orgânico para óticas: o sistema encontra empresas perto da {otica} (mercados, escolas, clínicas, oficinas) e envia a oferta de vocês pelo WhatsApp, aos poucos e com a aprovação de vocês. Quem responde fica num CRM, e vocês acompanham quantos viraram clientes e quanto venderam.\n\nE junto vem um sistema de gestão completo com a logo, as cores e a marca da {otica}: vendas, clientes, carnê com Pix, ordens de serviço e financeiro.\n\nMontei uma demonstração com o nome de vocês, podem testar à vontade:\n{link}\n\nPosso mostrar como funciona em 10 minutos?',
-  followup:'Oi, pessoal da {otica}! Conseguiram ver a demonstração? Nela vocês veem como o Tráfego Orgânico encontra empresas perto da ótica e leva a oferta de vocês até elas:\n{link}\n\nÉ um jeito de trazer clientes novos sem depender de indicação. Posso mostrar rapidinho?',
-  interesse:'Que bom que gostou, pessoal da {otica}! 😊\n\nFunciona assim: vocês ganham duas coisas no mesmo sistema, que roda no navegador do computador e do celular:\n\n1. Tráfego Orgânico: o sistema acha empresas num raio de até 3 km da ótica, vocês escolhem quais abordar e a oferta sai pelo WhatsApp da ótica. Quem responde fica num CRM, com o resultado de vendas.\n2. Gestão completa com a logo e as cores da {otica}: vendas, clientes, carnê com Pix, ordens de serviço, financeiro e avisos automáticos pelo WhatsApp.\n\nValores:\n• Implantação: a partir de R$ 457 (pagamento único, deixo tudo configurado para vocês)\n• Plano Premium, com o Tráfego Orgânico: R$ 67 por mês\n• Plano Básico, só a gestão: R$ 47 por mês\n\nA primeira mensalidade só vence 30 dias depois da implantação. Quer que eu mostre funcionando numa chamada rápida?',
+  abordagem:'Olá, equipe da {otica}! Tudo bem?\n\nMe chamo {seu_nome} e trabalho com sistemas personalizados para empresas.\n\nJá pensaram em captar os próprios clientes, sem esperar que eles cheguem até a ótica?\n\nCriei o Tráfego Orgânico para óticas: o sistema encontra empresas perto da {otica} (mercados, escolas, clínicas, oficinas) e envia a oferta de vocês pelo WhatsApp, aos poucos e com a aprovação de vocês. Quem responde fica num CRM, e vocês acompanham quantos viraram clientes e quanto venderam.\n\nE tem mais: um Agente de IA que atende o WhatsApp da {otica} 24 horas, inclusive à noite e no domingo. Ele tira dúvidas de preço, endereço e promoções, entende áudio e foto da receita e já marca o exame de vista. Quando precisa de uma pessoa, chama vocês.\n\nE junto vem um sistema de gestão completo com a logo, as cores e a marca da {otica}: vendas, clientes, carnê com Pix, ordens de serviço e financeiro.\n\nMontei uma demonstração com o nome de vocês, podem testar à vontade:\n{link}\n\nPosso mostrar como funciona em 10 minutos?',
+  followup:'Oi, pessoal da {otica}! Conseguiram ver a demonstração? Nela vocês veem como o Tráfego Orgânico encontra empresas perto da ótica e leva a oferta de vocês até elas:\n{link}\n\nE o Agente de IA responde os clientes no WhatsApp 24 horas e já marca o exame, para nenhum contato ficar sem resposta. É um jeito de trazer clientes novos sem depender de indicação. Posso mostrar rapidinho?',
+  interesse:'Que bom que gostou, pessoal da {otica}! 😊\n\nFunciona assim: vocês ganham duas coisas no mesmo sistema, que roda no navegador do computador e do celular:\n\n1. Tráfego Orgânico: o sistema acha empresas num raio de até 3 km da ótica, vocês escolhem quais abordar e a oferta sai pelo WhatsApp da ótica. Quem responde fica num CRM, com o resultado de vendas.\n2. Agente de IA 24 horas no WhatsApp da ótica: responde dúvidas de preço, horário e promoções, entende áudio e foto da receita, marca o exame de vista e chama vocês quando precisa de uma pessoa. Antes de ligar, vocês testam ele numa tela de teste.\n3. Gestão completa com a logo e as cores da {otica}: vendas, clientes, carnê com Pix, ordens de serviço, financeiro e avisos automáticos pelo WhatsApp.\n\nValores:\n• Implantação: a partir de R$ 457 (pagamento único, deixo tudo configurado para vocês)\n• Plano Premium, com o Tráfego Orgânico e o Agente de IA: R$ 67 por mês\n• Plano Básico, só a gestão: R$ 47 por mês\n\nA primeira mensalidade só vence 30 dias depois da implantação. Quer que eu mostre funcionando numa chamada rápida?',
   site_extra:'Vi também que a {otica} ainda não tem site no Google. Montei uma prévia de site com o nome e o endereço de vocês, para verem como ficaria:\n{site}',
   agradecimento:'Tudo bem, pessoal da {otica}! Obrigado pelo retorno e pela atenção. 🙏\n\nAproveito para contar: além do sistema para óticas, eu desenvolvo soluções personalizadas para empresas, como sites profissionais, agentes de IA que atendem clientes no WhatsApp e sistemas feitos sob medida para facilitar o dia a dia do negócio.\n\nSe um dia precisarem de algo assim, é só me chamar por aqui. Sucesso para vocês!\n\n{seu_nome}'
 };
@@ -253,7 +254,7 @@ async function load(){
   st.leads=lr.data||[];st.cfg={};(cr.data||[]).forEach(r=>st.cfg[r.chave]=r.valor);
   st.ac={};((ar&&ar.data)||[]).forEach(a=>{(st.ac[a.lead_id]=st.ac[a.lead_id]||[]).push(a)});
   await loadFila();
-  st.loaded=true;const qt=new URLSearchParams(location.search).get('tab');if(qt&&['crm','buscar','msg','auto','zap'].includes(qt))st.tab=qt;else if(!st.leads.length)st.tab='buscar';render();
+  st.loaded=true;const qt=new URLSearchParams(location.search).get('tab');if(qt&&['crm','buscar','msg','auto','zap','camp'].includes(qt))st.tab=qt;else if(!st.leads.length)st.tab='buscar';render();
 }
 /* ---------- envio automático (chip do CRM + segundo conector) ---------- */
 let wQrT=null;
@@ -316,7 +317,7 @@ function vAuto(){
     '<div class="row"><button class="btn" data-a="wtoken">'+(w.tem_token?'Gerar novo código':'Gerar código do conector')+'</button><a class="btn" href="/conector.zip" download>Baixar o programa</a></div></div>';
   const at=st.fila.filter(x=>ATIVOS.includes(x.status)||x.status==='falhou').sort((a,b)=>String(a.enviar_apos).localeCompare(String(b.enviar_apos)));
   const env=st.fila.filter(x=>x.status==='enviada').sort((a,b)=>String(b.enviado_em).localeCompare(String(a.enviado_em))).slice(0,40);
-  const row=(x,act)=>{const s=FST[x.status]||['',x.status];return '<div class="card" style="padding:10px 12px"><div class="row"><b class="grow">'+esc(nm(x.lead_id))+'</b><span class="tag '+s[0]+'">'+s[1]+'</span></div><div class="small muted" style="margin-top:4px">'+(x.tipo==='abordagem'?'Abordagem':'Follow-up')+' · '+(x.status==='enviada'?'enviada '+dh(x.enviado_em):x.status==='espera'?'sai alguns dias depois da abordagem':'a partir de '+dh(x.enviar_apos))+(x.erro&&x.status!=='enviada'?' · '+esc(x.erro):'')+'</div>'+(act?'<div class="acts" style="margin-top:8px"><button class="btn sm" data-fcanc="'+x.id+'">Cancelar</button></div>':'')+'</div>'};
+  const row=(x,act)=>{const s=FST[x.status]||['',x.status];return '<div class="card" style="padding:10px 12px"><div class="row"><b class="grow">'+esc(nm(x.lead_id))+'</b><span class="tag '+s[0]+'">'+s[1]+'</span></div><div class="small muted" style="margin-top:4px">'+(x.tipo==='abordagem'?'Abordagem':x.tipo==='campanha'?'Campanha':'Follow-up')+' · '+(x.status==='enviada'?'enviada '+dh(x.enviado_em):x.status==='espera'?'sai alguns dias depois da abordagem':'a partir de '+dh(x.enviar_apos))+(x.erro&&x.status!=='enviada'?' · '+esc(x.erro):'')+'</div>'+(act?'<div class="acts" style="margin-top:8px"><button class="btn sm" data-fcanc="'+x.id+'">Cancelar</button></div>':'')+'</div>'};
   h+='<div class="sec"><h2>Fila ('+at.length+')</h2>'+(at.length?'<div class="list two">'+at.map(x=>row(x,true)).join('')+'</div>':'<div class="empty">Nada na fila. No CRM, marque as óticas novas e coloque na fila automática.</div>')+'</div>';
   h+='<div class="sec"><h2>Enviadas recentemente</h2>'+(env.length?'<div class="list two">'+env.map(x=>row(x,false)).join('')+'</div>':'<div class="empty">Nenhuma mensagem automática enviada ainda.</div>')+'</div>';
   return h;
@@ -368,6 +369,7 @@ function enviar(id,kind){
   window.open(waUrl(f,msg(kind,l)),isMobile?'_self':'_blank');
   const patch=kind==='abordagem'
     ?{status:l.status==='novo'?'enviado':l.status,enviado_em:new Date().toISOString(),follow_up:l.follow_up||addDays(3),historico:hist(l,'Abordagem enviada')}
+    :kind==='campanha'?{campanha_em:new Date().toISOString(),follow_up:addDays(4),historico:hist(l,'Campanha Tráfego Orgânico + Agente de IA enviada')}
     :{follow_up:addDays(4),historico:hist(l,'Follow-up enviado')};
   upd(id,patch);
 }
@@ -388,11 +390,11 @@ function render(){if(st.tab==='auto'&&!wQrT)setTimeout(wQrPoll,0);
   if(!st.loaded)return a.innerHTML='<div class="empty">Carregando leads…</div>';
   const sec=st.tab==='buscar'?'buscar':'crm';
   const item=n=>n[2]?'<a href="'+n[2]+'"'+(sec===n[0]?' class="on"':'')+'>'+n[3]+'<span>'+n[1]+'</span></a>':'<a href="/prospectar?tab='+n[0]+'" data-tab="'+n[0]+'"'+(sec===n[0]?' class="on" aria-current="page"':'')+'>'+n[3]+'<span>'+n[1]+'</span></a>';
-  const head=st.tab==='buscar'?['Prospecção','Encontre óticas no Google Maps e adicione ao CRM']:st.tab==='zap'?['WhatsApp do CRM','Conversas do chip de prospecção: quem respondeu e o follow-up']:st.tab==='auto'?['Envio automático','Fila de abordagens e follow-ups pelo chip do CRM']:st.tab==='msg'?['Modelos de mensagem','Textos da abordagem e do follow-up']:['CRM','Funil de óticas, follow-up e acessos ao demo'];
-  const sub=st.tab==='buscar'?'':'<div class="subtabs"><button class="chip '+(st.tab==='crm'?'on':'')+'" data-tab="crm">Óticas ('+st.leads.length+')</button><button class="chip '+(st.tab==='zap'?'on':'')+'" data-tab="zap">WhatsApp'+(zNao()?'<span class="n">'+zNao()+'</span>':'')+'</button><button class="chip '+(st.tab==='auto'?'on':'')+'" data-tab="auto">Envio automático ('+st.fila.filter(x=>(x.status==='aguardando'||x.status==='enviando')&&x.tipo!=='manual').length+')</button><button class="chip '+(st.tab==='msg'?'on':'')+'" data-tab="msg">Modelos de mensagem</button></div>';
+  const head=st.tab==='buscar'?['Prospecção','Encontre óticas no Google Maps e adicione ao CRM']:st.tab==='zap'?['WhatsApp do CRM','Conversas do chip de prospecção: quem respondeu e o follow-up']:st.tab==='auto'?['Envio automático','Fila de abordagens e follow-ups pelo chip do CRM']:st.tab==='msg'?['Modelos de mensagem','Textos da abordagem e do follow-up']:st.tab==='camp'?['Campanha','Tráfego Orgânico e Agente de IA para as óticas que você já abordou']:['CRM','Funil de óticas, follow-up e acessos ao demo'];
+  const sub=st.tab==='buscar'?'':'<div class="subtabs"><button class="chip '+(st.tab==='crm'?'on':'')+'" data-tab="crm">Óticas ('+st.leads.length+')</button><button class="chip '+(st.tab==='zap'?'on':'')+'" data-tab="zap">WhatsApp'+(zNao()?'<span class="n">'+zNao()+'</span>':'')+'</button><button class="chip '+(st.tab==='auto'?'on':'')+'" data-tab="auto">Envio automático ('+st.fila.filter(x=>(x.status==='aguardando'||x.status==='enviando')&&x.tipo!=='manual').length+')</button><button class="chip '+(st.tab==='camp'?'on':'')+'" data-tab="camp">Campanha</button><button class="chip '+(st.tab==='msg'?'on':'')+'" data-tab="msg">Modelos de mensagem</button></div>';
   a.innerHTML='<aside class="pside"><div class="brand"><b>Adm Óticas</b><small>Controle geral</small></div><nav>'+NAV.map(item).join('')+'</nav><div class="foot"><div>'+esc((st.user&&st.user.email)||'')+'</div><button data-a="sair">Sair</button></div></aside>'+
    '<header class="mtop"><b>Adm Óticas</b><span class="sp"></span><button data-a="sair">Sair</button></header>'+
-   '<main><div class="ph"><h1>'+head[0]+'</h1><p>'+head[1]+'</p></div>'+sub+(st.tab==='buscar'?vBuscar():st.tab==='msg'?vMsg():st.tab==='auto'?vAuto():st.tab==='zap'?vZap():vCrm())+'</main>'+
+   '<main><div class="ph"><h1>'+head[0]+'</h1><p>'+head[1]+'</p></div>'+sub+(st.tab==='buscar'?vBuscar():st.tab==='msg'?vMsg():st.tab==='auto'?vAuto():st.tab==='zap'?vZap():st.tab==='camp'?vCamp():vCrm())+'</main>'+
    '<nav class="pnav" aria-label="Seções">'+NAV.map(item).join('')+'</nav>';
 }
 function gate(){return '<div class="gate"><div class="card"><h1>Prospecção</h1><p class="muted small" style="margin:0">Entre com o mesmo e-mail e senha do painel administrativo.</p><input type="email" id="g-e" placeholder="E-mail" autocomplete="username"><input type="password" id="g-p" placeholder="Senha" autocomplete="current-password"><div class="err" id="g-err"></div><button class="btn pri" data-a="entrar">Entrar</button></div></div>'}
@@ -547,6 +549,38 @@ function cardLead(l){
   return h+'</div>';
 }
 
+/* ---------- campanha: Tráfego Orgânico + Agente de IA para quem já foi abordado ---------- */
+const campAlvo=l=>l.status!=='novo'&&l.status!=='fechou'&&!!(l.enviado_em||l.status!=='enviado');
+const campFila=l=>st.fila.some(x=>x.lead_id===l.id&&x.tipo==='campanha'&&ATIVOS.includes(x.status));
+const campPode=l=>campAlvo(l)&&!l.campanha_em&&!campFila(l)&&tipoFone(foneDe(l))==='cel';
+function vCamp(){
+  const A=st.leads.filter(campAlvo),feitas=A.filter(l=>l.campanha_em),fila=A.filter(campFila),resp=feitas.filter(l=>['respondeu','interessada','fechou'].includes(l.status)||(l.historico||[]).some(x=>x.em>l.campanha_em&&/^Respondeu/.test(x.txt)));
+  const f=st.cf||'falta',L=(f==='feitas'?feitas:f==='todas'?A:A.filter(l=>!l.campanha_em)).slice().sort((a,b)=>String(b.enviado_em||'').localeCompare(String(a.enviado_em||'')));
+  const sel=st.cmarc||(st.cmarc={}),n=Object.keys(sel).filter(id=>sel[id]).length,ex=A[0]||{id:'00000000-0000-0000-0000-000000000000',nome:'Ótica Exemplo',cidade:'Recife'};
+  let h='<div class="stats"><div class="stat k1"><b>'+A.length+'</b><span>Óticas já abordadas</span></div><div class="stat k2"><b>'+feitas.length+'</b><span>Receberam a campanha</span></div><div class="stat k3"><b>'+fila.length+'</b><span>Na fila agora</span></div><div class="stat k4"><b>'+resp.length+'</b><span>Responderam depois</span></div></div>';
+  h+='<div class="card sec"><h2 style="margin:0 0 8px">Mensagem da campanha</h2><p class="small muted" style="margin:0 0 8px">Fala só do Tráfego Orgânico e do Agente de IA, com o link do demo com o nome da ótica. Use {otica}, {link} e {seu_nome}.</p>'+
+    '<div class="fld"><textarea data-cfg="campanha" style="min-height:220px">'+esc(cfg('campanha'))+'</textarea></div><div class="row" style="margin-top:8px"><button class="btn sm pri" data-a="salvarcfg">Salvar texto</button><button class="btn sm" data-a="camppadrao">Voltar ao texto padrão</button></div>'+
+    '<label class="small muted" style="display:block;margin-top:10px">Prévia</label><div class="prev">'+esc(msg('campanha',ex))+'</div></div>';
+  h+='<div class="row sec" style="gap:6px;flex-wrap:wrap">'+[['falta','Ainda não receberam ('+A.filter(l=>!l.campanha_em).length+')'],['feitas','Já receberam ('+feitas.length+')'],['todas','Todas ('+A.length+')']].map(x=>'<button class="chip '+(f===x[0]?'on':'')+'" data-a="campf" data-v="'+x[0]+'">'+x[1]+'</button>').join('')+'</div>';
+  h+='<div class="card sec" style="position:sticky;top:8px;z-index:5"><div class="row" style="gap:8px;flex-wrap:wrap"><b class="grow">'+n+' marcada(s)</b><button class="btn sm" data-a="campmarcar">Marcar as próximas '+(+cfg('wa_limite')||20)+'</button><button class="btn sm" data-a="campdesm">Desmarcar</button><button class="btn sm pri" data-a="campfila"'+(n?'':' disabled')+'>Colocar na fila automática</button></div><p class="small muted" style="margin:6px 0 0">Sai pelo chip do CRM, no horário e com o intervalo do Envio automático'+(cfg('wa_on')==='true'?'':' (o envio está desligado: ligue na aba Envio automático)')+'. Óticas que já fecharam não entram.</p></div>';
+  if(!L.length)return h+'<div class="empty">Nenhuma ótica aqui.</div>';
+  h+=L.map(l=>{const fone=foneDe(l),pode=campPode(l),nf=campFila(l);
+    return '<div class="card lead"><div class="row" style="gap:10px;align-items:flex-start">'+(pode?'<input type="checkbox" data-cmarca="'+l.id+'"'+(sel[l.id]?' checked':'')+' aria-label="Marcar para a campanha" style="width:20px;height:20px;margin-top:3px">':'<span style="width:20px"></span>')+
+      '<div class="grow"><b>'+esc(l.nome)+'</b> <span class="tag '+(STAG[l.status]||'')+'">'+esc(STATUS[l.status]||l.status)+'</span>'+(l.campanha_em?' <span class="tag ok">Campanha enviada '+fmtDH(l.campanha_em)+'</span>':nf?' <span class="tag acc">🤖 Na fila da campanha</span>':'')+
+      '<div class="small muted">'+esc(fmtFone(fone)||'sem telefone')+(l.cidade?' · '+esc(l.cidade):'')+(l.enviado_em?' · abordada '+fmtDH(l.enviado_em):'')+(fone&&tipoFone(fone)!=='cel'?' · telefone fixo: envie manualmente':'')+'</div></div>'+
+      (fone?'<button class="btn sm" data-env="'+l.id+'" data-k="campanha">WhatsApp</button>':'')+'</div></div>'}).join('');
+  return h;
+}
+async function campEnfileirar(){
+  if(!cfg('seu_nome'))return toast('Coloque seu nome na aba Modelos de mensagem antes'),go('msg');
+  const L=Object.keys(st.cmarc||{}).filter(id=>st.cmarc[id]).map(id=>st.leads.find(x=>x.id===id)).filter(l=>l&&campPode(l));
+  if(!L.length)return toast('Nenhuma ótica marcada pode receber a campanha');
+  const rows=L.map(l=>({lead_id:l.id,tipo:'campanha',telefone:brNumber(foneDe(l)),texto:msg('campanha',l),status:'aguardando'}));
+  const r=await sb.from('prosp_wa_fila').insert(rows).select();
+  if(r.error)return toast('Não foi possível colocar na fila: '+r.error.message);
+  st.fila=(r.data||[]).concat(st.fila);st.cmarc={};
+  toast(L.length+' ótica(s) na fila da campanha'+(cfg('wa_on')==='true'?'':'. Ligue o envio na aba Envio automático'));render();
+}
 function vMsg(){
   const ex={id:'00000000-0000-0000-0000-000000000000',nome:'Ótica Exemplo',cidade:'Recife'};
   const f=(k,lbl,area,ph)=>'<div class="fld" style="margin-bottom:10px"><label>'+lbl+'</label>'+(area?'<textarea data-cfg="'+k+'">'+esc(cfg(k))+'</textarea>':'<input type="text" data-cfg="'+k+'" value="'+esc(st.cfg[k]||DEF[k]||'')+'" placeholder="'+esc(ph||'')+'">')+'</div>';
@@ -587,6 +621,11 @@ document.addEventListener('click',async e=>{
     case 'add':return addSel();
     case 'wrecarregar':await load();return;
     case 'enfileirar':return enfileirar(Object.keys(st.marc).filter(id=>st.marc[id]));
+    case 'campf':st.cf=d.v;st.cmarc={};return render();
+    case 'campdesm':st.cmarc={};return render();
+    case 'campmarcar':{st.cmarc=st.cmarc||{};st.leads.filter(campPode).sort((a,b)=>String(b.enviado_em||'').localeCompare(String(a.enviado_em||''))).slice(0,+cfg('wa_limite')||20).forEach(l=>st.cmarc[l.id]=true);return render()}
+    case 'campfila':return campEnfileirar();
+    case 'camppadrao':st.cfg.campanha='';await sb.from('prosp_config').upsert([{chave:'campanha',valor:''}]);toast('Texto padrão');return render();
     case 'desmarcar':st.marc={};return render();
     case 'marcartodas':{const q=st.fq.trim().toLowerCase();let L=st.f==='todos'?st.leads:st.leads.filter(l=>l.status===st.f);if(q)L=L.filter(l=>(l.nome+' '+(l.endereco||'')+' '+digits(foneDe(l))).toLowerCase().includes(q));L.filter(podeAuto).slice(0,+cfg('wa_limite')||20).forEach(l=>st.marc[l.id]=true);return render()}
     case 'wsalvar':{const rows=[...document.querySelectorAll('[data-wcfg]')].map(i=>({chave:i.dataset.wcfg,valor:String(i.value||'').trim()})).concat([...document.querySelectorAll('[data-wchk]')].map(i=>({chave:i.dataset.wchk,valor:i.checked?'true':'false'})));
@@ -603,6 +642,7 @@ document.addEventListener('change',e=>{
   const t=e.target;
   if(t.dataset.sel){st.sel[t.dataset.sel]=t.checked;return render()}
   if(t.dataset.marca){st.marc[t.dataset.marca]=t.checked;return render()}
+  if(t.dataset.cmarca){(st.cmarc=st.cmarc||{})[t.dataset.cmarca]=t.checked;return render()}
   if(t.dataset.upd){const l=st.leads.find(x=>x.id===t.dataset.upd),f=t.dataset.fld,v=t.value||null;const p={[f]:v};if(f==='status')p.historico=hist(l,'Status: '+STATUS[v]);upd(l.id,p)}
 });
 document.addEventListener('input',e=>{

@@ -79,11 +79,33 @@ async function volta() {
   }
 }
 
+// Atualização automática: quando sai uma versão nova do conector no site, o servidor se atualiza sozinho.
+const SITE = process.env.SITE || 'https://oticas-cobranca.vercel.app';
+const VERSAO = (() => { try { return JSON.parse(fs.readFileSync(path.join(RAIZ, 'package.json'), 'utf8')).version; } catch (e) { return ''; } })();
+async function verAtualizacao() {
+  if (process.env.SEM_ATUALIZAR === '1') return;
+  try {
+    const r = await fetch(SITE + '/servidor/versao.json?t=' + Date.now(), { signal: AbortSignal.timeout(15000) });
+    if (!r.ok) return;
+    const v = String((await r.json()).versao || '');
+    if (!v || v === VERSAO) return;
+    const marca = path.join(RAIZ, '.atualizando');
+    try { const ant = JSON.parse(fs.readFileSync(marca, 'utf8')); if (ant.v === v && Date.now() - ant.em < 6 * 3600e3) return; } catch (e) { /* primeira vez */ }
+    fs.writeFileSync(marca, JSON.stringify({ v, em: Date.now() }));
+    log('Versão nova do conector (' + VERSAO + ' -> ' + v + '). Atualizando...');
+    // roda fora do serviço, porque a atualização reinicia o próprio serviço
+    spawn('systemd-run', ['--unit=adm-conector-atualizar-' + Date.now(), '--collect', 'bash', '-c', 'curl -fsSL ' + SITE + '/servidor/instalar.sh | bash'], { stdio: 'ignore', detached: true }).unref();
+  } catch (e) { log('Não consegui ver se há atualização: ' + e.message); }
+}
+
 if (require.main === module) {
   if (!/^srv_[0-9a-f]{48}$/.test(CHAVE)) { log('Falta a chave do servidor (SERVER_KEY).'); process.exit(1); }
   log('Gerenciador da nuvem iniciado. Sessões em ' + PASTA);
   volta();
   setInterval(volta, INTERVALO);
+  log('Versão ' + VERSAO);
+  setTimeout(verAtualizacao, 60000);
+  setInterval(verAtualizacao, 20 * 60000);
   const sair = () => { for (const id of [...rodando.keys()]) desligar(id, 'servidor parando'); setTimeout(() => process.exit(0), 1500); };
   process.on('SIGTERM', sair);
   process.on('SIGINT', sair);

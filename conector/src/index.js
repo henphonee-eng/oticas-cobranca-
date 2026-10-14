@@ -168,7 +168,7 @@ async function main() {
         try {
           if (!m.message || m.key.fromMe || String(m.key.remoteJid || '').endsWith('@g.us') || String(m.key.remoteJid || '') === 'status@broadcast') continue;
           const txt = ((m.message.conversation || (m.message.extendedTextMessage && m.message.extendedTextMessage.text)) || '').trim();
-          if (!txt) continue;
+          if (!txt) { await midiaRecebida(m); continue; }
           const jid = m.key.remoteJidAlt || m.key.senderPn || m.key.remoteJid || '';
           const tel = String(jid).split('@')[0].replace(/\D/g, '');
           if (!tel) continue;
@@ -201,23 +201,47 @@ async function main() {
     }
     return null;
   }
+  // Áudio e foto que o cliente manda: se o Agente de IA estiver ligado, vão para o sistema virar texto.
+  let agenteOffAte = 0;
+  async function midiaRecebida(m) {
+    if (MODO === 'prospeccao' || !api.midia || Date.now() < agenteOffAte) return;
+    let x = m.message;
+    for (let i = 0; i < 4 && x; i++) {
+      const w = x.ephemeralMessage || x.viewOnceMessage || x.viewOnceMessageV2 || x.viewOnceMessageV2Extension;
+      if (w && w.message) x = w.message; else break;
+    }
+    if (!x) return;
+    const au = x.audioMessage, im = x.imageMessage;
+    if (!au && !im) return;
+    if (au && Number(au.seconds || 0) > 300) return;
+    if (im && Number(im.fileLength || 0) > 6 * 1024 * 1024) return;
+    const tel = numeroDaConversa(m.key);
+    if (!tel) return;
+    try {
+      const buf = await baileys.downloadMediaMessage(m, 'buffer', {}, { logger, reuploadRequest: sock.updateMediaMessage });
+      const r = await api.midia({ telefone: tel, nome: m.pushName || '', tipo: au ? 'audio' : 'imagem', mime: (au || im).mimetype || '', legenda: (im && im.caption) || '', waId: m.key.id, base64: Buffer.from(buf).toString('base64') });
+      if (r && r.off) agenteOffAte = Date.now() + 10 * 60000; // agente desligado: não baixa mídia por 10 minutos
+      else log((au ? 'Áudio' : 'Foto') + ' de ' + tel + ' enviado ao Agente de IA');
+    } catch (e) { log('Não consegui ler a mídia recebida: ' + e.message); }
+  }
   const wa = {
     conectado: () => aberto,
     existe: async (tel) => !!(await acharJid(tel)),
-    enviar: async (tel, texto, tipo) => {
+    enviar: async (tel, texto, tipo, midia) => {
       const jid = (await acharJid(tel)) || (tel + '@s.whatsapp.net');
       const manual = tipo === 'manual';
       if (!manual) { try { await sock.presenceSubscribe(jid); await sock.sendPresenceUpdate('composing', jid); } catch (e) { /* ignora */ } }
       // o id é criado aqui para o eco da própria mensagem não ser guardado como "enviada pelo celular"
       const id = baileys.generateMessageIDV2 ? baileys.generateMessageIDV2(sock.user && sock.user.id) : (baileys.generateMessageID ? baileys.generateMessageID() : undefined);
       marcarSaindo(id);
-      const r = await sock.sendMessage(jid, { text: texto }, id ? { messageId: id } : undefined);
+      const conteudoMsg = midia ? { image: { url: midia }, caption: texto || undefined } : { text: texto };
+      const r = await sock.sendMessage(jid, conteudoMsg, id ? { messageId: id } : undefined);
       guardar(r);
       const wid = (r && r.key && r.key.id) || id;
       marcarSaindo(wid);
       log('Entregue ao WhatsApp: ' + jid + ' (id ' + (wid || '?') + ')');
       if (!manual) { try { await sock.sendPresenceUpdate('paused', jid); } catch (e) { /* ignora */ } }
-      api.registrar({ telefone: tel, deMim: true, texto, tipo: 'texto', waId: wid, origem: manual ? 'sistema' : 'automatico' })
+      api.registrar({ telefone: tel, deMim: true, texto: midia ? '📷 Foto' + (texto ? ': ' + texto : '') : texto, tipo: midia ? 'foto' : 'texto', waId: wid, origem: manual ? 'sistema' : 'automatico' })
         .catch((e) => log('Não consegui guardar a conversa: ' + e.message));
     },
   };
