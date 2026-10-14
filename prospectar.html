@@ -256,6 +256,8 @@ async function load(){
   st.loaded=true;const qt=new URLSearchParams(location.search).get('tab');if(qt&&['crm','buscar','msg','auto','zap'].includes(qt))st.tab=qt;else if(!st.leads.length)st.tab='buscar';render();
 }
 /* ---------- envio automático (chip do CRM + segundo conector) ---------- */
+let wQrT=null;
+function wQrPoll(){clearTimeout(wQrT);wQrT=null;const w=st.wst||{};if(w.nuvem&&w.estado!=='conectado'&&st.tab==='auto')wQrT=setTimeout(async()=>{if(!document.hidden&&st.tab==='auto'&&!document.activeElement.matches('input,textarea,select')){await loadFila();render()}wQrPoll()},8000)}
 async function loadFila(){
   try{const desde=new Date(Date.now()-45*864e5).toISOString();
     const [fr,sr]=await Promise.all([sb.from('prosp_wa_fila').select('*').gte('criado_em',desde).order('criado_em',{ascending:false}).limit(2000),sb.rpc('prosp_wa_status')]);
@@ -302,7 +304,14 @@ function vAuto(){
     '<div class="list two">'+f('wa_ini','Enviar a partir de','time','09:00')+f('wa_fim','Até','time','18:00')+f('wa_limite','Limite por dia','number','20',' min="1" max="80"')+f('wa_intervalo','Intervalo entre mensagens (minutos)','number','5',' min="1" max="120"')+f('wa_followup_dias','Follow-up depois de (dias, 0 = sem follow-up)','number','3',' min="0" max="30"')+'</div>'+
     '<p class="small muted" style="margin:8px 0">Não envia aos domingos. Para um chip novo, comece com 10 a 15 por dia e vá aumentando.</p>'+
     '<div class="row"><button class="btn pri" data-a="wsalvar">Salvar configuração</button></div></div>';
-  h+='<div class="card sec"><h2 style="margin:0 0 8px">Programa do computador</h2><p class="small muted" style="margin:0 0 10px">É o mesmo conector da ótica, em outra pasta, ligado ao chip do CRM. '+(w.tem_token?'Já existe um código; gerar outro desconecta o atual.':'Gere o código e baixe o arquivo de configuração.')+'</p>'+
+  const q=w.estado==='qr'&&w.qr;
+  h+='<div class="card sec"><h2 style="margin:0 0 8px">☁️ WhatsApp na nuvem (24 horas)</h2>'+(!w.nuvem?
+    '<p class="small muted" style="margin:0 0 10px">O chip do CRM fica ligado no servidor e envia mesmo com o notebook desligado. Ao ligar, o programa do computador para de funcionar e você lê um QR Code novo aqui.</p><div class="row"><button class="btn pri" data-a="wnuvem">Ligar o WhatsApp na nuvem</button></div>':
+    (w.estado==='conectado'?'<p class="small muted" style="margin:0 0 10px">Funcionando no servidor. Pode desligar o notebook.</p>':
+     q?'<p class="small" style="margin:0 0 8px"><b>Leia o QR Code</b> com o celular do chip do CRM: WhatsApp › Configurações › Aparelhos conectados › Conectar um aparelho.</p><img alt="QR Code do WhatsApp" src="'+esc(w.qr)+'" style="width:260px;max-width:100%;height:auto;background:#fff;padding:8px;border-radius:8px;margin-bottom:10px">':
+     '<p class="small muted" style="margin:0 0 10px">Preparando o QR Code no servidor... aparece aqui em até 1 minuto.</p>')+
+    '<div class="row"><button class="btn sm" data-a="wrecarregar">Atualizar</button><button class="btn sm" data-a="wnuvemoff">Desligar a nuvem</button></div>')+'</div>';
+  if(!w.nuvem)h+='<div class="card sec"><h2 style="margin:0 0 8px">Programa do computador</h2><p class="small muted" style="margin:0 0 10px">É o mesmo conector da ótica, em outra pasta, ligado ao chip do CRM. '+(w.tem_token?'Já existe um código; gerar outro desconecta o atual.':'Gere o código e baixe o arquivo de configuração.')+'</p>'+
     (st.token?'<div class="note" style="margin-bottom:10px">Código gerado. Baixe o arquivo agora (por segurança ele aparece só desta vez) e coloque na pasta do conector de prospecção.</div><div class="row" style="margin-bottom:10px"><button class="btn pri" data-a="wbaixar">Baixar config.json</button></div>':'')+
     '<div class="row"><button class="btn" data-a="wtoken">'+(w.tem_token?'Gerar novo código':'Gerar código do conector')+'</button><a class="btn" href="/conector.zip" download>Baixar o programa</a></div></div>';
   const at=st.fila.filter(x=>ATIVOS.includes(x.status)||x.status==='falhou').sort((a,b)=>String(a.enviar_apos).localeCompare(String(b.enviar_apos)));
@@ -371,7 +380,7 @@ const NAV=[
   ['mensal','Mensalidades','/adm?tab=mensal',IC('<rect x="4" y="5" width="16" height="15" rx="2.5"/><path d="M4 10h16M9 3v4M15 3v4M8.5 14.5h3"/>')],
   ['buscar','Prospecção',null,IC('<circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/>')],
   ['crm','CRM',null,IC('<rect x="3.5" y="4.5" width="5" height="15" rx="1.5"/><rect x="9.5" y="4.5" width="5" height="10" rx="1.5"/><rect x="15.5" y="4.5" width="5" height="6" rx="1.5"/>')]];
-function render(){
+function render(){if(st.tab==='auto'&&!wQrT)setTimeout(wQrPoll,0);
   const a=$('#app');
   if(st.user===null)return a.innerHTML='<div class="empty">Carregando…</div>';
   if(!st.user)return a.innerHTML=gate();
@@ -582,6 +591,8 @@ document.addEventListener('click',async e=>{
     case 'marcartodas':{const q=st.fq.trim().toLowerCase();let L=st.f==='todos'?st.leads:st.leads.filter(l=>l.status===st.f);if(q)L=L.filter(l=>(l.nome+' '+(l.endereco||'')+' '+digits(foneDe(l))).toLowerCase().includes(q));L.filter(podeAuto).slice(0,+cfg('wa_limite')||20).forEach(l=>st.marc[l.id]=true);return render()}
     case 'wsalvar':{const rows=[...document.querySelectorAll('[data-wcfg]')].map(i=>({chave:i.dataset.wcfg,valor:String(i.value||'').trim()})).concat([...document.querySelectorAll('[data-wchk]')].map(i=>({chave:i.dataset.wchk,valor:i.checked?'true':'false'})));
       const r=await sb.from('prosp_config').upsert(rows);if(r.error)return toast(r.error.message);rows.forEach(x=>st.cfg[x.chave]=x.valor);toast('Configuração salva');await loadFila();return render()}
+    case 'wnuvem':{if(st.wst&&st.wst.tem_token&&!confirm('Ligar a nuvem desativa o programa do notebook (ele para de enviar). Continuar?'))return;const r=await sb.rpc('prosp_wa_nuvem_ligar');if(r.error)return toast(r.error.message);toast('Nuvem ligada. O QR Code aparece em instantes.');await loadFila();render();return wQrPoll()}
+    case 'wnuvemoff':{if(!confirm('Desligar o WhatsApp na nuvem do CRM?'))return;const r=await sb.rpc('prosp_wa_nuvem_desligar');if(r.error)return toast(r.error.message);await loadFila();return render()}
     case 'wtoken':{if(st.wst&&st.wst.tem_token&&!confirm('Gerar um novo código desconecta o programa atual até você trocar o arquivo. Continuar?'))return;const r=await sb.rpc('prosp_wa_gerar_token');if(r.error)return toast(r.error.message);st.token=r.data;await loadFila();return render()}
     case 'wbaixar':{if(!st.token)return;const b=new Blob([JSON.stringify({supabaseUrl:SB_URL,supabaseKey:SB_KEY,token:st.token,modo:'prospeccao',porta:3940},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='config.json';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);return toast('Arquivo baixado: coloque na pasta do conector de prospecção')}
     case 'salvarcfg':{const rows=[...document.querySelectorAll('[data-cfg]')].map(i=>({chave:i.dataset.cfg,valor:i.value}));const r=await sb.from('prosp_config').upsert(rows);if(r.error)return toast(r.error.message);rows.forEach(x=>st.cfg[x.chave]=x.valor);toast('Mensagens salvas');return render()}
