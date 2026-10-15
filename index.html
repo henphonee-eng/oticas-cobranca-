@@ -8,8 +8,8 @@
 document.write('<meta name="theme-color" content="'+(a?'#1F2A3C':'#00348A')+'">'+
 '<link rel="manifest" href="'+(a?'/adm.webmanifest':'/manifest.webmanifest')+'">'+
 '<link rel="apple-touch-icon" href="'+(a?'/icons/adm-apple-touch-icon.png':'/icons/apple-touch-icon.png')+'">'+
-'<meta name="apple-mobile-web-app-title" content="'+(a?'Adm Óticas':'Gestão')+'">'+
-'<title>'+(a?'Adm Óticas':'Gestão da ótica')+'</title>')})();</script>
+'<meta name="apple-mobile-web-app-title" content="'+(a?'Connecta AI':'Gestão')+'">'+
+'<title>'+(a?'Connecta AI':'Gestão da ótica')+'</title>')})();</script>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="robots" content="noindex,nofollow">
@@ -866,7 +866,7 @@ html:not(.adm) :is(.btn,.tab,.fchip,button.card,button.kpi,button.tile,.dlc):foc
 .wc-volta{display:none}
 @media (max-width:899px){.wc-side.tem{display:none}.wc-side:not(.tem)+.wc-vazio{display:none}.wc-volta{display:inline-flex}.wc{height:calc(100dvh - 210px);min-height:420px}}
 </style>
-<script>if(/^\/adm(\/|$)/.test(location.pathname)){document.documentElement.classList.add('adm');var q=function(x){return document.querySelector(x)};if(q('link[rel=manifest]'))q('link[rel=manifest]').href='/adm.webmanifest';if(q('link[rel=apple-touch-icon]'))q('link[rel=apple-touch-icon]').href='/icons/adm-apple-touch-icon.png';if(q('meta[name=apple-mobile-web-app-title]'))q('meta[name=apple-mobile-web-app-title]').content='Adm Óticas';if(q('meta[name=theme-color]'))q('meta[name=theme-color]').content='#1F2A3C';document.title='Adm Óticas';var f=document.createElement('link');f.rel='stylesheet';f.href='https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap';document.head.appendChild(f)}</script>
+<script>if(/^\/adm(\/|$)/.test(location.pathname)){document.documentElement.classList.add('adm');var q=function(x){return document.querySelector(x)};if(q('link[rel=manifest]'))q('link[rel=manifest]').href='/adm.webmanifest';if(q('link[rel=apple-touch-icon]'))q('link[rel=apple-touch-icon]').href='/icons/adm-apple-touch-icon.png';if(q('meta[name=apple-mobile-web-app-title]'))q('meta[name=apple-mobile-web-app-title]').content='Connecta AI';if(q('meta[name=theme-color]'))q('meta[name=theme-color]').content='#1F2A3C';document.title='Connecta AI';var f=document.createElement('link');f.rel='stylesheet';f.href='https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap';document.head.appendChild(f)}</script>
 
 </head>
 <body>
@@ -1062,7 +1062,7 @@ async function applyBrand(o){
   gateKey='';
   try{await pwaBrand(o,c1,c2)}catch(e){}
 }
-const brandNome=()=>ADM_MODE?'Adm Óticas':((OTICA&&OTICA.nome)||(PRE&&PRE.nome)||'');
+const brandNome=()=>ADM_MODE?'Connecta AI':((OTICA&&OTICA.nome)||(PRE&&PRE.nome)||'');
 let PRE=null;
 function tenantSlug(){
   try{const q=new URLSearchParams(location.search).get('o');if(q){localStorage.setItem('otica-slug',q);return q.toLowerCase()}}catch(e){}
@@ -4305,7 +4305,7 @@ function viewAdmin(){
     '<p class="sub" style="margin:0">Com a chave preenchida, as cobranças levam o Pix copia e cola já com o valor de cada mensalidade.</p></div>'+
     '<p class="sub" style="margin:0">Pode usar: {nome} {otica} {descricao} {valor} {vencimento} {dias} {pix} {pixcopia} {link} {email} {senha}</p>'+
     Object.keys(ADMDEF).map(k=>'<div class="card"><div class="field"><span>'+ADMLABEL[k]+'</span><textarea data-admcfg="'+k+'">'+esc(admTpl(k))+'</textarea></div><div><button class="btn sm ghost" data-act="admtplreset" data-k="'+k+'">Restaurar texto padrão</button></div></div>').join('')+'</div></details>';
-  return pageHead('Adm Óticas','Controle geral das óticas clientes','<button class="btn primary" data-act="admnova">Nova ótica</button>')+
+  return pageHead('Connecta AI','Controle geral das óticas clientes','<button class="btn primary" data-act="admnova">Nova ótica</button>')+
   (ADM.err?'<p class="hint bad" role="alert">'+esc(ADM.err)+'</p>':'')+kp+
   (ADM.loaded?'<div class="secs">'+admSec('atraso','Cobranças em atraso',late.length?plural(late.length,'cobrança','cobranças')+' · '+brl(sum(late)):'Nenhuma',late.length>0,'<div class="stack">'+(late.length?late.map(admCobRow).join(''):none('Nenhuma ótica em atraso.'))+'</div>')+
     admSec('prox','Vencem em até 7 dias',prox.length?plural(prox.length,'cobrança','cobranças')+' · '+brl(sum(prox)):'Nada vencendo',false,'<div class="stack">'+(prox.length?prox.map(admCobRow).join(''):none('Nada vencendo nos próximos dias.'))+'</div>')+
@@ -4533,10 +4533,10 @@ Object.assign(A,{
 
 function brandAdm(){
   const adm=ui.tab==='admin'||ui.tab==='mensal'||ui.tab==='iauso';const bl=$('#brand-logo');if(!bl)return;
-  let ab=$('#brand-adm');if(!ab){ab=document.createElement('div');ab.id='brand-adm';ab.className='brand-adm';ab.innerHTML='Adm Óticas<small>controle geral</small>';bl.parentNode.insertBefore(ab,bl.nextSibling)}
+  let ab=$('#brand-adm');if(!ab){ab=document.createElement('div');ab.id='brand-adm';ab.className='brand-adm';ab.innerHTML='Connecta AI<small>controle geral</small>';bl.parentNode.insertBefore(ab,bl.nextSibling)}
   ab.hidden=!adm;bl.hidden=adm||!LOGO_W;
   const bs=document.querySelector('.brand-sub');if(bs)bs.hidden=adm;
-  document.title=adm?'Adm Óticas':((OTICA&&OTICA.nome)||'Cobranças')+' · Cobranças';
+  document.title=adm?'Connecta AI':((OTICA&&OTICA.nome)||'Cobranças')+' · Cobranças';
 }
 const admBlank=()=>({id:'',slug:'',nome:'',cor1:'#0486DE',cor2:'#00348A',dominios:'',ativa:true,email:'',senha:'',logo_claro:'',logo_escuro:'',err:'',dono_nome:'',whatsapp_dono:'',mensalidade:'',dia_venc:'10',impl_valor:'',impl_data:todayStr(),plano:'basico',modulos:{},extras:'',bloqueio_ativo:false,aviso_dias:'3',bloqueio_dias:'10'});
 function sheetAdm(){
@@ -4821,10 +4821,10 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&ui.sheet)closeSheet
   render();
   if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});
   if(ADM_MODE){
-    PRE={nome:'Adm Óticas',cor1:'#475569',cor2:'#1B222C'};await applyBrand(PRE);
+    PRE={nome:'Connecta AI',cor1:'#475569',cor2:'#1B222C'};await applyBrand(PRE);
     const ml=document.querySelector('link[rel=manifest]');if(ml)ml.href='/adm.webmanifest';
     const al=document.querySelector('link[rel=apple-touch-icon]');if(al)al.href='/icons/adm-apple-touch-icon.png';
-    const at=document.querySelector('meta[name=apple-mobile-web-app-title]');if(at)at.content='Adm Óticas';
+    const at=document.querySelector('meta[name=apple-mobile-web-app-title]');if(at)at.content='Connecta AI';
   }else try{
     const slug=tenantSlug();
     if(slug){const m=await sb.rpc('marca',{p:slug});if(m.data&&m.data.length){PRE=m.data[0];await applyBrand(PRE)}}
