@@ -1303,6 +1303,20 @@ html.adm .gate-card{border-top:0}
   html:not(.adm) #toast{transition:opacity .22s ease-out,transform .32s cubic-bezier(.34,1.56,.64,1)}
   html:not(.adm) .row,html:not(.adm) .card,html:not(.adm) .bi-card{transition:border-color .18s,box-shadow .18s}
 }
+/* ===== Refinamento (etapa 3): só aparência ===== */
+/* /adm no celular: abas de baixo legíveis (antes o texto ficava branco sobre fundo claro) e nome sem ficar por baixo do sino */
+@media (max-width:899px){
+  html.adm .tabs .tab{color:var(--muted)}
+  html.adm .tabs .tab[aria-current=page]{color:var(--accent)}
+  html.adm .brand-adm{font-size:18px;flex:none}
+}
+@media (max-width:459px){
+  html.adm .brand-adm{font-size:16.5px}
+  html.adm .sync span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+}
+/* lembrete (aniversariantes, cobranças): no celular aparece logo abaixo da barra de cima, sem cobrir o menu e o sino; no computador, no canto de baixo à direita, sem cobrir o título nem os botões */
+@media (max-width:899px){#popup{top:calc(env(safe-area-inset-top,0px) + 74px);transform:translate(-50%,calc(-100% - 110px))}#popup.on{transform:translate(-50%,0)}}
+@media (min-width:900px){#popup{left:auto;right:24px;top:auto;bottom:24px;width:min(400px,calc(100% - 48px));transform:translate(0,160%)}#popup.on{transform:translate(0,0)}}
 </style>
 <script>if(/^\/adm(\/|$)/.test(location.pathname)){document.documentElement.classList.add('adm');var q=function(x){return document.querySelector(x)};if(q('link[rel=manifest]'))q('link[rel=manifest]').href='/adm.webmanifest';if(q('link[rel=apple-touch-icon]'))q('link[rel=apple-touch-icon]').href='/icons/adm-apple-touch-icon.png';if(q('meta[name=apple-mobile-web-app-title]'))q('meta[name=apple-mobile-web-app-title]').content='Connecta AI';if(q('meta[name=theme-color]'))q('meta[name=theme-color]').content='#1F2A3C';document.title='Connecta AI';var f=document.createElement('link');f.rel='stylesheet';f.href='https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap';document.head.appendChild(f)}</script>
 
@@ -5388,6 +5402,25 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&ui.sheet)closeSheet
   }
   let ab=0;const obs=new MutationObserver(()=>{if(!ab)ab=requestAnimationFrame(()=>{ab=0;badges()})});
   ['tabs','bell','menubtn'].forEach(id=>{const el=document.getElementById(id);if(el)obs.observe(el,{childList:true,subtree:true})});
+})();
+</script>
+<script>
+/* ===== Acessibilidade (etapa 3): só dá nome aos campos que já têm um rótulo visível ao lado, para leitores de tela. Não muda nenhuma função. ===== */
+(function(){
+  if(!window.MutationObserver)return;
+  const SEL='input:not([type=hidden]):not([type=checkbox]):not([type=radio]):not([aria-label]):not([aria-labelledby]),select:not([aria-label]):not([aria-labelledby]),textarea:not([aria-label]):not([aria-labelledby])';
+  function rotula(){
+    ag=0;
+    document.querySelectorAll(SEL).forEach(el=>{
+      if(el.getAttribute('aria-hidden')==='true'||(el.labels&&el.labels.length)||el.closest('label'))return;
+      const p=el.previousElementSibling;
+      if(!p||!/^(LABEL|SPAN|B|STRONG|SMALL)$/.test(p.tagName))return;
+      const t=(p.textContent||'').replace(/\s+/g,' ').trim();
+      if(t&&t.length<=80)el.setAttribute('aria-label',t);
+    });
+  }
+  let ag=0;const go=()=>{if(!ag)ag=requestAnimationFrame(rotula)};
+  new MutationObserver(go).observe(document.body,{childList:true,subtree:true});go();
 })();
 </script>
 </body>
