@@ -8,7 +8,7 @@
 <title>Agendar exame de vista</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,500;6..72,600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{--c1:#0486DE;--c2:#00348A;--bg:#F5F7FA;--card:#fff;--ink:#14202E;--muted:#5B6878;--line:#DCE3EC;--ok:#1F7A45;--bad:#B3261E;--tint:color-mix(in srgb,var(--c1) 9%,#fff);--on:#fff;--r:16px}
 @media (prefers-color-scheme:dark){:root{--bg:#0E141C;--card:#161E29;--ink:#EEF2F7;--muted:#9AA7B8;--line:#2A3646;--ok:#6FD39A;--bad:#FF8A80;--tint:color-mix(in srgb,var(--c1) 22%,#161E29)}}
@@ -89,6 +89,12 @@ body.semBarra .wa-fab{bottom:calc(20px + env(safe-area-inset-bottom))}
 @media (max-width:380px){.wa-fab span{display:none}.wa-fab{width:56px;padding:0;justify-content:center}}
 @media (min-width:900px){.wa-fab{right:28px}}
 [hidden]{display:none!important}
+
+/* Redesign visual v3 (Connecta AI): mesma tipografia do sistema, só aparência */
+body{font-family:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;letter-spacing:-.003em}
+h1,h2{font-family:"Inter",system-ui,sans-serif;font-weight:700;letter-spacing:-.025em}
+.step h2{font-size:18px;font-weight:650;letter-spacing:-.015em}
+.card{box-shadow:0 1px 2px rgba(15,25,45,.04),0 14px 34px -20px rgba(15,25,45,.35)}
 </style>
 </head>
 <body>
