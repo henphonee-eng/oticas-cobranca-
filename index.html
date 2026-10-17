@@ -15,7 +15,7 @@ document.write('<meta name="theme-color" content="'+(a?'#1F2A3C':'#00348A')+'">'
 <meta name="robots" content="noindex,nofollow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* Identidade: azul escuro e azul claro da logo, com branco. Layout: sistema de balcão. Desktop: menu lateral fixo + área de trabalho em duas colunas. Celular: cabeçalho fino, 4 abas + "Mais" na base. Porta de entrada com login. */
 :root{
@@ -865,6 +865,205 @@ html:not(.adm) :is(.btn,.tab,.fchip,button.card,button.kpi,button.tile,.dlc):foc
 .wc-env textarea{flex:1;resize:none;min-height:44px;max-height:140px}
 .wc-volta{display:none}
 @media (max-width:899px){.wc-side.tem{display:none}.wc-side:not(.tem)+.wc-vazio{display:none}.wc-volta{display:inline-flex}.wc{height:calc(100dvh - 210px);min-height:420px}}
+
+/* ===================== Redesign visual v3 (Connecta AI) =====================
+   Só aparência: cores, tipografia, espaçamentos, cantos e sombras.
+   Fica por último para valer sobre as camadas anteriores; não muda nenhuma classe usada pelo JavaScript. */
+html:not(.adm){
+  --f-display:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-body:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --bg:#F4F6FA; --surface:#FFFFFF; --surface-2:#EEF2F7; --fg:#0E1A2B; --muted:#5D6B80; --line:#E2E7EF;
+  --ok:#11784A; --ok-bg:#E5F4EC; --warn:#935F00; --warn-bg:#FBF0D9; --bad:#C0352B; --bad-bg:#FCE8E6; --bad-solid:#C0352B;
+  --wa:#178A52; --wa-fg:#FFFFFF;
+  --hair:#E8ECF2;
+  --sh0:0 1px 2px rgba(15,25,45,.04);
+  --sh1:0 1px 2px rgba(15,25,45,.04),0 6px 16px -8px rgba(15,25,45,.12);
+  --sh2:0 2px 6px rgba(15,25,45,.05),0 18px 40px -18px rgba(15,25,45,.22);
+  --r-s:8px; --r-m:12px; --r-l:16px;
+  --nav-bg:color-mix(in srgb,var(--brand-2) 30%,#0A1322);
+  --nav-line:rgba(255,255,255,.08);
+  --tabline:color-mix(in srgb,var(--brand-1) 70%,#fff);
+}
+@media (prefers-color-scheme:dark){
+  html:not(.adm):not([data-theme="light"]){
+    --bg:#0A111E; --surface:#111A2A; --surface-2:#18233A; --fg:#E7EDF6; --muted:#97A5BB; --line:#223049;
+    --ok:#5CCB93; --ok-bg:#10301F; --warn:#E9B45A; --warn-bg:#352812; --bad:#F08A80; --bad-bg:#3A1714; --bad-solid:#D9473D;
+    --wa:#36B874; --wa-fg:#04210F; --hair:#1C2840;
+    --sh0:0 1px 2px rgba(0,0,0,.3);--sh1:0 1px 2px rgba(0,0,0,.35),0 8px 20px -10px rgba(0,0,0,.55);--sh2:0 2px 6px rgba(0,0,0,.4),0 20px 44px -18px rgba(0,0,0,.7);
+    --nav-bg:color-mix(in srgb,var(--brand-2) 22%,#070C16);
+  }
+}
+html[data-theme="dark"]:not(.adm){
+  --bg:#0A111E; --surface:#111A2A; --surface-2:#18233A; --fg:#E7EDF6; --muted:#97A5BB; --line:#223049;
+  --ok:#5CCB93; --ok-bg:#10301F; --warn:#E9B45A; --warn-bg:#352812; --bad:#F08A80; --bad-bg:#3A1714; --bad-solid:#D9473D;
+  --wa:#36B874; --wa-fg:#04210F; --hair:#1C2840;
+  --sh0:0 1px 2px rgba(0,0,0,.3);--sh1:0 1px 2px rgba(0,0,0,.35),0 8px 20px -10px rgba(0,0,0,.55);--sh2:0 2px 6px rgba(0,0,0,.4),0 20px 44px -18px rgba(0,0,0,.7);
+  --nav-bg:color-mix(in srgb,var(--brand-2) 22%,#070C16);
+}
+
+/* tipografia */
+html:not(.adm) body{font:14.5px/1.5 var(--f-body);font-feature-settings:'cv11','ss01';letter-spacing:-.003em;background:radial-gradient(1100px 480px at 100% -10%,color-mix(in srgb,var(--brand-1) 7%,transparent),transparent 70%),var(--bg);background-attachment:fixed}
+html:not(.adm) h1,html:not(.adm) h2,html:not(.adm) h3{font-family:var(--f-display);font-weight:650;letter-spacing:-.018em}
+html:not(.adm) .ph{margin-bottom:22px;align-items:center}
+html:not(.adm) .ph h1{font-size:24px;font-weight:700;letter-spacing:-.025em;line-height:1.15}
+html:not(.adm) .ph .sub{font-size:13.5px;margin-top:4px;letter-spacing:0}
+@media (min-width:900px){html:not(.adm) .ph h1{font-size:28px}}
+html:not(.adm) .sh{margin:28px 0 12px}
+html:not(.adm) .sh h2,html:not(.adm) .calhead h2{font-size:17px;font-weight:650;letter-spacing:-.015em}
+html:not(.adm) .sec>h3,html:not(.adm) .sheet-body h3{font-size:13px;font-weight:650;letter-spacing:.01em;color:var(--fg)}
+html:not(.adm) .sub{color:var(--muted)}
+html:not(.adm) .num,html:not(.adm) .amt,html:not(.adm) .kpi b,html:not(.adm) .tile b,html:not(.adm) .bi-k b{font-variant-numeric:tabular-nums lining-nums}
+
+/* menu lateral (computador) e barra de cima (celular) */
+html:not(.adm) .side{background:var(--nav-bg);box-shadow:inset -1px 0 0 var(--nav-line)}
+html:not(.adm) .side .btn,html:not(.adm) .menubtn{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:10px;box-shadow:none;color:#fff}
+html:not(.adm) .side .btn:hover:not([disabled]),html:not(.adm) .menubtn:hover{background:rgba(255,255,255,.1);transform:none;box-shadow:none}
+html:not(.adm) .brand-sub{color:rgba(255,255,255,.55);font-size:10.5px;letter-spacing:.16em}
+html:not(.adm) .sync{color:rgba(255,255,255,.7);font-size:12px}
+html:not(.adm) .bellbtn{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:10px;color:#fff;font-weight:600}
+html:not(.adm) .bellbtn.bad{background:color-mix(in srgb,#E5484D 22%,transparent);border-color:color-mix(in srgb,#E5484D 55%,transparent)}
+html:not(.adm) .bellbtn.warn{background:color-mix(in srgb,#F5A524 20%,transparent);border-color:color-mix(in srgb,#F5A524 50%,transparent)}
+html:not(.adm) .bellbtn .badge{background:#E5484D;color:#fff;box-shadow:0 0 0 2px var(--nav-bg)}
+html:not(.adm) .badge{background:#E5484D;font-weight:650;font-size:10.5px;min-width:18px;height:18px;border-radius:9px}
+@media (min-width:900px){
+  html:not(.adm) .side{background:linear-gradient(180deg,color-mix(in srgb,var(--nav-bg) 92%,var(--brand-1)),var(--nav-bg) 38%);gap:20px;padding:26px 14px 18px}
+  html:not(.adm) .tgrp{color:rgba(255,255,255,.4);font-size:10.5px;font-weight:650;letter-spacing:.1em;text-transform:uppercase;padding:18px 12px 6px}
+  html:not(.adm) .tgrp:first-child{padding-top:2px}
+  html:not(.adm) .tab{font-size:13.5px;font-weight:500;color:rgba(255,255,255,.7);padding:9px 12px;border-radius:9px;gap:11px;line-height:1.3}
+  html:not(.adm) .tab svg{width:19px;height:19px;stroke-width:1.75;opacity:.85}
+  html:not(.adm) .tab:hover{background:rgba(255,255,255,.05);color:#fff}
+  html:not(.adm) .tab[aria-current=page]{background:rgba(255,255,255,.09);color:#fff;font-weight:600;box-shadow:inset 3px 0 0 var(--tabline)}
+  html:not(.adm) .tab[aria-current=page] svg{opacity:1;color:var(--tabline)}
+  html:not(.adm) .tab .lk{opacity:.45;margin-left:auto}
+  html:not(.adm) .tab .lk+.badge,html:not(.adm) .tab .badge{margin-left:auto}
+  html:not(.adm) .bellbtn{height:42px}
+  html:not(.adm) .side-foot{border-top:1px solid var(--nav-line);padding-top:14px}
+}
+/* barra de abas do celular */
+@media (max-width:899px){
+  html:not(.adm) .tabs{background:color-mix(in srgb,var(--surface) 94%,transparent);border-top:1px solid var(--line);box-shadow:0 -6px 20px -14px rgba(15,25,45,.25)}
+  html:not(.adm) .tab{font-size:10.5px;font-weight:500;padding-top:9px}
+  html:not(.adm) .tab[aria-current=page]{font-weight:650}
+  html:not(.adm) .tab[aria-current=page]::before{left:30%;right:30%;height:2.5px}
+}
+
+/* cartões e listas */
+html:not(.adm) .row,html:not(.adm) .card,html:not(.adm) .item,html:not(.adm) .sum,html:not(.adm) details,html:not(.adm) .acc-h,html:not(.adm) .rx,html:not(.adm) .tile,html:not(.adm) .msum,html:not(.adm) .sec-h{border:1px solid var(--line);border-radius:var(--r-m);box-shadow:var(--sh0);background:var(--surface)}
+html:not(.adm) .row{padding:14px 16px;gap:14px}
+@media (min-width:760px){html:not(.adm) .row{align-items:center}}
+html:not(.adm) .row-main{gap:4px}
+html:not(.adm) .row-main>b,html:not(.adm) .row-main>.link,html:not(.adm) .row .link{font-weight:650;font-size:14.5px;color:var(--fg)}
+html:not(.adm) .row .meta{font-size:13px;color:var(--muted)}
+html:not(.adm) .row .amt{font-family:var(--f-display);font-size:17px;font-weight:700;letter-spacing:-.01em}
+html:not(.adm) .card{padding:16px;gap:10px}
+html:not(.adm) .stack{gap:10px}
+html:not(.adm) .row,html:not(.adm) .card,html:not(.adm) .acc-h,html:not(.adm) button.tile,html:not(.adm) button.card{transition:border-color .15s,box-shadow .15s}
+html:not(.adm) button.card:hover,html:not(.adm) .acc-h:hover,html:not(.adm) button.tile:hover,html:not(.adm) .sec-h:hover{box-shadow:var(--sh1);border-color:color-mix(in srgb,var(--accent) 30%,var(--line))}
+html:not(.adm) .empty{border:1px dashed color-mix(in srgb,var(--muted) 30%,var(--line));border-radius:var(--r-l);background:color-mix(in srgb,var(--surface) 80%,transparent);padding:36px 20px;gap:8px}
+html:not(.adm) .empty svg{opacity:.6;width:48px;height:48px}
+html:not(.adm) .empty h3{font-size:16px}
+html:not(.adm) .tile{padding:14px 16px}
+html:not(.adm) .tile small{font-size:12.5px;font-weight:500;color:var(--muted)}
+html:not(.adm) .tile b{font-family:var(--f-display);font-weight:700;font-size:22px;letter-spacing:-.02em}
+html:not(.adm) .tile.hero{background:linear-gradient(135deg,var(--brand-2),color-mix(in srgb,var(--brand-2) 70%,#000));box-shadow:var(--sh1)}
+
+/* indicadores do painel */
+html:not(.adm) .kpis{border-radius:var(--r-l);box-shadow:var(--sh1);border:1px solid var(--line);background:var(--surface)}
+html:not(.adm) .kpi{border-left:1px solid var(--hair);border-top:1px solid var(--hair);padding:18px 20px 16px;gap:4px}
+html:not(.adm) .kpi small{font-size:12.5px;font-weight:500;color:var(--muted);letter-spacing:0}
+html:not(.adm) .kpi b{font-family:var(--f-display);font-weight:700;font-size:24px;letter-spacing:-.025em;line-height:1.15}
+html:not(.adm) .kpi span{font-size:12px}
+html:not(.adm) .kpi.lead{background:linear-gradient(140deg,color-mix(in srgb,var(--brand-2) 88%,#fff 0%),color-mix(in srgb,var(--brand-2) 72%,#000));border:0}
+html:not(.adm) .kpi.lead::before{opacity:.5}
+html:not(.adm) .kpi.lead b{font-size:30px}
+@media (min-width:1180px){html:not(.adm) .kpi.lead b{font-size:32px}}
+html:not(.adm) .kpi.total{background:color-mix(in srgb,var(--accent) 4%,var(--surface))}
+html:not(.adm) .kpi.neg b{color:var(--bad)}
+html:not(.adm) .kpis.k3 .kpi b{font-size:17px}
+@media (max-width:599px){html:not(.adm) .kpi{padding:14px 14px 12px}html:not(.adm) .kpi b{font-size:20px}html:not(.adm) .kpi.lead b{font-size:28px}}
+
+/* painel BI e gráficos */
+html:not(.adm) .bi-k,html:not(.adm) .bi-card{border:1px solid var(--line);border-radius:var(--r-l);box-shadow:var(--sh0);background:var(--surface)}
+html:not(.adm) .bi-k{padding:16px 16px 14px}
+html:not(.adm) .bi-k small{font-weight:500;font-size:12.5px}
+html:not(.adm) .bi-k b{font-family:var(--f-display);font-weight:700;font-size:21px;letter-spacing:-.02em}
+html:not(.adm) .bi-card{padding:18px 18px 16px}
+html:not(.adm) .bi-ch h3,html:not(.adm) .bi-top h2{font-family:var(--f-display);font-weight:650;letter-spacing:-.015em}
+html:not(.adm) .bi-ch h3{font-size:14.5px}
+html:not(.adm) .bi-top h2{font-size:19px}
+html:not(.adm) .bi-seg{background:var(--surface-2);border-radius:10px;padding:3px}
+html:not(.adm) .bi-seg button{min-height:34px;border-radius:8px;font-size:13px}
+html:not(.adm) .bi-gl{border-top-color:color-mix(in srgb,var(--line) 75%,transparent)}
+html:not(.adm) .bi-col i{flex-basis:9px;min-width:3px;border-radius:4px 4px 1px 1px}
+html:not(.adm) .bi-hb .tr{height:7px;background:var(--surface-2)}
+html:not(.adm) .bi-tbw{border-radius:10px;border-color:var(--line)}
+html:not(.adm) .bi-tbw th{background:var(--surface-2);font-size:12px;font-weight:600;color:var(--muted);text-transform:none}
+html:not(.adm) .bi-tip{border-radius:8px;font-size:12.5px;box-shadow:var(--sh2)}
+html:not(.adm) .mb{border-radius:5px 5px 1px 1px}
+html:not(.adm) .mb.a{background:var(--bar-a)} html:not(.adm) .mb.b{background:var(--bar-b)}
+html:not(.adm) .bar{height:7px;border-radius:4px;background:var(--surface-2)}
+
+/* botões */
+html:not(.adm) .btn{min-height:40px;padding:0 16px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--fg);font-weight:600;font-size:14px;letter-spacing:-.005em;box-shadow:var(--sh0);transition:background .15s,border-color .15s,box-shadow .15s,color .15s}
+html:not(.adm) .btn:hover:not([disabled]){transform:none;border-color:color-mix(in srgb,var(--fg) 18%,var(--line));box-shadow:var(--sh1)}
+html:not(.adm) .btn.sm{min-height:34px;padding:0 12px;font-size:13px;border-radius:9px}
+html:not(.adm) .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg);box-shadow:0 1px 2px rgba(15,25,45,.12),inset 0 1px 0 rgba(255,255,255,.14)}
+html:not(.adm) .btn.primary:hover:not([disabled]){background:color-mix(in srgb,var(--accent) 88%,#000);border-color:transparent;box-shadow:0 6px 16px -8px color-mix(in srgb,var(--accent) 70%,transparent)}
+html:not(.adm) .btn.ok{background:var(--ok-bg);color:var(--ok);border-color:color-mix(in srgb,var(--ok) 22%,transparent);box-shadow:none}
+html:not(.adm) .btn.wa{background:var(--wa);border-color:var(--wa);color:var(--wa-fg);box-shadow:0 1px 2px rgba(15,25,45,.12)}
+html:not(.adm) .btn.sm.wa{background:color-mix(in srgb,var(--wa) 10%,var(--surface));color:var(--wa);border-color:color-mix(in srgb,var(--wa) 35%,transparent);box-shadow:none}
+html:not(.adm) .btn.sm.wa:hover:not([disabled]){background:color-mix(in srgb,var(--wa) 16%,var(--surface))}
+html:not(.adm) .btn.ghost{background:transparent;box-shadow:none;border-color:transparent;color:var(--muted)}
+html:not(.adm) .btn.ghost:hover:not([disabled]){background:var(--surface-2);color:var(--fg);box-shadow:none}
+html:not(.adm) .btn.danger{color:var(--bad);border-color:color-mix(in srgb,var(--bad) 35%,transparent);background:var(--surface)}
+html:not(.adm) .btn.danger.armed{background:var(--bad-solid);color:#fff;border-color:var(--bad-solid)}
+html:not(.adm) .btn[disabled]{opacity:1;background:var(--surface-2);color:color-mix(in srgb,var(--muted) 75%,transparent);border-color:var(--line);box-shadow:none}
+html:not(.adm) .eyebtn{border-radius:10px;border-color:var(--line);box-shadow:var(--sh0);width:40px;height:40px}
+@media (max-width:899px){html:not(.adm) .btn{min-height:44px}html:not(.adm) .btn.sm{min-height:38px}}
+
+/* etiquetas e filtros */
+html:not(.adm) .chip{min-height:22px;padding:0 9px;border-radius:999px;font-size:11.5px;font-weight:600;letter-spacing:0}
+html:not(.adm) .demo{font-size:10.5px;font-weight:600;border-radius:999px;padding:1px 7px;background:var(--surface-2);color:var(--muted)}
+html:not(.adm) .fchip{min-height:34px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--muted);font-weight:600;font-size:13px;box-shadow:none}
+html:not(.adm) .fchip:hover{color:var(--fg);border-color:color-mix(in srgb,var(--fg) 18%,var(--line))}
+html:not(.adm) .fchip[aria-pressed=true]{background:var(--fg);border-color:var(--fg);color:var(--surface);box-shadow:none}
+html:not(.adm) .filters{gap:8px}
+
+/* formulários */
+html:not(.adm) .field>span{font-size:12.5px;font-weight:600;color:var(--fg);opacity:.82}
+html:not(.adm) input[type=text],html:not(.adm) input[type=search],html:not(.adm) input[type=date],html:not(.adm) input[type=time],html:not(.adm) input[type=number],html:not(.adm) input[type=password],html:not(.adm) input[type=email],html:not(.adm) input[type=tel],html:not(.adm) select,html:not(.adm) textarea{border:1px solid var(--line);border-radius:10px;background:var(--surface);box-shadow:var(--sh0);transition:border-color .15s,box-shadow .15s}
+html:not(.adm) input:hover,html:not(.adm) select:hover,html:not(.adm) textarea:hover{border-color:color-mix(in srgb,var(--fg) 20%,var(--line))}
+html:not(.adm) input:focus-visible,html:not(.adm) select:focus-visible,html:not(.adm) textarea:focus-visible{outline:0;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 16%,transparent)}
+html:not(.adm) .seg{background:var(--surface-2);border-radius:12px;padding:4px;gap:4px}
+html:not(.adm) .seg span{border-radius:9px;font-size:14px}
+html:not(.adm) .seg input:checked+span{background:var(--surface);color:var(--fg);box-shadow:0 1px 2px rgba(15,25,45,.1),0 0 0 1px var(--line)}
+html:not(.adm) .hint{font-size:12.5px}
+
+/* janelas */
+html:not(.adm) .scrim{background:rgba(9,15,28,.5);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+html:not(.adm) .sheet{background:var(--bg);border-radius:20px 20px 0 0;box-shadow:0 -18px 50px -20px rgba(0,0,0,.45)}
+@media (min-width:760px){html:not(.adm) .sheet{border-radius:20px;box-shadow:0 30px 80px -28px rgba(0,0,0,.5),0 0 0 1px rgba(15,25,45,.06)}}
+html:not(.adm) .sheet-head{background:var(--surface);border-bottom:1px solid var(--line);padding:16px 20px;border-radius:inherit;border-bottom-left-radius:0;border-bottom-right-radius:0}
+html:not(.adm) .sheet-head h2{font-size:17px;font-weight:650}
+html:not(.adm) .sheet-body{padding:18px 20px;gap:20px}
+html:not(.adm) .sheet-foot{background:var(--surface);border-top:1px solid var(--line);padding:14px 20px calc(14px + env(safe-area-inset-bottom,0px));gap:10px;box-shadow:0 -8px 20px -16px rgba(15,25,45,.25)}
+html:not(.adm) .sheet.drawer{border-radius:0 20px 20px 0}
+
+/* avisos */
+html:not(.adm) .alert{border:1px solid;border-left-width:3px;border-radius:var(--r-m);box-shadow:var(--sh0);padding:13px 16px}
+html:not(.adm) .alert.bad{background:var(--bad-bg);border-color:color-mix(in srgb,var(--bad) 35%,transparent);border-left-color:var(--bad)}
+html:not(.adm) .alert.warn{background:var(--warn-bg);border-color:color-mix(in srgb,var(--warn) 35%,transparent);border-left-color:var(--warn)}
+html:not(.adm) .alert.info{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 30%,transparent);border-left-color:var(--accent)}
+html:not(.adm) .alert b{font-size:14.5px;font-weight:650}
+html:not(.adm) #toast{background:#0E1A2B;color:#fff;border-radius:12px;font-size:13.5px;font-weight:500;padding:11px 18px;box-shadow:0 12px 30px -10px rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.08);bottom:calc(92px + env(safe-area-inset-bottom,0px));max-width:min(92vw,520px);text-align:center}
+@media (min-width:900px){html:not(.adm) #toast{bottom:32px}}
+html.lock:not(.adm) #toast{top:calc(18px + env(safe-area-inset-top,0px));bottom:auto}
+
+/* abas que abrem e fecham, tela de entrada */
+html:not(.adm) .sec-h{padding:15px 18px}
+html:not(.adm) .sec-t{font-weight:650;font-size:15px}
+html:not(.adm) .gate-card{border-radius:20px;padding:30px 26px;box-shadow:0 30px 80px -26px rgba(0,0,0,.6)}
+html:not(.adm) .gate-card h2{font-size:18px;font-weight:650}
 </style>
 <script>if(/^\/adm(\/|$)/.test(location.pathname)){document.documentElement.classList.add('adm');var q=function(x){return document.querySelector(x)};if(q('link[rel=manifest]'))q('link[rel=manifest]').href='/adm.webmanifest';if(q('link[rel=apple-touch-icon]'))q('link[rel=apple-touch-icon]').href='/icons/adm-apple-touch-icon.png';if(q('meta[name=apple-mobile-web-app-title]'))q('meta[name=apple-mobile-web-app-title]').content='Connecta AI';if(q('meta[name=theme-color]'))q('meta[name=theme-color]').content='#1F2A3C';document.title='Connecta AI';var f=document.createElement('link');f.rel='stylesheet';f.href='https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap';document.head.appendChild(f)}</script>
 
