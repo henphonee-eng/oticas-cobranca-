@@ -5287,5 +5287,40 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&ui.sheet)closeSheet
   setInterval(function(){if(!document.hidden)checar()},10*60*1000);
 })();
 </script>
+<script src="https://cdn.jsdelivr.net/npm/motion@11.11.17/dist/motion.js" integrity="sha384-YXUklWfH/2mt4JRj3K/QEMSu5vCe7gjRtLG44/RHcttBZYOzbK7crTzfjEXcFXng" crossorigin="anonymous" defer></script>
+<script>
+/* ===== Animações (Motion para JavaScript puro, carregado do CDN com versão fixa) =====
+   Só aparência: observa a tela e anima o que acabou de aparecer. Não altera nenhuma função do sistema.
+   Se o CDN não carregar, ou se a pessoa pediu "reduzir movimento", nada é animado e tudo aparece normalmente. */
+(function(){
+  if(/^\/adm(\/|$)/.test(location.pathname))return; // etapa 1: só o sistema das óticas
+  const view=document.getElementById('view');if(!view||!window.MutationObserver)return;
+  const reduz=window.matchMedia?window.matchMedia('(prefers-reduced-motion: reduce)'):{matches:false};
+  const EASE=[0.22,1,0.36,1];
+  const M=()=>(!reduz.matches&&window.Motion&&typeof window.Motion.animate==='function')?window.Motion:null;
+  const limpa=els=>els.forEach(el=>{el.style.removeProperty('opacity');el.style.removeProperty('transform')});
+  let ultima=null,agendado=0;
+  function entrada(){
+    agendado=0;
+    const tab=(typeof ui!=='undefined'&&ui)?ui.tab:'';
+    if(tab===ultima)return; // a mesma tela foi só atualizada (busca, salvar, fila do WhatsApp): não anima de novo
+    ultima=tab;
+    const m=M();if(!m)return;
+    const alt=window.innerHeight||800;
+    const itens=Array.from(view.querySelectorAll('.ph,.kpis,.bi-k,.bi-card,.alert,.tiles>.tile,.stack>.row,.stack>.card,.grid>.card,.cards>.card,.panel>.card,.sec-h,.rep-hero,.kb-col,.wq-box,.empty'))
+      .filter(el=>{const r=el.getBoundingClientRect();return r.height>0&&r.top<alt})
+      .filter((el,i,a)=>!a.some(o=>o!==el&&o.contains(el)))
+      .slice(0,14);
+    if(!itens.length)return;
+    try{
+      const a=m.animate(itens,{opacity:[0,1],y:[8,0]},{duration:0.26,ease:EASE,delay:m.stagger?m.stagger(0.028):0});
+      const fim=()=>limpa(itens);
+      if(a&&typeof a.then==='function')a.then(fim,fim);
+      setTimeout(fim,1200); // garantia: nada fica invisível se a animação for interrompida
+    }catch(e){limpa(itens)}
+  }
+  new MutationObserver(()=>{if(!agendado)agendado=requestAnimationFrame(entrada)}).observe(view,{childList:true});
+})();
+</script>
 </body>
 </html>
