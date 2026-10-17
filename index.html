@@ -1294,6 +1294,15 @@ html.adm .gate-card{border-top:0}
 .mid-vi{display:block;width:280px;max-width:100%;max-height:360px;border-radius:10px;margin:2px 0 4px;background:#000}
 .mid-a{display:block;margin:2px 0 4px}.mid-im{display:block;max-width:260px;width:100%;max-height:340px;object-fit:cover;border-radius:10px}.mid-im.fig{width:130px;background:transparent;object-fit:contain}
 .mid-load{font-size:13px;color:var(--muted);padding:6px 0}
+/* ===== Microinterações (etapa 2): só CSS, desligadas com "reduzir movimento" ===== */
+@media (prefers-reduced-motion:no-preference){
+  html:not(.adm) .btn,html:not(.adm) .fchip,html:not(.adm) .eyebtn,html:not(.adm) .bellbtn,html:not(.adm) .menubtn,html:not(.adm) .chip[data-act]{transition:background-color .15s,border-color .15s,box-shadow .15s,color .15s,transform .12s cubic-bezier(.22,1,.36,1)}
+  html:not(.adm) .btn:active:not([disabled]),html:not(.adm) .fchip:active,html:not(.adm) .eyebtn:active,html:not(.adm) .bellbtn:active,html:not(.adm) .menubtn:active{transform:scale(.97)}
+  html:not(.adm) .tab{transition:background-color .18s,color .18s,box-shadow .18s}
+  html:not(.adm) .tab:active svg{transform:scale(.9);transition:transform .1s}
+  html:not(.adm) #toast{transition:opacity .22s ease-out,transform .32s cubic-bezier(.34,1.56,.64,1)}
+  html:not(.adm) .row,html:not(.adm) .card,html:not(.adm) .bi-card{transition:border-color .18s,box-shadow .18s}
+}
 </style>
 <script>if(/^\/adm(\/|$)/.test(location.pathname)){document.documentElement.classList.add('adm');var q=function(x){return document.querySelector(x)};if(q('link[rel=manifest]'))q('link[rel=manifest]').href='/adm.webmanifest';if(q('link[rel=apple-touch-icon]'))q('link[rel=apple-touch-icon]').href='/icons/adm-apple-touch-icon.png';if(q('meta[name=apple-mobile-web-app-title]'))q('meta[name=apple-mobile-web-app-title]').content='Connecta AI';if(q('meta[name=theme-color]'))q('meta[name=theme-color]').content='#1F2A3C';document.title='Connecta AI';var f=document.createElement('link');f.rel='stylesheet';f.href='https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap';document.head.appendChild(f)}</script>
 
@@ -5317,12 +5326,21 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&ui.sheet)closeSheet
    Só aparência: observa a tela e anima o que acabou de aparecer. Não altera nenhuma função do sistema.
    Se o CDN não carregar, ou se a pessoa pediu "reduzir movimento", nada é animado e tudo aparece normalmente. */
 (function(){
-  if(/^\/adm(\/|$)/.test(location.pathname))return; // etapa 1: só o sistema das óticas
+  if(/^\/adm(\/|$)/.test(location.pathname))return; // só o sistema das óticas
   const view=document.getElementById('view');if(!view||!window.MutationObserver)return;
   const reduz=window.matchMedia?window.matchMedia('(prefers-reduced-motion: reduce)'):{matches:false};
   const EASE=[0.22,1,0.36,1];
   const M=()=>(!reduz.matches&&window.Motion&&typeof window.Motion.animate==='function')?window.Motion:null;
-  const limpa=els=>els.forEach(el=>{el.style.removeProperty('opacity');el.style.removeProperty('transform')});
+  const limpa=els=>els.forEach(el=>{if(!el)return;el.style.removeProperty('opacity');el.style.removeProperty('transform')});
+  // roda a animação e, no fim (ou se algo der errado), devolve o elemento ao estilo normal
+  function anima(m,els,kf,op,max){
+    els=els.filter(Boolean);if(!els.length)return;
+    try{const a=m.animate(els.length===1?els[0]:els,kf,op);const fim=()=>limpa(els);
+      if(a&&typeof a.then==='function')a.then(fim,fim);setTimeout(fim,max||1200)}catch(e){limpa(els)}
+  }
+  // escala somada ao transform que o elemento já tem (ex.: contador centralizado com translateY)
+  function tf(el,de){const b=getComputedStyle(el).transform;return (b&&b!=='none')?[b+' '+de,b]:[de,'none']}
+  /* Etapa 1: troca de página e entrada dos cartões */
   let ultima=null,agendado=0;
   function entrada(){
     agendado=0;
@@ -5336,14 +5354,40 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&ui.sheet)closeSheet
       .filter((el,i,a)=>!a.some(o=>o!==el&&o.contains(el)))
       .slice(0,14);
     if(!itens.length)return;
-    try{
-      const a=m.animate(itens,{opacity:[0,1],y:[8,0]},{duration:0.26,ease:EASE,delay:m.stagger?m.stagger(0.028):0});
-      const fim=()=>limpa(itens);
-      if(a&&typeof a.then==='function')a.then(fim,fim);
-      setTimeout(fim,1200); // garantia: nada fica invisível se a animação for interrompida
-    }catch(e){limpa(itens)}
+    anima(m,itens,{opacity:[0,1],y:[8,0]},{duration:0.26,ease:EASE,delay:m.stagger?m.stagger(0.028):0});
+    // menu: o ícone da aba que acabou de ficar ativa dá um toque discreto
+    const ic=document.querySelector('#tabs .tab[aria-current=page] svg');
+    if(ic)anima(m,[ic],{transform:tf(ic,'scale(.82)')},{duration:0.32,ease:[0.34,1.56,0.64,1]},800);
   }
   new MutationObserver(()=>{if(!agendado)agendado=requestAnimationFrame(entrada)}).observe(view,{childList:true});
+
+  /* Etapa 2: janelas (nova venda, cliente, menu do celular...) — só na abertura; o fechamento continua instantâneo */
+  const layer=document.getElementById('layer');let chave='';
+  if(layer)new MutationObserver(()=>{
+    const k=layer.dataset.key||'';
+    if(k===chave)return; // a mesma janela foi só atualizada (digitando, trocando item): não anima de novo
+    const abriu=!!k&&!chave;chave=k;
+    const m=M();if(!m||!abriu)return;
+    const sh=layer.querySelector('.sheet'),sc=layer.querySelector('.scrim');if(!sh)return;
+    const base=getComputedStyle(sh).transform,b=(base&&base!=='none')?base+' ':'';
+    const larga=window.matchMedia&&window.matchMedia('(min-width:760px)').matches;
+    const de=sh.classList.contains('drawer')?b+'translateX(-28px)':larga?b+'translateY(10px) scale(.98)':b+'translateY(36px)';
+    if(sc)anima(m,[sc],{opacity:[0,1]},{duration:0.2,ease:'ease-out'},900);
+    anima(m,[sh],{opacity:[0,1],transform:[de,base==='none'?'none':base]},{duration:larga?0.24:0.3,ease:EASE},1000);
+  }).observe(layer,{childList:true,attributes:true,attributeFilter:['data-key']});
+
+  /* Etapa 2: contadores (badges) dão um "pop" quando o número muda */
+  const nums=new Map();let prim=true;
+  function badges(){
+    const m=M();const vistos=new Set();
+    document.querySelectorAll('#tabs .badge,#bell .badge,#menubtn .badge').forEach(bd=>{
+      const dono=bd.closest('[data-t]'),k=(dono?dono.dataset.t:bd.parentElement&&bd.parentElement.id)||'?';vistos.add(k);
+      const v=bd.textContent;if(nums.get(k)!==v){if(!prim&&m)anima(m,[bd],{transform:tf(bd,'scale(.5)')},{duration:0.36,ease:[0.34,1.56,0.64,1]},900);nums.set(k,v)}
+    });
+    nums.forEach((v,k)=>{if(!vistos.has(k))nums.delete(k)});prim=false;
+  }
+  let ab=0;const obs=new MutationObserver(()=>{if(!ab)ab=requestAnimationFrame(()=>{ab=0;badges()})});
+  ['tabs','bell','menubtn'].forEach(id=>{const el=document.getElementById(id);if(el)obs.observe(el,{childList:true,subtree:true})});
 })();
 </script>
 </body>
