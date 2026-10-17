@@ -254,6 +254,9 @@ input:focus,select:focus,textarea:focus{box-shadow:0 0 0 3px color-mix(in srgb,v
   .pside a.on svg{color:var(--navsel)}
   .pside .foot button{border-radius:10px;border-color:rgba(255,255,255,.18);background:rgba(255,255,255,.06)}
 }
+/* ===== Refinamento (etapa 3): só aparência ===== */
+@media (max-width:759px){.fun{gap:2px}.fun button{min-height:34px;padding:4px 0}}
+.fun button:focus-visible{outline:2px solid var(--accent,#2563EB);outline-offset:2px;border-radius:6px}
 </style>
 </head>
 <body>
@@ -697,7 +700,7 @@ function vCamp(){
   const sel=st.cmarc||(st.cmarc={}),n=Object.keys(sel).filter(id=>sel[id]).length,ex=A[0]||{id:'00000000-0000-0000-0000-000000000000',nome:'Ótica Exemplo',cidade:'Recife'};
   let h='<div class="stats"><div class="stat k1"><b>'+A.length+'</b><span>Óticas já abordadas</span></div><div class="stat k2"><b>'+feitas.length+'</b><span>Receberam a campanha</span></div><div class="stat k3"><b>'+fila.length+'</b><span>Na fila agora</span></div><div class="stat k4"><b>'+resp.length+'</b><span>Responderam depois</span></div></div>';
   h+='<details class="card sec cx" data-sec="campmsg"'+secOpen('campmsg',false)+'><summary><h2>Mensagem da campanha</h2><span class="cx-i" aria-hidden="true"></span></summary><div class="cx-b"><p class="small muted" style="margin:0 0 8px">Fala só do Tráfego Orgânico e do Agente de IA, com o link do demo com o nome da ótica. Use {otica}, {link}, {link_agente} e {seu_nome}.</p>'+
-    '<div class="fld"><textarea data-cfg="campanha" style="min-height:220px">'+esc(cfg('campanha'))+'</textarea></div><div class="row" style="margin-top:8px"><button class="btn sm pri" data-a="salvarcfg">Salvar texto</button><button class="btn sm" data-a="camppadrao">Voltar ao texto padrão</button></div>'+
+    '<div class="fld"><textarea data-cfg="campanha" aria-label="Texto da campanha" style="min-height:220px">'+esc(cfg('campanha'))+'</textarea></div><div class="row" style="margin-top:8px"><button class="btn sm pri" data-a="salvarcfg">Salvar texto</button><button class="btn sm" data-a="camppadrao">Voltar ao texto padrão</button></div>'+
     '<label class="small muted" style="display:block;margin-top:10px">Prévia</label><div class="prev">'+esc(msg('campanha',ex))+'</div></div></details>';
   h+='<div class="row sec" style="gap:6px;flex-wrap:wrap">'+[['falta','Ainda não receberam ('+A.filter(l=>!l.campanha_em).length+')'],['feitas','Já receberam ('+feitas.length+')'],['todas','Todas ('+A.length+')']].map(x=>'<button class="chip '+(f===x[0]?'on':'')+'" data-a="campf" data-v="'+x[0]+'">'+x[1]+'</button>').join('')+'</div>';
   h+='<div class="card sec" style="position:sticky;top:8px;z-index:5"><div class="row" style="gap:8px;flex-wrap:wrap"><b class="grow">'+n+' marcada(s)</b><button class="btn sm" data-a="campmarcar">Marcar as próximas '+(+cfg('wa_limite')||20)+'</button><button class="btn sm" data-a="campdesm">Desmarcar</button><button class="btn sm pri" data-a="campfila"'+(n?'':' disabled')+'>Colocar na fila automática</button></div><p class="small muted" style="margin:6px 0 0">Sai pelo chip do CRM, no horário e com o intervalo do Envio automático'+(cfg('wa_on')==='true'?'':' (o envio está desligado: ligue na aba Envio automático)')+'. Óticas marcadas como interessadas ou que já fecharam não entram, e saem da fila se estiverem nela.</p></div>';
@@ -843,6 +846,25 @@ function aoVivo(){if(vivo||!st.admin)return;vivo=sb.channel('crm-ao-vivo')
   window.addEventListener('load',function(){setTimeout(function(){ult=0;checar()},4000)});
   document.addEventListener('visibilitychange',function(){if(!document.hidden)checar()});
   setInterval(function(){if(!document.hidden)checar()},10*60*1000);
+})();
+</script>
+<script>
+/* ===== Acessibilidade (etapa 3): só dá nome aos campos que já têm um rótulo visível ao lado, para leitores de tela. Não muda nenhuma função. ===== */
+(function(){
+  if(!window.MutationObserver)return;
+  const SEL='input:not([type=hidden]):not([type=checkbox]):not([type=radio]):not([aria-label]):not([aria-labelledby]),select:not([aria-label]):not([aria-labelledby]),textarea:not([aria-label]):not([aria-labelledby])';
+  function rotula(){
+    ag=0;
+    document.querySelectorAll(SEL).forEach(el=>{
+      if(el.getAttribute('aria-hidden')==='true'||(el.labels&&el.labels.length)||el.closest('label'))return;
+      const p=el.previousElementSibling;
+      if(!p||!/^(LABEL|SPAN|B|STRONG|SMALL)$/.test(p.tagName))return;
+      const t=(p.textContent||'').replace(/\s+/g,' ').trim();
+      if(t&&t.length<=80)el.setAttribute('aria-label',t);
+    });
+  }
+  let ag=0;const go=()=>{if(!ag)ag=requestAnimationFrame(rotula)};
+  new MutationObserver(go).observe(document.body,{childList:true,subtree:true});go();
 })();
 </script>
 </body>
