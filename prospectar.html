@@ -8,7 +8,7 @@
 <title>Prospecção · Connecta AI</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* Painel de dados (estilo BI): canvas frio, menu grafite, um único destaque dourado para o que está ativo */
 :root{
@@ -183,6 +183,77 @@ button.stat{cursor:pointer}button.stat:hover{background:var(--surface-2)}
 @media (max-width:520px){.ftiles{grid-template-columns:repeat(2,minmax(0,1fr))}.ftile b{font-size:22px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 .cx{padding:0!important}.cx>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;padding:14px 16px;user-select:none}.cx>summary::-webkit-details-marker{display:none}.cx>summary h2{margin:0;flex:1;font-size:16px}.cx-i{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;background:var(--s,rgba(0,0,0,.05));flex:none;transition:transform .15s}.cx-i::before{content:'';width:8px;height:8px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:translateY(-2px) rotate(45deg)}.cx[open] .cx-i{transform:rotate(180deg)}.cx>.cx-b{padding:0 16px 16px}.cx:not([open])>summary:hover{background:rgba(0,0,0,.025)}
+/* ===================== Redesign visual v3 (Connecta AI) – CRM =====================
+   Só aparência; mesmas classes. Menu azul-marinho, um destaque azul, cantos e sombras iguais aos do sistema. */
+:root{
+  --bg:#F4F6FA;--surface:#fff;--surface-2:#EEF2F7;--fg:#0E1A2B;--muted:#5D6B80;--line:#E2E7EF;--line-2:#D3DAE5;
+  --nav:#0B1424;--nav-fg:rgba(255,255,255,.7);--gold:#F5A524;--gold-ink:#3A2600;--navsel:#6FB1FF;
+  --accent:#1E5BD8;--accent-fg:#fff;--accent-soft:#E6EEFC;
+  --ok:#11784A;--ok-bg:#E5F4EC;--warn:#935F00;--warn-bg:#FBF0D9;--bad:#C0352B;--bad-bg:#FCE8E6;
+  --wa:#178A52;--s1:#1E5BD8;--s3:#F5A524;
+  --r:12px;--shadow:0 1px 2px rgba(15,25,45,.04);--sh1:0 1px 2px rgba(15,25,45,.04),0 6px 16px -8px rgba(15,25,45,.12);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0A111E;--surface:#111A2A;--surface-2:#18233A;--fg:#E7EDF6;--muted:#97A5BB;--line:#223049;--line-2:#2C3C58;
+  --nav:#070C16;--accent:#6FA4F5;--accent-fg:#06142C;--accent-soft:#16264A;
+  --ok:#5CCB93;--ok-bg:#10301F;--warn:#E9B45A;--warn-bg:#352812;--bad:#F08A80;--bad-bg:#3A1714;--wa:#36B874;--s1:#6FA4F5;
+  --shadow:0 1px 2px rgba(0,0,0,.3);--sh1:0 1px 2px rgba(0,0,0,.35),0 8px 20px -10px rgba(0,0,0,.55)}}
+html,body{font:14.5px/1.5 'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;font-feature-settings:"tnum" 1,"cv11" 1;letter-spacing:-.003em}
+h1,h2,h3{font-weight:650;letter-spacing:-.018em}
+.ph h1{font-size:24px;font-weight:700;letter-spacing:-.025em}
+@media (min-width:900px){.ph h1{font-size:28px}}
+.card,.vz,.zap,.stats,.ftile,.empty{border-radius:var(--r)}
+.card{padding:16px 18px;border-color:var(--line)}
+.btn{min-height:38px;border-radius:10px;padding:0 14px;font-weight:600;border-color:var(--line);box-shadow:var(--shadow);justify-content:center;transition:border-color .15s,box-shadow .15s,background .15s}
+.btn:hover{border-color:color-mix(in srgb,var(--fg) 18%,var(--line));box-shadow:var(--sh1)}
+.btn.sm{min-height:32px;padding:0 11px;border-radius:9px}
+.btn.pri:hover{filter:none;background:color-mix(in srgb,var(--accent) 88%,#000)}
+.btn.wa{box-shadow:0 1px 2px rgba(15,25,45,.12)}
+.btn:disabled{opacity:1;background:var(--surface-2);color:color-mix(in srgb,var(--muted) 75%,transparent);box-shadow:none}
+input[type=text],input[type=email],input[type=password],input[type=date],input[type=time],input[type=number],input[type=search],select,textarea{border-radius:10px;border-color:var(--line);padding:10px 12px;box-shadow:var(--shadow);transition:border-color .15s,box-shadow .15s}
+input:focus,select:focus,textarea:focus{box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 16%,transparent)}
+.tag{border-radius:999px;padding:2px 9px;font-size:11.5px;font-weight:600}
+.chip{border-radius:999px;padding:6px 13px;font-weight:600;color:var(--muted);border-color:var(--line)}
+.chip:hover{color:var(--fg)}
+.chip.on{color:var(--surface)}
+.note{border-radius:10px}
+.note.warn{border-color:var(--warn)}
+.prev,.acs{border-radius:10px}
+.stats{box-shadow:var(--sh1)}
+.stat{padding:16px 18px}
+.stat b,.ftile b,.fun b{font-family:'Inter',system-ui,sans-serif;font-weight:700;letter-spacing:-.025em}
+.stat b{font-size:26px}
+.ftile{border-radius:var(--r);min-height:76px}
+.ftile::before{border-radius:var(--r) 0 0 var(--r)}
+.ftile.on{box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 16%,transparent)}
+.vz{padding:16px 18px}
+.vz h3{font-size:14.5px;font-weight:650}
+.fun .bar{border-radius:5px;height:16px}
+.fun .bar i{border-radius:5px}
+.cols i{border-radius:4px 4px 1px 1px}
+.zi.on{box-shadow:inset 3px 0 0 var(--accent)}
+.zi .n,.subtabs .chip .n{background:var(--accent);color:#fff}
+.zb{border-radius:12px 12px 12px 4px;padding:8px 12px}
+.zb.eu{border-radius:12px 12px 4px 12px}
+.lead h2{font-size:15px;font-weight:650}
+.toast{border-radius:12px;border-left:0;background:#0E1A2B;box-shadow:0 12px 30px -10px rgba(0,0,0,.45);padding:11px 18px}
+.gate .card{border-top:0;border-radius:20px;padding:28px 24px;box-shadow:0 30px 80px -26px rgba(15,25,45,.35)}
+.mtop{border-bottom:1px solid rgba(255,255,255,.08)}
+.mtop button{border-radius:10px;border-color:rgba(255,255,255,.18);background:rgba(255,255,255,.06)}
+.pnav a.on{border-top-color:var(--navsel)}
+.subtabs .chip{border-radius:0}
+.subtabs .chip.on{color:var(--fg);border-bottom-color:var(--accent);font-weight:650}
+.cx-i{border-radius:9px}
+.row>b.grow{min-width:fit-content}
+@media (min-width:900px){
+  .pside{background:linear-gradient(180deg,#0F1D38,var(--nav) 38%);box-shadow:inset -1px 0 0 rgba(255,255,255,.06)}
+  .pside .brand b{font-size:20px;font-weight:700;letter-spacing:-.02em}
+  .pside .brand small{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.55)}
+  .pside a{border-radius:9px;border-left:0;font-size:13.5px;color:rgba(255,255,255,.7)}
+  .pside a.on{background:rgba(255,255,255,.09);color:#fff;font-weight:600;box-shadow:inset 3px 0 0 var(--navsel)}
+  .pside a.on svg{color:var(--navsel)}
+  .pside .foot button{border-radius:10px;border-color:rgba(255,255,255,.18);background:rgba(255,255,255,.06)}
+}
 </style>
 </head>
 <body>
