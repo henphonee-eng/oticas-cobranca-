@@ -1584,6 +1584,7 @@ async function doLogin(f){
   fails=0;auth='loading';gateKey='';render();await entrar(r.data.session);
 }
 async function logout(msg,silent){
+  const eraSaindo=sessSaindo;sessSaindo=true; // a saída manual não deve virar o aviso de "sessão expirou"
   try{await sb.auth.signOut()}catch(e){}
   if(chan){try{sb.removeChannel(chan)}catch(e){}chan=null}
   if(typeof wcSair==='function')wcSair();
@@ -1592,7 +1593,28 @@ async function logout(msg,silent){
   auth='login';gateNote=msg||'';gateKey='';
   ui.sheet=null;ui.draft=null;ui.cdraft=null;renderSheet();render();
   if(!silent&&!msg)toast('Você saiu do sistema');
+  sessSaindo=eraSaindo;
 }
+/* sessão vencida (ex.: app parado muito tempo no celular): renova sozinho; se não der, pede para entrar de novo,
+   em vez de deixar a tela aberta sem permissão ("permission denied") */
+const SESS_MSG='Sua sessão expirou. Entre de novo para continuar.';
+let sessSaindo=false;
+async function garanteSessao(){
+  if(auth!=='ok'||sessSaindo)return true;
+  try{
+    const {data}=await sb.auth.getSession();const s0=data&&data.session;
+    if(!s0){sessSaindo=true;await logout(SESS_MSG,true);sessSaindo=false;return false}
+    const exp=(s0.expires_at||0)*1000;
+    if(exp&&exp-Date.now()<120000){const r=await sb.auth.refreshSession();if(r.error||!r.data||!r.data.session){sessSaindo=true;await logout(SESS_MSG,true);sessSaindo=false;return false}SESSION=r.data.session}
+    return true;
+  }catch(e){return true}
+}
+const semPermissao=e=>/permission denied|JWT|jwt expired|not authorized|401/i.test(String((e&&(e.message||e.code))||e||''));
+try{sb.auth.onAuthStateChange((ev,s)=>{
+  if(ev==='TOKEN_REFRESHED'&&s)SESSION=s;
+  if(ev==='SIGNED_OUT'&&auth==='ok'&&!sessSaindo){sessSaindo=true;setTimeout(async()=>{await logout(SESS_MSG,true);sessSaindo=false},0)}
+})}catch(e){}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)garanteSessao()});
 ['click','keydown','touchstart'].forEach(ev=>document.addEventListener(ev,()=>{last=Date.now()},true));
 setInterval(()=>{if(auth!=='ok')return;const m=+cfg().autolock;if(m>0&&Date.now()-last>m*60000)logout('Sessão encerrada por inatividade.')},20000);
 
@@ -4640,7 +4662,9 @@ const ADMDEF={
 const ADMLABEL={boasvindas:'Boas-vindas (ótica nova)',lembrete:'Parcela perto de vencer ou vencendo hoje',atraso:'Parcela vencida'};
 const admTpl=k=>(ADM.cfg[k]&&ADM.cfg[k].trim())?ADM.cfg[k]:ADMDEF[k];
 async function admLoad(force){
-  if((ADM.loaded&&!force)||ADM.busy||!IS_ADMIN)return;ADM.busy=true;
+  if((ADM.loaded&&!force)||ADM.busy||!IS_ADMIN)return;
+  if(!(await garanteSessao()))return;
+  ADM.busy=true;
   try{
     const [lr,or,cr,gr,pl]=await Promise.all([sb.rpc('admin_listar_oticas'),sb.from('oticas').select('*'),sb.from('adm_cobrancas').select('*'),sb.from('adm_config').select('*'),sb.from('prosp_leads').select('status,enviado_em,demo_aberturas,historico,criado_em')]);
     ADM.leads=(pl&&!pl.error&&pl.data)||[];
@@ -4660,7 +4684,10 @@ async function admLoad(force){
     ADM.cobAll=(cr&&cr.data)||[];ADM.cob=ADM.cobAll.filter(admVisivel);ADM.cfg={};((gr&&gr.data)||[]).forEach(g=>{ADM.cfg[g.chave]=g.valor});
     ADM.err=(cr&&cr.error)?'Não foi possível carregar as cobranças: '+errTxt(cr.error):'';
     await admGerar();
-  }catch(e){ADM.err='Não foi possível carregar as óticas: '+errTxt(e)}
+  }catch(e){
+    if(semPermissao(e)&&!admLoad.tentou){admLoad.tentou=true;ADM.busy=false;try{const r=await sb.auth.refreshSession();if(r.data&&r.data.session){SESSION=r.data.session;return admLoad(true)}}catch(x){}admLoad.tentou=false;sessSaindo=true;await logout(SESS_MSG,true);sessSaindo=false;return}
+    ADM.err='Não foi possível carregar as óticas: '+errTxt(e)}
+  admLoad.tentou=false;
   ADM.busy=false;ADM.loaded=true;render();admNovaDoCrm();admAoVivo();
 }
 /* cria as mensalidades que ainda não existem: a 1ª vence 30 dias após o pagamento da implantação, depois uma por mês */
