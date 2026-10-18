@@ -65,5 +65,10 @@ const { criarApi, criarRobo } = require('./fila');
   const apiPm = criarApi({ supabaseUrl: 'http://x', supabaseKey: 'k', token: 'wa_p', modo: 'prospeccao' }, async (url, o) => { urlMidia = url; corpoMidia = JSON.parse(o.body); return { ok: true, status: 200, json: async () => ({ ok: true }) }; });
   await apiPm.midia({ telefone: '5581', tipo: 'imagem', base64: 'AA' });
   assert.strictEqual(urlMidia, 'http://x/functions/v1/agente-vendas'); assert.strictEqual(corpoMidia.modo, 'midia'); assert.strictEqual(corpoMidia.token, 'wa_p');
+  // arquivos da conversa vão para a função wa-midia (ótica e CRM)
+  await apiMd.guardarMidia({ waId: 'ABC123', tipo: 'audio', base64: 'AA' });
+  assert.strictEqual(urlMidia, 'http://x/functions/v1/wa-midia'); assert.strictEqual(corpoMidia.token, 'wa_t'); assert.strictEqual(corpoMidia.waId, 'ABC123');
+  await apiPm.guardarMidia({ waId: 'ABC124', tipo: 'foto', base64: 'AA' });
+  assert.strictEqual(urlMidia, 'http://x/functions/v1/wa-midia'); assert.strictEqual(corpoMidia.token, 'wa_p');
   console.log('Teste ok');
 })().catch((e) => { console.error('FALHOU', e); process.exit(1); });
