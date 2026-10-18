@@ -254,6 +254,21 @@ input:focus,select:focus,textarea:focus{box-shadow:0 0 0 3px color-mix(in srgb,v
   .pside a.on svg{color:var(--navsel)}
   .pside .foot button{border-radius:10px;border-color:rgba(255,255,255,.18);background:rgba(255,255,255,.06)}
 }
+/* kanban das mensagens automáticas e teste do agente de vendas */
+.kb{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(272px,1fr);gap:12px;overflow-x:auto;padding-bottom:8px;scroll-snap-type:x proximity}
+.kb-col{background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:8px;min-height:140px;max-height:72vh;overflow-y:auto;scroll-snap-align:start}
+.kb-h{display:flex;align-items:center;gap:8px;font-weight:650;font-size:13.5px;padding:2px 2px 4px}
+.kb-h .n{margin-left:auto;min-width:24px;text-align:center;font-size:12px;font-weight:700;border-radius:999px;padding:2px 8px;background:var(--surface);border:1px solid var(--line)}
+.kb-col>.card{margin:0}
+.kb-vz{padding:6px 4px}
+@media (min-width:1280px){.kb{grid-auto-flow:row;grid-template-columns:repeat(5,minmax(0,1fr))}}
+.agt{display:flex;flex-direction:column;gap:8px;max-height:420px;overflow-y:auto;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--surface-2)}
+.agt-b{max-width:85%;padding:8px 11px;border-radius:12px;white-space:pre-wrap;font-size:14px;line-height:1.4}
+.agt-b small{display:block;font-size:11px;opacity:.7;margin-bottom:2px}
+.agt-b.eu{align-self:flex-end;background:#D9FDD3;color:#111B21;border-top-right-radius:4px}
+.agt-b.ela{align-self:flex-start;background:var(--surface);border:1px solid var(--line);border-top-left-radius:4px}
+@media (max-width:600px){.agt-in{flex-direction:column;align-items:stretch!important}.agt-in textarea{width:100%}}
+.agt-ac{align-self:center;font-size:12px;color:var(--muted);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:4px 10px;text-align:center}
 </style>
 </head>
 <body>
@@ -358,6 +373,7 @@ async function load(){
   st.leads=(lr.data||[]).filter(l=>!l.arquivado_em);st.arq=(lr.data||[]).filter(l=>l.arquivado_em);st.cfg={};(cr.data||[]).forEach(r=>st.cfg[r.chave]=r.valor);
   st.ac={};((ar&&ar.data)||[]).forEach(a=>{(st.ac[a.lead_id]=st.ac[a.lead_id]||[]).push(a)});
   await loadFila();
+  try{const rr=await sb.from('prosp_reunioes').select('*').gte('inicio',new Date(Date.now()-864e5).toISOString()).order('inicio');st.reun=(rr&&rr.data)||[]}catch(e){st.reun=[]}
   st.loaded=true;const qt=new URLSearchParams(location.search).get('tab');if(qt&&['crm','buscar','msg','auto','zap','camp'].includes(qt))st.tab=qt;else if(!st.leads.length)st.tab='buscar';render();
 }
 /* ---------- envio automático (chip do CRM + segundo conector) ---------- */
@@ -404,6 +420,48 @@ function tagFila(l){const f=filaDe(l.id);if(!f.length)return '';const ab=f.find(
   if(fu)return '<span class="tag acc">🤖 Follow-up automático '+fmtD(new Date(new Date(fu.enviar_apos).getTime()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10))+'</span>';return ''}
 const WEST={conectado:['ok','Conectado'],qr:['warn','Esperando ler o QR Code'],offline:['bad','Computador desligado ou programa fechado'],desconectado:['bad','Desconectado'],sem_conector:['','Conector ainda não instalado']};
 const FST={espera:['','Espera a abordagem'],aguardando:['acc','Na fila'],enviando:['acc','Enviando'],enviada:['ok','Enviada'],falhou:['bad','Falhou'],cancelada:['','Cancelada']};
+/* ---------- agente de vendas: responde as empresas que voltam a falar ---------- */
+const AGEXS=[['advocacia','Silva & Rocha Advocacia'],['dentista','Sorriso Perfeito Odontologia'],['clínica','Clínica Viver Bem'],['barbearia','Barbearia do Centro'],['salão de beleza','Studio Bella'],['pizzaria','Pizzaria Napoli'],['academia','Academia Força Total'],['escola','Escola Pequeno Príncipe'],['imobiliária','Lar Imóveis'],['contabilidade','Prime Contabilidade'],['pet shop','Pet Feliz'],['oficina mecânica','Auto Center Recife'],['pousada','Pousada Mar Azul'],['loja de roupas','Loja Estilo']];
+function agtNovo(i){const x=AGEXS[i]||AGEXS[0];const l={id:'abcdef12-0000-0000-0000-000000000000',nome:x[1],cidade:'Recife',segmento:x[0]};return {seg:i||0,msgs:[{eu:true,texto:msg('abordagem',l)}],txt:'',auto:false,busy:false}}
+function vAgente(){
+  const ligado=cfg('ag_on')==='true',dias=String(cfg('ag_dias')||'1,2,3,4,5').split(','),DS=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  const t=st.agt||(st.agt=agtNovo(0));
+  const prox=(st.reun||[]).filter(r=>r.status==='marcada'&&new Date(r.inicio).getTime()>Date.now()-3600e3);
+  const nm=id=>{const l=st.leads.find(x=>x.id===id);return l?nomeCurto(l.nome):'Empresa'};
+  const fH=iso=>{const d=new Date(iso);return ['dom','seg','ter','qua','qui','sex','sáb'][d.getDay()]+' '+String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+' às '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
+  const bolha=m=>m.acao?'<div class="agt-ac">⚙️ '+esc(m.acao)+'</div>':'<div class="agt-b '+(m.eu?'eu':'ela')+'"><small>'+(m.eu?'Você / agente':'Empresa')+'</small>'+esc(m.texto).replace(/\*([^*\n]+)\*/g,'<b>$1</b>')+'</div>';
+  return '<details class="card sec cx" data-sec="agvendas"'+secOpen('agvendas',!ligado)+'><summary><h2>🤖 Agente de vendas '+(ligado?'<span class="tag ok">ligado</span>':'<span class="tag">desligado</span>')+'</h2><span class="cx-i" aria-hidden="true"></span></summary><div class="cx-b">'+
+    '<p class="small muted" style="margin:0 0 10px">Quando uma empresa responder a abordagem, o agente lê a conversa. Se for resposta automática ou robô da empresa, ele não responde (e o follow-up continua marcado). Se for uma pessoa, ele conversa por você: explica, quebra objeções, fala dos planos, entende áudio e foto, pergunta o que a empresa precisa e marca uma conversa com você. Quando a empresa quiser fechar, ele avisa que vai passar para você finalizar a implantação e o contrato (50% no início e 50% na entrega) e para de responder. Se você responder a empresa pelo celular ou por aqui, ele fica quieto naquela conversa por 12 horas.</p>'+
+    '<label class="row small" style="gap:8px;margin-bottom:6px"><input type="checkbox" data-agchk="ag_on"'+(ligado?' checked':'')+'> Agente de vendas ligado</label>'+
+    '<label class="row small" style="gap:8px;margin-bottom:12px"><input type="checkbox" data-agchk="ag_oticas"'+(cfg('ag_oticas')==='true'?' checked':'')+'> Responder também as óticas (com os planos das óticas)</label>'+
+    '<div class="fld"><label>Dias em que você pode conversar</label><div class="row" style="gap:6px;flex-wrap:wrap">'+DS.map((x,i)=>'<label class="chip'+(dias.includes(String(i))?' on':'')+'" style="cursor:pointer"><input type="checkbox" data-agdia="'+i+'"'+(dias.includes(String(i))?' checked':'')+' style="margin:0 4px 0 0">'+x+'</label>').join('')+'</div></div>'+
+    '<div class="list two" style="margin-top:8px"><div class="fld"><label for="ag-ini">Conversas a partir de</label><input id="ag-ini" type="time" data-agcfg="ag_ini" value="'+esc(cfg('ag_ini')||'09:00')+'"></div><div class="fld"><label for="ag-fim">Até</label><input id="ag-fim" type="time" data-agcfg="ag_fim" value="'+esc(cfg('ag_fim')||'18:00')+'"></div></div>'+
+    '<div class="fld" style="margin-top:8px"><label for="ag-obs">Observações para o agente (opcional)</label><textarea id="ag-obs" data-agcfg="ag_obs" style="min-height:70px" placeholder="Ex.: implantação em até 7 dias; atendo em todo o Brasil; prefiro conversas por vídeo">'+esc(cfg('ag_obs')||'')+'</textarea></div>'+
+    '<div class="row" style="margin:10px 0 14px"><button class="btn pri" data-a="agsalvar">Salvar agente</button></div>'+
+    '<h3 style="margin:6px 0 8px;font-size:14px">Conversas marcadas com você ('+prox.length+')</h3>'+
+    (prox.length?'<div class="list two">'+prox.map(r=>'<div class="card" style="padding:10px 12px"><div class="row"><b class="grow">'+esc(nm(r.lead_id))+'</b><span class="tag hot">'+esc(fH(r.inicio))+'</span></div><div class="small muted" style="margin-top:4px">'+esc(r.forma||'WhatsApp')+(r.nome?' · com '+esc(r.nome):'')+(r.assunto?' · '+esc(r.assunto):'')+'</div><div class="acts" style="margin-top:8px"><button class="btn sm" data-a="reuncanc" data-id="'+r.id+'">Cancelar</button></div></div>').join('')+'</div>':'<div class="small muted" style="margin-bottom:10px">Nenhuma conversa marcada ainda.</div>')+
+    '<h3 style="margin:16px 0 8px;font-size:14px">Testar o agente (nada é enviado)</h3>'+
+    '<p class="small muted" style="margin:0 0 8px">Escreva como se fosse a empresa respondendo a sua abordagem. Marque "resposta automática" para ver o agente ignorar mensagens de robô.</p>'+
+    '<div class="fld" style="max-width:360px;margin-bottom:8px"><label for="agt-seg">Tipo de empresa</label><select id="agt-seg" data-agtseg="1">'+AGEXS.map((x,i)=>'<option value="'+i+'"'+(i===t.seg?' selected':'')+'>'+esc(x[0].charAt(0).toUpperCase()+x[0].slice(1))+' · '+esc(x[1])+'</option>').join('')+'</select></div>'+
+    '<div class="agt" id="agt-th">'+t.msgs.map(bolha).join('')+(t.busy?'<div class="agt-ac">digitando…</div>':'')+'</div>'+
+    '<div class="row agt-in" style="gap:8px;align-items:flex-end;margin-top:8px"><textarea id="agt-txt" aria-label="Mensagem da empresa" placeholder="Ex.: Boa noite, quanto custa?" style="flex:1;min-height:46px">'+esc(t.txt)+'</textarea><button class="btn pri" data-a="agtenviar"'+(t.busy?' disabled':'')+'>Enviar como empresa</button></div>'+
+    '<div class="row" style="gap:12px;margin-top:6px;flex-wrap:wrap"><label class="row small" style="gap:6px"><input type="checkbox" id="agt-auto"'+(t.auto?' checked':'')+'> Simular resposta automática (chega 3 segundos depois)</label><button class="btn sm" data-a="agtlimpar">Recomeçar teste</button></div>'+
+    '</div></details>';
+}
+async function agtEnviar(){
+  const t=st.agt;if(!t||t.busy)return;const el=$('#agt-txt');const tx=String((el&&el.value)||t.txt||'').trim();if(!tx)return toast('Escreva a mensagem da empresa');
+  const au=$('#agt-auto');t.auto=!!(au&&au.checked);
+  t.msgs.push({eu:false,texto:tx,segundos:t.auto?3:90});t.txt='';t.busy=true;render();
+  try{
+    const {data:sd}=await sb.auth.getSession();const x=AGEXS[t.seg]||AGEXS[0];
+    const r=await fetch(SB_URL+'/functions/v1/agente-vendas',{method:'POST',headers:{'Content-Type':'application/json',apikey:SB_KEY,Authorization:'Bearer '+((sd&&sd.session&&sd.session.access_token)||SB_KEY)},body:JSON.stringify({modo:'teste',empresa:x[1],segmento:x[0],mensagens:t.msgs.filter(m=>!m.acao).map(m=>({eu:!!m.eu,texto:m.texto,segundos:m.segundos}))})});
+    const d=await r.json().catch(()=>({}));if(d.error)throw new Error(d.error);
+    if(d.cl)t.msgs.push({acao:(d.cl.autor==='humano'?'Pessoa':'Resposta automática')+' ('+Math.round((d.cl.confianca||0)*100)+'%) · '+(d.cl.intencao||'')+(d.cl.motivo?' · '+d.cl.motivo:'')});
+    (d.acoes||[]).forEach(a=>t.msgs.push({acao:a.txt}));
+    (d.partes&&d.partes.length?d.partes:(d.resposta?[d.resposta]:[])).forEach(p=>t.msgs.push({eu:true,texto:p}));
+  }catch(e){t.msgs.push({acao:'O agente não respondeu: '+e.message})}
+  t.busy=false;render();const th=$('#agt-th');if(th)th.scrollTop=th.scrollHeight;
+}
 function vAuto(){
   const w=st.wst||{},e=WEST[w.estado]||WEST.sem_conector,nm=id=>{const l=st.leads.find(x=>x.id===id);return l?l.nome:'Ótica removida'};
   const dh=iso=>fmtDH(iso);
@@ -413,6 +471,7 @@ function vAuto(){
   h+='<div class="stats"><div class="stat k1"><b><span class="tag '+e[0]+'" style="font-size:13px">'+e[1]+'</span></b><span>'+(w.numero?'Chip '+esc(fmtFone(w.numero)):'Chip do CRM')+'</span></div>'+
     '<div class="stat k2"><b>'+(+w.enviadas_hoje||0)+'<span> / '+esc(cfg('wa_limite')||'20')+'</span></b><span>Enviadas hoje</span></div>'+
     '<div class="stat k3"><b>'+st.fila.filter(naFila).length+'</b><span>Na fila</span></div><div class="stat k4"><b>'+st.fila.filter(fuEsp).length+'</b><span>Follow-ups esperando</span></div></div>';
+  h+='@@KB@@'+vAgente();
   h+='<details class="card sec cx" data-sec="como"'+secOpen('como',false)+'><summary><h2>Como funciona</h2><span class="cx-i" aria-hidden="true"></span></summary><div class="cx-b"><p class="small muted" style="margin:0">No CRM, marque as óticas novas e toque em <b>Colocar na fila automática</b>: isso já é a sua aprovação. O programa no computador manda uma de cada vez pelo chip do CRM, só no horário, com intervalo e limite por dia. O follow-up sai sozinho alguns dias depois, e é cancelado se a ótica responder, pedir para sair (SAIR) ou se você mudar o status dela. Quando a ótica responde, o cartão vira <b>Respondeu</b> e a resposta aparece no histórico.</p></div></details>';
   h+='<details class="card sec cx" data-sec="config"'+secOpen('config',false)+'><summary><h2>Configuração</h2><span class="cx-i" aria-hidden="true"></span></summary><div class="cx-b">'+
     '<label class="row small" style="gap:8px;margin-bottom:8px"><input type="checkbox" data-wchk="wa_on"'+(cfg('wa_on')==='true'?' checked':'')+'> Envio automático ligado</label>'+
@@ -433,9 +492,20 @@ function vAuto(){
   const fe=st.fila.filter(fuEsp).sort((a,b)=>String(a.enviar_apos).localeCompare(String(b.enviar_apos)));const at=st.fila.filter(naFila).sort((a,b)=>String(a.enviar_apos).localeCompare(String(b.enviar_apos)));
   const env=st.fila.filter(x=>x.status==='enviada').sort((a,b)=>String(b.enviado_em).localeCompare(String(a.enviado_em))).slice(0,40);
   const row=(x,act)=>{const s=fuEsp(x)?['','Agendado']:FST[x.status]||['',x.status];return '<div class="card" style="padding:10px 12px"><div class="row"><b class="grow">'+esc(nm(x.lead_id))+'</b><span class="tag '+s[0]+'">'+s[1]+'</span></div><div class="small muted" style="margin-top:4px">'+(x.tipo==='abordagem'?'Abordagem':x.tipo==='campanha'?'Campanha':'Follow-up')+' · '+(x.status==='enviada'?'enviada '+dh(x.enviado_em):x.status==='espera'?'sai alguns dias depois da abordagem':'a partir de '+dh(x.enviar_apos))+(x.erro&&x.status!=='enviada'?' · '+esc(x.erro):'')+'</div>'+(act?'<div class="acts" style="margin-top:8px"><button class="btn sm" data-fcanc="'+x.id+'">Cancelar</button></div>':'')+'</div>'};
-  h+='<div class="sec"><h2>Fila ('+at.length+')</h2>'+(at.length?'<div class="list two">'+at.map(x=>row(x,true)).join('')+'</div>':'<div class="empty">Nada na fila. No CRM, marque as óticas novas e coloque na fila automática.</div>')+'</div>';
-  h+='<details class="card sec cx" data-sec="fuesp"'+secOpen('fuesp',false)+'><summary><h2>Follow-ups esperando ('+fe.length+')</h2><span class="cx-i" aria-hidden="true"></span></summary><div class="cx-b"><p class="small muted" style="margin:0 0 10px">Saem sozinhos na data marcada, se a ótica não responder antes. Quando chega o dia, passam para a fila.</p>'+(fe.length?'<div class="list two">'+fe.map(x=>row(x,true)).join('')+'</div>':'<div class="empty">Nenhum follow-up esperando.</div>')+'</div></details>';
-  h+='<div class="sec"><h2>Enviadas recentemente</h2>'+(env.length?'<div class="list two">'+env.map(x=>row(x,false)).join('')+'</div>':'<div class="empty">Nenhuma mensagem automática enviada ainda.</div>')+'</div>';
+  const d7=Date.now()-7*864e5;
+  const ag=st.fila.filter(x=>x.tipo==='manual'&&x.origem==='agente'&&new Date(x.criado_em).getTime()>d7).sort((a,b)=>String(b.criado_em).localeCompare(String(a.criado_em))).slice(0,30);
+  const fal=st.fila.filter(x=>x.status==='falhou'&&x.tipo!=='manual'&&new Date(x.criado_em).getTime()>d7).sort((a,b)=>String(b.criado_em).localeCompare(String(a.criado_em))).slice(0,30);
+  const envA=env.filter(x=>x.tipo!=='manual');
+  const rowAg=x=>'<div class="card kb-it"><div class="row"><b class="grow">'+esc(nm(x.lead_id))+'</b><span class="tag '+((FST[x.status]||[''])[0])+'">'+esc((FST[x.status]||['',x.status])[1])+'</span></div><div class="small" style="margin-top:4px;white-space:pre-wrap">'+esc(String(x.texto||'').slice(0,180))+(String(x.texto||'').length>180?'…':'')+'</div><div class="small muted" style="margin-top:4px">'+(x.status==='enviada'?'enviada '+dh(x.enviado_em):'criada '+dh(x.criado_em))+'</div></div>';
+  const col=(t,ic,n,body,vazio)=>'<div class="kb-col"><div class="kb-h"><span aria-hidden="true">'+ic+'</span>'+t+'<span class="n">'+n+'</span></div>'+(body||'<div class="small muted kb-vz">'+vazio+'</div>')+'</div>';
+  const kbH='<div class="sec"><h2>Mensagens</h2><div class="kb">'+
+    col('Na fila','⏳',at.length,at.map(x=>row(x,true)).join(''),'Nada na fila. No CRM, marque as empresas novas e coloque na fila automática.')+
+    col('Follow-ups agendados','🗓️',fe.length,fe.map(x=>row(x,true)).join(''),'Nenhum follow-up esperando. Saem sozinhos na data, se a empresa não responder antes.')+
+    col('Agente de vendas','🤖',ag.length,ag.map(rowAg).join(''),'Quando uma empresa responder, as respostas do agente aparecem aqui.')+
+    col('Enviadas','✅',envA.length,envA.map(x=>row(x,false)).join(''),'Nenhuma mensagem automática enviada ainda.')+
+    col('Com falha','⚠️',fal.length,fal.map(x=>row(x,false)).join(''),'Nenhuma falha nos últimos 7 dias.')+
+    '</div></div>';
+  h=h.replace('@@KB@@',()=>kbH);
   return h;
 }
 async function upd(id,patch){
@@ -668,6 +738,7 @@ function vCrm(){
 function cardLead(l){
   const op=st.open===l.id,tf=tipoFone(foneDe(l)),late=l.follow_up&&l.follow_up<=today()&&['enviado','respondeu','interessada'].includes(l.status);
   let h='<div class="card lead"><div class="row">'+(podeAuto(l)?'<input type="checkbox" data-marca="'+l.id+'"'+(st.marc[l.id]?' checked':'')+' aria-label="Marcar para o envio automático" style="width:20px;height:20px;flex:none">':'')+'<h2 class="grow">'+esc(l.nome)+'</h2>'+(ehOtica(l)?'':'<span class="tag acc">'+esc(l.segmento)+'</span>')+'<span class="tag '+STAG[l.status]+'">'+STATUS[l.status]+'</span></div><div class="meta">'+
+    (l.ag_estado?'<span class="tag '+({humano:'acc',automatico:'',passado:'ok',pausado:'warn'}[l.ag_estado]||'')+'">'+({humano:'🤖 Agente conversando',automatico:'🤖 Só resposta automática',passado:'✅ Passado para você',pausado:'⏸ Agente pausado'}[l.ag_estado]||'')+'</span> ':'')+
     (acessos(l).length?'<span class="tag hot">👀 '+acessos(l).length+(acessos(l).length>1?' acessos':' acesso')+(ehOtica(l)?' ao demo':' ao teste do agente')+' · último '+fmtDH(acessos(l)[0].em)+'</span>':l.status!=='novo'?'<span class="tag">'+(ehOtica(l)?'Ainda não abriu o demo':'Ainda não abriu o teste do agente')+'</span>':'')+
     (acessosSite(l).length?'<span class="tag hot">🌐 '+acessosSite(l).length+(acessosSite(l).length>1?' acessos':' acesso')+' ao site · último '+fmtDH(acessosSite(l)[0].em)+'</span>':'')+
     (SITE_ON&&!l.site?'<span class="tag">Sem site: recebe a prévia de site</span>':'')+
@@ -690,7 +761,7 @@ function cardLead(l){
       '<div><label>Próximo follow-up</label><input type="date" data-upd="'+l.id+'" data-fld="follow_up" value="'+esc(l.follow_up||'')+'"></div>'+
       '<div class="full"><label>WhatsApp (se for diferente do telefone do Google)</label><input type="text" data-upd="'+l.id+'" data-fld="whatsapp" value="'+esc(l.whatsapp||'')+'" placeholder="(81) 9XXXX-XXXX"></div>'+
       '<div class="full"><label>Anotações</label><textarea data-upd="'+l.id+'" data-fld="notas" style="min-height:70px" placeholder="Quem atendeu, o que perguntou, quantas lojas…">'+esc(l.notas||'')+'</textarea></div>'+
-      '<div class="full acts">'+(ehOtica(l)?'<button class="btn sm" data-copy="'+l.id+'">Copiar link do demo</button><a class="btn sm" href="'+esc(demoLink(l,true))+'" target="_blank" rel="noopener">Ver demo</a>':'<button class="btn sm" data-copy="'+l.id+'">Copiar link do teste do agente</button><a class="btn sm" href="'+esc(agenteLink(l,true))+'" target="_blank" rel="noopener">Ver teste do agente</a>')+(SITE_ON&&!l.site?'<button class="btn sm" data-copysite="'+l.id+'">Copiar link do site</button><a class="btn sm" href="'+esc(siteLink(l,true))+'" target="_blank" rel="noopener">Ver site demo</a>':'')+(l.maps_url?'<a class="btn sm" href="'+esc(l.maps_url)+'" target="_blank" rel="noopener">Google Maps</a>':'')+(l.site?'<a class="btn sm" href="'+esc(l.site)+'" target="_blank" rel="noopener">Site</a>':'')+(l.status!=='novo'?'<button class="btn sm" data-env="'+l.id+'" data-k="abordagem">Reenviar abordagem</button>':'')+'<button class="btn sm" data-del="'+l.id+'" style="color:var(--bad)">Remover</button></div>'+
+      '<div class="full acts">'+(ehOtica(l)?'<button class="btn sm" data-copy="'+l.id+'">Copiar link do demo</button><a class="btn sm" href="'+esc(demoLink(l,true))+'" target="_blank" rel="noopener">Ver demo</a>':'<button class="btn sm" data-copy="'+l.id+'">Copiar link do teste do agente</button><a class="btn sm" href="'+esc(agenteLink(l,true))+'" target="_blank" rel="noopener">Ver teste do agente</a>')+(SITE_ON&&!l.site?'<button class="btn sm" data-copysite="'+l.id+'">Copiar link do site</button><a class="btn sm" href="'+esc(siteLink(l,true))+'" target="_blank" rel="noopener">Ver site demo</a>':'')+(l.maps_url?'<a class="btn sm" href="'+esc(l.maps_url)+'" target="_blank" rel="noopener">Google Maps</a>':'')+(l.site?'<a class="btn sm" href="'+esc(l.site)+'" target="_blank" rel="noopener">Site</a>':'')+(l.status!=='novo'?'<button class="btn sm" data-env="'+l.id+'" data-k="abordagem">Reenviar abordagem</button>':'')+(cfg('ag_on')==='true'?(['pausado','passado'].includes(l.ag_estado)?'<button class="btn sm" data-a="agretomar" data-id="'+l.id+'">Agente volta a responder</button>':'<button class="btn sm" data-a="agpausar" data-id="'+l.id+'">Pausar agente nesta empresa</button>'):'')+'<button class="btn sm" data-del="'+l.id+'" style="color:var(--bad)">Remover</button></div>'+
       '<div class="full"><label>Acessos ao demo e ao site</label>'+((st.ac[l.id]||[]).length?'<div class="acs">'+(st.ac[l.id]||[]).map((a,i)=>'<div><b>'+((st.ac[l.id]||[]).length-i)+'º</b> '+(a.tipo==='site'?'Site':a.tipo==='agente'?'Teste do agente':'Demo')+' · '+fmtDH(a.em)+(a.aparelho?' · '+esc(a.aparelho):'')+'</div>').join('')+'</div>':'<div class="small muted">Nenhum acesso ainda.</div>')+'</div>'+
       '<div class="full small muted">'+(l.historico||[]).slice().reverse().map(x=>fmtD(x.em.slice(0,10))+' '+x.em.slice(11,16)+' — '+esc(x.txt)).join('<br>')+'</div></div>';
   }
@@ -748,7 +819,7 @@ function vMsg(){
 }
 
 /* ---------- eventos ---------- */
-document.addEventListener('change',e=>{const t=e.target;if(t&&t.dataset&&t.dataset.prevseg){document.querySelectorAll('[data-cfg]').forEach(i=>{if(i.value!==String(cfg(i.dataset.cfg)??''))st.cfg[i.dataset.cfg]=i.value});st.prevSeg=+t.value||0;const y=scrollY;render();scrollTo(0,y)}});
+document.addEventListener('change',e=>{const t=e.target;if(t&&t.dataset&&t.dataset.agtseg){st.agt=agtNovo(+t.value||0);return render()}if(t&&t.dataset&&t.dataset.agdia){const c=t.closest('.chip');if(c)c.classList.toggle('on',t.checked);return}if(t&&t.dataset&&t.dataset.prevseg){document.querySelectorAll('[data-cfg]').forEach(i=>{if(i.value!==String(cfg(i.dataset.cfg)??''))st.cfg[i.dataset.cfg]=i.value});st.prevSeg=+t.value||0;const y=scrollY;render();scrollTo(0,y)}});
 document.addEventListener('click',async e=>{
   const b=e.target.closest('button,[data-tab]');if(!b)return;const d=b.dataset;
   if(d.tab){e.preventDefault();return go(d.tab)}
@@ -770,6 +841,14 @@ document.addEventListener('click',async e=>{
   if(d.copy){const l=st.leads.find(x=>x.id===d.copy);const lk=ehOtica(l)?demoLink(l):agenteLink(l);try{await navigator.clipboard.writeText(lk);toast('Link copiado')}catch(x){prompt('Copie o link:',lk)}return}
   if(d.del){if(!confirm('Remover essa ótica do CRM?'))return;const r=await sb.from('prosp_leads').delete().eq('id',d.del);if(r.error)return toast(r.error.message);st.leads=st.leads.filter(l=>l.id!==d.del);return render()}
   switch(d.a){
+    case 'agsalvar':{const rows=[...document.querySelectorAll('[data-agcfg]')].map(i=>({chave:i.dataset.agcfg,valor:String(i.value||'').trim()})).concat([...document.querySelectorAll('[data-agchk]')].map(i=>({chave:i.dataset.agchk,valor:i.checked?'true':'false'})));
+      const ds=[...document.querySelectorAll('[data-agdia]')].filter(i=>i.checked).map(i=>i.dataset.agdia);if(!ds.length)return toast('Marque pelo menos um dia');rows.push({chave:'ag_dias',valor:ds.join(',')});
+      const r=await sb.from('prosp_config').upsert(rows);if(r.error)return toast(r.error.message);rows.forEach(x=>st.cfg[x.chave]=x.valor);toast(cfg('ag_on')==='true'?'Agente de vendas salvo e ligado':'Agente de vendas salvo (desligado)');return render()}
+    case 'agtenviar':return agtEnviar();
+    case 'agtlimpar':st.agt=agtNovo(st.agt?st.agt.seg:0);return render();
+    case 'reuncanc':{if(!confirm('Cancelar esta conversa marcada?'))return;const r=await sb.from('prosp_reunioes').update({status:'cancelada'}).eq('id',d.id);if(r.error)return toast(r.error.message);st.reun=(st.reun||[]).map(x=>x.id===d.id?Object.assign({},x,{status:'cancelada'}):x);toast('Conversa cancelada');return render()}
+    case 'agpausar':{const l=st.leads.find(x=>x.id===d.id);if(!l)return;await upd(l.id,{ag_estado:'pausado',historico:hist(l,'Agente de vendas pausado nesta conversa')});return toast('O agente não vai mais responder esta empresa')}
+    case 'agretomar':{const l=st.leads.find(x=>x.id===d.id);if(!l)return;await upd(l.id,{ag_estado:null,historico:hist(l,'Agente de vendas retomado nesta conversa')});return toast('O agente volta a responder esta empresa')}
     case 'entrar':{const r=await sb.auth.signInWithPassword({email:$('#g-e').value.trim(),password:$('#g-p').value});if(r.error){$('#g-err').textContent='E-mail ou senha incorretos.';return}return boot()}
     case 'sair':await sb.auth.signOut();st.user=false;st.loaded=false;return render();
     case 'buscar':st.q=$('#q').value;return buscar(false);
@@ -801,7 +880,7 @@ document.addEventListener('change',e=>{
   if(t.dataset.cmarca){(st.cmarc=st.cmarc||{})[t.dataset.cmarca]=t.checked;return render()}
   if(t.dataset.upd){const l=st.leads.find(x=>x.id===t.dataset.upd),f=t.dataset.fld,v=t.value||null;const p={[f]:v};if(f==='status')p.historico=hist(l,'Status: '+STATUS[v]);upd(l.id,p)}
 });
-document.addEventListener('input',e=>{
+document.addEventListener('input',e=>{if(e.target&&e.target.id==='agt-txt'&&st.agt){st.agt.txt=e.target.value}
   const t=e.target;
   if(t.id==='ztxt'&&st.zsel){st.ztxt[st.zsel]=t.value;return}
   if(t.id==='zq'){st.zq=t.value;const z=$('#zlist');if(z)z.innerHTML=zLista();return}

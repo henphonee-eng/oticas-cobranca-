@@ -216,7 +216,7 @@ async function main() {
   // Áudio e foto que o cliente manda: se o Agente de IA estiver ligado, vão para o sistema virar texto.
   let agenteOffAte = 0;
   async function midiaRecebida(m) {
-    if (MODO === 'prospeccao' || !api.midia || Date.now() < agenteOffAte) return;
+    if (!api.midia || Date.now() < agenteOffAte) return;
     let x = m.message;
     for (let i = 0; i < 4 && x; i++) {
       const w = x.ephemeralMessage || x.viewOnceMessage || x.viewOnceMessageV2 || x.viewOnceMessageV2Extension;
@@ -233,7 +233,7 @@ async function main() {
       const buf = await baileys.downloadMediaMessage(m, 'buffer', {}, { logger, reuploadRequest: sock.updateMediaMessage });
       const r = await api.midia({ telefone: tel, nome: m.pushName || '', tipo: au ? 'audio' : 'imagem', segundos: au ? Number(au.seconds || 0) : 0, mime: (au || im).mimetype || '', legenda: (im && im.caption) || '', waId: m.key.id, base64: Buffer.from(buf).toString('base64') });
       if (r && r.off) agenteOffAte = Date.now() + 10 * 60000; // agente desligado: não baixa mídia por 10 minutos
-      else log((au ? 'Áudio' : 'Foto') + ' de ' + tel + ' enviado ao Agente de IA');
+      else log((au ? 'Áudio' : 'Foto') + ' de ' + tel + ' enviado ao ' + (MODO === 'prospeccao' ? 'agente de vendas' : 'Agente de IA'));
     } catch (e) { log('Não consegui ler a mídia recebida: ' + e.message); }
   }
   const wa = {

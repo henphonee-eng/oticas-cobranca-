@@ -240,7 +240,7 @@ button,textarea{font:inherit;color:inherit}
       if(/bot|crawl|spider|preview|facebookexternalhit|whatsapp/i.test(navigator.userAgent))return;
       try{for(var i=0;i<localStorage.length;i++){if(/^sb-.*-auth-token$/.test(localStorage.key(i)))return}}catch(e){}
       var ua=navigator.userAgent,ap=/iPhone|iPad|iPod/.test(ua)?'Celular · iPhone':/Android/.test(ua)?'Celular · Android':/Mobi/.test(ua)?'Celular':/Mac/.test(ua)?'Computador · Mac':/Windows/.test(ua)?'Computador · Windows':'Computador';
-      fetch(SB+'/rest/v1/rpc/prosp_agente_aberto',{method:'POST',headers:{'Content-Type':'application/json',apikey:KEY},body:JSON.stringify({p_lead:lead,p_aparelho:ap}),keepalive:true}).catch(function(){});
+      fetch(SB+'/functions/v1/agente-vendas',{method:'POST',headers:{'Content-Type':'application/json',apikey:KEY},body:JSON.stringify({modo:'aberto',lead:lead,aparelho:ap}),keepalive:true}).then(function(r){if(!r.ok)throw 0}).catch(function(){fetch(SB+'/rest/v1/rpc/prosp_agente_aberto',{method:'POST',headers:{'Content-Type':'application/json',apikey:KEY},body:JSON.stringify({p_lead:lead,p_aparelho:ap}),keepalive:true}).catch(function(){})});
     }catch(e){}
   }
 
