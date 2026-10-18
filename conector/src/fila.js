@@ -24,6 +24,15 @@ function criarApi(cfg, fetchFn) {
       sair: (telefone) => rpc('prosp_wa_sair', { p_token: cfg.token, p_telefone: telefone }),
       receber: (telefone, texto, nome) => rpc('prosp_wa_receber', { p_token: cfg.token, p_telefone: telefone, p_texto: texto, p_nome: nome || null }),
       puxarManual: () => rpc('prosp_wa_puxar_manual', { p_token: cfg.token }),
+      // áudio ou foto que a empresa mandou: o agente de vendas transforma em texto e responde (se estiver ligado)
+      midia: async (corpo) => {
+        const r = await f(cfg.supabaseUrl + '/functions/v1/agente-vendas', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', apikey: cfg.supabaseKey, Authorization: 'Bearer ' + cfg.supabaseKey },
+          body: JSON.stringify(Object.assign({ modo: 'midia', token: cfg.token }, corpo)),
+        });
+        return r.json().catch(() => ({}));
+      },
       registrar: (m) => rpc('prosp_wa_registrar', { p_token: cfg.token, p_tel: m.telefone, p_nome: m.nome || null, p_de_mim: !!m.deMim, p_texto: m.texto, p_tipo: m.tipo || 'texto', p_wa_id: m.waId || null, p_origem: m.origem || null }),
     };
   }

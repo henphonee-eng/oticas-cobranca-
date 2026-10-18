@@ -61,5 +61,9 @@ const { criarApi, criarRobo } = require('./fila');
   const apiMd = criarApi({ supabaseUrl: 'http://x', supabaseKey: 'k', token: 'wa_t' }, async (url, o) => { urlMidia = url; corpoMidia = JSON.parse(o.body); return { ok: true, status: 200, json: async () => ({ ok: true, off: true }) }; });
   assert.deepStrictEqual(await apiMd.midia({ telefone: '5581', tipo: 'audio', base64: 'AA' }), { ok: true, off: true });
   assert.strictEqual(urlMidia, 'http://x/functions/v1/agente-ia'); assert.strictEqual(corpoMidia.modo, 'midia'); assert.strictEqual(corpoMidia.token, 'wa_t');
+  // no chip do CRM (prospecção), a mídia vai para o agente de vendas
+  const apiPm = criarApi({ supabaseUrl: 'http://x', supabaseKey: 'k', token: 'wa_p', modo: 'prospeccao' }, async (url, o) => { urlMidia = url; corpoMidia = JSON.parse(o.body); return { ok: true, status: 200, json: async () => ({ ok: true }) }; });
+  await apiPm.midia({ telefone: '5581', tipo: 'imagem', base64: 'AA' });
+  assert.strictEqual(urlMidia, 'http://x/functions/v1/agente-vendas'); assert.strictEqual(corpoMidia.modo, 'midia'); assert.strictEqual(corpoMidia.token, 'wa_p');
   console.log('Teste ok');
 })().catch((e) => { console.error('FALHOU', e); process.exit(1); });
