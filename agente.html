@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
+<meta name="robots" content="noindex">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#008069" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#202C33" media="(prefers-color-scheme: dark)">
+<title>Teste o Agente de IA · Connecta AI</title>
+<meta name="description" content="Converse com o agente como se fosse um cliente no WhatsApp. Ele responde 24 horas, tira dúvidas e agenda atendimentos.">
+<meta property="og:title" content="Teste o Agente de IA da sua empresa">
+<meta property="og:description" content="Converse com ele como se fosse um cliente no WhatsApp. Responde 24 horas, tira dúvidas e agenda. Feito pela Connecta AI.">
+<meta property="og:image" content="https://oticas-cobranca.vercel.app/icons/adm-icon-512.png">
+<meta property="og:type" content="website">
+<link rel="icon" href="/icons/adm-icon-192.png">
+<style>
+:root{
+  --bg:#EFEAE2;--dots:rgba(84,64,40,.07);--head:#008069;--head-fg:#fff;--head-sub:rgba(255,255,255,.82);
+  --in:#fff;--in-fg:#111B21;--out:#D9FDD3;--out-fg:#111B21;--meta:#667781;--tick:#53BDEB;
+  --bar:#F0F2F5;--field:#fff;--field-fg:#111B21;--send:#00A884;--note:#FFEECD;--note-fg:#54656F;
+  --act:#E1F3FB;--act-fg:#1A5A73;--chip:#fff;--chip-fg:#008069;--chip-line:#D1D7DB;
+  --panel:#FFFFFF;--panel-fg:#111B21;--panel-sub:#54656F;--line:#E9EDEF;--page:#D1D7DB;--cta:#25D366;--cta-fg:#06311F;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0B141A;--dots:rgba(255,255,255,.035);--head:#202C33;--head-fg:#E9EDEF;--head-sub:#8696A0;
+  --in:#202C33;--in-fg:#E9EDEF;--out:#005C4B;--out-fg:#E9EDEF;--meta:#8696A0;--tick:#53BDEB;
+  --bar:#202C33;--field:#2A3942;--field-fg:#E9EDEF;--send:#00A884;--note:#182229;--note-fg:#FFD279;
+  --act:#103529;--act-fg:#7FE0C2;--chip:#202C33;--chip-fg:#00A884;--chip-line:#2A3942;
+  --panel:#111B21;--panel-fg:#E9EDEF;--panel-sub:#8696A0;--line:#222D34;--page:#0C1317;--cta:#25D366;--cta-fg:#06311F;
+}}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--page);color:var(--in-fg);font:400 15px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%}
+button,textarea{font:inherit;color:inherit}
+.app{display:flex;height:100dvh;max-width:1180px;margin:0 auto}
+/* painel de explicação (só no computador) */
+.info{display:none}
+/* telefone / conversa */
+.chat{flex:1;display:flex;flex-direction:column;min-width:0;background:var(--bg);position:relative}
+.chat::before{content:"";position:absolute;inset:0;background-image:radial-gradient(var(--dots) 1.2px,transparent 1.3px),radial-gradient(var(--dots) 1.2px,transparent 1.3px);background-size:26px 26px;background-position:0 0,13px 13px;pointer-events:none}
+.hd{position:relative;z-index:2;display:flex;align-items:center;gap:10px;background:var(--head);color:var(--head-fg);padding:calc(env(safe-area-inset-top) + 8px) 10px 8px 6px;min-height:60px}
+.hd .back{width:34px;height:40px;display:grid;place-items:center;opacity:.9}
+.av{width:40px;height:40px;border-radius:50%;flex:none;display:grid;place-items:center;font-weight:700;font-size:16px;color:#fff;background:linear-gradient(140deg,#25D366,#128C7E);letter-spacing:-.02em}
+.who{flex:1;min-width:0;line-height:1.2}
+.who b{display:block;font-size:16.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.who small{display:block;font-size:13px;color:var(--head-sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hd .quero{flex:none;border:0;border-radius:999px;background:rgba(255,255,255,.16);color:var(--head-fg);font-weight:600;font-size:13px;padding:8px 12px;text-decoration:none;white-space:nowrap}
+.hd .quero:hover{background:rgba(255,255,255,.24)}
+.hd .quero .lg{display:none}
+@media (min-width:480px){.hd .quero .lg{display:inline}.hd .quero .sm{display:none}}
+.th{position:relative;z-index:1;flex:1;overflow-y:auto;overscroll-behavior:contain;padding:12px 4% 10px;display:flex;flex-direction:column;gap:3px;scroll-behavior:smooth}
+.day{align-self:center;background:var(--in);color:var(--meta);font-size:12.5px;padding:5px 12px;border-radius:8px;margin:6px 0 8px;box-shadow:0 1px .5px rgba(11,20,26,.13)}
+.note{align-self:center;max-width:min(520px,94%);background:var(--note);color:var(--note-fg);font-size:12.8px;text-align:center;padding:8px 12px;border-radius:8px;margin:0 0 10px;box-shadow:0 1px .5px rgba(11,20,26,.13);text-wrap:pretty}
+.msg{max-width:min(78%,520px);padding:6px 8px 8px 9px;border-radius:8px;box-shadow:0 1px .5px rgba(11,20,26,.13);position:relative;white-space:pre-wrap;word-wrap:break-word;overflow-wrap:anywhere;margin-top:2px}
+.msg.in{align-self:flex-start;background:var(--in);color:var(--in-fg);border-top-left-radius:0}
+.msg.out{align-self:flex-end;background:var(--out);color:var(--out-fg);border-top-right-radius:0}
+.msg.in.first::before,.msg.out.first::before{content:"";position:absolute;top:0;width:8px;height:13px}
+.msg.in.first::before{left:-8px;background:linear-gradient(225deg,var(--in) 50%,transparent 50%)}
+.msg.out.first::before{right:-8px;background:linear-gradient(135deg,var(--out) 50%,transparent 50%)}
+.msg:not(.first){border-radius:8px}
+.msg .t{float:right;margin:6px 0 -4px 10px;font-size:11px;color:var(--meta);display:inline-flex;align-items:center;gap:3px;white-space:nowrap}
+.msg.out .t svg{width:16px;height:11px;color:var(--tick)}
+.msg.first{margin-top:8px}
+.act{align-self:center;max-width:94%;background:var(--act);color:var(--act-fg);font-size:12.5px;font-weight:500;padding:5px 11px;border-radius:8px;margin:6px 0;text-align:center;box-shadow:0 1px .5px rgba(11,20,26,.1)}
+.typing{align-self:flex-start;background:var(--in);border-radius:8px;border-top-left-radius:0;padding:11px 14px;margin-top:8px;box-shadow:0 1px .5px rgba(11,20,26,.13);display:flex;gap:4px}
+.typing i{width:7px;height:7px;border-radius:50%;background:var(--meta);opacity:.5;animation:pul 1.2s infinite}
+.typing i:nth-child(2){animation-delay:.18s}.typing i:nth-child(3){animation-delay:.36s}
+@keyframes pul{0%,60%,100%{opacity:.35;transform:translateY(0)}30%{opacity:.9;transform:translateY(-3px)}}
+.cta-card{align-self:center;width:min(360px,94%);background:var(--in);color:var(--in-fg);border-radius:12px;padding:14px;margin:12px 0 6px;text-align:center;box-shadow:0 2px 8px rgba(11,20,26,.12)}
+.cta-card b{display:block;font-size:15px;margin-bottom:4px}
+.cta-card p{margin:0 0 12px;color:var(--meta);font-size:13.5px}
+.btn-cta{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:999px;background:var(--cta);color:var(--cta-fg);font-weight:700;padding:11px 18px;text-decoration:none;font-size:14.5px}
+.btn-cta svg{width:18px;height:18px}
+.sug{position:relative;z-index:1;display:flex;gap:8px;overflow-x:auto;padding:8px 10px 2px;scrollbar-width:none}
+.sug::-webkit-scrollbar{display:none}
+.sug button{flex:none;border:1px solid var(--chip-line);background:var(--chip);color:var(--chip-fg);border-radius:999px;padding:8px 13px;font-size:13.5px;font-weight:500;cursor:pointer;white-space:nowrap;box-shadow:0 1px .5px rgba(11,20,26,.08)}
+.sug button:hover{filter:brightness(.97)}
+.bar{position:relative;z-index:2;display:flex;align-items:flex-end;gap:8px;padding:8px 8px calc(8px + env(safe-area-inset-bottom));background:transparent}
+.field{flex:1;display:flex;align-items:flex-end;background:var(--field);border-radius:24px;min-height:46px;padding:0 6px 0 14px;box-shadow:0 1px .5px rgba(11,20,26,.13)}
+.field textarea{flex:1;border:0;outline:0;background:transparent;color:var(--field-fg);resize:none;padding:12px 0;max-height:130px;font-size:16px;line-height:1.35}
+.field textarea::placeholder{color:var(--meta)}
+.send{width:46px;height:46px;border-radius:50%;border:0;background:var(--send);color:#fff;display:grid;place-items:center;flex:none;cursor:pointer;box-shadow:0 1px 2px rgba(11,20,26,.2)}
+.send:disabled{opacity:.55;cursor:default}
+.send svg{width:22px;height:22px}
+.foot{position:relative;z-index:1;text-align:center;font-size:11.5px;color:var(--meta);padding:0 10px 4px}
+.foot a{color:inherit}
+:focus-visible{outline:2px solid var(--send);outline-offset:2px}
+.field:focus-within{box-shadow:0 0 0 2px color-mix(in srgb,var(--send) 55%,transparent)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+@media (min-width:900px){
+  body{background:linear-gradient(180deg,var(--head) 0,var(--head) 128px,var(--page) 128px)}
+  .app{height:calc(100dvh - 38px);margin-top:19px;box-shadow:0 6px 24px rgba(11,20,26,.2);border-radius:6px;overflow:hidden}
+  .info{display:flex;flex-direction:column;width:380px;flex:none;background:var(--panel);color:var(--panel-fg);border-right:1px solid var(--line);padding:34px 30px 24px;overflow-y:auto}
+  .info .tag{align-self:flex-start;font-size:12px;font-weight:600;letter-spacing:.04em;color:var(--send);background:color-mix(in srgb,var(--send) 12%,transparent);padding:5px 10px;border-radius:999px}
+  .info h1{font-size:26px;line-height:1.15;letter-spacing:-.02em;margin:16px 0 10px;text-wrap:balance}
+  .info p{margin:0 0 18px;color:var(--panel-sub);text-wrap:pretty}
+  .info ul{list-style:none;margin:0 0 22px;padding:0;display:grid;gap:12px}
+  .info li{display:flex;gap:10px;align-items:flex-start;font-size:14.5px}
+  .info li svg{flex:none;width:20px;height:20px;color:var(--send);margin-top:1px}
+  .info .btn-cta{align-self:flex-start}
+  .info .by{margin-top:auto;padding-top:22px;font-size:12.5px;color:var(--panel-sub);border-top:1px solid var(--line)}
+  .info .by b{color:var(--panel-fg)}
+  .hd{padding:10px 16px}
+  .hd .back{display:none}
+  .th{padding:14px 7% 10px}
+  .bar{padding:10px 16px 12px;background:var(--bar)}
+  .sug{padding:8px 16px 4px}
+}
+@media (prefers-reduced-motion:reduce){.typing i{animation:none}.th{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="info" aria-label="Sobre esta demonstração">
+    <span class="tag">DEMONSTRAÇÃO</span>
+    <h1 id="i-tit">O Agente de IA da sua empresa no WhatsApp</h1>
+    <p id="i-sub">Converse ao lado como se fosse um cliente. É assim que ele atende quem chama no WhatsApp de vocês, a qualquer hora.</p>
+    <ul>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>Responde 24 horas, inclusive à noite e no fim de semana</span></li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span id="i-acao">Tira dúvidas, passa preços e agenda atendimentos</span></li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z"/><path d="M19 11a7 7 0 0 1-14 0M12 18v3"/></svg><span>Entende áudio e foto, como uma pessoa</span></li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M21 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Chama a equipe quando o assunto precisa de uma pessoa</span></li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span>Responde só com as informações que vocês cadastrarem</span></li>
+    </ul>
+    <a class="btn-cta" id="i-cta" target="_blank" rel="noopener" href="#"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.3-.7-2.8-1.1-4.5-3.9-4.7-4.1-.1-.2-1.1-1.5-1.1-2.8s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.4 0 .5l-.3.5-.4.4c-.1.2-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.1 1 2.1 1.3 2.4 1.5.3.1.5.1.6-.1l.9-1c.2-.3.4-.2.7-.1l1.9.9c.3.1.5.2.5.3.1.2.1.7-.1 1.3z"/></svg><span>Quero esse agente</span></a>
+    <div class="by">Feito por <b>Connecta AI</b> · Éder Henrique<br>Agentes de IA e sistemas personalizados para empresas</div>
+  </aside>
+  <main class="chat" aria-label="Conversa de teste com o Agente de IA">
+    <header class="hd">
+      <span class="back" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></span>
+      <span class="av" id="av" aria-hidden="true">A</span>
+      <div class="who"><b id="nome">Sua Empresa</b><small id="status">online</small></div>
+      <a class="quero" id="h-cta" target="_blank" rel="noopener" href="#" aria-label="Quero esse agente na minha empresa"><span class="lg">Quero esse agente</span><span class="sm">Quero</span></a>
+    </header>
+    <div class="th" id="th" role="log" aria-live="polite" aria-label="Mensagens"></div>
+    <div class="sug" id="sug" aria-label="Sugestões de mensagem"></div>
+    <form class="bar" id="form" autocomplete="off">
+      <div class="field"><label for="txt" class="sr">Mensagem</label><textarea id="txt" rows="1" maxlength="600" placeholder="Mensagem" enterkeyhint="send"></textarea></div>
+      <button class="send" id="send" type="submit" aria-label="Enviar"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3.4 20.4 21 12 3.4 3.6l.1 6.5L15 12 3.5 13.9z"/></svg></button>
+    </form>
+    <div class="foot">Teste · valores de exemplo · feito pela <a id="f-cta" target="_blank" rel="noopener" href="#">Connecta AI</a></div>
+  </main>
+</div>
+<script>
+(function(){
+  'use strict';
+  var SB='https://ovynkeifzhavhjdkjjui.supabase.co', KEY='sb_publishable_7RunIjZPQDCuWNSuPrD10w_Gy_lIUFl', CTA_NUM='5581999707538';
+  var $=function(id){return document.getElementById(id)};
+  var E={nome:'',segmento:'',cidade:'',endereco:'',lead:null};
+  var chat=[],dig=false,ultimoDia='';
+  // sugestões e textos por tipo de empresa (mesmos tipos do CRM)
+  var TIPOS=[
+    [/advoca|advogad|jur[ií]dic/i,'escritório de advocacia','faz a triagem do caso e agenda a consulta com o advogado',['Fui demitido e não recebi a rescisão','Quanto custa a consulta?','Vocês atendem online?']],
+    [/odonto|dentist/i,'clínica odontológica','marca avaliações, passa valores e encaixa quem está com dor',['Quanto é o clareamento?','Quero marcar uma avaliação','Estou com dor de dente, tem horário hoje?']],
+    [/cl[ií]nica|m[eé]dic|consult[oó]rio|fisio|psic|nutri|sa[uú]de|laborat|derma|pediatr|ginec|cardio|ortoped/i,'clínica','marca e confirma consultas e informa valores e convênios',['Qual o valor da consulta?','Aceitam convênio?','Tem horário esta semana?']],
+    [/barbe/i,'barbearia','agenda horários e passa os valores dos serviços',['Tem horário hoje à tarde?','Quanto é corte e barba?','Tem plano mensal?']],
+    [/sal[aã]o|cabel|est[eé]tic|manicure|unha|spa|sobrancelha|depila|beleza|maquiag|lash|c[ií]lio/i,'salão de beleza','agenda horários e passa os valores dos serviços',['Quanto é escova?','Tem horário sábado de manhã?','Fazem design de sobrancelha?']],
+    [/restaur|pizza|lanch|hamb[uú]rg|delivery|a[cç]a[ií]|padaria|cafeteria|\bbar\b|sushi|japon|churrasc|marmit|doceria|confeitar|sorvet/i,'restaurante','passa o cardápio e os preços e anota o pedido',['Qual o valor da pizza grande?','Entregam no meu bairro?','Quero fazer um pedido']],
+    [/academia|crossfit|pilates|muscula|funcional|luta|jiu|muay|dan[cç]a|nata[cç]/i,'academia','explica planos e agenda a aula experimental',['Quanto é o plano mensal?','Posso fazer uma aula grátis?','Qual o horário de vocês?']],
+    [/escola|col[eé]gio|curso|creche|faculdade|idioma|ingl[eê]s|refor[cç]o|auto ?escola/i,'escola','informa matrículas e mensalidades e agenda a visita',['Ainda tem vaga?','Qual o valor da mensalidade?','Posso visitar a escola?']],
+    [/imobili|corretor|im[oó]ve/i,'imobiliária','apresenta imóveis e agenda visitas',['Tem apartamento de 2 quartos para alugar?','Aceita financiamento?','Posso visitar no sábado?']],
+    [/contab|contador/i,'contabilidade','tira dúvidas e agenda a reunião com o contador',['Quanto custa abrir uma empresa?','Vocês atendem MEI?','Fazem imposto de renda?']],
+    [/\bpet|veterin|banho e tosa|agropet/i,'pet shop','agenda banho, tosa e consultas',['Quanto é banho e tosa?','Tem horário amanhã?','Vocês buscam em casa?']],
+    [/oficina|mec[aâ]nic|auto ?pe[cç]|funilaria|lava ?jato|pneu|borrachar|auto ?center/i,'oficina','faz o orçamento inicial e agenda o serviço',['Quanto é a troca de óleo?','Fazem alinhamento?','Posso levar o carro amanhã?']],
+    [/hotel|pousada|hostel|resort/i,'pousada','informa diárias e encaminha a reserva',['Tem quarto para casal no feriado?','Qual o valor da diária?','Aceita pet?']],
+    [/loja|moda|roupa|cal[cç]ado|boutique|m[oó]veis|eletr|celular|inform[aá]tica|presente|cosm[eé]t|perfum|joia|farm[aá]c|material de constru|mercad|supermerc|distribuid|papelaria/i,'loja','tira dúvidas de produtos e preços e encaminha a venda',['Qual o valor?','Vocês entregam hoje?','Qual o horário da loja?']]
+  ];
+  var GERAL=['empresa','tira dúvidas, passa preços e agenda atendimentos',['Qual o horário de vocês?','Quais os valores?','Tem horário amanhã?']];
+  function tipo(){var t=E.segmento||'',n=E.nome||'';for(var i=0;i<TIPOS.length;i++){if(t&&TIPOS[i][0].test(t))return TIPOS[i]}for(var j=0;j<TIPOS.length;j++){if(TIPOS[j][0].test(n))return TIPOS[j]}return [null].concat(GERAL)}
+  function nomeCurto(n){var s=String(n||'').trim(),c=s.split(/\s*(?::|\||\s[-–—]\s)\s*/)[0].trim();return (c.length>=3?c:s).slice(0,40)}
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+  function fmt(s){return esc(s).replace(/\*([^*\n]+)\*/g,'<b>$1</b>').replace(/_([^_\n]+)_/g,'<i>$1</i>')}
+  function hora(){var d=new Date();return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')}
+  var TICK='<svg viewBox="0 0 16 11" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 6l3 3 6-7"/><path d="M6 9l1 1 6-8"/></svg>';
+  function ctaHref(){return 'https://wa.me/'+CTA_NUM+'?text='+encodeURIComponent('Olá, Éder! Testei o Agente de IA'+(E.nome&&E.nome!=='Sua Empresa'?' ('+E.nome+')':'')+' e quero ele no WhatsApp da minha empresa.')}
+
+  function desenhar(){
+    var th=$('th'),h='<div class="day">HOJE</div>'+
+      '<div class="note">🔒 Este é um teste do Agente de IA feito para <b>'+esc(E.nome)+'</b>. Escreva como se fosse um cliente. Os serviços e valores são de exemplo: no agente de verdade entram os de vocês. Nada é marcado de verdade.</div>';
+    var prev='';
+    chat.forEach(function(m){
+      if(m.acao){h+='<div class="act">⚙️ '+esc(m.acao)+'</div>';prev='';return}
+      if(m.cta){h+='<div class="cta-card"><b>Gostou do atendimento?</b><p>Coloco esse agente no WhatsApp de vocês, com os serviços, valores e horários de verdade.</p><a class="btn-cta" target="_blank" rel="noopener" href="'+esc(ctaHref())+'">Quero esse agente</a></div>';prev='';return}
+      var k=m.eu?'out':'in';
+      h+='<div class="msg '+k+(prev!==k?' first':'')+'">'+fmt(m.t)+'<span class="t">'+m.h+(m.eu?' '+TICK:'')+'</span></div>';prev=k;
+    });
+    if(dig)h+='<div class="typing" aria-label="digitando"><i></i><i></i><i></i></div>';
+    th.innerHTML=h;
+    $('status').textContent=dig?'digitando…':'online';
+    $('send').disabled=dig;
+    var sug=$('sug');
+    if(!chat.length){sug.innerHTML=tipo()[3].map(function(x){return '<button type="button" data-s="'+esc(x)+'">'+esc(x)+'</button>'}).join('');sug.hidden=false}else{sug.innerHTML='';sug.hidden=true}
+    requestAnimationFrame(function(){th.scrollTop=th.scrollHeight});
+  }
+
+  function enviar(t){
+    t=String(t||'').trim();if(!t||dig)return;
+    var hist=chat.filter(function(m){return !m.acao&&!m.cta}).map(function(m){return {papel:m.eu?'cliente':'agente',texto:m.t}});
+    chat.push({eu:true,t:t,h:hora()});dig=true;desenhar();
+    var t0=Date.now();
+    fetch(SB+'/functions/v1/agente-demo',{method:'POST',headers:{'Content-Type':'application/json',apikey:KEY},body:JSON.stringify({empresa:E.nome,segmento:E.segmento,cidade:E.cidade,endereco:E.endereco,mensagens:hist,texto:t})})
+      .then(function(r){return r.json().catch(function(){return {}})})
+      .then(function(d){
+        var espera=Math.max(0,900-(Date.now()-t0));
+        return new Promise(function(ok){setTimeout(function(){ok(d)},espera)});
+      })
+      .then(function(d){
+        if(d&&d.error)throw new Error(d.error);
+        (d.acoes||[]).forEach(function(a){if(a&&a.txt)chat.push({acao:a.txt})});
+        if(d.resposta)chat.push({eu:false,t:d.resposta,h:hora()});
+        var respostas=chat.filter(function(m){return m.eu===false}).length;
+        if(respostas===4&&!chat.some(function(m){return m.cta}))chat.push({cta:true});
+      })
+      .catch(function(){chat.push({acao:'O agente não respondeu agora. Tente de novo.'})})
+      .then(function(){dig=false;desenhar();var x=$('txt');if(x&&matchMedia('(min-width:900px)').matches)x.focus()});
+  }
+
+  function aplicar(){
+    E.nome=nomeCurto(E.nome)||'Sua Empresa';
+    var tp=tipo();
+    document.title='Agente de IA · '+E.nome;
+    $('nome').textContent=E.nome;
+    $('av').textContent=(E.nome.replace(/[^A-Za-zÀ-ÿ0-9]/g,'').charAt(0)||'A').toUpperCase();
+    $('i-tit').textContent='Agente de IA no WhatsApp · '+E.nome;
+    $('i-sub').textContent='Converse ao lado como se fosse um cliente'+(tp[1]&&tp[1]!=='empresa'?' de '+(/^(clínica|barbearia|academia|escola|imobiliária|pousada|loja|oficina|contabilidade)/.test(tp[1])?'uma ':'um ')+tp[1]:'')+'. É assim que ele atenderia quem chama no WhatsApp de vocês, a qualquer hora.';
+    $('i-acao').textContent='Ele '+tp[2]+', 24 horas';
+    ['i-cta','h-cta','f-cta'].forEach(function(id){$(id).href=ctaHref()});
+    desenhar();
+  }
+
+  $('form').addEventListener('submit',function(e){e.preventDefault();var x=$('txt');var v=x.value;x.value='';x.style.height='';enviar(v)});
+  $('txt').addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing&&matchMedia('(min-width:900px)').matches){e.preventDefault();$('form').requestSubmit()}});
+  $('txt').addEventListener('input',function(){this.style.height='auto';this.style.height=Math.min(130,this.scrollHeight)+'px'});
+  $('sug').addEventListener('click',function(e){var b=e.target.closest('button[data-s]');if(b)enviar(b.dataset.s)});
+
+  function rastrear(lead){
+    try{
+      if(!lead||/[?&]eu=1/.test(location.search))return;
+      if(/bot|crawl|spider|preview|facebookexternalhit|whatsapp/i.test(navigator.userAgent))return;
+      try{for(var i=0;i<localStorage.length;i++){if(/^sb-.*-auth-token$/.test(localStorage.key(i)))return}}catch(e){}
+      var ua=navigator.userAgent,ap=/iPhone|iPad|iPod/.test(ua)?'Celular · iPhone':/Android/.test(ua)?'Celular · Android':/Mobi/.test(ua)?'Celular':/Mac/.test(ua)?'Computador · Mac':/Windows/.test(ua)?'Computador · Windows':'Computador';
+      fetch(SB+'/rest/v1/rpc/prosp_agente_aberto',{method:'POST',headers:{'Content-Type':'application/json',apikey:KEY},body:JSON.stringify({p_lead:lead,p_aparelho:ap}),keepalive:true}).catch(function(){});
+    }catch(e){}
+  }
+
+  var q=new URLSearchParams(location.search);
+  E.nome=q.get('e')||'';E.segmento=q.get('s')||'';E.cidade=q.get('c')||'';
+  var cod=(location.pathname.match(/^\/a\/([0-9a-f]{7,32})\/?$/i)||[])[1];
+  aplicar();
+  if(cod){
+    fetch(SB+'/rest/v1/rpc/prosp_agente_codigo',{method:'POST',headers:{'Content-Type':'application/json',apikey:KEY},body:JSON.stringify({p_cod:cod})})
+      .then(function(r){return r.ok?r.json():null})
+      .then(function(r){if(r&&r.nome){E.nome=r.nome;E.segmento=r.segmento||E.segmento;E.cidade=r.cidade||'';E.endereco=r.endereco||'';E.lead=r.lead;aplicar();rastrear(r.lead)}})
+      .catch(function(){});
+  }
+})();
+</script>
+</body>
+</html>
