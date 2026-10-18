@@ -32,6 +32,14 @@
       "destination": "/vitrine/index.html"
     },
     {
+      "source": "/a/:cod",
+      "destination": "/agente.html"
+    },
+    {
+      "source": "/agente",
+      "destination": "/agente.html"
+    },
+    {
       "source": "/adm",
       "destination": "/index.html"
     },
