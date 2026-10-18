@@ -172,6 +172,7 @@ async function main() {
           if (c && !(m.key.fromMe && saindo.has(m.key.id))) {
             api.registrar({ telefone: tel, nome: m.key.fromMe ? '' : m.pushName, deMim: !!m.key.fromMe, texto: c.texto, tipo: c.tipo, waId: m.key.id, origem: m.key.fromMe ? 'celular' : 'cliente' })
               .catch((e) => log('Não consegui guardar a conversa: ' + e.message));
+            if (['audio', 'foto', 'video', 'figurinha'].includes(c.tipo)) filaMidia = filaMidia.then(() => guardarMidia(m, c.tipo)).catch(() => {});
           }
         } catch (e) { log('Erro ao guardar mensagem: ' + e.message); }
       }
@@ -212,6 +213,27 @@ async function main() {
       if (achado) { jids[tel] = achado.jid || (t + '@s.whatsapp.net'); return jids[tel]; }
     }
     return null;
+  }
+  // Áudio, foto, vídeo e figurinha da conversa: o arquivo vai para o sistema, para ouvir e ver nas abas de conversa.
+  // Um de cada vez (para não pesar a memória), até 15 MB.
+  let filaMidia = Promise.resolve();
+  async function guardarMidia(m, tipo) {
+    if (!api.guardarMidia || !m.key || !m.key.id) return;
+    let x = m.message;
+    for (let i = 0; i < 4 && x; i++) {
+      const w = x.ephemeralMessage || x.viewOnceMessage || x.viewOnceMessageV2 || x.viewOnceMessageV2Extension;
+      if (w && w.message) x = w.message; else break;
+    }
+    const no = x && (x.audioMessage || x.imageMessage || x.videoMessage || x.stickerMessage);
+    if (!no) return;
+    const LIM = 15 * 1024 * 1024;
+    if (Number(no.fileLength || 0) > LIM) return;
+    try {
+      const buf = await baileys.downloadMediaMessage(m, 'buffer', {}, { logger, reuploadRequest: sock.updateMediaMessage });
+      if (!buf || buf.length > LIM) return;
+      const r = await api.guardarMidia({ waId: m.key.id, tipo, mime: no.mimetype || '', base64: Buffer.from(buf).toString('base64') });
+      if (r && r.erro) log('Não consegui guardar a mídia: ' + r.erro);
+    } catch (e) { log('Não consegui baixar a mídia da conversa: ' + e.message); }
   }
   // Áudio e foto que o cliente manda: se o Agente de IA estiver ligado, vão para o sistema virar texto.
   let agenteOffAte = 0;

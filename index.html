@@ -1290,6 +1290,10 @@ html.adm .card,html.adm .row,html.adm details,html.adm .acc-h,html.adm .msum,htm
 html.adm #toast{border-left:0}
 html.adm .gate-card{border-top:0}
 @media (min-width:900px){html.adm .tab{border-left:0}html.adm .tab[aria-current=page]{border-left-color:transparent}}
+.mid-au{display:block;width:260px;max-width:100%;height:40px;margin:2px 0 4px}
+.mid-vi{display:block;width:280px;max-width:100%;max-height:360px;border-radius:10px;margin:2px 0 4px;background:#000}
+.mid-a{display:block;margin:2px 0 4px}.mid-im{display:block;max-width:260px;width:100%;max-height:340px;object-fit:cover;border-radius:10px}.mid-im.fig{width:130px;background:transparent;object-fit:contain}
+.mid-load{font-size:13px;color:var(--muted);padding:6px 0}
 </style>
 <script>if(/^\/adm(\/|$)/.test(location.pathname)){document.documentElement.classList.add('adm');var q=function(x){return document.querySelector(x)};if(q('link[rel=manifest]'))q('link[rel=manifest]').href='/adm.webmanifest';if(q('link[rel=apple-touch-icon]'))q('link[rel=apple-touch-icon]').href='/icons/adm-apple-touch-icon.png';if(q('meta[name=apple-mobile-web-app-title]'))q('meta[name=apple-mobile-web-app-title]').content='Connecta AI';if(q('meta[name=theme-color]'))q('meta[name=theme-color]').content='#1F2A3C';document.title='Connecta AI';var f=document.createElement('link');f.rel='stylesheet';f.href='https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap';document.head.appendChild(f)}</script>
 
@@ -4098,7 +4102,7 @@ async function wcLoad(){
   if(WC.busy||!OTICA||!modOn('wachat'))return;WC.busy=true;
   try{
     const desde=new Date(Date.now()-45*864e5).toISOString();
-    const r=await Promise.all([sb.from('wa_msg').select('id,telefone,nome,de_mim,texto,tipo,origem,lido,criado_em').eq('otica_id',OTICA.id).gte('criado_em',desde).order('criado_em',{ascending:false}).limit(1500),
+    const r=await Promise.all([sb.from('wa_msg').select('id,telefone,nome,de_mim,texto,tipo,origem,lido,criado_em,midia').eq('otica_id',OTICA.id).gte('criado_em',desde).order('criado_em',{ascending:false}).limit(1500),
       sb.from('wa_fila').select('id,telefone,texto,status,erro,criado_em').eq('otica_id',OTICA.id).eq('tipo','manual').in('status',['aguardando','enviando','falhou']).gte('criado_em',new Date(Date.now()-2*864e5).toISOString()).order('criado_em'),sb.rpc('wa_status',{p_otica:OTICA.id})]);
     if(r[2]&&!r[2].error)WC.st=r[2].data||null;
     if(!r[0].error)WC.msgs=r[0].data||[];else WC.msgs=WC.msgs||[];
@@ -4116,6 +4120,8 @@ function wcAoVivo(){
     if(m.de_mim)WC.pend=WC.pend.filter(x=>!(wcK(x.telefone)===wcK(m.telefone)&&x.texto===m.texto));
     if(!m.de_mim&&ui.tab==='wachat'&&WC.sel===wcK(m.telefone)&&!document.hidden)wcMarcarLidas(WC.sel);
     wcPinta();
+  }).on('postgres_changes',{event:'UPDATE',schema:'public',table:'wa_msg',filter:'otica_id=eq.'+OTICA.id},p=>{
+    const n=p.new,o=n&&WC.msgs&&WC.msgs.find(x=>x.id===n.id);if(!o)return;if(o.midia===n.midia&&o.texto===n.texto)return;o.midia=n.midia;o.texto=n.texto;if(ui.tab==='wachat')wcPinta();
   }).subscribe()}catch(e){WC.chan=null}
 }
 function wcSair(){if(WC.chan){try{sb.removeChannel(WC.chan)}catch(e){}}WC.chan=null;WC.msgs=null;WC.pend=[];WC.sel=''}
@@ -4139,13 +4145,31 @@ function wcLista(){
   return cs.map(c=>{const u=c.ult;const prev=u?(u.de_mim?'Você: ':'')+u.texto:WC.pend.some(p=>wcK(p.telefone)===c.k&&p.status!=='novo')?'Enviando...':'Nova conversa';
     return '<button class="wc-it'+(WC.sel===c.k?' on':'')+'" data-act="wcabrir" data-k="'+c.k+'"><span class="wc-av" aria-hidden="true">'+esc((c.nome.match(/[A-Za-zÀ-ú0-9]/)||['?'])[0].toUpperCase())+'</span><span class="wc-tx"><span class="wc-l1"><b>'+esc(c.nome)+'</b><small>'+(c.quando?wcHora(c.quando):'')+'</small></span><span class="wc-l2"><span>'+esc(prev.replace(/\s+/g,' ').slice(0,90))+'</span>'+(c.nao?'<i class="badge">'+c.nao+'</i>':'')+'</span></span></button>'}).join('');
 }
+/* áudio, foto, vídeo e figurinha das conversas: o arquivo fica guardado no sistema (link seguro que vale 1 hora) */
+const MIDURL={};let midPend=new Set(),midT=0,midRepinta=null;
+function midiaUrl(p){const c=MIDURL[p];if(c&&c.exp>Date.now())return c;midPend.add(p);
+  if(!midT)midT=setTimeout(async()=>{midT=0;const ps=[...midPend];midPend.clear();let ok={};
+    try{const r=await sb.storage.from('wa-midia').createSignedUrls(ps,3600);((r&&r.data)||[]).forEach(x=>{if(x&&x.signedUrl&&!x.error){ok[x.path]=1;MIDURL[x.path]={u:x.signedUrl,exp:Date.now()+3500e3}}})}catch(e){}
+    ps.forEach(p=>{if(!ok[p])MIDURL[p]={u:'',exp:Date.now()+120000,erro:1}});if(midRepinta)midRepinta()},60);
+  return null}
+const MIDBASE=/^(🎤 Áudio|📷 Foto|🎬 Vídeo|🙂 Figurinha)(:\s*)?/;
+function midiaTexto(m){const t=String(m.texto||'');if(!m.midia)return t;const r=t.replace(MIDBASE,'').trim();return r?(/^🎤/.test(t)?'📝 '+r:r):''}
+function midiaHtml(m){
+  if(!m.midia)return '';const c=midiaUrl(m.midia);const tp=m.tipo||'';
+  if(!c)return '<div class="mid-load">'+(tp==='audio'?'🎤':tp==='video'?'🎬':'📷')+' Carregando…</div>';
+  if(!c.u)return '<div class="mid-load">Não foi possível abrir o arquivo agora.</div>';
+  if(tp==='audio')return '<audio class="mid-au" controls preload="none" src="'+esc(c.u)+'"></audio>';
+  if(tp==='video')return '<video class="mid-vi" controls preload="metadata" src="'+esc(c.u)+'"></video>';
+  return '<a href="'+esc(c.u)+'" target="_blank" rel="noopener" class="mid-a"><img class="mid-im'+(tp==='figurinha'?' fig':'')+'" loading="lazy" src="'+esc(c.u)+'" alt="'+(tp==='figurinha'?'Figurinha':'Foto da conversa')+'"></a>';
+}
 function wcMsgs(){
+  midRepinta=()=>{if(ui.tab==='wachat')wcPinta()};
   const c=wcConvs().find(x=>x.k===WC.sel);if(!c)return '';
   const ORI={sistema:'pelo sistema',automatico:'aviso automático',celular:'pelo celular'};
   let dia='',h='';
   c.msgs.forEach(m=>{const d=new Date(new Date(m.criado_em).getTime()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);
     if(d!==dia){dia=d;h+='<div class="wc-dia"><span>'+(d===todayStr()?'Hoje':d===addDays(todayStr(),-1)?'Ontem':fmtDate(d))+'</span></div>'}
-    h+='<div class="wc-b'+(m.de_mim?' eu':'')+'"><div class="wc-txt">'+esc(m.texto)+'</div><small>'+wcHora(m.criado_em).replace(/^.* /,'')+(m.de_mim&&ORI[m.origem]?' · '+ORI[m.origem]:'')+'</small></div>'});
+    const tx=midiaTexto(m);h+='<div class="wc-b'+(m.de_mim?' eu':'')+'">'+midiaHtml(m)+(tx?'<div class="wc-txt">'+esc(tx)+'</div>':'')+'<small>'+wcHora(m.criado_em).replace(/^.* /,'')+(m.de_mim&&ORI[m.origem]?' · '+ORI[m.origem]:'')+'</small></div>'});
   WC.pend.filter(p=>wcK(p.telefone)===c.k&&p.status!=='novo').forEach(p=>{h+='<div class="wc-b eu pend"><div class="wc-txt">'+esc(p.texto)+'</div><small>'+(p.status==='falhou'?'<span style="color:var(--bad)">Não foi enviada'+(p.erro==='sem_whatsapp'?': número sem WhatsApp':'')+'</span>':'Enviando... (o computador da loja precisa estar ligado)')+'</small></div>'});
   return h||'<p class="sub" style="text-align:center">Sem mensagens ainda.</p>';
 }

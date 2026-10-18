@@ -33,6 +33,15 @@ function criarApi(cfg, fetchFn) {
         });
         return r.json().catch(() => ({}));
       },
+      // áudio, foto, vídeo e figurinha da conversa: guarda o arquivo para ouvir e ver no sistema
+      guardarMidia: async (corpo) => {
+        const r = await f(cfg.supabaseUrl + '/functions/v1/wa-midia', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', apikey: cfg.supabaseKey, Authorization: 'Bearer ' + cfg.supabaseKey },
+          body: JSON.stringify(Object.assign({ token: cfg.token }, corpo)),
+        });
+        return r.json().catch(() => ({}));
+      },
       registrar: (m) => rpc('prosp_wa_registrar', { p_token: cfg.token, p_tel: m.telefone, p_nome: m.nome || null, p_de_mim: !!m.deMim, p_texto: m.texto, p_tipo: m.tipo || 'texto', p_wa_id: m.waId || null, p_origem: m.origem || null }),
     };
   }
@@ -46,6 +55,15 @@ function criarApi(cfg, fetchFn) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', apikey: cfg.supabaseKey, Authorization: 'Bearer ' + cfg.supabaseKey },
         body: JSON.stringify(Object.assign({ modo: 'midia', token: cfg.token }, corpo)),
+      });
+      return r.json().catch(() => ({}));
+    },
+    // áudio, foto, vídeo e figurinha da conversa: guarda o arquivo para ouvir e ver no sistema
+    guardarMidia: async (corpo) => {
+      const r = await f(cfg.supabaseUrl + '/functions/v1/wa-midia', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', apikey: cfg.supabaseKey, Authorization: 'Bearer ' + cfg.supabaseKey },
+        body: JSON.stringify(Object.assign({ token: cfg.token }, corpo)),
       });
       return r.json().catch(() => ({}));
     },

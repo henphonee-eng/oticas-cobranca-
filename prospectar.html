@@ -269,6 +269,10 @@ input:focus,select:focus,textarea:focus{box-shadow:0 0 0 3px color-mix(in srgb,v
 .agt-b.ela{align-self:flex-start;background:var(--surface);border:1px solid var(--line);border-top-left-radius:4px}
 @media (max-width:600px){.agt-in{flex-direction:column;align-items:stretch!important}.agt-in textarea{width:100%}}
 .agt-ac{align-self:center;font-size:12px;color:var(--muted);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:4px 10px;text-align:center}
+.mid-au{display:block;width:260px;max-width:100%;height:40px;margin:2px 0 4px}
+.mid-vi{display:block;width:280px;max-width:100%;max-height:360px;border-radius:10px;margin:2px 0 4px;background:#000}
+.mid-a{display:block;margin:2px 0 4px}.mid-im{display:block;max-width:260px;width:100%;max-height:340px;object-fit:cover;border-radius:10px}.mid-im.fig{width:130px;background:transparent;object-fit:contain}
+.mid-load{font-size:13px;color:var(--muted);padding:6px 0}
 </style>
 </head>
 <body>
@@ -384,7 +388,7 @@ async function loadFila(){
     const [fr,sr]=await Promise.all([sb.from('prosp_wa_fila').select('*').gte('criado_em',desde).order('criado_em',{ascending:false}).limit(2000),sb.rpc('prosp_wa_status')]);
     st.fila=fr.error?st.fila:(fr.data||[]);st.wst=sr.error?st.wst:sr.data;st.filaErr=!!(fr.error||sr.error)}catch(e){st.filaErr=true}
   arquivarFalhas();
-  try{const mr=await sb.from('prosp_wa_msg').select('id,lead_id,telefone,nome,de_mim,texto,tipo,origem,lido,criado_em').gte('criado_em',new Date(Date.now()-60*864e5).toISOString()).order('criado_em',{ascending:false}).limit(3000);if(!mr.error)st.msgs=mr.data||[]}catch(e){}
+  try{const mr=await sb.from('prosp_wa_msg').select('id,lead_id,telefone,nome,de_mim,texto,tipo,origem,lido,criado_em,midia').gte('criado_em',new Date(Date.now()-60*864e5).toISOString()).order('criado_em',{ascending:false}).limit(3000);if(!mr.error)st.msgs=mr.data||[]}catch(e){}
 }
 const ATIVOS=['espera','aguardando','enviando'];
 /* follow-up agendado (esperando a abordagem ou com data futura) não conta como fila: fica em "Follow-ups esperando" */
@@ -663,11 +667,30 @@ function zLista(){
   return cs.map(g=>{const u=g.ult,prev=u?(u.de_mim?'Você: ':'')+u.texto:'Nova conversa';
     return '<button class="zi'+(st.zsel===g.k?' on':'')+'" data-zk="'+g.k+'"><span class="av" aria-hidden="true">'+esc((g.nome.match(/[A-Za-zÀ-ú0-9]/)||['?'])[0].toUpperCase())+'</span><span class="tx"><span class="l1"><b>'+esc(g.nome)+'</b><small>'+(g.quando?zHora(g.quando):'')+'</small></span><span class="l2"><span>'+esc(prev.replace(/\s+/g,' ').slice(0,90))+'</span>'+(g.nao?'<span class="n">'+g.nao+'</span>':'')+'</span></span></button>'}).join('');
 }
+/* áudio, foto, vídeo e figurinha das conversas: o arquivo fica guardado no sistema (link seguro que vale 1 hora) */
+const MIDURL={};let midPend=new Set(),midT=0,midRepinta=null;
+function midiaUrl(p){const c=MIDURL[p];if(c&&c.exp>Date.now())return c;midPend.add(p);
+  if(!midT)midT=setTimeout(async()=>{midT=0;const ps=[...midPend];midPend.clear();let ok={};
+    try{const r=await sb.storage.from('wa-midia').createSignedUrls(ps,3600);((r&&r.data)||[]).forEach(x=>{if(x&&x.signedUrl&&!x.error){ok[x.path]=1;MIDURL[x.path]={u:x.signedUrl,exp:Date.now()+3500e3}}})}catch(e){}
+    ps.forEach(p=>{if(!ok[p])MIDURL[p]={u:'',exp:Date.now()+120000,erro:1}});if(midRepinta)midRepinta()},60);
+  return null}
+const MIDBASE=/^(🎤 Áudio|📷 Foto|🎬 Vídeo|🙂 Figurinha)(:\s*)?/;
+function midiaTexto(m){const t=String(m.texto||'');if(!m.midia)return t;const r=t.replace(MIDBASE,'').trim();return r?(/^🎤/.test(t)?'📝 '+r:r):''}
+function midiaHtml(m){
+  if(!m.midia)return '';const c=midiaUrl(m.midia);const tp=m.tipo||'';
+  if(!c)return '<div class="mid-load">'+(tp==='audio'?'🎤':tp==='video'?'🎬':'📷')+' Carregando…</div>';
+  if(!c.u)return '<div class="mid-load">Não foi possível abrir o arquivo agora.</div>';
+  if(tp==='audio')return '<audio class="mid-au" controls preload="none" src="'+esc(c.u)+'"></audio>';
+  if(tp==='video')return '<video class="mid-vi" controls preload="metadata" src="'+esc(c.u)+'"></video>';
+  return '<a href="'+esc(c.u)+'" target="_blank" rel="noopener" class="mid-a"><img class="mid-im'+(tp==='figurinha'?' fig':'')+'" loading="lazy" src="'+esc(c.u)+'" alt="'+(tp==='figurinha'?'Figurinha':'Foto da conversa')+'"></a>';
+}
+function zPintaThread(){if(st.tab!=='zap')return;const t=$('#zthread'),g=zConvs().find(x=>x.k===st.zsel);if(t&&g){const fim=t.scrollHeight-t.scrollTop-t.clientHeight<60;t.innerHTML=zMsgs(g);if(fim)zRolar()}}
 function zMsgs(g){
+  midRepinta=zPintaThread;
   const ORI={sistema:'pelo CRM',automatico:'envio automático',celular:'pelo celular'};let dia='',h='';
   g.msgs.forEach(m=>{const d=new Date(m.criado_em),dd=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
     if(dd!==dia){dia=dd;h+='<div class="zd"><span>'+(dd===today()?'Hoje':fmtD(dd))+'</span></div>'}
-    h+='<div class="zb'+(m.de_mim?' eu':'')+'"><div class="t">'+esc(m.texto)+'</div><small>'+zHora(m.criado_em).slice(-5)+(m.de_mim&&ORI[m.origem]?' · '+ORI[m.origem]:'')+'</small></div>'});
+    const tx=midiaTexto(m);h+='<div class="zb'+(m.de_mim?' eu':'')+'">'+midiaHtml(m)+(tx?'<div class="t">'+esc(tx)+'</div>':'')+'<small>'+zHora(m.criado_em).slice(-5)+(m.de_mim&&ORI[m.origem]?' · '+ORI[m.origem]:'')+'</small></div>'});
   st.fila.filter(x=>x.tipo==='manual'&&k8(x.telefone)===g.k&&['aguardando','enviando','falhou'].includes(x.status)).forEach(x=>{h+='<div class="zb eu pend"><div class="t">'+esc(x.texto)+'</div><small>'+(x.status==='falhou'?'<span style="color:var(--bad)">Não foi enviada'+(x.erro==='sem_whatsapp'?': número sem WhatsApp':'')+'</span>':'Enviando pelo chip do CRM…')+'</small></div>'});
   return h||'<p class="small muted" style="text-align:center">Sem mensagens ainda. Escreva abaixo para começar.</p>';
 }
@@ -910,6 +933,7 @@ function aoVivo(){if(vivo||!st.admin)return;vivo=sb.channel('crm-ao-vivo')
   .on('postgres_changes',{event:'INSERT',schema:'public',table:'prosp_acessos'},p=>{const l=st.leads.find(x=>x.id===p.new.lead_id);toast('👀 '+((l&&l.nome)||'Uma empresa')+(p.new.tipo==='agente'?' abriu o teste do agente agora':' abriu o demo agora'));recarregar(300)})
   .on('postgres_changes',{event:'*',schema:'public',table:'prosp_leads'},p=>{const n=p.new,o=st.leads.find(x=>x&&n&&x.id===n.id);if(o&&n&&o.status==='enviado'&&n.status==='respondeu')toast('💬 '+n.nome+' respondeu no WhatsApp');recarregar()})
   .on('postgres_changes',{event:'*',schema:'public',table:'prosp_wa_fila'},()=>recarregar())
+  .on('postgres_changes',{event:'UPDATE',schema:'public',table:'prosp_wa_msg'},p=>{const n=p.new,o=n&&st.msgs.find(x=>x.id===n.id);if(!o||(o.midia===n.midia&&o.texto===n.texto))return;o.midia=n.midia;o.texto=n.texto;zPintaThread()})
   .on('postgres_changes',{event:'INSERT',schema:'public',table:'prosp_wa_msg'},p=>{const m=p.new;if(!m||st.msgs.some(x=>x.id===m.id))return;st.msgs.unshift(m);
     if(!m.de_mim){const l=leadDe(k8(m.telefone));if(st.tab==='zap'&&st.zsel===k8(m.telefone)&&!document.hidden)zLidas(st.zsel);else toast('💬 '+(l?nomeCurto(l.nome):fmtFone(m.telefone))+': '+String(m.texto).slice(0,60))}
     if(st.tab==='zap'){if(digitando()){const z=$('#zlist'),t=$('#zthread');if(z)z.innerHTML=zLista();const g=zConvs().find(x=>x.k===st.zsel);if(t&&g){t.innerHTML=zMsgs(g);zRolar()}}else{render();zRolar()}}else render()})
