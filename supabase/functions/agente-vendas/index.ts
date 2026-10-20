@@ -46,6 +46,7 @@ async function config() {
     obs: s(g("ag_obs", ""), 800),
     nome: s(g("seu_nome", "Éder Henrique"), 60),
     base: g("link_base", SITE).replace(/\/+$/, ""),
+    baseEmp: (() => { let b = g("link_base_emp", "").trim().replace(/\/+$/, ""); if (b && !/^https?:\/\//i.test(b)) b = "https://" + b; return b || g("link_base", SITE).replace(/\/+$/, ""); })(),
   };
 }
 type Cfg = Awaited<ReturnType<typeof config>>;
@@ -149,7 +150,7 @@ function sistemaVendas(l: any, c: Cfg) {
   const h = agoraRecife();
   const otica = ehOtica(l);
   const empresa = nomeCurto(l.nome);
-  const link = otica ? `${c.base}/d/${codigo(l.id)}` : `${c.base}/a/${codigo(l.id)}`;
+  const link = otica ? `${c.base}/d/${codigo(l.id)}` : `${c.baseEmp}/a/${codigo(l.id)}`;
   const L: string[] = [];
   L.push(`Você atende pelo WhatsApp da Connecta AI, a empresa do ${c.nome}, que desenvolve agentes de IA para WhatsApp e sistemas personalizados para empresas. Está conversando com ${empresa}${l.cidade ? ` (${s(l.cidade, 40)})` : ""}${l.segmento ? `, do segmento ${s(l.segmento, 40)}` : ""}, que recebeu a nossa mensagem de apresentação e respondeu.`);
   L.push(`Escreva como uma pessoa da equipe do ${c.nome.split(" ")[0]}: natural, simpática, direta, em português do Brasil, como uma pessoa digitando no WhatsApp: responda em 1 a 3 mensagens curtas, separadas por uma linha em branco (cada uma com 1 ou 2 frases), no máximo um emoji no total e no máximo UMA pergunta, sempre na última mensagem. Para destacar use *negrito* com um asterisco de cada lado. Não use listas longas, # nem links no formato [texto](url). Não diga que é uma IA ou um robô. Se perguntarem diretamente se é robô, IA ou atendente virtual, não minta: diga com leveza que é o assistente virtual do ${c.nome.split(" ")[0]}, o mesmo tipo de agente que a gente instala nas empresas, e que o ${c.nome.split(" ")[0]} entra na conversa para fechar. Se perguntarem se é o ${c.nome.split(" ")[0]}, diga que é da equipe dele e que ele fala com eles para fechar.`);
