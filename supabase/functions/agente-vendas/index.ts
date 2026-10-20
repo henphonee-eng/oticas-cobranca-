@@ -138,6 +138,7 @@ async function classificar(msgs: Msg[]): Promise<Classe> {
     messages: [
       { role: "system", content: `Você analisa conversas de WhatsApp entre uma empresa de tecnologia ([NÓS]) e empresas que ela prospectou ([EMPRESA]). Decida quem escreveu a ÚLTIMA mensagem da [EMPRESA] e o que ela quer.
 autor = "automatico" quando for mensagem automática ou de robô: saudação ou ausência do WhatsApp Business ("Olá! Obrigado por entrar em contato", "Em breve retornaremos", "nosso horário de atendimento é..."), menus ("digite 1", "escolha uma opção"), assistente virtual ou chatbot da empresa, mensagem genérica que não responde ao que dissemos, link de cardápio/catálogo enviado sozinho, ou texto que chegou poucos segundos depois da nossa mensagem com cara de modelo pronto. Também conta como automático um agente de IA da empresa que responde de forma genérica, repete apresentações ou faz perguntas de triagem padrão.
+Atenção: muitos robôs e agentes de IA se apresentam com nome de pessoa ("Eu sou a Eloisa e vou te acompanhar no atendimento", "Aqui é a Ana, assistente virtual") e perguntam "como posso ajudar?". Isso é AUTOMÁTICO, mesmo com emoji e tom pessoal, quando a mensagem não comenta nada específico do que dissemos (agente de IA, Connecta, o teste, o preço). Também é automático: "seu atendimento está sendo direcionado", "um de nossos atendentes vai continuar", "aguarde", protocolo de atendimento, pesquisa de satisfação. Se a [EMPRESA] já mandou mensagens automáticas antes nesta conversa, só marque "humano" quando a mensagem responder claramente ao que nós dissemos.
 Mensagem que começa com "Olá, Éder!" e fala da página do Agente de IA ou de um plano (às vezes termina com "(ref. ...)") foi enviada por uma pessoa que clicou na nossa página: autor = "humano".
 autor = "humano" quando a mensagem reage de forma específica ao que dissemos (pergunta preço, pede detalhes, diz que tem interesse ou que não tem, faz uma pergunta sobre o agente, responde com informalidade natural, cumprimenta de forma pessoal como "boa noite, quem fala?").
 intencao: "interesse" (quer saber mais, quer contratar, pediu proposta), "pergunta" (pergunta algo sobre a oferta, preço, como funciona, quem é), "objecao" (acha caro, já tem atendente, não confia em IA, sem tempo), "saudacao" (só cumprimentou), "sem_interesse" (disse que não quer, pediu para não mandar mais), "outro".
@@ -430,7 +431,9 @@ async function atenderMsg(b: any) {
   if (!msgs.length || msgs[msgs.length - 1].de_mim) return { ignorado: "sem_mensagem" };
 
   const cl = await classificar(msgs);
-  if (cl.autor !== "humano" || cl.confianca < 0.6) {
+  // se a empresa já mandou resposta automática nesta conversa, exige mais certeza de que agora é uma pessoa
+  const jaRobo = (Array.isArray(l.historico) ? l.historico : []).some((h: any) => /^🤖 Resposta automática/.test(String(h?.txt || "")));
+  if (cl.autor !== "humano" || cl.confianca < (jaRobo ? 0.85 : 0.6)) {
     // resposta automática: volta para "Mensagem enviada" e reativa o follow-up (para chegar numa pessoa depois)
     const extra: Record<string, unknown> = { ag_em: new Date().toISOString() };
     if (!["humano", "implantacao"].includes(l.ag_estado || "")) {
