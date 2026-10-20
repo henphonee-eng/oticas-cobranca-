@@ -166,6 +166,11 @@ function promptEmpresa(cf: any) {
 }
 
 /* ---------- contrato ---------- */
+const FUNCOES: Record<string, string> = {
+  "Essencial": "atendimento 24 horas no WhatsApp, entende áudio e foto, tira dúvidas de preços e horários, follow-up automático de quem perguntou e não fechou, chama a equipe quando precisa e CRM com os clientes e as conversas",
+  "Profissional": "tudo do Essencial, mais agenda própria (o agente marca, remarca e cancela os horários), lembrete do horário na véspera e no dia, mensagem de parabéns no aniversário do cliente, 1 (uma) campanha da promoção do mês para os clientes e CRM completo do ramo",
+  "Sob medida": "tudo do Profissional, mais até 4 (quatro) campanhas por mês e um CRM desenvolvido do zero para a rotina da CONTRATANTE, conforme o que for combinado por escrito",
+};
 async function contratoDe(impl: any, cad: any) {
   const k = await segredos(["contratada_nome", "contratada_doc", "contratada_endereco"]);
   const metade = Number(impl.valor_implantacao) / 2;
@@ -183,6 +188,8 @@ As partes acima identificadas celebram este contrato, que se rege pelas cláusul
 CLÁUSULA 1 – OBJETO
 1.1. A CONTRATADA prestará à CONTRATANTE os serviços do plano ${impl.plano}: configuração e implantação de um agente de inteligência artificial que atende o WhatsApp da CONTRATANTE, com base nas informações fornecidas por ela no cadastro, e o acesso a um CRM de gestão com a marca da CONTRATANTE, conforme o plano contratado.
 1.2. O agente responde com as informações cadastradas pela CONTRATANTE (serviços, preços, horários, regras e perguntas frequentes) e encaminha para a equipe da CONTRATANTE os assuntos definidos por ela.
+1.3. Funções incluídas no plano ${impl.plano}: ${FUNCOES[impl.plano] || FUNCOES["Profissional"]}.
+1.4. As mensagens automáticas para os clientes da CONTRATANTE (lembretes, follow-up, aniversário e campanhas) só vão para contatos que conversaram com a CONTRATANTE ou foram cadastrados por ela, sempre com a opção de sair respondendo SAIR. O conteúdo das campanhas é escrito e aprovado pela CONTRATANTE, que responde por ele.
 
 CLÁUSULA 2 – PRAZO DE IMPLANTAÇÃO
 2.1. A implantação será concluída em ${PRAZO}, contados a partir do último destes eventos: assinatura deste contrato, envio completo das informações pela CONTRATANTE e pagamento da primeira parcela da implantação.
@@ -359,19 +366,23 @@ async function ajustar(b: any) {
   if (!(await usar(impl.id, "ajuste", 60))) return ok({ error: "Chegaram ao limite de ajustes de hoje. Amanhã libera de novo." }, 429);
   await db.from("prosp_impl_ajustes").insert({ impl_id: impl.id, de: "empresa", texto });
   const { data: hist } = await db.from("prosp_impl_ajustes").select("de,texto").eq("impl_id", impl.id).order("em", { ascending: false }).limit(10);
+  // a agenda (grade) também pode ser ajustada por aqui: horários, duração, feriados
+  const atual: any = { ...(impl.config || {}) };
+  if (!atual.grade || typeof atual.grade !== "object") { const { data: g } = await db.rpc("emp_grade_de", { p_cad: impl.cadastro || {} }); if (g) atual.grade = g; }
   const j = await chat({
     temperature: 0, max_tokens: 2500, response_format: { type: "json_object" },
     messages: [
       { role: "system", content: `Você ajusta a configuração do agente de atendimento de uma empresa. A empresa escreve o que quer mudar; você aplica a mudança na configuração (JSON) e responde para ela.
 Regras:
 - Mude só o que foi pedido. Mantenha todos os outros campos exatamente iguais.
-- Campos: empresa, ramo, descricao, endereco, instagram, assistente (nome do atendente), tom ("formal" | "proximo" | "descontraido"), emojis (true/false), horarios (texto), fora_horario (texto), servicos (lista de {nome, preco, obs}), pagamentos (lista), parcela, agenda (texto), especificas (lista de textos), chamar (lista de situações em que chama a equipe), nao_falar, faq (texto com perguntas e respostas), regras_extras (lista de regras pedidas).
+- Campos: empresa, ramo, descricao, endereco, instagram, assistente (nome do atendente), tom ("formal" | "proximo" | "descontraido"), emojis (true/false), horarios (texto), fora_horario (texto), servicos (lista de {nome, preco, obs}), pagamentos (lista), parcela, agenda (texto), especificas (lista de textos), chamar (lista de situações em que chama a equipe), nao_falar, faq (texto com perguntas e respostas), regras_extras (lista de regras pedidas), grade (a agenda que o agente usa para marcar: {dias: {seg|ter|qua|qui|sex|sab|dom: {aberto, abre "HH:MM", fecha "HH:MM"}}, dur: minutos de cada atendimento, antec_h: antecedência mínima em horas, vagas: atendimentos ao mesmo tempo, almoco: {ini, fim} opcional, bloqueios: lista de datas "AAAA-MM-DD" sem atendimento}).
+- Quando mudar horário de funcionamento, feriado, folga ou duração do atendimento, atualize o texto de horarios E a grade.
 - Pedidos de comportamento ("fale mais curto", "sempre ofereça a avaliação") viram itens em regras_extras.
 - Se o pedido for algo que a configuração não resolve (integração com outro sistema, mudar número de WhatsApp, cobrança, contrato), não mude nada, diga com gentileza que o Éder vai ver isso pessoalmente e marque para_eder = true.
 - Se o pedido estiver confuso, não mude nada e pergunte o que a empresa quis dizer.
 - resposta: em português, curta e simpática, dizendo exatamente o que mudou e convidando a testar de novo${impl.otica_id ? " (o agente já está atendendo no WhatsApp: diga que a mudança já vale para os clientes)" : ""}. Escreva como a equipe da Connecta.
 Responda só JSON: {"config": {...configuração completa...}, "mudancas": ["frase curta por mudança"], "resposta": "...", "para_eder": false}` },
-      { role: "user", content: `Configuração atual:\n${JSON.stringify(impl.config || {})}\n\nConversa recente de ajustes (mais nova primeiro):\n${(hist || []).map((x: any) => x.de + ": " + x.texto).join("\n")}\n\nPedido novo da empresa: ${texto}` },
+      { role: "user", content: `Configuração atual:\n${JSON.stringify(atual)}\n\nConversa recente de ajustes (mais nova primeiro):\n${(hist || []).map((x: any) => x.de + ": " + x.texto).join("\n")}\n\nPedido novo da empresa: ${texto}` },
     ],
   });
   let o: any = {};
