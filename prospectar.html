@@ -562,6 +562,8 @@ async function agtEnviar(){
   }catch(e){t.msgs.push({acao:'O agente não respondeu: '+e.message})}
   t.busy=false;render();const th=$('#agt-th');if(th)th.scrollTop=th.scrollHeight;
 }
+/* o envio nunca passa de 80 por dia (proteção do chip contra bloqueio do WhatsApp) */
+const waLim=()=>Math.max(1,Math.min(80,+cfg('wa_limite')||20));
 function vAuto(){
   const w=st.wst||{},e=WEST[w.estado]||WEST.sem_conector,nm=id=>{const l=st.leads.find(x=>x.id===id);return l?l.nome:'Ótica removida'};
   const dh=iso=>fmtDH(iso);
@@ -569,14 +571,15 @@ function vAuto(){
   let h='';
   if(st.filaErr)h+='<div class="note warn row"><span class="grow">Não foi possível atualizar a fila agora. Isso costuma acontecer quando a página fica muito tempo aberta.</span><button class="btn sm" data-a="wrecarregar">Atualizar</button></div>';
   h+='<div class="stats"><div class="stat k1"><b><span class="tag '+e[0]+'" style="font-size:13px">'+e[1]+'</span></b><span>'+(w.numero?'Chip '+esc(fmtFone(w.numero)):'Chip do CRM')+'</span></div>'+
-    '<div class="stat k2"><b>'+(+w.enviadas_hoje||0)+'<span> / '+esc(cfg('wa_limite')||'20')+'</span></b><span>Enviadas hoje</span></div>'+
+    '<div class="stat k2"><b>'+(+w.enviadas_hoje||0)+'<span> / '+waLim()+'</span></b><span>Enviadas hoje</span></div>'+
     '<div class="stat k3"><b>'+st.fila.filter(naFila).length+'</b><span>Na fila</span></div><div class="stat k4"><b>'+st.fila.filter(fuEsp).length+'</b><span>Follow-ups esperando</span></div></div>';
+  if((+w.enviadas_hoje||0)>=waLim()&&st.fila.some(naFila))h+='<div class="note warn sec"><b>Limite do dia atingido:</b> '+waLim()+' mensagens enviadas hoje. As que estão na fila saem no próximo dia útil, a partir das '+esc(cfg('wa_ini')||'09:00')+'.</div>';
   h+='@@KB@@'+vAgente();
   h+='<details class="card sec cx" data-sec="como"'+secOpen('como',false)+'><summary><h2>Como funciona</h2><span class="cx-i" aria-hidden="true"></span></summary><div class="cx-b"><p class="small muted" style="margin:0">No CRM, marque as empresas novas e toque em <b>Colocar na fila automática</b>: isso já é a sua aprovação. O programa no computador manda uma de cada vez pelo chip do CRM, só no horário, com intervalo e limite por dia. O follow-up sai sozinho alguns dias depois, e é cancelado se a empresa responder, pedir para sair (SAIR) ou se você mudar o status dela. Quando a empresa responde, o cartão vira <b>Respondeu</b> e a resposta aparece no histórico.</p></div></details>';
   h+='<details class="card sec cx" data-sec="config"'+secOpen('config',false)+'><summary><h2>Configuração</h2><span class="cx-i" aria-hidden="true"></span></summary><div class="cx-b">'+
     '<label class="row small" style="gap:8px;margin-bottom:8px"><input type="checkbox" data-wchk="wa_on"'+(cfg('wa_on')==='true'?' checked':'')+'> Envio automático ligado</label>'+
     '<label class="row small" style="gap:8px;margin-bottom:10px"><input type="checkbox" data-wchk="wa_pausa"'+(cfg('wa_pausa')==='true'?' checked':'')+'> Pausar agora</label>'+
-    '<div class="list two">'+f('wa_ini','Enviar a partir de','time','09:00')+f('wa_fim','Até','time','18:00')+f('wa_limite','Limite por dia','number','20',' min="1" max="80"')+f('wa_intervalo','Intervalo entre mensagens (minutos)','number','5',' min="1" max="120"')+f('wa_followup_dias','Follow-up depois de (dias, 0 = sem follow-up)','number','3',' min="0" max="30"')+'</div>'+
+    '<div class="list two">'+f('wa_ini','Enviar a partir de','time','09:00')+f('wa_fim','Até','time','18:00')+f('wa_limite','Limite por dia (máximo 80)','number','20',' min="1" max="80"')+f('wa_intervalo','Intervalo entre mensagens (minutos)','number','5',' min="1" max="120"')+f('wa_followup_dias','Follow-up depois de (dias, 0 = sem follow-up)','number','3',' min="0" max="30"')+'</div>'+
     '<p class="small muted" style="margin:8px 0">Não envia aos domingos. Para um chip novo, comece com 10 a 15 por dia e vá aumentando.</p>'+
     '<div class="row"><button class="btn pri" data-a="wsalvar">Salvar configuração</button></div></div></details>';
   const q=w.estado==='qr'&&w.qr;
@@ -1257,7 +1260,7 @@ document.addEventListener('click',async e=>{
     case 'camppadrao':st.cfg.campanha='';await sb.from('prosp_config').upsert([{chave:'campanha',valor:''}]);toast('Texto padrão');return render();
     case 'desmarcar':st.marc={};return render();
     case 'marcartodas':{const q=st.fq.trim().toLowerCase();let L=st.f==='todos'?st.leads:st.leads.filter(l=>l.status===st.f);if(q)L=L.filter(l=>(l.nome+' '+(l.endereco||'')+' '+digits(foneDe(l))).toLowerCase().includes(q));L.filter(podeAuto).slice(0,+cfg('wa_limite')||20).forEach(l=>st.marc[l.id]=true);return render()}
-    case 'wsalvar':{const rows=[...document.querySelectorAll('[data-wcfg]')].map(i=>({chave:i.dataset.wcfg,valor:String(i.value||'').trim()})).concat([...document.querySelectorAll('[data-wchk]')].map(i=>({chave:i.dataset.wchk,valor:i.checked?'true':'false'})));
+    case 'wsalvar':{const rows=[...document.querySelectorAll('[data-wcfg]')].map(i=>({chave:i.dataset.wcfg,valor:i.dataset.wcfg==='wa_limite'?String(Math.max(1,Math.min(80,+i.value||20))):String(i.value||'').trim()})).concat([...document.querySelectorAll('[data-wchk]')].map(i=>({chave:i.dataset.wchk,valor:i.checked?'true':'false'})));
       const r=await sb.from('prosp_config').upsert(rows);if(r.error)return toast(r.error.message);rows.forEach(x=>st.cfg[x.chave]=x.valor);toast('Configuração salva');await loadFila();return render()}
     case 'wnuvem':{if(st.wst&&st.wst.tem_token&&!confirm('Ligar a nuvem desativa o programa do notebook (ele para de enviar). Continuar?'))return;const r=await sb.rpc('prosp_wa_nuvem_ligar');if(r.error)return toast(r.error.message);toast('Nuvem ligada. O QR Code aparece em instantes.');await loadFila();render();return wQrPoll()}
     case 'wnuvemoff':{if(!confirm('Desligar o WhatsApp na nuvem do CRM?'))return;const r=await sb.rpc('prosp_wa_nuvem_desligar');if(r.error)return toast(r.error.message);await loadFila();return render()}
