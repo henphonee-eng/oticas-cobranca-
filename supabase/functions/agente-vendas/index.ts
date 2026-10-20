@@ -201,6 +201,20 @@ Só ofereça uma conversa com o ${c.nome.split(" ")[0]} quando a empresa pedir p
   return L.join("\n");
 }
 
+/* rede de segurança: tira o nome da empresa da conversa quando o contato ainda está sem nome */
+async function extrairEmpresa(msgs: Msg[]) {
+  try {
+    const txt = msgs.filter((m) => !m.de_mim).slice(-6).map((m) => m.texto).join("\n");
+    const j = await chat({ temperature: 0, max_tokens: 120, response_format: { type: "json_object" }, messages: [
+      { role: "system", content: 'Mensagens de WhatsApp de uma pessoa interessada num serviço. Se ela disse o nome da empresa dela, responda {"nome":"...","segmento":"ramo em poucas palavras ou vazio","cidade":"ou vazio"}. Se não disse o nome da empresa, responda {"nome":""}. Não invente.' },
+      { role: "user", content: txt },
+    ] });
+    const o = JSON.parse(j.choices?.[0]?.message?.content || "{}");
+    const nome = s(o.nome, 80);
+    return nome.length >= 2 ? { nome, segmento: s(o.segmento, 60), cidade: s(o.cidade, 60) } : null;
+  } catch { return null; }
+}
+
 /* quem está do outro lado: contato novo da página, indicação ou outro número da empresa */
 function quemE(l: any, tel: string) {
   const fim = String(tel || "").slice(-8);
@@ -256,7 +270,7 @@ function ferramentas() {
   f("marcar_conversa", "Marca a conversa com o Éder no horário que a empresa escolheu.", { data: { type: "string", description: "AAAA-MM-DD" }, hora: { type: "string", description: "HH:MM" }, nome: { type: "string", description: "Nome de quem vai participar" }, forma: { type: "string", enum: ["ligação", "vídeo", "WhatsApp"] }, assunto: { type: "string", description: "Resumo do que a empresa precisa" } }, ["data", "hora", "nome"]);
   f("passar_para_eder", "OBRIGATÓRIO sempre que a empresa quiser fechar, escolher um plano, pedir contrato, proposta ou forma de pagamento: passa a conversa para o Éder finalizar a implantação e o contrato e avisa ele no celular.", { resumo: { type: "string", description: "Plano escolhido e o que foi combinado" } }, ["resumo"]);
   f("anotar", "Guarda uma informação importante que a empresa contou.", { texto: { type: "string" } }, ["texto"]);
-  f("registrar_empresa", "Guarda o nome e o ramo da empresa de quem está conversando, quando ela contar. Use outra_empresa=true quando a pessoa disser que é de uma empresa diferente da que está no cadastro.", { nome: { type: "string", description: "Nome da empresa" }, segmento: { type: "string", description: "Ramo, ex.: clínica odontológica, advocacia, restaurante" }, cidade: { type: "string" }, outra_empresa: { type: "boolean" } }, ["nome"]);
+  f("registrar_empresa", "OBRIGATÓRIO assim que a pessoa disser o nome da empresa dela: guarda o nome e o ramo da empresa de quem está conversando. Use outra_empresa=true quando a pessoa disser que é de uma empresa diferente da que está no cadastro.", { nome: { type: "string", description: "Nome da empresa" }, segmento: { type: "string", description: "Ramo, ex.: clínica odontológica, advocacia, restaurante" }, cidade: { type: "string" }, outra_empresa: { type: "boolean" } }, ["nome"]);
   f("sem_interesse", "A empresa disse que não tem interesse.", { motivo: { type: "string" } });
   return T;
 }
@@ -429,6 +443,10 @@ async function atenderMsg(b: any) {
     await acoesReais(l, c, feito, tel)("passar_para_eder", { resumo: `Quer fechar (${cl.motivo || "pediu para fechar"})` });
   }
   if (feito.includes("passou")) resposta = fechar(resposta, c);
+  if (l.segmento === "a confirmar" && ["pagina", "indicacao"].includes(l.origem || "")) {
+    const e = await extrairEmpresa(msgs);
+    if (e) await acoesReais(l, c, feito, tel)("registrar_empresa", e);
+  }
   // como uma pessoa: várias mensagens curtas, cada uma com o seu tempo de digitação
   let t = Date.now();
   const rows = partes(resposta).map((p, i) => {
@@ -512,6 +530,7 @@ async function teste(req: Request, b: any, interno = false) {
   let resposta = await vender(l, c, msgs, exec);
   if (resposta && !acoes.some((x) => String(x.txt).startsWith("Passaria a conversa")) && disseQuePassou(resposta, c)) acoes.push({ txt: "Passaria a conversa para você (rede de segurança: ele disse que ia passar)" });
   if (resposta && acoes.some((x) => String(x.txt).startsWith("Passaria a conversa"))) resposta = fechar(resposta, c);
+  if (l.origem && !acoes.some((x) => String(x.txt).startsWith("Registraria a empresa"))) { const e = await extrairEmpresa(msgs); if (e) acoes.push({ txt: `Registraria a empresa: ${e.nome}${e.segmento ? " (" + e.segmento + ")" : ""} (rede de segurança)` }); }
   return ok({ ok: true, cl, resposta, partes: resposta ? partes(resposta) : [], acoes });
 }
 
