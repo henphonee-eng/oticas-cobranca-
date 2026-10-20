@@ -582,7 +582,7 @@ details.q .r{padding:0 0 26px;color:var(--nevoa);font-size:17px;max-width:44em}
 
   /* links de teste e de contato */
   function testeHref(){return E.cod?'/a/'+E.cod:('/agente'+(E.nome?'?e='+encodeURIComponent(E.nome)+(E.seg?'&s='+encodeURIComponent(E.seg):''):''))}
-  function zap(t){return 'https://wa.me/'+CTA+'?text='+encodeURIComponent(t)}
+  function zap(t){return 'https://wa.me/'+CTA+'?text='+encodeURIComponent(t+(E.cod?' (ref. '+E.cod.slice(0,7)+')':''))}
   function aplicar(){
     $$('.js-testar').forEach(function(a){a.href=testeHref()});
     var quem=E.nome?' Sou da '+E.nome+'.':'';
@@ -596,6 +596,7 @@ details.q .r{padding:0 0 26px;color:var(--nevoa);font-size:17px;max-width:44em}
       document.title='Agente de IA para '+E.nome+' · Connecta AI';
     }
   }
+  function aparelho(){var u=navigator.userAgent;return (/iPhone|iPad/.test(u)?'iPhone':/Android/.test(u)?'Android':/Mac/.test(u)?'Mac':/Windows/.test(u)?'Windows':'Outro')+(/Mobi/.test(u)?' (celular)':'')}
   function nomeCurto(n){var s=String(n||'').trim(),c=s.split(/\s*(?::|\||\s[-–—]\s)\s*/)[0].trim();return (c.length>=3?c:s).slice(0,40)}
 
   /* entrada da primeira tela: uma única sequência */
@@ -617,7 +618,7 @@ details.q .r{padding:0 0 26px;color:var(--nevoa);font-size:17px;max-width:44em}
   if(document.readyState==='complete')setTimeout(comecar,50);else window.addEventListener('load',comecar);
   if(E.cod&&E.cod.length>=7){
     fetch(SB+'/rest/v1/rpc/prosp_agente_codigo',{method:'POST',headers:{'Content-Type':'application/json',apikey:KEY},body:JSON.stringify({p_cod:E.cod})})
-      .then(function(r){return r.ok?r.json():null}).then(function(r){if(r&&r.nome){E.nome=nomeCurto(r.nome);E.seg=r.segmento||E.seg;aplicar();conversa()}}).catch(function(){});
+      .then(function(r){return r.ok?r.json():null}).then(function(r){if(r&&r.nome){E.nome=nomeCurto(r.nome);E.seg=r.segmento||E.seg;aplicar();conversa();if(r.lead&&!/[?&]eu=1/.test(location.search))fetch(SB+'/functions/v1/agente-vendas',{method:'POST',headers:{'Content-Type':'application/json',apikey:KEY},body:JSON.stringify({modo:'aberto',tipo:'pagina',lead:r.lead,aparelho:aparelho()})}).catch(function(){})}}).catch(function(){});
   }
 })();
 </script>
