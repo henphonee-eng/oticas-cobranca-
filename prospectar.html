@@ -92,6 +92,33 @@ button.stat{cursor:pointer}button.stat:hover{background:var(--surface-2)}
 .sec>h2{margin-bottom:8px}
 .fld{margin-bottom:10px}
 /* visuais */
+.impl{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:14px 16px;margin-bottom:12px}
+.impl .cab{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:flex-start}
+.impl h3{margin:0;font-size:16px;font-weight:600}
+.impl .sub{font-size:13px;color:var(--muted);margin-top:2px}
+.etp{display:flex;gap:0;margin:14px 0 10px;flex-wrap:wrap}
+.etp span{flex:1;min-width:110px;font-size:12.5px;padding:7px 10px;border-top:3px solid var(--line-2);color:var(--muted)}
+.etp span.ok{border-color:var(--s5);color:var(--fg)}
+.etp span.at{border-color:var(--gold);color:var(--fg);font-weight:600}
+.etp b{display:block;font-size:13px}
+.impl .acts{display:flex;gap:6px;flex-wrap:wrap}
+.impl details{border-top:1px solid var(--line);margin-top:10px;padding-top:8px}
+.impl summary{cursor:pointer;font-weight:600;font-size:14px;padding:4px 0}
+.impl .dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;font-size:13.5px;margin:8px 0}
+.impl .dl b{color:var(--muted);font-weight:500}
+@media (max-width:640px){.impl .dl{grid-template-columns:1fr}}
+.impl pre{white-space:pre-wrap;font:13px/1.55 inherit;background:var(--surface-2);border-radius:6px;padding:12px;max-height:360px;overflow:auto;margin:8px 0}
+.aju{display:flex;flex-direction:column;gap:6px;margin:8px 0;max-height:380px;overflow:auto}
+.aju div{max-width:85%;padding:7px 10px;border-radius:8px;font-size:13.5px;white-space:pre-wrap}
+.aju .empresa{align-self:flex-start;background:var(--surface-2)}
+.aju .ia{align-self:flex-end;background:#E8F0FE}
+.aju .eder{align-self:flex-end;background:#FFF4D6}
+.aju small{display:block;color:var(--muted);font-size:11.5px;margin-top:3px}
+.aju .mud{color:#1E7B4F;font-weight:600}
+.ini{margin-top:10px;padding:12px;border:1px dashed var(--line-2);border-radius:6px;display:grid;gap:10px}
+.ini .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ini label{font-size:13px;font-weight:600;display:grid;gap:4px}
+.ini input[type=number]{width:100%}
 .fech{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--s6);border-radius:var(--r);box-shadow:var(--shadow);padding:12px 16px 14px;margin-bottom:14px}
 .fech h3{margin:0 0 2px;font-size:15px;font-weight:600}
 .fech .it{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 12px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
@@ -407,8 +434,13 @@ async function load(){
   st.leads=(lr.data||[]).filter(l=>!l.arquivado_em);st.arq=(lr.data||[]).filter(l=>l.arquivado_em);st.cfg={};(cr.data||[]).forEach(r=>st.cfg[r.chave]=r.valor);
   st.ac={};((ar&&ar.data)||[]).forEach(a=>{(st.ac[a.lead_id]=st.ac[a.lead_id]||[]).push(a)});
   await loadFila();
+  await loadImpl();
   try{const rr=await sb.from('prosp_reunioes').select('*').gte('inicio',new Date(Date.now()-864e5).toISOString()).order('inicio');st.reun=(rr&&rr.data)||[]}catch(e){st.reun=[]}
-  st.loaded=true;const qt=new URLSearchParams(location.search).get('tab');if(qt&&['crm','buscar','msg','auto','zap','camp'].includes(qt))st.tab=qt;else if(!st.leads.length)st.tab='buscar';render();
+  st.loaded=true;const qt=new URLSearchParams(location.search).get('tab');if(qt&&['crm','buscar','msg','auto','zap','camp','impl'].includes(qt))st.tab=qt;else if(!st.leads.length)st.tab='buscar';render();
+}
+async function loadImpl(){
+  try{const [ir,ar]=await Promise.all([sb.from('prosp_impl').select('*').neq('status','cancelada').order('criado_em',{ascending:false}),sb.from('prosp_impl_ajustes').select('*').order('em').limit(3000)]);
+    st.impl=ir.error?(st.impl||[]):(ir.data||[]);st.implAj={};((ar&&ar.data)||[]).forEach(x=>{(st.implAj[x.impl_id]=st.implAj[x.impl_id]||[]).push(x)})}catch(e){st.impl=st.impl||[];st.implAj=st.implAj||{}}
 }
 /* ---------- envio automático (chip do CRM + segundo conector) ---------- */
 let wQrT=null;
@@ -641,11 +673,11 @@ function render(){if(st.tab==='auto'&&!wQrT)setTimeout(wQrPoll,0);
   if(!st.loaded)return a.innerHTML='<div class="empty">Carregando leads…</div>';
   const sec=st.tab==='buscar'?'buscar':'crm';
   const item=n=>n[2]?'<a href="'+n[2]+'"'+(sec===n[0]?' class="on"':'')+'>'+n[3]+'<span>'+n[1]+'</span></a>':'<a href="/prospectar?tab='+n[0]+'" data-tab="'+n[0]+'"'+(sec===n[0]?' class="on" aria-current="page"':'')+'>'+n[3]+'<span>'+n[1]+'</span></a>';
-  const head=st.tab==='buscar'?['Prospecção','Encontre óticas no Google Maps e adicione ao CRM']:st.tab==='zap'?['WhatsApp do CRM','Conversas do chip de prospecção: quem respondeu e o follow-up']:st.tab==='auto'?['Envio automático','Fila de abordagens e follow-ups pelo chip do CRM']:st.tab==='msg'?['Modelos de mensagem','Textos da abordagem e do follow-up']:st.tab==='camp'?['Campanha','Tráfego Orgânico e Agente de IA para as óticas que você já abordou']:['CRM','Funil de óticas, follow-up e acessos ao demo'];
-  const sub=st.tab==='buscar'?'':'<div class="subtabs"><button class="chip '+(st.tab==='crm'?'on':'')+'" data-tab="crm">Óticas ('+st.leads.length+')</button><button class="chip '+(st.tab==='zap'?'on':'')+'" data-tab="zap">WhatsApp'+(zNao()?'<span class="n">'+zNao()+'</span>':'')+'</button><button class="chip '+(st.tab==='auto'?'on':'')+'" data-tab="auto">Envio automático ('+st.fila.filter(naFila).length+')</button><button class="chip '+(st.tab==='camp'?'on':'')+'" data-tab="camp">Campanha</button><button class="chip '+(st.tab==='msg'?'on':'')+'" data-tab="msg">Modelos de mensagem</button></div>';
+  const head=st.tab==='buscar'?['Prospecção','Encontre óticas no Google Maps e adicione ao CRM']:st.tab==='zap'?['WhatsApp do CRM','Conversas do chip de prospecção: quem respondeu e o follow-up']:st.tab==='auto'?['Envio automático','Fila de abordagens e follow-ups pelo chip do CRM']:st.tab==='msg'?['Modelos de mensagem','Textos da abordagem e do follow-up']:st.tab==='camp'?['Campanha','Tráfego Orgânico e Agente de IA para as óticas que você já abordou']:st.tab==='impl'?['Implantações','Cadastro, contrato, teste e ajustes de cada empresa que fechou']:['CRM','Funil de óticas, follow-up e acessos ao demo'];
+  const sub=st.tab==='buscar'?'':'<div class="subtabs"><button class="chip '+(st.tab==='crm'?'on':'')+'" data-tab="crm">Óticas ('+st.leads.length+')</button><button class="chip '+(st.tab==='zap'?'on':'')+'" data-tab="zap">WhatsApp'+(zNao()?'<span class="n">'+zNao()+'</span>':'')+'</button><button class="chip '+(st.tab==='auto'?'on':'')+'" data-tab="auto">Envio automático ('+st.fila.filter(naFila).length+')</button><button class="chip '+(st.tab==='camp'?'on':'')+'" data-tab="camp">Campanha</button><button class="chip '+(st.tab==='msg'?'on':'')+'" data-tab="msg">Modelos de mensagem</button><button class="chip '+(st.tab==='impl'?'on':'')+'" data-tab="impl">Implantações'+((st.impl||[]).filter(x=>x.status!=='ativa').length?' ('+(st.impl||[]).filter(x=>x.status!=='ativa').length+')':'')+'</button></div>';
   a.innerHTML='<aside class="pside"><div class="brand"><b>Connecta AI</b><small>Controle geral</small></div><nav>'+NAV.map(item).join('')+'</nav><div class="foot"><div>'+esc((st.user&&st.user.email)||'')+'</div><button data-a="sair">Sair</button></div></aside>'+
    '<header class="mtop"><b>Connecta AI</b><span class="sp"></span><button data-a="sair">Sair</button></header>'+
-   '<main><div class="ph"><h1>'+head[0]+'</h1><p>'+head[1]+'</p></div>'+sub+(st.tab==='buscar'?vBuscar():st.tab==='msg'?vMsg():st.tab==='auto'?vAuto():st.tab==='zap'?vZap():st.tab==='camp'?vCamp():vCrm())+'</main>'+
+   '<main><div class="ph"><h1>'+head[0]+'</h1><p>'+head[1]+'</p></div>'+sub+(st.tab==='buscar'?vBuscar():st.tab==='msg'?vMsg():st.tab==='auto'?vAuto():st.tab==='zap'?vZap():st.tab==='camp'?vCamp():st.tab==='impl'?vImpl():vCrm())+'</main>'+
    '<nav class="pnav" aria-label="Seções">'+NAV.map(item).join('')+'</nav>';
 }
 function gate(){return '<div class="gate"><div class="card"><h1>Prospecção</h1><p class="muted small" style="margin:0">Entre com o mesmo e-mail e senha do painel administrativo.</p><input type="email" id="g-e" placeholder="E-mail" autocomplete="username"><input type="password" id="g-p" placeholder="Senha" autocomplete="current-password"><div class="err" id="g-err"></div><button class="btn pri" data-a="entrar">Entrar</button></div></div>'}
@@ -761,9 +793,47 @@ function vizCrm(c){
   return '<div class="viz">'+fun+cols+'</div>';
 }
 
+
+/* ---------- implantações ---------- */
+const brl=n=>'R$ '+Number(n||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const PLANOS={Essencial:[497,197],Profissional:[797,297],'Sob medida':[1457,497]};
+const IMPL_ST={cadastro:'Cadastro',contrato:'Contrato',teste:'Teste e ajustes',ativa:'Agente ligado'};
+const implDe=l=>(st.impl||[]).find(x=>x.lead_id===l.id);
+const implLink=x=>linkBaseEmp()+'/'+(x.status==='cadastro'?'cadastro':x.status==='contrato'?'contrato':'teste')+'/'+x.token;
+function vIniciar(l){
+  const pl=st.iniPlano||'Profissional',v=PLANOS[pl];
+  return '<form class="ini" data-ini="'+l.id+'"><b>🚀 Iniciar a implantação da '+esc(nomeCurto(l.nome))+'</b><div class="ops" role="radiogroup" aria-label="Plano">'+Object.keys(PLANOS).map(k=>'<button type="button" class="chip '+(k===pl?'on':'')+'" data-a="iniplano" data-p="'+k+'" aria-pressed="'+(k===pl)+'">'+k+'</button>').join(' ')+'</div>'+
+   '<div class="row2"><label>Implantação (R$)<input type="number" min="1" step="1" name="vi" value="'+v[0]+'"></label><label>Mensalidade (R$)<input type="number" min="1" step="1" name="vm" value="'+v[1]+'"></label></div>'+
+   '<p class="small muted" style="margin:0">O agente manda agora no WhatsApp o link do cadastro. Depois que a empresa preencher, o contrato é liberado; depois da assinatura, ela recebe o teste real com a área de ajustes.</p>'+
+   '<div class="acts"><button class="btn sm pri" type="submit">Iniciar e enviar o cadastro</button><button class="btn sm" type="button" data-a="inifechar">Cancelar</button></div></form>';
+}
+function vImpl(){
+  const L=st.impl||[];
+  if(!L.length)return '<div class="empty">Nenhuma implantação ainda.<br><br>Quando o agente passar uma empresa para você fechar, toque em <b>Iniciar implantação</b> no topo do CRM.</div>';
+  const ord=['cadastro','contrato','teste','ativa'];
+  return L.map(x=>{
+    const l=st.leads.find(y=>y.id===x.lead_id)||{},c=x.cadastro||{},e=c.empresa||{},d=c.dono||{},aj=(st.implAj||{})[x.id]||[],i=ord.indexOf(x.status);
+    const datas=[x.criado_em,x.cadastro_em,x.assinado_em,x.ativa_em];
+    const etp='<div class="etp">'+ord.map((k,j)=>'<span class="'+(j<i?'ok':j===i?'at':'')+'"><b>'+(j<i?'✓ ':'')+IMPL_ST[k]+'</b>'+(datas[j]&&j<=i?fmtDH(datas[j]):j===i?'agora':'')+'</span>').join('')+'</div>';
+    const hs=Object.entries(c.horarios||{}).filter(([,v])=>v&&v.aberto).map(([k,v])=>k+' '+v.abre+'–'+v.fecha).join(', ');
+    const esp=Object.entries(c.especificas||{}).filter(([,v])=>Array.isArray(v)?v.length:v).map(([k,v])=>'<b>'+esc(k.replace(/_/g,' '))+'</b><span>'+esc(Array.isArray(v)?v.join(', '):v)+'</span>').join('');
+    const pedidos=aj.filter(a=>a.de==='empresa').length,mud=aj.filter(a=>a.de==='ia'&&a.mudancas&&(a.mudancas.itens||[]).length).length,pend=aj.some(a=>a.mudancas&&a.mudancas.para_eder);
+    return '<section class="impl"><div class="cab"><div><h3>'+esc(e.nome||nomeCurto(l.nome||''))+'</h3><p class="sub">Plano '+esc(x.plano)+' · '+brl(x.valor_implantacao)+' + '+brl(x.valor_mensal)+'/mês'+(x.status!=='ativa'?' · prazo: até 7 dias':'')+'</p></div>'+
+      '<div class="acts"><button class="btn sm" data-copyimpl="'+x.id+'">Copiar link</button><a class="btn sm" href="'+esc(implLink(x))+'" target="_blank" rel="noopener">Abrir página</a>'+(x.status==='teste'?'<button class="btn sm pri" data-a="implativar" data-id="'+x.id+'">Agente ligado ✅</button>':'')+'</div></div>'+etp+
+      (pend?'<p class="small" style="margin:0 0 6px;color:var(--s6);font-weight:600">🛠️ Tem pedido que precisa de você nos ajustes.</p>':'')+
+      (x.status==='cadastro'?'<p class="small muted" style="margin:0">Esperando a empresa preencher o cadastro.'+(Object.keys(c).length>1?' Ela já começou a preencher.':'')+'</p>':'')+
+      (x.cadastro_em?'<details><summary>Cadastro da empresa</summary><div class="dl"><b>Tipo</b><span>'+esc(x.segmento||c.ramo||'')+'</span><b>Razão social / documento</b><span>'+esc((e.razao||e.nome||'')+(e.doc?' · '+e.doc:''))+'</span><b>Endereço</b><span>'+esc([e.endereco,e.cidade].filter(Boolean).join(' - '))+'</span><b>Responsável</b><span>'+esc([d.nome,d.cargo,d.cpf,d.email,d.whatsapp].filter(Boolean).join(' · '))+'</span><b>Horários</b><span>'+esc(hs)+'</span><b>Serviços</b><span>'+esc((c.servicos||[]).map(v=>v.nome+(v.preco?' ('+v.preco+')':'')).join(', '))+'</span><b>Pagamento</b><span>'+esc((c.pagamentos||[]).join(', ')+(c.parcela?' · '+c.parcela:''))+'</span><b>Agenda</b><span>'+esc((c.agenda||{}).usa||'')+((c.agenda||{}).duracao?' · '+c.agenda.duracao:'')+'</span>'+esp+'<b>Atendente</b><span>'+esc([(c.atendimento||{}).assistente,(c.atendimento||{}).tom].filter(Boolean).join(' · '))+'</span><b>Chamar a equipe</b><span>'+esc((c.chamar||[]).join(', '))+'</span>'+(c.faq?'<b>Perguntas frequentes</b><span>'+esc(c.faq)+'</span>':'')+(c.nao_falar?'<b>Não falar</b><span>'+esc(c.nao_falar)+'</span>':'')+(c.extras?'<b>Outras orientações</b><span>'+esc(c.extras)+'</span>':'')+'</div></details>':'')+
+      (x.contrato_texto?'<details><summary>Contrato'+(x.assinado_em?' (assinado)':' (esperando assinatura)')+'</summary>'+(x.assinatura?'<div class="dl"><b>Assinado por</b><span>'+esc(x.assinatura.nome+' · CPF '+x.assinatura.cpf)+'</span><b>Quando</b><span>'+fmtDH(x.assinatura.em)+'</span><b>IP</b><span>'+esc(x.assinatura.ip||'–')+'</span><b>Código do documento</b><span style="word-break:break-all">'+esc(x.contrato_hash||'')+'</span></div>':'')+'<pre>'+esc(x.contrato_texto)+'</pre></details>':'')+
+      (['teste','ativa'].includes(x.status)?'<details'+(pend?' open':'')+'><summary>Ajustes pedidos pela empresa ('+pedidos+' pedidos, '+mud+' aplicados)</summary><div class="aju">'+aj.map(a=>'<div class="'+a.de+'">'+(a.de==='eder'?'<b>Você:</b> ':'')+esc(a.texto)+(a.mudancas&&(a.mudancas.itens||[]).length?'<small class="mud">✓ '+esc(a.mudancas.itens.join(' · '))+'</small>':'')+(a.mudancas&&a.mudancas.para_eder?'<small style="color:var(--s6)">Precisa de você</small>':'')+'<small>'+(a.de==='empresa'?'Empresa':a.de==='ia'?'Ajuste automático':'Você')+' · '+fmtDH(a.em)+'</small></div>').join('')+'</div>'+
+        '<form class="row" data-ajeder="'+x.id+'" style="gap:6px"><input class="grow" name="t" placeholder="Responder para a empresa nos ajustes" aria-label="Responder para a empresa"><button class="btn sm" type="submit">Enviar</button></form>'+
+        '<details style="border:0;margin:6px 0 0;padding:0"><summary class="small muted" style="font-weight:500">Ver configuração atual da IA</summary><pre>'+esc(JSON.stringify(x.config||{},null,2))+'</pre></details></details>':'')+
+    '</section>';
+  }).join('');
+}
+
 /* ---------- empresas que o agente passou para fechar ---------- */
 function paraFechar(){
-  return st.leads.filter(l=>l.ag_estado==='passado'&&!['fechou','sem_interesse'].includes(l.status)&&(l.historico||[]).some(h=>/^🔥/.test(h.txt||''))).map(l=>{
+  return st.leads.filter(l=>l.ag_estado==='passado'&&!implDe(l)&&!['fechou','sem_interesse'].includes(l.status)&&(l.historico||[]).some(h=>/^🔥/.test(h.txt||''))).map(l=>{
     const h=[...(l.historico||[])].reverse().find(x=>/^🔥/.test(x.txt||''));
     return {l,em:h.em,resumo:String(h.txt).replace(/^🔥[^:]*:\s*/,'')};
   }).sort((a,b)=>a.em.localeCompare(b.em));
@@ -773,9 +843,10 @@ function vFechar(){
   const L=paraFechar();if(!L.length)return '';
   return '<section class="fech" aria-label="Empresas para você fechar"><h3>🔥 Para você fechar ('+L.length+')</h3><p class="small muted" style="margin:0 0 6px">O agente já vendeu: a empresa escolheu o plano e está esperando você para a implantação e o contrato.</p>'+
     L.map(x=>'<div class="it"><div><b>'+esc(nomeCurto(x.l.nome))+'</b> <span class="esp">'+esperando(x.em)+'</span><p>'+esc(x.resumo)+'</p></div><div class="acts">'+
-      '<button class="btn sm pri" data-a="zabrir" data-id="'+x.l.id+'">Abrir conversa</button>'+
+      '<button class="btn sm pri" data-a="iniabrir" data-id="'+x.l.id+'">🚀 Iniciar implantação</button>'+
+      '<button class="btn sm" data-a="zabrir" data-id="'+x.l.id+'">Abrir conversa</button>'+
       '<button class="btn sm" data-a="fechou" data-id="'+x.l.id+'">Fechou ✅</button>'+
-      '<button class="btn sm" data-a="agretomar" data-id="'+x.l.id+'">Devolver ao agente</button></div></div>').join('')+'</section>';
+      '<button class="btn sm" data-a="agretomar" data-id="'+x.l.id+'">Devolver ao agente</button></div>'+(st.iniLead===x.l.id?'<div style="grid-column:1/-1">'+vIniciar(x.l)+'</div>':'')+'</div>').join('')+'</section>';
 }
 
 /* ---------- painel de resultados ---------- */
@@ -925,6 +996,16 @@ function vMsg(){
 
 /* ---------- eventos ---------- */
 document.addEventListener('change',e=>{const t=e.target;if(t&&t.dataset&&t.dataset.agtseg){st.agt=agtNovo(+t.value||0);return render()}if(t&&t.dataset&&t.dataset.agdia){const c=t.closest('.chip');if(c)c.classList.toggle('on',t.checked);return}if(t&&t.dataset&&t.dataset.prevseg){document.querySelectorAll('[data-cfg]').forEach(i=>{if(i.value!==String(cfg(i.dataset.cfg)??''))st.cfg[i.dataset.cfg]=i.value});st.prevSeg=+t.value||0;const y=scrollY;render();scrollTo(0,y)}});
+document.addEventListener('submit',async e=>{
+  const f=e.target;
+  if(f.dataset.ini){e.preventDefault();const b=f.querySelector('[type=submit]');b.disabled=true;b.textContent='Iniciando…';
+    const {data:sd}=await sb.auth.getSession();
+    try{const r=await fetch(SB_URL+'/functions/v1/implantacao',{method:'POST',headers:{'Content-Type':'application/json',apikey:SB_KEY,Authorization:'Bearer '+((sd&&sd.session&&sd.session.access_token)||SB_KEY)},body:JSON.stringify({modo:'iniciar',lead:f.dataset.ini,plano:st.iniPlano||'Profissional',valor_implantacao:+f.vi.value,valor_mensal:+f.vm.value})});
+      const j=await r.json();if(!r.ok||j.error){b.disabled=false;b.textContent='Iniciar e enviar o cadastro';return toast(j.error||'Não deu certo')}
+      st.iniLead=null;await load();toast(j.enviado?'Implantação iniciada: o cadastro foi enviado no WhatsApp':'Implantação iniciada. Copie o link do cadastro na aba Implantações')}catch(x){b.disabled=false;b.textContent='Iniciar e enviar o cadastro';toast('Sem conexão')}
+    return}
+  if(f.dataset.ajeder){e.preventDefault();const t=f.t.value.trim();if(!t)return;const r=await sb.from('prosp_impl_ajustes').insert({impl_id:f.dataset.ajeder,de:'eder',texto:t});if(r.error)return toast('Não salvou: '+r.error.message);f.t.value='';await loadImpl();render();return toast('Resposta enviada para a empresa')}
+});
 document.addEventListener('click',async e=>{
   const b=e.target.closest('button,[data-tab]');if(!b)return;const d=b.dataset;
   if(d.tab){e.preventDefault();return go(d.tab)}
@@ -943,6 +1024,7 @@ document.addEventListener('click',async e=>{
     // interessada ou fechou: sai da campanha (cancela o que ainda estiver na fila)
     if(d.v==='interessada'||d.v==='fechou'){const fq=st.fila.filter(x=>x.lead_id===d.st&&x.tipo==='campanha'&&ATIVOS.includes(x.status));if(fq.length){sb.from('prosp_wa_fila').update({status:'cancelada',erro:'marcada como '+STATUS[d.v].toLowerCase()}).eq('lead_id',d.st).eq('tipo','campanha').in('status',ATIVOS).then(()=>{fq.forEach(x=>{x.status='cancelada'});render()})}}return upd(d.st,{status:d.v,historico:hist(l,'Status: '+STATUS[d.v]),follow_up:d.v==='fechou'?null:l.follow_up})}
   if(d.copysite){const l=st.leads.find(x=>x.id===d.copysite);try{await navigator.clipboard.writeText(siteLink(l));toast('Link do site copiado')}catch(x){prompt('Copie o link:',siteLink(l))}return}
+  if(d.copyimpl){const x=(st.impl||[]).find(y=>y.id===d.copyimpl);const lk=implLink(x);try{await navigator.clipboard.writeText(lk);toast('Link copiado')}catch(z){prompt('Copie o link:',lk)}return}
   if(d.copy){const l=st.leads.find(x=>x.id===d.copy);const lk=ehOtica(l)?demoLink(l):agenteLink(l);try{await navigator.clipboard.writeText(lk);toast('Link copiado')}catch(x){prompt('Copie o link:',lk)}return}
   if(d.del){if(!confirm('Remover essa ótica do CRM?'))return;const r=await sb.from('prosp_leads').delete().eq('id',d.del);if(r.error)return toast(r.error.message);st.leads=st.leads.filter(l=>l.id!==d.del);return render()}
   switch(d.a){
@@ -953,6 +1035,10 @@ document.addEventListener('click',async e=>{
     case 'agtlimpar':st.agt=agtNovo(st.agt?st.agt.seg:0);return render();
     case 'reuncanc':{if(!confirm('Cancelar esta conversa marcada?'))return;const r=await sb.from('prosp_reunioes').update({status:'cancelada'}).eq('id',d.id);if(r.error)return toast(r.error.message);st.reun=(st.reun||[]).map(x=>x.id===d.id?Object.assign({},x,{status:'cancelada'}):x);toast('Conversa cancelada');return render()}
     case 'agpausar':{const l=st.leads.find(x=>x.id===d.id);if(!l)return;await upd(l.id,{ag_estado:'pausado',historico:hist(l,'Agente de vendas pausado nesta conversa')});return toast('O agente não vai mais responder esta empresa')}
+    case 'iniabrir':{st.iniLead=d.id;st.iniPlano='Profissional';return render()}
+    case 'inifechar':{st.iniLead=null;return render()}
+    case 'iniplano':{st.iniPlano=d.p;return render()}
+    case 'implativar':{const x=(st.impl||[]).find(y=>y.id===d.id);if(!x)return;const r=await sb.from('prosp_impl').update({status:'ativa',ativa_em:new Date().toISOString(),atualizado_em:new Date().toISOString()}).eq('id',x.id);if(r.error)return toast('Não salvou: '+r.error.message);const l=st.leads.find(y=>y.id===x.lead_id);if(l)await upd(l.id,{status:'fechou',historico:hist(l,'✅ Agente ligado no WhatsApp da empresa')});await loadImpl();render();return toast('Implantação concluída')}
     case 'zabrir':{const l=st.leads.find(x=>x.id===d.id);if(!l)return;const um=[...st.msgs].reverse().find(m=>!m.de_mim&&m.lead_id===l.id);st.tab='zap';st.zsel=k8(um?um.telefone:foneDe(l));render();try{zRolar()}catch(e){}return}
     case 'fechou':{const l=st.leads.find(x=>x.id===d.id);if(!l)return;await upd(l.id,{status:'fechou',historico:hist(l,'✅ Fechou o contrato')});return toast('Parabéns! '+nomeCurto(l.nome)+' marcada como fechada')}
     case 'resdias':{st.resDias=+d.d||7;return render()}
@@ -1015,6 +1101,8 @@ const digitando=()=>{const a=document.activeElement;return !!(a&&/INPUT|TEXTAREA
 function recarregar(ms){clearTimeout(vt);vt=setTimeout(()=>{if(digitando()||st.busy){vp=true;return recarregar(2500)}vp=false;const y=scrollY;load().then(()=>scrollTo(0,y))},ms==null?1200:ms)}
 document.addEventListener('focusout',()=>{if(vp)recarregar(600)});
 function aoVivo(){if(vivo||!st.admin)return;vivo=sb.channel('crm-ao-vivo')
+  .on('postgres_changes',{event:'*',schema:'public',table:'prosp_impl'},()=>{loadImpl().then(()=>{if(!digitando())render()})})
+  .on('postgres_changes',{event:'INSERT',schema:'public',table:'prosp_impl_ajustes'},()=>{loadImpl().then(()=>{if(st.tab==='impl'&&!digitando())render()})})
   .on('postgres_changes',{event:'INSERT',schema:'public',table:'prosp_acessos'},p=>{const l=st.leads.find(x=>x.id===p.new.lead_id);toast('👀 '+((l&&l.nome)||'Uma empresa')+(p.new.tipo==='agente'?' abriu o teste do agente agora':' abriu o demo agora'));recarregar(300)})
   .on('postgres_changes',{event:'*',schema:'public',table:'prosp_leads'},p=>{const n=p.new,o=st.leads.find(x=>x&&n&&x.id===n.id);if(o&&n&&o.status==='enviado'&&n.status==='respondeu')toast('💬 '+n.nome+' respondeu no WhatsApp');recarregar()})
   .on('postgres_changes',{event:'*',schema:'public',table:'prosp_wa_fila'},()=>recarregar())
