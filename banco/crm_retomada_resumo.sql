@@ -1,0 +1,4 @@
+-- Aplicado no Supabase em 2026-10-20 (migrations leads_da_pagina e crm_retomada_e_resumo).
+-- prosp_leads.origem ('pagina' | 'indicacao'), prosp_leads.ag_retomado_em, tabela prosp_avisos,
+-- funções prosp_wa_receber (contatos da página), prosp_agente_retomar e prosp_avisos_resumo,
+-- agendamentos: prosp-agente-retomar ('20 12-20 * * 1-6', UTC) e prosp-avisos-resumo ('0 15,21 * * *', UTC = 12h e 18h em Recife).
