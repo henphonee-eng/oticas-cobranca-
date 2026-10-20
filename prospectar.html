@@ -193,7 +193,7 @@ button.stat{cursor:pointer}button.stat:hover{background:var(--surface-2)}
 .mtop b{font-size:17px;font-weight:600}
 .mtop .sp{flex:1}
 .mtop button{background:none;border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:4px;padding:6px 12px;font:inherit;font-size:13.5px;cursor:pointer}
-.pnav{position:fixed;left:0;right:0;bottom:0;z-index:10;background:var(--nav);display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);padding-bottom:env(safe-area-inset-bottom,0px)}
+.pnav{position:fixed;left:0;right:0;bottom:0;z-index:10;-webkit-transform:translateZ(0);transform:translateZ(0);background:var(--nav);display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);padding-bottom:env(safe-area-inset-bottom,0px)}
 .pnav a{display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 2px 8px;color:var(--nav-fg);font-size:11px;font-weight:500;text-decoration:none;min-width:0;border-top:2px solid transparent}
 .pnav a span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .pnav svg,.pside svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
@@ -667,6 +667,7 @@ const NAV=[
   ['crm','CRM',null,IC('<rect x="3.5" y="4.5" width="5" height="15" rx="1.5"/><rect x="9.5" y="4.5" width="5" height="10" rx="1.5"/><rect x="15.5" y="4.5" width="5" height="6" rx="1.5"/>')]];
 function render(){if(st.tab==='auto'&&!wQrT)setTimeout(wQrPoll,0);
   const a=$('#app');
+  if(!(st.user&&st.admin&&st.loaded))barraNav('');
   if(st.user===null)return a.innerHTML='<div class="empty">Carregando…</div>';
   if(!st.user)return a.innerHTML=gate();
   if(!st.admin)return a.innerHTML='<div class="gate"><div class="card"><h1>Sem acesso</h1><p class="muted">Essa área é só do administrador.</p><button class="btn" data-a="sair">Sair</button></div></div>';
@@ -677,8 +678,16 @@ function render(){if(st.tab==='auto'&&!wQrT)setTimeout(wQrPoll,0);
   const sub=st.tab==='buscar'?'':'<div class="subtabs"><button class="chip '+(st.tab==='crm'?'on':'')+'" data-tab="crm">Óticas ('+st.leads.length+')</button><button class="chip '+(st.tab==='zap'?'on':'')+'" data-tab="zap">WhatsApp'+(zNao()?'<span class="n">'+zNao()+'</span>':'')+'</button><button class="chip '+(st.tab==='auto'?'on':'')+'" data-tab="auto">Envio automático ('+st.fila.filter(naFila).length+')</button><button class="chip '+(st.tab==='camp'?'on':'')+'" data-tab="camp">Campanha</button><button class="chip '+(st.tab==='msg'?'on':'')+'" data-tab="msg">Modelos de mensagem</button><button class="chip '+(st.tab==='impl'?'on':'')+'" data-tab="impl">Implantações'+((st.impl||[]).filter(x=>x.status!=='ativa').length?' ('+(st.impl||[]).filter(x=>x.status!=='ativa').length+')':'')+'</button></div>';
   a.innerHTML='<aside class="pside"><div class="brand"><b>Connecta AI</b><small>Controle geral</small></div><nav>'+NAV.map(item).join('')+'</nav><div class="foot"><div>'+esc((st.user&&st.user.email)||'')+'</div><button data-a="sair">Sair</button></div></aside>'+
    '<header class="mtop"><b>Connecta AI</b><span class="sp"></span><button data-a="sair">Sair</button></header>'+
-   '<main><div class="ph"><h1>'+head[0]+'</h1><p>'+head[1]+'</p></div>'+sub+(st.tab==='buscar'?vBuscar():st.tab==='msg'?vMsg():st.tab==='auto'?vAuto():st.tab==='zap'?vZap():st.tab==='camp'?vCamp():st.tab==='impl'?vImpl():vCrm())+'</main>'+
-   '<nav class="pnav" aria-label="Seções">'+NAV.map(item).join('')+'</nav>';
+   '<main><div class="ph"><h1>'+head[0]+'</h1><p>'+head[1]+'</p></div>'+sub+(st.tab==='buscar'?vBuscar():st.tab==='msg'?vMsg():st.tab==='auto'?vAuto():st.tab==='zap'?vZap():st.tab==='camp'?vCamp():st.tab==='impl'?vImpl():vCrm())+'</main>';
+  barraNav(NAV.map(item).join(''));
+}
+/* barra de baixo (celular): fica fora do #app e só muda quando a aba muda.
+   Recriar uma barra fixa a cada atualização em tempo real fazia o iPhone desenhá-la no meio da tela durante a rolagem. */
+function barraNav(html){
+  let n=document.getElementById('pnav');
+  if(!html){if(n)n.remove();return}
+  if(!n){n=document.createElement('nav');n.id='pnav';n.className='pnav';n.setAttribute('aria-label','Seções');document.body.appendChild(n)}
+  if(n.innerHTML!==html)n.innerHTML=html;
 }
 function gate(){return '<div class="gate"><div class="card"><h1>Prospecção</h1><p class="muted small" style="margin:0">Entre com o mesmo e-mail e senha do painel administrativo.</p><input type="email" id="g-e" placeholder="E-mail" autocomplete="username"><input type="password" id="g-p" placeholder="Senha" autocomplete="current-password"><div class="err" id="g-err"></div><button class="btn pri" data-a="entrar">Entrar</button></div></div>'}
 
