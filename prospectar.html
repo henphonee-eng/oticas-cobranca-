@@ -102,6 +102,22 @@ button.stat{cursor:pointer}button.stat:hover{background:var(--surface-2)}
 .etp span.at{border-color:var(--gold);color:var(--fg);font-weight:600}
 .etp b{display:block;font-size:13px}
 .impl .acts{display:flex;gap:6px;flex-wrap:wrap}
+.sau{display:block;font-size:13.5px;padding:10px 12px;border-radius:var(--r);background:var(--bg);border:1px solid var(--line);margin:0 0 10px}
+.sau.ok{background:var(--ok-bg);border-color:transparent;color:var(--ok)}.sau.ok b{color:inherit}
+.sau.warn{background:var(--warn-bg);border-color:transparent;display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap}.sau.bad{background:var(--bad-bg);border-color:transparent;color:var(--bad)}
+.sau img{width:200px;max-width:100%;height:auto;background:#fff;padding:6px;border-radius:8px}
+.cobs{display:grid;gap:0;margin-top:6px}
+.cob{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:9px 0;border-top:1px solid var(--line)}.cob:first-child{border-top:0}
+.cob .grow{min-width:180px}.cob b{display:block;font-size:13.5px;font-weight:600}
+.fks{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
+@media (max-width:900px){.fks{grid-template-columns:repeat(2,1fr)}}@media (max-width:520px){.fks{grid-template-columns:1fr}}
+.fk{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;box-shadow:var(--shadow)}
+.fk b{display:block;font-size:22px;font-weight:700;letter-spacing:-.01em;font-variant-numeric:tabular-nums}.fk span{display:block;font-size:13px;color:var(--muted);margin-top:2px}.fk small{display:block;font-size:12px;color:var(--muted);margin-top:6px}
+.fk.bad b{color:var(--bad)}
+.fbar{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;align-items:end;height:170px;margin-top:10px}
+.fbar div{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:4px;min-width:0}
+.fbar i{display:block;width:100%;max-width:56px;background:var(--accent);border-radius:4px 4px 0 0;min-height:2px}
+.fbar b{font-size:11.5px;font-weight:600;white-space:nowrap}.fbar span{font-size:12px;color:var(--muted)}
 .impl details{border-top:1px solid var(--line);margin-top:10px;padding-top:8px}
 .impl summary{cursor:pointer;font-weight:600;font-size:14px;padding:4px 0}
 .impl .dl{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;font-size:13.5px;margin:8px 0}
@@ -437,12 +453,26 @@ async function load(){
   await loadFila();
   await loadImpl();
   try{const rr=await sb.from('prosp_reunioes').select('*').gte('inicio',new Date(Date.now()-864e5).toISOString()).order('inicio');st.reun=(rr&&rr.data)||[]}catch(e){st.reun=[]}
-  st.loaded=true;const qt=new URLSearchParams(location.search).get('tab');if(qt&&['crm','buscar','msg','auto','zap','camp','impl'].includes(qt))st.tab=qt;else if(!st.leads.length)st.tab='buscar';render();
+  st.loaded=true;const qt=new URLSearchParams(location.search).get('tab');if(qt&&['crm','buscar','msg','auto','zap','camp','impl','fin'].includes(qt))st.tab=qt;else if(!st.leads.length)st.tab='buscar';render();
 }
 async function loadImpl(){
-  try{const [ir,ar]=await Promise.all([sb.from('prosp_impl').select('*').neq('status','cancelada').order('criado_em',{ascending:false}),sb.from('prosp_impl_ajustes').select('*').order('em').limit(3000)]);
-    st.impl=ir.error?(st.impl||[]):(ir.data||[]);st.implAj={};((ar&&ar.data)||[]).forEach(x=>{(st.implAj[x.impl_id]=st.implAj[x.impl_id]||[]).push(x)})}catch(e){st.impl=st.impl||[];st.implAj=st.implAj||{}}
+  try{const [ir,ar,cr,rr]=await Promise.all([sb.from('prosp_impl').select('*').neq('status','cancelada').order('criado_em',{ascending:false}),sb.from('prosp_impl_ajustes').select('*').order('em').limit(3000),sb.from('prosp_cobr').select('*').order('venc').limit(5000),sb.from('prosp_relatorios').select('*').order('mes',{ascending:false}).limit(500)]);
+    st.impl=ir.error?(st.impl||[]):(ir.data||[]);st.implAj={};((ar&&ar.data)||[]).forEach(x=>{(st.implAj[x.impl_id]=st.implAj[x.impl_id]||[]).push(x)});
+    if(cr&&!cr.error)st.cobr=cr.data||[];if(rr&&!rr.error)st.rels=rr.data||[]}catch(e){st.impl=st.impl||[];st.implAj=st.implAj||{}}
+  st.cobr=st.cobr||[];st.rels=st.rels||[];
+  if((st.impl||[]).some(x=>x.otica_id))loadSaude();
 }
+/* pós-venda (função connecta-pos): saúde do WhatsApp, ligar, pausar, baixa, cobrar, encerrar */
+async function pos(acao,extra){const {data:sd}=await sb.auth.getSession();
+  try{const r=await fetch(SB_URL+'/functions/v1/connecta-pos',{method:'POST',headers:{'Content-Type':'application/json',apikey:SB_KEY,Authorization:'Bearer '+((sd&&sd.session&&sd.session.access_token)||SB_KEY)},body:JSON.stringify(Object.assign({modo:'admin',acao:acao},extra||{}))});
+    const j=await r.json().catch(()=>({}));if(!r.ok&&!j.error)j.error='Não deu certo agora';return j}catch(x){return {error:'Sem conexão'}}}
+let saudeT=0,saudeVai=false;
+async function loadSaude(){if(saudeVai)return;saudeVai=true;const j=await pos('saude');saudeVai=false;if(j&&j.saude){const antes=JSON.stringify(st.saude||{});st.saude=j.saude;if(JSON.stringify(st.saude)!==antes&&['impl','fin'].includes(st.tab)&&!digitando())render()}
+  clearTimeout(saudeT);const espera=Object.values(st.saude||{}).some(w=>w&&!w.online);saudeT=setTimeout(()=>{if(!document.hidden&&['impl','fin'].includes(st.tab))loadSaude();else saudeT=setTimeout(loadSaude,60000)},espera?6000:45000)}
+async function loadFin(){
+  try{const [or,cr]=await Promise.all([sb.from('oticas').select('id,nome,mensalidade,ativa,plano'),sb.from('adm_cobrancas').select('*')]);
+    st.finOt=(or&&!or.error&&or.data)||[];st.finOtCob=(cr&&!cr.error&&cr.data)||[]}catch(e){st.finOt=st.finOt||[];st.finOtCob=st.finOtCob||[]}
+  st.finOk=true;if(st.tab==='fin'&&!digitando())render()}
 /* ---------- envio automático (chip do CRM + segundo conector) ---------- */
 let wQrT=null;
 function wQrPoll(){clearTimeout(wQrT);wQrT=null;const w=st.wst||{};if(w.nuvem&&w.estado!=='conectado'&&st.tab==='auto')wQrT=setTimeout(async()=>{if(!document.hidden&&st.tab==='auto'&&!document.activeElement.matches('input,textarea,select')){await loadFila();render()}wQrPoll()},8000)}
@@ -675,11 +705,11 @@ function render(){if(st.tab==='auto'&&!wQrT)setTimeout(wQrPoll,0);
   if(!st.loaded)return a.innerHTML='<div class="empty">Carregando leads…</div>';
   const sec=st.tab==='buscar'?'buscar':'crm';
   const item=n=>n[2]?'<a href="'+n[2]+'"'+(sec===n[0]?' class="on"':'')+'>'+n[3]+'<span>'+n[1]+'</span></a>':'<a href="/prospectar?tab='+n[0]+'" data-tab="'+n[0]+'"'+(sec===n[0]?' class="on" aria-current="page"':'')+'>'+n[3]+'<span>'+n[1]+'</span></a>';
-  const head=st.tab==='buscar'?['Prospecção','Encontre óticas no Google Maps e adicione ao CRM']:st.tab==='zap'?['WhatsApp do CRM','Conversas do chip de prospecção: quem respondeu e o follow-up']:st.tab==='auto'?['Envio automático','Fila de abordagens e follow-ups pelo chip do CRM']:st.tab==='msg'?['Modelos de mensagem','Textos da abordagem e do follow-up']:st.tab==='camp'?['Campanha','Tráfego Orgânico e Agente de IA para as óticas que você já abordou']:st.tab==='impl'?['Implantações','Cadastro, contrato, teste e ajustes de cada empresa que fechou']:['CRM','Funil de óticas, follow-up e acessos ao demo'];
-  const sub=st.tab==='buscar'?'':'<div class="subtabs"><button class="chip '+(st.tab==='crm'?'on':'')+'" data-tab="crm">Óticas ('+st.leads.length+')</button><button class="chip '+(st.tab==='zap'?'on':'')+'" data-tab="zap">WhatsApp'+(zNao()?'<span class="n">'+zNao()+'</span>':'')+'</button><button class="chip '+(st.tab==='auto'?'on':'')+'" data-tab="auto">Envio automático ('+st.fila.filter(naFila).length+')</button><button class="chip '+(st.tab==='camp'?'on':'')+'" data-tab="camp">Campanha</button><button class="chip '+(st.tab==='msg'?'on':'')+'" data-tab="msg">Modelos de mensagem</button><button class="chip '+(st.tab==='impl'?'on':'')+'" data-tab="impl">Implantações'+((st.impl||[]).filter(x=>x.status!=='ativa').length?' ('+(st.impl||[]).filter(x=>x.status!=='ativa').length+')':'')+'</button></div>';
+  const head=st.tab==='buscar'?['Prospecção','Encontre óticas no Google Maps e adicione ao CRM']:st.tab==='zap'?['WhatsApp do CRM','Conversas do chip de prospecção: quem respondeu e o follow-up']:st.tab==='auto'?['Envio automático','Fila de abordagens e follow-ups pelo chip do CRM']:st.tab==='msg'?['Modelos de mensagem','Textos da abordagem e do follow-up']:st.tab==='camp'?['Campanha','Tráfego Orgânico e Agente de IA para as óticas que você já abordou']:st.tab==='impl'?['Implantações','Cadastro, contrato, teste, WhatsApp e pagamentos de cada empresa que fechou']:st.tab==='fin'?['Financeiro','Quanto entra por mês, o que falta receber e quem está em atraso']:['CRM','Funil de óticas, follow-up e acessos ao demo'];
+  const sub=st.tab==='buscar'?'':'<div class="subtabs"><button class="chip '+(st.tab==='crm'?'on':'')+'" data-tab="crm">Óticas ('+st.leads.length+')</button><button class="chip '+(st.tab==='zap'?'on':'')+'" data-tab="zap">WhatsApp'+(zNao()?'<span class="n">'+zNao()+'</span>':'')+'</button><button class="chip '+(st.tab==='auto'?'on':'')+'" data-tab="auto">Envio automático ('+st.fila.filter(naFila).length+')</button><button class="chip '+(st.tab==='camp'?'on':'')+'" data-tab="camp">Campanha</button><button class="chip '+(st.tab==='msg'?'on':'')+'" data-tab="msg">Modelos de mensagem</button><button class="chip '+(st.tab==='impl'?'on':'')+'" data-tab="impl">Implantações'+((st.impl||[]).filter(x=>!['ativa','encerrada'].includes(x.status)).length?' ('+(st.impl||[]).filter(x=>!['ativa','encerrada'].includes(x.status)).length+')':'')+'</button><button class="chip '+(st.tab==='fin'?'on':'')+'" data-tab="fin">Financeiro'+((st.cobr||[]).filter(c=>!c.pago&&!c.cancelada&&c.venc<hojeR()).length?'<span class="n">'+(st.cobr||[]).filter(c=>!c.pago&&!c.cancelada&&c.venc<hojeR()).length+'</span>':'')+'</button></div>';
   a.innerHTML='<aside class="pside"><div class="brand"><b>Connecta AI</b><small>Controle geral</small></div><nav>'+NAV.map(item).join('')+'</nav><div class="foot"><div>'+esc((st.user&&st.user.email)||'')+'</div><button data-a="sair">Sair</button></div></aside>'+
    '<header class="mtop"><b>Connecta AI</b><span class="sp"></span><button data-a="sair">Sair</button></header>'+
-   '<main><div class="ph"><h1>'+head[0]+'</h1><p>'+head[1]+'</p></div>'+sub+(st.tab==='buscar'?vBuscar():st.tab==='msg'?vMsg():st.tab==='auto'?vAuto():st.tab==='zap'?vZap():st.tab==='camp'?vCamp():st.tab==='impl'?vImpl():vCrm())+'</main>';
+   '<main><div class="ph"><h1>'+head[0]+'</h1><p>'+head[1]+'</p></div>'+sub+(st.tab==='buscar'?vBuscar():st.tab==='msg'?vMsg():st.tab==='auto'?vAuto():st.tab==='zap'?vZap():st.tab==='camp'?vCamp():st.tab==='impl'?vImpl():st.tab==='fin'?vFin():vCrm())+'</main>';
   barraNav(NAV.map(item).join(''));
 }
 /* barra de baixo (celular): fica fora do #app e só muda quando a aba muda.
@@ -807,9 +837,32 @@ function vizCrm(c){
 /* ---------- implantações ---------- */
 const brl=n=>'R$ '+Number(n||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
 const PLANOS={Essencial:[497,197],Profissional:[797,297],'Sob medida':[1457,497]};
-const IMPL_ST={cadastro:'Cadastro',contrato:'Contrato',teste:'Teste e ajustes',ativa:'Agente ligado'};
+const IMPL_ST={cadastro:'Cadastro',contrato:'Contrato',teste:'Teste e ajustes',ativa:'Atendendo no WhatsApp'};
 const implDe=l=>(st.impl||[]).find(x=>x.lead_id===l.id);
-const implLink=x=>linkBaseEmp()+'/'+(x.status==='cadastro'?'cadastro':x.status==='contrato'?'contrato':'teste')+'/'+x.token;
+const implLink=x=>linkBaseEmp()+'/'+(x.status==='cadastro'?'cadastro':x.status==='contrato'?'contrato':['ativa','encerrada'].includes(x.status)?'cliente':'teste')+'/'+x.token;
+const COB_DESC={entrada:'1ª parte da implantação',entrega:'2ª parte da implantação',mensal:'Mensalidade'};
+const MESES=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+const hojeR=()=>new Date(Date.now()-3*3600e3).toISOString().slice(0,10);
+const diasEntre=(a,b)=>Math.round((Date.parse(b+'T12:00:00Z')-Date.parse(a+'T12:00:00Z'))/864e5);
+const cobDesc=c=>c.tipo==='mensal'?'Mensalidade de '+MESES[+c.venc.slice(5,7)-1]:COB_DESC[c.tipo];
+function cobSit(c){if(c.cancelada)return '<span class="tag">Cancelada</span>';if(c.pago)return '<span class="tag ok">Pago '+fmtD(c.pago_em||'')+'</span>';const d=diasEntre(c.venc,hojeR());return d>0?'<span class="tag bad">'+d+(d===1?' dia':' dias')+' de atraso</span>':d===0?'<span class="tag warn">Vence hoje</span>':'<span class="tag">Vence '+fmtD(c.venc)+'</span>'}
+function cobLinha(c,comEmpresa){const x=comEmpresa?(st.impl||[]).find(y=>y.id===c.impl_id):null;
+  return '<div class="cob"><div class="grow"><b>'+(x?esc(implNome(x))+' · ':'')+esc(cobDesc(c))+'</b><span class="small muted">'+brl(c.valor)+' · vence '+fmtD(c.venc)+(c.comprovante_em&&!c.pago?' · 💸 mandou comprovante':'')+(c.ultimo_aviso&&!c.pago?' · último aviso '+fmtD(c.ultimo_aviso):'')+'</span></div>'+cobSit(c)+
+   (c.cancelada?'':c.pago?'<button class="btn sm" data-a="cobdesf" data-id="'+c.id+'">Desfazer</button>':'<button class="btn sm pri" data-a="cobbaixa" data-id="'+c.id+'">Recebi ✅</button><button class="btn sm" data-a="cobcobrar" data-id="'+c.id+'">Cobrar agora</button>')+'</div>'}
+const implNome=x=>{const l=st.leads.find(y=>y.id===x.lead_id)||{};return ((x.cadastro||{}).empresa||{}).nome||nomeCurto(l.nome||'')||'Empresa'};
+function vSaude(x){const w=(st.saude||{})[x.id];
+  if(!x.otica_id)return '';
+  if(!w)return '<div class="sau">Verificando o WhatsApp do agente…</div>';
+  if(x.status==='encerrada')return '<div class="sau">🛑 Cliente encerrado'+(x.encerrada_em?' em '+fmtDH(x.encerrada_em):'')+'</div>';
+  if(w.online)return '<div class="sau ok">🟢 <b>Atendendo</b> no WhatsApp '+esc(fmtFone(w.numero||''))+' · '+w.respostas_mes+' respostas este mês'+(w.limite_mes>0?' (limite '+w.limite_mes+')':'')+(w.agente_ativo?'':' · <b>⏸ agente pausado</b>')+'</div>';
+  if(w.qr)return '<div class="sau warn"><div><b>📱 Esperando ler o QR Code</b><br><span class="small">No celular da empresa: WhatsApp › Aparelhos conectados › Conectar um aparelho. A empresa também vê este QR no link da área do cliente.</span></div><img alt="QR Code do WhatsApp da empresa" src="'+esc(w.qr)+'"></div>';
+  if(x.conectado_em)return '<div class="sau bad">🔴 <b>WhatsApp desconectado</b>'+(w.ultimo_contato?' · último contato '+fmtDH(w.ultimo_contato):'')+'. O QR Code aparece aqui assim que o servidor gerar.</div>';
+  return '<div class="sau">⏳ Preparando a conexão do WhatsApp. O QR Code aparece aqui em até 1 minuto.</div>'}
+function vCobrImpl(x){const cs=(st.cobr||[]).filter(c=>c.impl_id===x.id&&!c.cancelada);if(!cs.length)return '';
+  const ab=cs.filter(c=>!c.pago),pg=cs.filter(c=>c.pago);const mostra=[...ab,...pg.slice(-3)].sort((a,b)=>a.venc<b.venc?-1:1);
+  return '<details'+(ab.some(c=>c.venc<=hojeR())?' open':'')+'><summary>Pagamentos ('+(ab.length?ab.length+' em aberto':'tudo em dia')+')</summary><div class="cobs">'+mostra.map(c=>cobLinha(c)).join('')+'</div></details>'}
+function vRelImpl(x){const rs=(st.rels||[]).filter(r=>r.impl_id===x.id);if(!rs.length)return '';
+  return '<details><summary>Relatórios mensais ('+rs.length+')</summary><div class="cobs">'+rs.map(r=>{const d=r.dados||{};return '<div class="cob"><div class="grow"><b>'+esc(MESES[+r.mes.slice(5,7)-1]+'/'+r.mes.slice(0,4))+'</b><span class="small muted">'+(d.pessoas||0)+' pessoas · '+(d.respostas||0)+' respostas · '+(d.fora_horario||0)+' fora do horário · chamou a equipe '+(d.chamou_equipe||0)+'x</span></div><span class="tag '+(r.enviado_em?'ok':'')+'">'+(r.enviado_em?'Enviado':'Não enviado')+'</span></div>'}).join('')+'</div></details>'}
 function vIniciar(l){
   const pl=st.iniPlano||'Profissional',v=PLANOS[pl];
   return '<form class="ini" data-ini="'+l.id+'"><b>🚀 Iniciar a implantação da '+esc(nomeCurto(l.nome))+'</b><div class="ops" role="radiogroup" aria-label="Plano">'+Object.keys(PLANOS).map(k=>'<button type="button" class="chip '+(k===pl?'on':'')+'" data-a="iniplano" data-p="'+k+'" aria-pressed="'+(k===pl)+'">'+k+'</button>').join(' ')+'</div>'+
@@ -822,14 +875,17 @@ function vImpl(){
   if(!L.length)return '<div class="empty">Nenhuma implantação ainda.<br><br>Quando o agente passar uma empresa para você fechar, toque em <b>Iniciar implantação</b> no topo do CRM.</div>';
   const ord=['cadastro','contrato','teste','ativa'];
   return L.map(x=>{
-    const l=st.leads.find(y=>y.id===x.lead_id)||{},c=x.cadastro||{},e=c.empresa||{},d=c.dono||{},aj=(st.implAj||{})[x.id]||[],i=ord.indexOf(x.status);
-    const datas=[x.criado_em,x.cadastro_em,x.assinado_em,x.ativa_em];
+    const l=st.leads.find(y=>y.id===x.lead_id)||{},c=x.cadastro||{},e=c.empresa||{},d=c.dono||{},aj=(st.implAj||{})[x.id]||[],i=x.status==='encerrada'?4:x.status==='ativa'&&!x.conectado_em?3:ord.indexOf(x.status)+(x.status==='ativa'?1:0);
+    const datas=[x.criado_em,x.cadastro_em,x.assinado_em,x.conectado_em||x.ativa_em];
     const etp='<div class="etp">'+ord.map((k,j)=>'<span class="'+(j<i?'ok':j===i?'at':'')+'"><b>'+(j<i?'✓ ':'')+IMPL_ST[k]+'</b>'+(datas[j]&&j<=i?fmtDH(datas[j]):j===i?'agora':'')+'</span>').join('')+'</div>';
     const hs=Object.entries(c.horarios||{}).filter(([,v])=>v&&v.aberto).map(([k,v])=>k+' '+v.abre+'–'+v.fecha).join(', ');
     const esp=Object.entries(c.especificas||{}).filter(([,v])=>Array.isArray(v)?v.length:v).map(([k,v])=>'<b>'+esc(k.replace(/_/g,' '))+'</b><span>'+esc(Array.isArray(v)?v.join(', '):v)+'</span>').join('');
     const pedidos=aj.filter(a=>a.de==='empresa').length,mud=aj.filter(a=>a.de==='ia'&&a.mudancas&&(a.mudancas.itens||[]).length).length,pend=aj.some(a=>a.mudancas&&a.mudancas.para_eder);
     return '<section class="impl"><div class="cab"><div><h3>'+esc(e.nome||nomeCurto(l.nome||''))+'</h3><p class="sub">Plano '+esc(x.plano)+' · '+brl(x.valor_implantacao)+' + '+brl(x.valor_mensal)+'/mês'+(x.status!=='ativa'?' · prazo: até 7 dias':'')+'</p></div>'+
-      '<div class="acts"><button class="btn sm" data-copyimpl="'+x.id+'">Copiar link</button><a class="btn sm" href="'+esc(implLink(x))+'" target="_blank" rel="noopener">Abrir página</a>'+(x.status==='teste'?'<button class="btn sm pri" data-a="implativar" data-id="'+x.id+'">Agente ligado ✅</button>':'')+'</div></div>'+etp+
+      '<div class="acts"><button class="btn sm" data-copyimpl="'+x.id+'">Copiar link</button><a class="btn sm" href="'+esc(implLink(x))+'" target="_blank" rel="noopener">'+(['ativa','encerrada'].includes(x.status)?'Área do cliente':'Abrir página')+'</a>'+
+        (x.status==='teste'?'<button class="btn sm pri" data-a="implligar" data-id="'+x.id+'">Ligar no WhatsApp 🚀</button>':'')+
+        (x.status==='ativa'?(((st.saude||{})[x.id]||{}).agente_ativo===false?'<button class="btn sm" data-a="implretomar" data-id="'+x.id+'">▶ Religar agente</button>':'<button class="btn sm" data-a="implpausar" data-id="'+x.id+'">⏸ Pausar agente</button>')+(x.conectado_em?'<button class="btn sm" data-a="implrel" data-id="'+x.id+'">Enviar relatório agora</button>':'')+'<button class="btn sm" data-a="implenc" data-id="'+x.id+'" style="color:var(--bad)">'+(st.encConf===x.id?'Confirmar: encerrar cliente':'Encerrar cliente')+'</button>':'')+
+      '</div></div>'+etp+vSaude(x)+
       (pend?'<p class="small" style="margin:0 0 6px;color:var(--s6);font-weight:600">🛠️ Tem pedido que precisa de você nos ajustes.</p>':'')+
       (x.status==='cadastro'?'<p class="small muted" style="margin:0">Esperando a empresa preencher o cadastro.'+(Object.keys(c).length>1?' Ela já começou a preencher.':'')+'</p>':'')+
       (x.cadastro_em?'<details><summary>Cadastro da empresa</summary><div class="dl"><b>Tipo</b><span>'+esc(x.segmento||c.ramo||'')+'</span><b>Razão social / documento</b><span>'+esc((e.razao||e.nome||'')+(e.doc?' · '+e.doc:''))+'</span><b>Endereço</b><span>'+esc([e.endereco,e.cidade].filter(Boolean).join(' - '))+'</span><b>Responsável</b><span>'+esc([d.nome,d.cargo,d.cpf,d.email,d.whatsapp].filter(Boolean).join(' · '))+'</span><b>Horários</b><span>'+esc(hs)+'</span><b>Serviços</b><span>'+esc((c.servicos||[]).map(v=>v.nome+(v.preco?' ('+v.preco+')':'')).join(', '))+'</span><b>Pagamento</b><span>'+esc((c.pagamentos||[]).join(', ')+(c.parcela?' · '+c.parcela:''))+'</span><b>Agenda</b><span>'+esc((c.agenda||{}).usa||'')+((c.agenda||{}).duracao?' · '+c.agenda.duracao:'')+'</span>'+esp+'<b>Atendente</b><span>'+esc([(c.atendimento||{}).assistente,(c.atendimento||{}).tom].filter(Boolean).join(' · '))+'</span><b>Chamar a equipe</b><span>'+esc((c.chamar||[]).join(', '))+'</span>'+(c.faq?'<b>Perguntas frequentes</b><span>'+esc(c.faq)+'</span>':'')+(c.nao_falar?'<b>Não falar</b><span>'+esc(c.nao_falar)+'</span>':'')+(c.extras?'<b>Outras orientações</b><span>'+esc(c.extras)+'</span>':'')+'</div></details>':'')+
@@ -837,8 +893,43 @@ function vImpl(){
       (['teste','ativa'].includes(x.status)?'<details'+(pend?' open':'')+'><summary>Ajustes pedidos pela empresa ('+pedidos+' pedidos, '+mud+' aplicados)</summary><div class="aju">'+aj.map(a=>'<div class="'+a.de+'">'+(a.de==='eder'?'<b>Você:</b> ':'')+esc(a.texto)+(a.mudancas&&(a.mudancas.itens||[]).length?'<small class="mud">✓ '+esc(a.mudancas.itens.join(' · '))+'</small>':'')+(a.mudancas&&a.mudancas.para_eder?'<small style="color:var(--s6)">Precisa de você</small>':'')+'<small>'+(a.de==='empresa'?'Empresa':a.de==='ia'?'Ajuste automático':'Você')+' · '+fmtDH(a.em)+'</small></div>').join('')+'</div>'+
         '<form class="row" data-ajeder="'+x.id+'" style="gap:6px"><input class="grow" name="t" placeholder="Responder para a empresa nos ajustes" aria-label="Responder para a empresa"><button class="btn sm" type="submit">Enviar</button></form>'+
         '<details style="border:0;margin:6px 0 0;padding:0"><summary class="small muted" style="font-weight:500">Ver configuração atual da IA</summary><pre>'+esc(JSON.stringify(x.config||{},null,2))+'</pre></details></details>':'')+
+      vCobrImpl(x)+vRelImpl(x)+
     '</section>';
   }).join('');
+}
+
+/* ---------- financeiro: o negócio inteiro num lugar só ---------- */
+function vFin(){
+  if(!st.finOk){loadFin();return '<div class="empty">Carregando…</div>'}
+  const h=hojeR(),mes=h.slice(0,7),cs=(st.cobr||[]).filter(c=>!c.cancelada),I=st.impl||[];
+  const ativos=I.filter(x=>x.status==='ativa'&&x.conectado_em),esperando=I.filter(x=>x.status==='ativa'&&!x.conectado_em);
+  const mrrAg=ativos.reduce((a,x)=>a+Number(x.valor_mensal||0),0);
+  const ots=(st.finOt||[]).filter(o=>o.ativa&&o.plano!=='empresa'),mrrOt=ots.reduce((a,o)=>a+Number(o.mensalidade||0)/100,0);
+  const otc=(st.finOtCob||[]).map(c=>Object.assign({},c,{valor:Number(c.valor||0)/100}));
+  const recMes=cs.filter(c=>c.pago&&String(c.pago_em||'').slice(0,7)===mes).reduce((a,c)=>a+Number(c.valor),0)+otc.filter(c=>c.pago&&String(c.pago_em||'').slice(0,7)===mes).reduce((a,c)=>a+c.valor,0);
+  const aRecMes=cs.filter(c=>!c.pago&&c.venc.slice(0,7)===mes&&c.venc>=h).reduce((a,c)=>a+Number(c.valor),0)+otc.filter(c=>!c.pago&&String(c.venc).slice(0,7)===mes&&c.venc>=h).reduce((a,c)=>a+c.valor,0);
+  const atr=cs.filter(c=>!c.pago&&c.venc<h),atrOt=otc.filter(c=>!c.pago&&c.venc<h);
+  const vAtr=atr.reduce((a,c)=>a+Number(c.valor),0)+atrOt.reduce((a,c)=>a+c.valor,0);
+  const implAb=cs.filter(c=>!c.pago&&c.tipo!=='mensal').reduce((a,c)=>a+Number(c.valor),0);
+  const futuraEntrega=I.filter(x=>['teste','ativa'].includes(x.status)&&!x.conectado_em).reduce((a,x)=>a+Number(x.valor_implantacao||0)/2,0);
+  const canc=I.filter(x=>x.encerrada_em&&Date.now()-Date.parse(x.encerrada_em)<90*864e5).length;
+  const meses=[];for(let i=5;i>=0;i--){const d=new Date(Date.UTC(+h.slice(0,4),+h.slice(5,7)-1-i,1));meses.push(d.toISOString().slice(0,7))}
+  const recPor=meses.map(m=>cs.filter(c=>c.pago&&String(c.pago_em||'').slice(0,7)===m).reduce((a,c)=>a+Number(c.valor),0)+otc.filter(c=>c.pago&&String(c.pago_em||'').slice(0,7)===m).reduce((a,c)=>a+c.valor,0));
+  const mx=Math.max(1,...recPor);
+  const prox=cs.filter(c=>!c.pago&&c.venc>=h&&diasEntre(h,c.venc)<=30);
+  const kp=(v,t,sub,cls)=>'<div class="fk'+(cls?' '+cls:'')+'"><b>'+v+'</b><span>'+t+'</span>'+(sub?'<small>'+sub+'</small>':'')+'</div>';
+  return '<div class="fks">'+
+    kp(brl(mrrAg+mrrOt),'Entra por mês (mensalidades)',brl(mrrAg)+' de '+ativos.length+(ativos.length===1?' agente':' agentes')+' · '+brl(mrrOt)+' de '+ots.length+(ots.length===1?' ótica':' óticas'))+
+    kp(brl(recMes),'Recebido em '+MESES[+mes.slice(5,7)-1],brl(aRecMes)+' ainda a receber este mês')+
+    kp(brl(vAtr),'Em atraso',(atr.length+atrOt.length)+(atr.length+atrOt.length===1?' cobrança':' cobranças'),vAtr>0?'bad':'')+
+    kp(brl(implAb+futuraEntrega),'Implantação a receber',brl(implAb)+' já cobrado · '+brl(futuraEntrega)+' na entrega')+
+    kp(String(ativos.length),'Agentes atendendo',esperando.length?esperando.length+' esperando conectar o WhatsApp':'')+
+    kp(String(canc),'Cancelaram (90 dias)','')+'</div>'+
+    '<section class="card sec"><h2>Recebido por mês</h2><div class="fbar">'+meses.map((m,i)=>'<div><i style="height:'+Math.max(2,Math.round(recPor[i]*100/mx))+'%" title="'+brl(recPor[i])+'"></i><b>'+(recPor[i]?brl(recPor[i]).replace(',00',''):'–')+'</b><span>'+MESES[+m.slice(5,7)-1]+'</span></div>').join('')+'</div><p class="small muted" style="margin:8px 0 0">Agentes (cobranças do pós-venda) + óticas (aba Mensalidades). Só entra o que você marcou como recebido.</p></section>'+
+    '<section class="card sec"><h2>Em atraso</h2>'+(atr.length?'<div class="cobs">'+atr.map(c=>cobLinha(c,true)).join('')+'</div>':'<p class="small muted" style="margin:0">Nenhum agente em atraso. 🎉</p>')+
+      (atrOt.length?'<p class="small" style="margin:10px 0 0">Óticas em atraso: '+atrOt.map(c=>esc(((st.finOt||[]).find(o=>o.id===c.otica_id)||{}).nome||'Ótica')+' ('+brl(c.valor)+', '+fmtD(c.venc)+')').join(', ')+' · <a href="/adm?tab=mensal">abrir Mensalidades</a></p>':'')+'</section>'+
+    '<section class="card sec"><h2>Próximos 30 dias</h2>'+(prox.length?'<div class="cobs">'+prox.map(c=>cobLinha(c,true)).join('')+'</div>':'<p class="small muted" style="margin:0">Nada vencendo nos próximos 30 dias.</p>')+'</section>'+
+    '<section class="card sec"><h2>Como funciona a cobrança</h2><p class="small muted" style="margin:0">A 1ª parte (50%) é cobrada quando a empresa assina o contrato. A 2ª parte (50%) quando o WhatsApp conecta e o agente começa a atender, e a 1ª mensalidade 30 dias depois. Cada cobrança vai pelo WhatsApp do CRM com o Pix copia e cola. A mensalidade é lembrada 3 dias antes, no dia, e com 3 e 7 dias de atraso. Com 10 dias de atraso você recebe um aviso para decidir se pausa o agente. Quando a empresa manda “paguei” ou o comprovante, você recebe um aviso para tocar em <b>Recebi</b>.</p></section>';
 }
 
 /* ---------- empresas que o agente passou para fechar ---------- */
@@ -1048,7 +1139,12 @@ document.addEventListener('click',async e=>{
     case 'iniabrir':{st.iniLead=d.id;st.iniPlano='Profissional';return render()}
     case 'inifechar':{st.iniLead=null;return render()}
     case 'iniplano':{st.iniPlano=d.p;return render()}
-    case 'implativar':{const x=(st.impl||[]).find(y=>y.id===d.id);if(!x)return;const r=await sb.from('prosp_impl').update({status:'ativa',ativa_em:new Date().toISOString(),atualizado_em:new Date().toISOString()}).eq('id',x.id);if(r.error)return toast('Não salvou: '+r.error.message);const l=st.leads.find(y=>y.id===x.lead_id);if(l)await upd(l.id,{status:'fechou',historico:hist(l,'✅ Agente ligado no WhatsApp da empresa')});await loadImpl();render();return toast('Implantação concluída')}
+    case 'implligar':{b.disabled=true;b.textContent='Criando o agente…';const j=await pos('ligar',{impl:d.id});if(j.error){b.disabled=false;b.textContent='Ligar no WhatsApp 🚀';return toast(j.error)}await loadImpl();render();return toast('Agente criado. Mandei para a empresa o link com o QR Code')}
+    case 'implpausar':case 'implretomar':{b.disabled=true;const j=await pos(d.a==='implpausar'?'pausar':'retomar',{impl:d.id});b.disabled=false;if(j.error)return toast(j.error);if(st.saude&&st.saude[d.id])st.saude[d.id].agente_ativo=d.a==='implretomar';render();return toast(d.a==='implpausar'?'Agente pausado: ele não responde os clientes até você religar':'Agente religado')}
+    case 'implrel':{b.disabled=true;b.textContent='Enviando…';const j=await pos('relatorio',{impl:d.id});if(j.error){b.disabled=false;b.textContent='Enviar relatório agora';return toast(j.error)}await loadImpl();render();return toast('Relatório do mês passado enviado')}
+    case 'implenc':{if(st.encConf!==d.id){st.encConf=d.id;render();setTimeout(()=>{if(st.encConf===d.id){st.encConf=null;render()}},6000);return}st.encConf=null;b.disabled=true;const j=await pos('encerrar',{impl:d.id});if(j.error)return toast(j.error);await loadImpl();render();return toast('Cliente encerrado: agente desligado e cobranças futuras canceladas')}
+    case 'cobbaixa':case 'cobdesf':{b.disabled=true;const j=await pos(d.a==='cobbaixa'?'baixa':'desfazer',{cobr:d.id});if(j.error){b.disabled=false;return toast(j.error)}await loadImpl();render();return toast(d.a==='cobbaixa'?'Pagamento registrado e agradecimento enviado':'Baixa desfeita')}
+    case 'cobcobrar':{b.disabled=true;b.textContent='Enviando…';const j=await pos('cobrar',{cobr:d.id});b.disabled=false;b.textContent='Cobrar agora';if(j.error)return toast(j.error);await loadImpl();render();return toast('Cobrança enviada com o Pix copia e cola')}
     case 'zabrir':{const l=st.leads.find(x=>x.id===d.id);if(!l)return;const um=[...st.msgs].reverse().find(m=>!m.de_mim&&m.lead_id===l.id);st.tab='zap';st.zsel=k8(um?um.telefone:foneDe(l));render();try{zRolar()}catch(e){}return}
     case 'fechou':{const l=st.leads.find(x=>x.id===d.id);if(!l)return;await upd(l.id,{status:'fechou',historico:hist(l,'✅ Fechou o contrato')});return toast('Parabéns! '+nomeCurto(l.nome)+' marcada como fechada')}
     case 'resdias':{st.resDias=+d.d||7;return render()}
@@ -1113,6 +1209,7 @@ document.addEventListener('focusout',()=>{if(vp)recarregar(600)});
 function aoVivo(){if(vivo||!st.admin)return;vivo=sb.channel('crm-ao-vivo')
   .on('postgres_changes',{event:'*',schema:'public',table:'prosp_impl'},()=>{loadImpl().then(()=>{if(!digitando())render()})})
   .on('postgres_changes',{event:'INSERT',schema:'public',table:'prosp_impl_ajustes'},()=>{loadImpl().then(()=>{if(st.tab==='impl'&&!digitando())render()})})
+  .on('postgres_changes',{event:'*',schema:'public',table:'prosp_cobr'},()=>{loadImpl().then(()=>{if(['impl','fin'].includes(st.tab)&&!digitando())render()})})
   .on('postgres_changes',{event:'INSERT',schema:'public',table:'prosp_acessos'},p=>{const l=st.leads.find(x=>x.id===p.new.lead_id);toast('👀 '+((l&&l.nome)||'Uma empresa')+(p.new.tipo==='agente'?' abriu o teste do agente agora':' abriu o demo agora'));recarregar(300)})
   .on('postgres_changes',{event:'*',schema:'public',table:'prosp_leads'},p=>{const n=p.new,o=st.leads.find(x=>x&&n&&x.id===n.id);if(o&&n&&o.status==='enviado'&&n.status==='respondeu')toast('💬 '+n.nome+' respondeu no WhatsApp');recarregar()})
   .on('postgres_changes',{event:'*',schema:'public',table:'prosp_wa_fila'},()=>recarregar())
