@@ -378,7 +378,7 @@ const DEF={
 };
 
 const st={tab:'crm',user:null,admin:false,leads:[],cfg:{},ac:{},loaded:false,
-  q:'óticas em Recife',res:[],next:null,busy:false,sel:{},serr:'',noKey:false,
+  q:'',res:[],next:null,busy:false,sel:{},serr:'',noKey:false,
   f:'todos',fq:'',open:null,fila:[],wst:null,marc:{},token:'',msgs:[],zsel:'',zf:'resp',zq:'',ztxt:{}};
 
 function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove('on'),2600)}
@@ -499,7 +499,7 @@ const podeAuto=l=>l.status==='novo'&&!l.enviado_em&&tipoFone(foneDe(l))==='cel'&
 async function enfileirar(ids){
   if(!cfg('seu_nome'))return toast('Coloque seu nome na aba Mensagens antes'),go('msg');
   const L=ids.map(id=>st.leads.find(x=>x.id===id)).filter(l=>l&&podeAuto(l));
-  if(!L.length)return toast('Nenhuma ótica nova com celular selecionada');
+  if(!L.length)return toast('Nenhuma empresa nova com celular selecionada');
   const fu=+cfg('wa_followup_dias');const rows=[];
   L.forEach(l=>{const tel=brNumber(foneDe(l));rows.push({lead_id:l.id,tipo:'abordagem',telefone:tel,texto:msg('abordagem',l),status:'aguardando'});
     if(fu>0)rows.push({lead_id:l.id,tipo:'followup',telefone:tel,texto:msg('followup',l),status:'espera'})});
@@ -507,7 +507,7 @@ async function enfileirar(ids){
   if(r.error)return toast('Não foi possível colocar na fila: '+r.error.message);
   st.fila=(r.data||[]).concat(st.fila);st.marc={};
   const on=cfg('wa_on')==='true';
-  toast(L.length+' ótica(s) na fila automática'+(on?'':'. Ligue o envio na aba Envio automático'));render();
+  toast(L.length+' empresa(s) na fila automática'+(on?'':'. Ligue o envio na aba Envio automático'));render();
 }
 async function cancelarFila(id){const r=await sb.from('prosp_wa_fila').update({status:'cancelada',erro:'cancelada por você'}).eq('id',id).in('status',ATIVOS.concat('falhou'));if(r.error)return toast(r.error.message);await loadFila();render()}
 async function cancelarLead(id){const r=await sb.from('prosp_wa_fila').update({status:'cancelada',erro:'cancelada por você'}).eq('lead_id',id).in('status',ATIVOS);if(r.error)return toast(r.error.message);await loadFila();render()}
@@ -569,7 +569,7 @@ function vAuto(){
     '<div class="stat k2"><b>'+(+w.enviadas_hoje||0)+'<span> / '+esc(cfg('wa_limite')||'20')+'</span></b><span>Enviadas hoje</span></div>'+
     '<div class="stat k3"><b>'+st.fila.filter(naFila).length+'</b><span>Na fila</span></div><div class="stat k4"><b>'+st.fila.filter(fuEsp).length+'</b><span>Follow-ups esperando</span></div></div>';
   h+='@@KB@@'+vAgente();
-  h+='<details class="card sec cx" data-sec="como"'+secOpen('como',false)+'><summary><h2>Como funciona</h2><span class="cx-i" aria-hidden="true"></span></summary><div class="cx-b"><p class="small muted" style="margin:0">No CRM, marque as óticas novas e toque em <b>Colocar na fila automática</b>: isso já é a sua aprovação. O programa no computador manda uma de cada vez pelo chip do CRM, só no horário, com intervalo e limite por dia. O follow-up sai sozinho alguns dias depois, e é cancelado se a ótica responder, pedir para sair (SAIR) ou se você mudar o status dela. Quando a ótica responde, o cartão vira <b>Respondeu</b> e a resposta aparece no histórico.</p></div></details>';
+  h+='<details class="card sec cx" data-sec="como"'+secOpen('como',false)+'><summary><h2>Como funciona</h2><span class="cx-i" aria-hidden="true"></span></summary><div class="cx-b"><p class="small muted" style="margin:0">No CRM, marque as empresas novas e toque em <b>Colocar na fila automática</b>: isso já é a sua aprovação. O programa no computador manda uma de cada vez pelo chip do CRM, só no horário, com intervalo e limite por dia. O follow-up sai sozinho alguns dias depois, e é cancelado se a empresa responder, pedir para sair (SAIR) ou se você mudar o status dela. Quando a empresa responde, o cartão vira <b>Respondeu</b> e a resposta aparece no histórico.</p></div></details>';
   h+='<details class="card sec cx" data-sec="config"'+secOpen('config',false)+'><summary><h2>Configuração</h2><span class="cx-i" aria-hidden="true"></span></summary><div class="cx-b">'+
     '<label class="row small" style="gap:8px;margin-bottom:8px"><input type="checkbox" data-wchk="wa_on"'+(cfg('wa_on')==='true'?' checked':'')+'> Envio automático ligado</label>'+
     '<label class="row small" style="gap:8px;margin-bottom:10px"><input type="checkbox" data-wchk="wa_pausa"'+(cfg('wa_pausa')==='true'?' checked':'')+'> Pausar agora</label>'+
@@ -643,12 +643,12 @@ async function buscarMais(){
       }while(tok&&pag<3);
     }
     novasDaBusca().forEach(p=>{if(st.sel[p.place_id]===undefined&&tipoFone(p.telefone)==='cel'&&!p.site)st.sel[p.place_id]=true});
-    const n=novasDaBusca().length-antes;toast(n?n+' ótica(s) nova(s) encontrada(s)':'Nenhuma ótica nova com essas palavras');
+    const n=novasDaBusca().length-antes;toast(n?n+' empresa(s) nova(s) encontrada(s)':'Nenhuma empresa nova com essas palavras');
   }catch(e){st.serr=e.message}
   st.busy=false;render();
 }
 async function buscar(more){
-  if(st.busy)return;st.busy=true;st.serr='';if(!more){st.res=[];st.next=null;st.sel={};st.vi=0;st.q0=st.q}render();
+  if(st.busy)return;if(!more&&!String(st.q||'').trim())return toast('Digite o que buscar, ex.: clínicas em Recife');st.busy=true;st.serr='';if(!more){st.res=[];st.next=null;st.sel={};st.vi=0;st.q0=st.q}render();
   try{
     // o Google devolve 20 por página (até 60): continua buscando sozinho enquanto a página só tiver óticas repetidas
     const antes=novasDaBusca().length;let pag=0;
@@ -664,18 +664,18 @@ async function buscar(more){
 async function addSel(){
   const lista=novasDaBusca();
   const rows=lista.filter(p=>st.sel[p.place_id]).map(p=>({place_id:p.place_id,nome:p.nome,telefone:p.telefone,whatsapp:tipoFone(p.telefone)==='cel'?p.telefone:null,endereco:p.endereco,cidade:p.cidade,site:p.site||null,maps_url:p.maps_url,nota:p.nota,avaliacoes:p.avaliacoes,segmento:segDaBusca(st.q0||st.q),historico:[{em:new Date().toISOString(),txt:'Adicionada pela busca "'+st.q+'"'}]}));
-  if(!rows.length)return toast('Marque pelo menos uma ótica nova');
+  if(!rows.length)return toast('Marque pelo menos uma empresa nova');
   const r=await sb.from('prosp_leads').upsert(rows,{onConflict:'place_id',ignoreDuplicates:true}).select();
   if(r.error)return toast('Erro: '+r.error.message);
   st.leads=(r.data||[]).concat(st.leads);
-  st.sel={};toast(rows.length+' ótica(s) adicionada(s) ao CRM. Elas não aparecem mais nas próximas buscas');render();
+  st.sel={};toast(rows.length+' empresa(s) adicionada(s) ao CRM. Elas não aparecem mais nas próximas buscas');render();
 }
 
 /* ---------- ações do CRM ---------- */
 const enviadosHoje=()=>st.leads.filter(l=>l.enviado_em&&l.enviado_em.slice(0,10)===new Date().toISOString().slice(0,10)).length;
 function enviar(id,kind){
   const l=st.leads.find(x=>x.id===id);const f=foneDe(l);
-  if(!f)return toast('Essa ótica não tem telefone. Adicione o WhatsApp no cartão.');
+  if(!f)return toast('Essa empresa não tem telefone. Adicione o WhatsApp no cartão.');
   if(!cfg('seu_nome'))return toast('Coloque seu nome na aba Mensagens antes de enviar'),go('msg');
   const lim=+cfg('limite')||0;
   if(kind==='abordagem'&&lim&&enviadosHoje()>=lim&&!confirm('Você já enviou '+enviadosHoje()+' abordagens hoje (seu limite é '+lim+'). Mandar muitas para quem não te conhece aumenta o risco de bloqueio do WhatsApp. Enviar mesmo assim?'))return;
@@ -705,8 +705,8 @@ function render(){if(st.tab==='auto'&&!wQrT)setTimeout(wQrPoll,0);
   if(!st.loaded)return a.innerHTML='<div class="empty">Carregando leads…</div>';
   const sec=st.tab==='buscar'?'buscar':'crm';
   const item=n=>n[2]?'<a href="'+n[2]+'"'+(sec===n[0]?' class="on"':'')+'>'+n[3]+'<span>'+n[1]+'</span></a>':'<a href="/prospectar?tab='+n[0]+'" data-tab="'+n[0]+'"'+(sec===n[0]?' class="on" aria-current="page"':'')+'>'+n[3]+'<span>'+n[1]+'</span></a>';
-  const head=st.tab==='buscar'?['Prospecção','Encontre óticas no Google Maps e adicione ao CRM']:st.tab==='zap'?['WhatsApp do CRM','Conversas do chip de prospecção: quem respondeu e o follow-up']:st.tab==='auto'?['Envio automático','Fila de abordagens e follow-ups pelo chip do CRM']:st.tab==='msg'?['Modelos de mensagem','Textos da abordagem e do follow-up']:st.tab==='camp'?['Campanha','Tráfego Orgânico e Agente de IA para as óticas que você já abordou']:st.tab==='impl'?['Implantações','Cadastro, contrato, teste, WhatsApp e pagamentos de cada empresa que fechou']:st.tab==='fin'?['Financeiro','Quanto entra por mês, o que falta receber e quem está em atraso']:['CRM','Funil de óticas, follow-up e acessos ao demo'];
-  const sub=st.tab==='buscar'?'':'<div class="subtabs"><button class="chip '+(st.tab==='crm'?'on':'')+'" data-tab="crm">Óticas ('+st.leads.length+')</button><button class="chip '+(st.tab==='zap'?'on':'')+'" data-tab="zap">WhatsApp'+(zNao()?'<span class="n">'+zNao()+'</span>':'')+'</button><button class="chip '+(st.tab==='auto'?'on':'')+'" data-tab="auto">Envio automático ('+st.fila.filter(naFila).length+')</button><button class="chip '+(st.tab==='camp'?'on':'')+'" data-tab="camp">Campanha</button><button class="chip '+(st.tab==='msg'?'on':'')+'" data-tab="msg">Modelos de mensagem</button><button class="chip '+(st.tab==='impl'?'on':'')+'" data-tab="impl">Implantações'+((st.impl||[]).filter(x=>!['ativa','encerrada'].includes(x.status)).length?' ('+(st.impl||[]).filter(x=>!['ativa','encerrada'].includes(x.status)).length+')':'')+'</button><button class="chip '+(st.tab==='fin'?'on':'')+'" data-tab="fin">Financeiro'+((st.cobr||[]).filter(c=>!c.pago&&!c.cancelada&&c.venc<hojeR()).length?'<span class="n">'+(st.cobr||[]).filter(c=>!c.pago&&!c.cancelada&&c.venc<hojeR()).length+'</span>':'')+'</button></div>';
+  const head=st.tab==='buscar'?['Prospecção','Encontre empresas no Google Maps e adicione ao CRM']:st.tab==='zap'?['WhatsApp do CRM','Conversas do chip de prospecção: quem respondeu e o follow-up']:st.tab==='auto'?['Envio automático','Fila de abordagens e follow-ups pelo chip do CRM']:st.tab==='msg'?['Modelos de mensagem','Textos da abordagem e do follow-up']:st.tab==='camp'?['Campanha','Tráfego Orgânico e Agente de IA para as óticas que você já abordou']:st.tab==='impl'?['Implantações','Cadastro, contrato, teste, WhatsApp e pagamentos de cada empresa que fechou']:st.tab==='fin'?['Financeiro','Quanto entra por mês, o que falta receber e quem está em atraso']:['CRM','Funil de empresas, follow-up e acessos ao demo'];
+  const sub=st.tab==='buscar'?'':'<div class="subtabs"><button class="chip '+(st.tab==='crm'?'on':'')+'" data-tab="crm">Empresas ('+st.leads.length+')</button><button class="chip '+(st.tab==='zap'?'on':'')+'" data-tab="zap">WhatsApp'+(zNao()?'<span class="n">'+zNao()+'</span>':'')+'</button><button class="chip '+(st.tab==='auto'?'on':'')+'" data-tab="auto">Envio automático ('+st.fila.filter(naFila).length+')</button><button class="chip '+(st.tab==='camp'?'on':'')+'" data-tab="camp">Campanha</button><button class="chip '+(st.tab==='msg'?'on':'')+'" data-tab="msg">Modelos de mensagem</button><button class="chip '+(st.tab==='impl'?'on':'')+'" data-tab="impl">Implantações'+((st.impl||[]).filter(x=>!['ativa','encerrada'].includes(x.status)).length?' ('+(st.impl||[]).filter(x=>!['ativa','encerrada'].includes(x.status)).length+')':'')+'</button><button class="chip '+(st.tab==='fin'?'on':'')+'" data-tab="fin">Financeiro'+((st.cobr||[]).filter(c=>!c.pago&&!c.cancelada&&c.venc<hojeR()).length?'<span class="n">'+(st.cobr||[]).filter(c=>!c.pago&&!c.cancelada&&c.venc<hojeR()).length+'</span>':'')+'</button></div>';
   a.innerHTML='<aside class="pside"><div class="brand"><b>Connecta AI</b><small>Controle geral</small></div><nav>'+NAV.map(item).join('')+'</nav><div class="foot"><div>'+esc((st.user&&st.user.email)||'')+'</div><button data-a="sair">Sair</button></div></aside>'+
    '<header class="mtop"><b>Connecta AI</b><span class="sp"></span><button data-a="sair">Sair</button></header>'+
    '<main><div class="ph"><h1>'+head[0]+'</h1><p>'+head[1]+'</p></div>'+sub+(st.tab==='buscar'?vBuscar():st.tab==='msg'?vMsg():st.tab==='auto'?vAuto():st.tab==='zap'?vZap():st.tab==='camp'?vCamp():st.tab==='impl'?vImpl():st.tab==='fin'?vFin():vCrm())+'</main>';
@@ -725,15 +725,15 @@ function gate(){return '<div class="gate"><div class="card"><h1>Prospecção</h1
 function vBuscar(){
   const ja=noCrm(),novos=novasDaBusca(),noCrmN=st.res.filter(p=>ja(p)).length;
   let h='<div class="card"><div class="row"><input type="text" id="q" class="grow" value="'+esc(st.q)+'" placeholder="ex.: óticas em Olinda, clínicas em Recife, advocacia em Boa Viagem"><button class="btn pri" data-a="buscar" '+(st.busy?'disabled':'')+'>'+(st.busy?'Buscando…':'Buscar')+'</button></div>'+
-    '<p class="muted small" style="margin:8px 0 0">Dica: busque por bairro ("óticas em Casa Amarela Recife") para achar lojas que a busca da cidade inteira não mostra.</p></div>';
+    '<p class="muted small" style="margin:8px 0 0">Dica: busque por bairro ("clínicas em Casa Amarela Recife") para achar empresas que a busca da cidade inteira não mostra.</p></div>';
   if(st.noKey)h+='<div class="note warn sec"><b>Falta a chave do Google.</b> Siga o passo a passo que te mandei no chat e depois busque de novo.</div>';
   if(st.serr)h+='<div class="note warn sec">'+esc(st.serr)+'</div>';
   if(st.res.length){
     const n=novos.filter(p=>st.sel[p.place_id]).length;
-    h+='<div class="row sec"><span class="grow muted small">'+novos.length+' ótica(s) nova(s) em '+st.res.length+' encontradas'+(noCrmN?'. '+noCrmN+' já estão no CRM e não aparecem aqui':'')+'. Marquei as que têm celular e não têm site.</span>'+
+    h+='<div class="row sec"><span class="grow muted small">'+novos.length+' empresa(s) nova(s) em '+st.res.length+' encontradas'+(noCrmN?'. '+noCrmN+' já estão no CRM e não aparecem aqui':'')+'. Marquei as que têm celular e não têm site.</span>'+
       '<button class="btn pri" data-a="add" '+(n?'':'disabled')+'>Adicionar '+n+' ao CRM</button></div>'+
-      '<p class="small muted" style="margin:6px 0 0">As óticas que você adicionar ao CRM não aparecem mais em nenhuma busca. As desmarcadas continuam aparecendo.</p><div class="list two">';
-    if(!novos.length)h+='<div class="empty">Todas as óticas desta busca já estão no seu CRM.'+' Toque em Buscar mais óticas, lá embaixo, ou busque outro bairro.'+'</div>';
+      '<p class="small muted" style="margin:6px 0 0">As empresas que você adicionar ao CRM não aparecem mais em nenhuma busca. As desmarcadas continuam aparecendo.</p><div class="list two">';
+    if(!novos.length)h+='<div class="empty">Todas as empresas desta busca já estão no seu CRM.'+' Toque em Buscar mais, lá embaixo, ou busque outro bairro.'+'</div>';
     novos.forEach(p=>{
       const tf=tipoFone(p.telefone);
       h+='<div class="card res"><input type="checkbox" data-sel="'+esc(p.place_id)+'" '+(st.sel[p.place_id]?'checked':'')+'><div class="grow"><b>'+esc(p.nome)+'</b><div class="meta" style="display:flex;gap:6px;flex-wrap:wrap;margin:4px 0">'+
@@ -745,7 +745,7 @@ function vBuscar(){
     h+='</div>';
     const segQ=segDaBusca(st.q0||st.q),fimVars=!st.next&&(st.vi||0)>=(segQ?4:VARS.length);
     h+='<div class="row sec" style="justify-content:center;flex-direction:column;align-items:center;gap:6px"><button class="btn pri" data-a="mais" '+(st.busy||fimVars?'disabled':'')+'>'+(st.busy?'Buscando...':segQ?'Buscar mais empresas':'Buscar mais óticas')+'</button><span class="small muted">'+(fimVars?'Já busquei com todas as palavras. Tente um bairro ou cidade vizinha.':st.next?'Carrega a próxima página do Google.':(segQ?'Busca de novo com variações de "'+esc(segQ)+'".':'Busca de novo com outras palavras (loja de óculos, óptica, lentes...) em '+esc(lugarDaBusca(st.q0||st.q))+'.'))+'</span></div>';
-  }else if(!st.busy&&!st.noKey&&!st.serr)h+='<div class="empty">Busque uma cidade ou bairro para encontrar óticas.</div>';
+  }else if(!st.busy&&!st.noKey&&!st.serr)h+='<div class="empty">Busque uma cidade ou bairro para encontrar empresas.</div>';
   return h;
 }
 
@@ -765,7 +765,7 @@ const zHora=iso=>{const d=new Date(iso),h=String(d.getHours()).padStart(2,'0')+'
 function zLista(){
   const q=st.zq.trim().toLowerCase();
   const cs=zConvs().filter(g=>(st.zf==='todas'||g.resp||g.k===st.zsel)&&(!q||g.nome.toLowerCase().includes(q)||g.tel.includes(digits(q)||'@')));
-  if(!cs.length)return '<p class="small muted" style="padding:14px">'+(st.zf==='resp'?'Nenhuma ótica respondeu ainda. Quando alguém responder pelo chip do CRM, a conversa aparece aqui.':'Nenhuma conversa ainda.')+'</p>';
+  if(!cs.length)return '<p class="small muted" style="padding:14px">'+(st.zf==='resp'?'Nenhuma empresa respondeu ainda. Quando alguém responder pelo chip do CRM, a conversa aparece aqui.':'Nenhuma conversa ainda.')+'</p>';
   return cs.map(g=>{const u=g.ult,prev=u?(u.de_mim?'Você: ':'')+u.texto:'Nova conversa';
     return '<button class="zi'+(st.zsel===g.k?' on':'')+'" data-zk="'+g.k+'"><span class="av" aria-hidden="true">'+esc((g.nome.match(/[A-Za-zÀ-ú0-9]/)||['?'])[0].toUpperCase())+'</span><span class="tx"><span class="l1"><b>'+esc(g.nome)+'</b><small>'+(g.quando?zHora(g.quando):'')+'</small></span><span class="l2"><span>'+esc(prev.replace(/\s+/g,' ').slice(0,90))+'</span>'+(g.nao?'<span class="n">'+g.nao+'</span>':'')+'</span></span></button>'}).join('');
 }
@@ -800,7 +800,7 @@ function vZap(){
   const w=st.wst||{},cs=zConvs(),g=cs.find(x=>x.k===st.zsel);
   let h='';
   if(w.estado&&w.estado!=='conectado')h+='<div class="note warn" style="margin-bottom:12px">O chip do CRM está desconectado ('+esc((WEST[w.estado]||[0,w.estado])[1])+'). As mensagens só chegam e saem com o conector ligado.</div>';
-  const side='<div class="zl'+(g?' tem':'')+'"><div class="zf"><input type="search" id="zq" placeholder="Buscar ótica ou número" value="'+esc(st.zq)+'" aria-label="Buscar conversa"><div class="row" style="gap:4px"><button class="chip'+(st.zf==='resp'?' on':'')+'" data-zf="resp">Responderam</button><button class="chip'+(st.zf==='todas'?' on':'')+'" data-zf="todas">Todas</button></div></div><div class="zs" id="zlist">'+zLista()+'</div></div>';
+  const side='<div class="zl'+(g?' tem':'')+'"><div class="zf"><input type="search" id="zq" placeholder="Buscar empresa ou número" value="'+esc(st.zq)+'" aria-label="Buscar conversa"><div class="row" style="gap:4px"><button class="chip'+(st.zf==='resp'?' on':'')+'" data-zf="resp">Responderam</button><button class="chip'+(st.zf==='todas'?' on':'')+'" data-zf="todas">Todas</button></div></div><div class="zs" id="zlist">'+zLista()+'</div></div>';
   let main='<div class="zm vazio" style="display:grid;place-items:center"><p class="small muted">Escolha uma conversa.</p></div>';
   if(g){const l=g.lead;
     const sts=l?['respondeu','interessada','fechou','sem_interesse'].filter(k=>k!==l.status).map(k=>'<button class="btn sm" data-st="'+l.id+'" data-v="'+k+'">'+STATUS[k]+'</button>').join(''):'';
@@ -823,7 +823,7 @@ function zRolar(){const t=$('#zthread');if(t)t.scrollTop=t.scrollHeight}
 function vizCrm(c){
   const ord=['novo','enviado','respondeu','interessada','fechou','sem_interesse'],cor={novo:'var(--line-2)',enviado:'var(--s1)',respondeu:'var(--s2)',interessada:'var(--s4)',fechou:'var(--gold)',sem_interesse:'var(--s6)'};
   const mx=Math.max(1,...ord.map(k=>c[k]||0));
-  const fun='<div class="vz"><h3>Funil de óticas</h3><p class="sub">Quantas estão em cada etapa. Toque para filtrar a lista.</p><div class="fun">'+ord.map(k=>'<button data-f="'+k+'"><span>'+STATUS[k]+'</span><span class="bar"><i style="width:'+((c[k]||0)*100/mx)+'%;--c:'+cor[k]+'"></i></span><b>'+(c[k]||0)+'</b></button>').join('')+'</div></div>';
+  const fun='<div class="vz"><h3>Funil de empresas</h3><p class="sub">Quantas estão em cada etapa. Toque para filtrar a lista.</p><div class="fun">'+ord.map(k=>'<button data-f="'+k+'"><span>'+STATUS[k]+'</span><span class="bar"><i style="width:'+((c[k]||0)*100/mx)+'%;--c:'+cor[k]+'"></i></span><b>'+(c[k]||0)+'</b></button>').join('')+'</div></div>';
   const dia=d=>{const x=new Date(d);return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0')};
   const dias=[];for(let i=13;i>=0;i--)dias.push(addDays(-i));
   const env={},ac={};st.leads.forEach(l=>{if(l.enviado_em){const k=dia(l.enviado_em);env[k]=(env[k]||0)+1}acessos(l).forEach(a=>{const k=dia(a.em);ac[k]=(ac[k]||0)+1})});
@@ -919,15 +919,15 @@ function vFin(){
   const prox=cs.filter(c=>!c.pago&&c.venc>=h&&diasEntre(h,c.venc)<=30);
   const kp=(v,t,sub,cls)=>'<div class="fk'+(cls?' '+cls:'')+'"><b>'+v+'</b><span>'+t+'</span>'+(sub?'<small>'+sub+'</small>':'')+'</div>';
   return '<div class="fks">'+
-    kp(brl(mrrAg+mrrOt),'Entra por mês (mensalidades)',brl(mrrAg)+' de '+ativos.length+(ativos.length===1?' agente':' agentes')+' · '+brl(mrrOt)+' de '+ots.length+(ots.length===1?' ótica':' óticas'))+
+    kp(brl(mrrAg+mrrOt),'Entra por mês (mensalidades)',brl(mrrAg)+' de '+ativos.length+(ativos.length===1?' agente':' agentes')+' · '+brl(mrrOt)+' de '+ots.length+(ots.length===1?' sistema de gestão':' sistemas de gestão'))+
     kp(brl(recMes),'Recebido em '+MESES[+mes.slice(5,7)-1],brl(aRecMes)+' ainda a receber este mês')+
     kp(brl(vAtr),'Em atraso',(atr.length+atrOt.length)+(atr.length+atrOt.length===1?' cobrança':' cobranças'),vAtr>0?'bad':'')+
     kp(brl(implAb+futuraEntrega),'Implantação a receber',brl(implAb)+' já cobrado · '+brl(futuraEntrega)+' na entrega')+
     kp(String(ativos.length),'Agentes atendendo',esperando.length?esperando.length+' esperando conectar o WhatsApp':'')+
     kp(String(canc),'Cancelaram (90 dias)','')+'</div>'+
-    '<section class="card sec"><h2>Recebido por mês</h2><div class="fbar">'+meses.map((m,i)=>'<div><i style="height:'+Math.max(2,Math.round(recPor[i]*100/mx))+'%" title="'+brl(recPor[i])+'"></i><b>'+(recPor[i]?brl(recPor[i]).replace(',00',''):'–')+'</b><span>'+MESES[+m.slice(5,7)-1]+'</span></div>').join('')+'</div><p class="small muted" style="margin:8px 0 0">Agentes (cobranças do pós-venda) + óticas (aba Mensalidades). Só entra o que você marcou como recebido.</p></section>'+
+    '<section class="card sec"><h2>Recebido por mês</h2><div class="fbar">'+meses.map((m,i)=>'<div><i style="height:'+Math.max(2,Math.round(recPor[i]*100/mx))+'%" title="'+brl(recPor[i])+'"></i><b>'+(recPor[i]?brl(recPor[i]).replace(',00',''):'–')+'</b><span>'+MESES[+m.slice(5,7)-1]+'</span></div>').join('')+'</div><p class="small muted" style="margin:8px 0 0">Agentes (cobranças do pós-venda) + sistemas de gestão (aba Mensalidades). Só entra o que você marcou como recebido.</p></section>'+
     '<section class="card sec"><h2>Em atraso</h2>'+(atr.length?'<div class="cobs">'+atr.map(c=>cobLinha(c,true)).join('')+'</div>':'<p class="small muted" style="margin:0">Nenhum agente em atraso. 🎉</p>')+
-      (atrOt.length?'<p class="small" style="margin:10px 0 0">Óticas em atraso: '+atrOt.map(c=>esc(((st.finOt||[]).find(o=>o.id===c.otica_id)||{}).nome||'Ótica')+' ('+brl(c.valor)+', '+fmtD(c.venc)+')').join(', ')+' · <a href="/adm?tab=mensal">abrir Mensalidades</a></p>':'')+'</section>'+
+      (atrOt.length?'<p class="small" style="margin:10px 0 0">Sistemas de gestão em atraso: '+atrOt.map(c=>esc(((st.finOt||[]).find(o=>o.id===c.otica_id)||{}).nome||'Empresa')+' ('+brl(c.valor)+', '+fmtD(c.venc)+')').join(', ')+' · <a href="/adm?tab=mensal">abrir Mensalidades</a></p>':'')+'</section>'+
     '<section class="card sec"><h2>Próximos 30 dias</h2>'+(prox.length?'<div class="cobs">'+prox.map(c=>cobLinha(c,true)).join('')+'</div>':'<p class="small muted" style="margin:0">Nada vencendo nos próximos 30 dias.</p>')+'</section>'+
     '<section class="card sec"><h2>Como funciona a cobrança</h2><p class="small muted" style="margin:0">A 1ª parte (50%) é cobrada quando a empresa assina o contrato. A 2ª parte (50%) quando o WhatsApp conecta e o agente começa a atender, e a 1ª mensalidade 30 dias depois. Cada cobrança vai pelo WhatsApp do CRM com o Pix copia e cola. A mensalidade é lembrada 3 dias antes, no dia, e com 3 e 7 dias de atraso. Com 10 dias de atraso você recebe um aviso para decidir se pausa o agente. Quando a empresa manda “paguei” ou o comprovante, você recebe um aviso para tocar em <b>Recebi</b>.</p></section>';
 }
@@ -996,7 +996,7 @@ function vCrm(){
     '<button class="stat k5" data-f="fechou"><b>'+(c.fechou||0)+'</b><span>Fecharam</span></button></div>';
   h=vFechar()+h;
   if(st.leads.length)h+=vizCrm(c)+vResultados();
-  if(!st.leads.length)return h+'<div class="empty">Nenhuma ótica no CRM ainda.<br><br><button class="btn pri" data-tab="buscar">Buscar óticas</button></div>';
+  if(!st.leads.length)return h+'<div class="empty">Nenhuma empresa no CRM ainda.<br><br><button class="btn pri" data-tab="buscar">Buscar empresas</button></div>';
   const COR={todos:'var(--fg)',hoje:'var(--s4)',abriu:'var(--gold)',novo:'var(--line-2)',enviado:'var(--s1)',respondeu:'var(--s2)',interessada:'var(--s4)',fechou:'var(--gold)',sem_interesse:'var(--s6)'};
   const chip=(k,n,x)=>'<button class="ftile'+(st.f===k?' on':'')+'" data-f="'+k+'" aria-pressed="'+(st.f===k)+'" style="--fc:'+COR[k]+'"><b>'+x+'</b><span>'+n.replace('👀 ','')+'</span></button>';
   h+='<input type="text" id="fq" placeholder="Procurar por nome, bairro ou telefone" value="'+esc(st.fq)+'">';
@@ -1004,10 +1004,10 @@ function vCrm(){
   const q=st.fq.trim().toLowerCase();
   let L=st.f==='todos'?st.leads:st.f==='hoje'?fu:st.f==='abriu'?ab:st.leads.filter(l=>l.status===st.f);
   if(q)L=L.filter(l=>(l.nome+' '+(l.endereco||'')+' '+digits(foneDe(l))).toLowerCase().includes(q));
-  if(st.f==='abriu')h+='<p class="small muted" style="margin:8px 0 0">Óticas que abriram o link, da mais recente para a mais antiga. Só contam acessos reais: os seus, a prévia do WhatsApp e recarregar a página em menos de 30 min ficam de fora.</p>';
-  if(!L.length)return h+'<div class="empty">'+(st.f==='abriu'?'Nenhuma ótica abriu o demo ainda.':'Nada aqui.')+'</div>';
+  if(st.f==='abriu')h+='<p class="small muted" style="margin:8px 0 0">Empresas que abriram o link, da mais recente para a mais antiga. Só contam acessos reais: os seus, a prévia do WhatsApp e recarregar a página em menos de 30 min ficam de fora.</p>';
+  if(!L.length)return h+'<div class="empty">'+(st.f==='abriu'?'Nenhuma empresa abriu o demo ainda.':'Nada aqui.')+'</div>';
   const cand=L.filter(podeAuto),nm=Object.keys(st.marc).filter(id=>st.marc[id]).length;
-  if(cand.length)h+='<div class="card sec" style="padding:10px 12px"><div class="row" style="flex-wrap:wrap;gap:8px"><span class="grow small">🤖 <b>Envio automático:</b> '+(nm?nm+' ótica(s) marcada(s)':'marque as óticas novas (com celular) nos cartões')+'</span><button class="btn sm" data-a="marcartodas">Marcar as '+Math.min(cand.length,+cfg('wa_limite')||20)+' primeiras novas</button>'+(nm?'<button class="btn sm" data-a="desmarcar">Desmarcar</button><button class="btn pri sm" data-a="enfileirar">Colocar '+nm+' na fila automática</button>':'')+'</div></div>';
+  if(cand.length)h+='<div class="card sec" style="padding:10px 12px"><div class="row" style="flex-wrap:wrap;gap:8px"><span class="grow small">🤖 <b>Envio automático:</b> '+(nm?nm+' empresa(s) marcada(s)':'marque as empresas novas (com celular) nos cartões')+'</span><button class="btn sm" data-a="marcartodas">Marcar as '+Math.min(cand.length,+cfg('wa_limite')||20)+' primeiras novas</button>'+(nm?'<button class="btn sm" data-a="desmarcar">Desmarcar</button><button class="btn pri sm" data-a="enfileirar">Colocar '+nm+' na fila automática</button>':'')+'</div></div>';
   h+='<div class="list two">'+L.map(cardLead).join('')+'</div>';
   return h;
 }
@@ -1127,7 +1127,7 @@ document.addEventListener('click',async e=>{
   if(d.copysite){const l=st.leads.find(x=>x.id===d.copysite);try{await navigator.clipboard.writeText(siteLink(l));toast('Link do site copiado')}catch(x){prompt('Copie o link:',siteLink(l))}return}
   if(d.copyimpl){const x=(st.impl||[]).find(y=>y.id===d.copyimpl);const lk=implLink(x);try{await navigator.clipboard.writeText(lk);toast('Link copiado')}catch(z){prompt('Copie o link:',lk)}return}
   if(d.copy){const l=st.leads.find(x=>x.id===d.copy);const lk=ehOtica(l)?demoLink(l):agenteLink(l);try{await navigator.clipboard.writeText(lk);toast('Link copiado')}catch(x){prompt('Copie o link:',lk)}return}
-  if(d.del){if(!confirm('Remover essa ótica do CRM?'))return;const r=await sb.from('prosp_leads').delete().eq('id',d.del);if(r.error)return toast(r.error.message);st.leads=st.leads.filter(l=>l.id!==d.del);return render()}
+  if(d.del){if(!confirm('Remover essa empresa do CRM?'))return;const r=await sb.from('prosp_leads').delete().eq('id',d.del);if(r.error)return toast(r.error.message);st.leads=st.leads.filter(l=>l.id!==d.del);return render()}
   switch(d.a){
     case 'agsalvar':{const rows=[...document.querySelectorAll('[data-agcfg]')].map(i=>({chave:i.dataset.agcfg,valor:String(i.value||'').trim()})).concat([...document.querySelectorAll('[data-agchk]')].map(i=>({chave:i.dataset.agchk,valor:i.checked?'true':'false'})));
       const ds=[...document.querySelectorAll('[data-agdia]')].filter(i=>i.checked).map(i=>i.dataset.agdia);if(!ds.length)return toast('Marque pelo menos um dia');rows.push({chave:'ag_dias',valor:ds.join(',')});

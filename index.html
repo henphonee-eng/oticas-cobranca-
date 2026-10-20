@@ -4659,7 +4659,7 @@ const ADMDEF={
   lembrete:'Olá, {nome}! Passando para lembrar que a {descricao} do sistema da {otica}, de {valor}, vence em {vencimento}.\n\nPix copia e cola (já com o valor):\n{pixcopia}\n\nObrigado!',
   atraso:'Olá, {nome}! A {descricao} do sistema da {otica}, de {valor}, venceu em {vencimento} e está em atraso há {dias}.\n\nPix copia e cola (já com o valor):\n{pixcopia}\n\nSe já pagou, é só enviar o comprovante. Obrigado!'
 };
-const ADMLABEL={boasvindas:'Boas-vindas (ótica nova)',lembrete:'Parcela perto de vencer ou vencendo hoje',atraso:'Parcela vencida'};
+const ADMLABEL={boasvindas:'Boas-vindas (empresa nova)',lembrete:'Parcela perto de vencer ou vencendo hoje',atraso:'Parcela vencida'};
 const admTpl=k=>(ADM.cfg[k]&&ADM.cfg[k].trim())?ADM.cfg[k]:ADMDEF[k];
 async function admLoad(force){
   if((ADM.loaded&&!force)||ADM.busy||!IS_ADMIN)return;
@@ -4686,7 +4686,7 @@ async function admLoad(force){
     await admGerar();
   }catch(e){
     if(semPermissao(e)&&!admLoad.tentou){admLoad.tentou=true;ADM.busy=false;try{const r=await sb.auth.refreshSession();if(r.data&&r.data.session){SESSION=r.data.session;return admLoad(true)}}catch(x){}admLoad.tentou=false;sessSaindo=true;await logout(SESS_MSG,true);sessSaindo=false;return}
-    ADM.err='Não foi possível carregar as óticas: '+errTxt(e)}
+    ADM.err='Não foi possível carregar as empresas: '+errTxt(e)}
   admLoad.tentou=false;
   ADM.busy=false;ADM.loaded=true;render();admNovaDoCrm();admAoVivo();
 }
@@ -4719,7 +4719,7 @@ async function admGerar(){
   const c=await sb.from('adm_cobrancas').select('*');if(!c.error){ADM.cobAll=c.data||[];ADM.cob=ADM.cobAll.filter(admVisivel)}
 }
 const admLink=o=>(o.dominios&&o.dominios.length)?'https://'+o.dominios[0]+'/':location.origin+'/?o='+encodeURIComponent(o.slug);
-const admOtica=id=>ADM.list.find(o=>o.id===id)||{nome:'Ótica removida'};
+const admOtica=id=>ADM.list.find(o=>o.id===id)||{nome:'Empresa removida'};
 const admDesc=c=>c.tipo==='implementacao'?'implantação':(c.parcela?c.parcela+'ª ':'')+'mensalidade ('+parseYmd(c.venc).toLocaleDateString('pt-BR',{month:'long'})+')';
 function admCtx(o,c,senha){
   const x={nome:firstName(o.dono_nome)||'tudo bem',otica:o.nome,link:admLink(o),email:o.email_dono||'o e-mail cadastrado',senha:senha?'\nSenha: '+senha:'',pix:(ADM.cfg.pix||'').trim()||'(informe a chave Pix)'};
@@ -4735,8 +4735,8 @@ function admRecorrente(){
   const rodando=at.filter(o=>admBase(o)),aguard=at.filter(o=>!admBase(o));
   const mrr=rodando.reduce((s,o)=>s+(+o.mensalidade),0),pend=aguard.reduce((s,o)=>s+(+o.mensalidade),0);
   const t=todayStr();let prox=0;for(let k=1;k<=3;k++){const m=addMonths(t.slice(0,7)+'-01',k).slice(0,7);prox+=menDoMes(m).filter(c=>c.tipo==='mensalidade').reduce((s,c)=>s+c.valor,0)}
-  return '<div class="sh"><h2>Receita recorrente</h2></div><div class="msum rec"><div class="ms"><small>Por mês</small><b>'+brl(mrr)+'</b><span>'+plural(rodando.length,'ótica pagando','óticas pagando')+'</span></div>'+
-    '<div class="ms"><small>Em 12 meses</small><b>'+brl((mrr+pend)*12)+'</b><span>'+(pend?'contando '+plural(aguard.length,'ótica que vai começar','óticas que vão começar'):'se todas continuarem')+'</span></div>'+
+  return '<div class="sh"><h2>Receita recorrente</h2></div><div class="msum rec"><div class="ms"><small>Por mês</small><b>'+brl(mrr)+'</b><span>'+plural(rodando.length,'empresa pagando','empresas pagando')+'</span></div>'+
+    '<div class="ms"><small>Em 12 meses</small><b>'+brl((mrr+pend)*12)+'</b><span>'+(pend?'contando '+plural(aguard.length,'empresa que vai começar','empresas que vão começar'):'se todas continuarem')+'</span></div>'+
     '<div class="ms"><small>Próximos 3 meses</small><b>'+brl(prox)+'</b><span>mensalidades previstas</span></div></div>';
 }
 /* funil de vendas, a partir do CRM */
@@ -4749,7 +4749,7 @@ function admFunil(){
   const max=Math.max(1,L.length);
   return '<div class="sh"><h2>Funil de vendas</h2><span class="sub">'+(ab.length?'taxas sobre quem recebeu a abordagem':'')+'</span></div><div class="card funil">'+
     et.map((e,i)=>'<div class="fn-row"><span class="fn-l">'+e[0]+'</span><div class="fn-bar"><i style="width:'+Math.max(4,Math.round(e[1]/max*100))+'%"'+(i===4?' class="win"':'')+'></i></div><b class="num">'+e[1]+'</b><span class="fn-p num">'+(e[2]==null?'':Math.round(e[2]*100)+'%')+'</span></div>').join('')+
-    (ab.length>=10?'<p class="sub" style="margin:4px 0 0">'+(dm.length/base<.3?'Poucas óticas abrem o demo: teste outra primeira frase da mensagem.':rs.length/base<.15?'Abrem o demo mas não respondem: mande o follow-up 2 ou 3 dias depois.':'Bom ritmo. Continue com o follow-up de quem abriu o demo.')+'</p>':'')+'</div>';
+    (ab.length>=10?'<p class="sub" style="margin:4px 0 0">'+(dm.length/base<.3?'Poucas empresas abrem o demo: teste outra primeira frase da mensagem.':rs.length/base<.15?'Abrem o demo mas não respondem: mande o follow-up 2 ou 3 dias depois.':'Bom ritmo. Continue com o follow-up de quem abriu o demo.')+'</p>':'')+'</div>';
 }
 /* abre "Nova ótica" já preenchida quando vem do CRM (/adm?nova=1&nome=...) */
 function admNovaDoCrm(){
@@ -4793,25 +4793,25 @@ function viewAdmin(){
   const recMes=C.filter(c=>c.pago&&c.pago_em&&c.pago_em.slice(0,7)===mk);
   const ativas=ADM.list.filter(o=>o.ativa).length;
   const kp=ADM.loaded?'<div class="kpis">'+
-    '<div class="kpi lead"><small>Óticas cadastradas</small><b>'+ADM.list.length+'</b><span>'+plural(ativas,'ativa','ativas')+'</span></div>'+
+    '<div class="kpi lead"><small>Empresas cadastradas</small><b>'+ADM.list.length+'</b><span>'+plural(ativas,'ativa','ativas')+'</span></div>'+
     '<div class="kpi"><small>Mensalidades a receber</small><b>'+brl(sum(mens.filter(c=>!c.pago)))+'</b><span>de '+brl(sum(mens))+' no mês</span></div>'+
     '<div class="kpi"><small>Implantações do mês</small><b>'+brl(sum(impl))+'</b><span>'+brl(sum(impl.filter(c=>c.pago)))+' recebido</span></div>'+
     '<div class="kpi'+(late.length?' neg':'')+'"><small>Em atraso</small><b>'+brl(sum(late))+'</b><span>'+plural(late.length,'cobrança','cobranças')+'</span></div>'+
     '<div class="kpi total"><small>Recebido no mês</small><b>'+brl(sum(recMes))+'</b><span>'+plural(recMes.length,'pagamento','pagamentos')+'</span></div></div>':'';
   const msgs='<details style="margin-top:18px"><summary>Mensagens de WhatsApp e chave Pix</summary><div class="stack" style="margin-top:10px"><div class="card"><div class="field"><span>Sua chave Pix (vai nas cobranças)</span><input type="text" data-admcfg="pix" value="'+esc(ADM.cfg.pix||'')+'" placeholder="CPF, e-mail, chave aleatória ou +5581999999999"></div>'+
     '<div class="grid2"><div class="field"><span>Nome do recebedor (como está no banco)</span><input type="text" data-admcfg="pix_nome" value="'+esc(ADM.cfg.pix_nome||'')+'" placeholder="Eder Henrique"></div><div class="field"><span>Cidade</span><input type="text" data-admcfg="pix_cidade" value="'+esc(ADM.cfg.pix_cidade||'')+'" placeholder="Recife"></div></div>'+
-    '<div class="field"><span>Seu WhatsApp (aparece para a ótica no aviso de atraso)</span><input type="text" inputmode="tel" data-admcfg="whatsapp_adm" value="'+esc(ADM.cfg.whatsapp_adm||'')+'" placeholder="(81) 99999-9999"></div>'+
+    '<div class="field"><span>Seu WhatsApp (aparece para a empresa no aviso de atraso)</span><input type="text" inputmode="tel" data-admcfg="whatsapp_adm" value="'+esc(ADM.cfg.whatsapp_adm||'')+'" placeholder="(81) 99999-9999"></div>'+
     '<p class="sub" style="margin:0">Com a chave preenchida, as cobranças levam o Pix copia e cola já com o valor de cada mensalidade.</p></div>'+
     '<p class="sub" style="margin:0">Pode usar: {nome} {otica} {descricao} {valor} {vencimento} {dias} {pix} {pixcopia} {link} {email} {senha}</p>'+
     Object.keys(ADMDEF).map(k=>'<div class="card"><div class="field"><span>'+ADMLABEL[k]+'</span><textarea data-admcfg="'+k+'">'+esc(admTpl(k))+'</textarea></div><div><button class="btn sm ghost" data-act="admtplreset" data-k="'+k+'">Restaurar texto padrão</button></div></div>').join('')+'</div></details>';
-  return pageHead('Connecta AI','Controle geral das óticas clientes','<button class="btn primary" data-act="admnova">Nova ótica</button>')+
+  return pageHead('Connecta AI','Controle geral das empresas clientes','<button class="btn primary" data-act="admnova">Nova empresa</button>')+
   (ADM.err?'<p class="hint bad" role="alert">'+esc(ADM.err)+'</p>':'')+kp+
-  (ADM.loaded?'<div class="secs">'+admSec('atraso','Cobranças em atraso',late.length?plural(late.length,'cobrança','cobranças')+' · '+brl(sum(late)):'Nenhuma',late.length>0,'<div class="stack">'+(late.length?late.map(admCobRow).join(''):none('Nenhuma ótica em atraso.'))+'</div>')+
+  (ADM.loaded?'<div class="secs">'+admSec('atraso','Cobranças em atraso',late.length?plural(late.length,'cobrança','cobranças')+' · '+brl(sum(late)):'Nenhuma',late.length>0,'<div class="stack">'+(late.length?late.map(admCobRow).join(''):none('Nenhuma empresa em atraso.'))+'</div>')+
     admSec('prox','Vencem em até 7 dias',prox.length?plural(prox.length,'cobrança','cobranças')+' · '+brl(sum(prox)):'Nada vencendo',false,'<div class="stack">'+(prox.length?prox.map(admCobRow).join(''):none('Nada vencendo nos próximos dias.'))+'</div>')+
     admMov()+'</div>':'')+
   (ADM.loaded?admRecorrente()+admFunil()+'<div class="sh"><h2>Avisos no celular</h2></div>'+pushCard():'')+
-  '<div class="sh"><h2>Óticas</h2></div>'+
-  (!ADM.loaded?none('Carregando...'):ADM.list.length?'<div class="gridlist">'+ADM.list.map(admCard).join('')+'</div>':'<div class="empty">'+GLASSES+'<h3>Nenhuma ótica cadastrada</h3><p>Toque em Nova ótica para cadastrar a primeira.</p></div>')+(ADM.loaded?msgs:'');
+  '<div class="sh"><h2>Empresas</h2></div>'+
+  (!ADM.loaded?none('Carregando...'):ADM.list.length?'<div class="gridlist">'+ADM.list.map(admCard).join('')+'</div>':'<div class="empty">'+GLASSES+'<h3>Nenhuma empresa cadastrada</h3><p>Toque em Nova empresa para cadastrar a primeira.</p></div>')+(ADM.loaded?msgs:'');
 }
 
 
@@ -4826,8 +4826,8 @@ function quandoFoi(iso){const m=Math.floor((Date.now()-new Date(iso).getTime())/
 function admMov(){
   const L=ADM.mov||[];
   const hoje=L.filter(m=>new Date(m.em).toDateString()===new Date().toDateString()).length;
-  return admSec('mov','Movimentações das óticas',(vivoOn?'<span class="aovivo">●</span> ':'')+(hoje?plural(hoje,'hoje','hoje'):'nenhuma hoje'),false,
-    (L.length?'<div class="card movs">'+L.map(m=>'<div class="mv"><span class="mv-t chip '+(m.tipo==='Nova venda'?'ok':m.tipo==='Orçamento'?'warn':'')+'">'+m.tipo+'</span><span class="mv-d"><b>'+esc(admOtica(m.otica_id).nome)+'</b>'+(m.nome?' · '+esc(m.nome):'')+'</span><span class="mv-v num">'+(m.valor?brl(m.valor):'')+'</span><span class="mv-q meta">'+quandoFoi(m.em)+'</span></div>').join('')+'</div>':none('Quando as óticas registrarem vendas e clientes, aparece aqui na hora.')));
+  return admSec('mov','Movimentações das empresas',(vivoOn?'<span class="aovivo">●</span> ':'')+(hoje?plural(hoje,'hoje','hoje'):'nenhuma hoje'),false,
+    (L.length?'<div class="card movs">'+L.map(m=>'<div class="mv"><span class="mv-t chip '+(m.tipo==='Nova venda'?'ok':m.tipo==='Orçamento'?'warn':'')+'">'+m.tipo+'</span><span class="mv-d"><b>'+esc(admOtica(m.otica_id).nome)+'</b>'+(m.nome?' · '+esc(m.nome):'')+'</span><span class="mv-v num">'+(m.valor?brl(m.valor):'')+'</span><span class="mv-q meta">'+quandoFoi(m.em)+'</span></div>').join('')+'</div>':none('Quando as empresas registrarem vendas e clientes, aparece aqui na hora.')));
 }
 setInterval(()=>{if(IS_ADMIN&&ui.tab==='admin'&&!admEditando()&&document.querySelector('.movs'))render()},60000);
 function admSaude(o){
@@ -4853,7 +4853,7 @@ function pushCard(){
     negado:'<span class="meta">As notificações foram bloqueadas no navegador. Libere nas configurações do site e toque em Ativar.</span>',
     instalar:'<span class="meta">No iPhone: toque em Compartilhar → <b>Adicionar à Tela de Início</b>, abra o Adm pelo ícone e ative aqui.</span>',
     sem:'<span class="meta">Este navegador não recebe notificações. Use o Chrome ou o app instalado na tela de início.</span>','?':''};
-  return '<div class="card pushcard"><div><b>Avisar no celular quando uma ótica abrir o demo</b><div class="meta">Chega na hora, mesmo com o sistema fechado.</div></div><div class="acts" style="justify-content:flex-start">'+(t[PUSH.st]||'')+'</div></div>';
+  return '<div class="card pushcard"><div><b>Avisar no celular quando uma empresa abrir o demo</b><div class="meta">Chega na hora, mesmo com o sistema fechado.</div></div><div class="acts" style="justify-content:flex-start">'+(t[PUSH.st]||'')+'</div></div>';
 }
 async function pushLigar(){
   try{
@@ -4880,7 +4880,7 @@ function admAoVivo(){
   vivo=sb.channel('adm-ao-vivo')
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'prosp_acessos'},async p=>{
       const r=await sb.from('prosp_leads').select('nome').eq('id',p.new.lead_id).single();
-      showPop('👀 '+((r.data&&r.data.nome)||'Uma ótica')+' abriu o demo',(p.new.aparelho||'Agora')+' · toque para ver no CRM','crm');admAgendar();
+      showPop('👀 '+((r.data&&r.data.nome)||'Uma empresa')+' abriu o demo',(p.new.aparelho||'Agora')+' · toque para ver no CRM','crm');admAgendar();
     })
     .on('postgres_changes',{event:'*',schema:'public',table:'docs'},p=>{
       const n=p.new||{},d=n.data||{};
@@ -4904,7 +4904,7 @@ function menRow(c){
   if(MEN.edit===c.id){
     return '<article class="row"><div class="row-main"><b>'+esc(o.nome)+'</b><div class="meta">'+esc(cap(admDesc(c)))+'</div>'+
       '<div class="grid2" style="margin-top:8px"><div class="field"><span>Vencimento</span><input type="date" id="men-venc" value="'+esc(c.venc)+'"></div><div class="field"><span>Valor (R$)</span><input type="text" inputmode="decimal" id="men-valor" value="'+esc(centsToStr(c.valor))+'"></div></div>'+
-      (c.tipo==='mensalidade'?'<p class="meta" style="margin-top:6px">As próximas mensalidades desta ótica vão seguir o mesmo dia.</p>':'')+
+      (c.tipo==='mensalidade'?'<p class="meta" style="margin-top:6px">As próximas mensalidades desta empresa vão seguir o mesmo dia.</p>':'')+
       '</div><div class="row-side"><div class="acts"><button class="btn sm primary" data-act="mensave" data-id="'+c.id+'"'+(MEN.saving?' disabled':'')+'>Salvar</button><button class="btn sm ghost" data-act="menedit" data-id="">Cancelar</button></div></div></article>';
   }
   const html=admCobRow(c);
@@ -4933,7 +4933,7 @@ function menPrevRow(c){
 function viewMensal(){
   const t=todayStr();if(!MEN.month)MEN.month=t.slice(0,7);
   const mk=MEN.month,Y=+mk.slice(0,4),M=+mk.slice(5,7);
-  let h=pageHead('Mensalidades','Implantação e mensalidades das óticas clientes')+(ADM.err?'<p class="hint bad" role="alert">'+esc(ADM.err)+'</p>':'');
+  let h=pageHead('Mensalidades','Implantação e mensalidades das empresas clientes')+(ADM.err?'<p class="hint bad" role="alert">'+esc(ADM.err)+'</p>':'');
   if(!ADM.loaded)return h+none('Carregando...');
   const L=menDoMes(mk),sum=a=>a.reduce((s,c)=>s+c.valor,0);
   const late=ADM.cob.filter(c=>!c.pago&&c.venc<t);
@@ -4956,7 +4956,7 @@ function viewMensal(){
   const dows=['D','S','T','Q','Q','S','S'].map(d=>'<div class="dow">'+d+'</div>').join('');
   const sel=MEN.sel&&MEN.sel.slice(0,7)===mk?MEN.sel:null;
   const lista=sel?L.filter(c=>c.venc===sel):L;
-  const titulo=sel?cap(parseYmd(sel).toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'})):'Óticas de '+new Date(Y,M-1,1).toLocaleDateString('pt-BR',{month:'long'});
+  const titulo=sel?cap(parseYmd(sel).toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'})):'Empresas de '+new Date(Y,M-1,1).toLocaleDateString('pt-BR',{month:'long'});
   h+='<div class="cols agenda" style="margin-top:22px"><div class="panel">'+
     '<div class="calhead"><button class="ib" data-act="menmes" data-n="-1" aria-label="Mês anterior">&#8249;</button><h2>'+mname+'</h2><button class="btn sm" data-act="menmes" data-n="0">Hoje</button><button class="ib" data-act="menmes" data-n="1" aria-label="Próximo mês">&#8250;</button></div>'+
     '<div class="cal">'+dows+cells.join('')+'</div>'+
@@ -5003,13 +5003,13 @@ async function iauLoad(force){
 }
 function viewAdmIA(){
   if(!IAU.mes)IAU.mes=todayStr().slice(0,7);
-  let h=pageHead('Agente de IA','Uso e custo da IA por ótica no mês')+(IAU.err?'<p class="hint bad" role="alert">'+esc(IAU.err)+'</p>':'');
+  let h=pageHead('Agente de IA','Uso e custo da IA por empresa no mês')+(IAU.err?'<p class="hint bad" role="alert">'+esc(IAU.err)+'</p>':'');
   const meses=[];{const d=new Date(todayStr()+'T12:00:00');for(let i=0;i<12;i++){const x=new Date(d.getFullYear(),d.getMonth()-i,1);meses.push(x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0'))}}
   h+='<div class="card" style="gap:10px;flex-direction:row;flex-wrap:wrap;align-items:flex-end"><div class="field" style="min-width:160px"><span>Mês</span><select data-iaumes>'+meses.map(m=>'<option value="'+m+'"'+(m===IAU.mes?' selected':'')+'>'+m.slice(5)+'/'+m.slice(0,4)+'</option>').join('')+'</select></div><div class="field" style="width:150px"><span>Dólar (R$)</span><input type="number" step="0.01" min="1" data-iaucambio value="'+IAU.cambio+'"></div><button class="btn" data-act="iaurecarregar">Atualizar</button><p class="sub" style="margin:0;flex:1;min-width:220px">Custo estimado pelos tokens que a OpenAI informou em cada resposta. A fatura real fica em platform.openai.com → Usage.</p></div>';
   if(!IAU.rows)return h+none('Carregando...');
   const R=IAU.rows,lib=R.filter(r=>r.liberado),cT=R.reduce((s,r)=>s+iauCusto(r),0),resp=R.reduce((s,r)=>s+r.respostas,0),rec=lib.length*AG_PRECO;
-  h+='<div class="kpis" style="margin:14px 0;grid-template-columns:repeat(auto-fit,minmax(160px,1fr))">'+tile('Óticas com o agente',lib.length+' <small style="font-size:13px;color:var(--muted)">'+R.filter(r=>r.ativo).length+' ligados</small>')+tile('Respostas no mês',resp.toLocaleString('pt-BR'))+tile('Custo da IA',brl(cT))+tile('Receita do agente',brl(rec))+tile('Margem',brl(rec-cT))+'</div>';
-  if(!R.length)return h+none('Nenhuma ótica com o Agente de IA ainda. Libere a função em Administração → editar a ótica → Funções liberadas.');
+  h+='<div class="kpis" style="margin:14px 0;grid-template-columns:repeat(auto-fit,minmax(160px,1fr))">'+tile('Empresas com o agente',lib.length+' <small style="font-size:13px;color:var(--muted)">'+R.filter(r=>r.ativo).length+' ligados</small>')+tile('Respostas no mês',resp.toLocaleString('pt-BR'))+tile('Custo da IA',brl(cT))+tile('Receita do agente',brl(rec))+tile('Margem',brl(rec-cT))+'</div>';
+  if(!R.length)return h+none('Nenhuma empresa com o Agente de IA ainda. Libere a função em Administração → editar a empresa → Funções liberadas.');
   h+='<div class="stack">'+R.map(r=>{const c=iauCusto(r),mg=(r.liberado?AG_PRECO:0)-c,pct=r.limite_mes>0?Math.min(100,Math.round(r.respostas*100/r.limite_mes)):0,lim=IAU.lim[r.id]!=null?IAU.lim[r.id]:r.limite_mes;
     const st=!r.liberado?['','Não liberado']:r.ativo?['ok','Ligado']:r.testado_em?['warn','Testado, desligado']:['','Liberado, não configurado'];
     return '<article class="row" style="flex-wrap:wrap;gap:10px"><div class="row-main" style="min-width:220px"><b>'+esc(r.nome)+'</b><div class="chips" style="margin-top:4px"><span class="chip '+st[0]+'">'+st[1]+'</span>'+(r.plano==='premium'?'<span class="chip">Premium</span>':'')+'</div>'+
@@ -5017,7 +5017,7 @@ function viewAdmIA(){
       '<div style="height:6px;background:var(--surface-2);border-radius:99px;margin-top:8px;overflow:hidden;max-width:420px"><div style="height:100%;width:'+pct+'%;background:'+(pct>=90?'var(--bad)':pct>=70?'var(--warn,#d89b00)':'var(--accent)')+'"></div></div><div class="meta">'+pct+'% do limite do mês</div></div>'+
       '<div class="row-side" style="display:grid;gap:6px;justify-items:end"><div style="text-align:right"><small class="sub">Custo da IA</small><div><b>'+brl(c)+'</b></div><small class="sub">'+(r.liberado?'Margem '+brl(mg):'sem mensalidade')+'</small></div>'+
       '<div style="display:flex;gap:6px;align-items:center"><label class="sub" style="margin:0">Limite/mês</label><input type="number" min="0" step="50" data-iaulim="'+r.id+'" value="'+lim+'" style="width:96px"><button class="btn sm" data-act="iaulim" data-id="'+r.id+'">Salvar</button></div></div></article>'}).join('')+'</div>';
-  h+='<p class="sub" style="margin-top:12px">Quando a ótica chega no limite do mês, o agente para de responder e os donos recebem um aviso para atender pelo WhatsApp. Mensalidade do agente considerada: '+brl(AG_PRECO)+' por ótica liberada.</p>';
+  h+='<p class="sub" style="margin-top:12px">Quando a empresa chega no limite do mês, o agente para de responder e os donos recebem um aviso para atender pelo WhatsApp. Mensalidade do agente considerada: '+brl(AG_PRECO)+' por empresa liberada.</p>';
   return h;
 }
 document.addEventListener('change',e=>{const t=e.target;if(!t||!t.dataset)return;
@@ -5041,12 +5041,12 @@ const admBlank=()=>({id:'',slug:'',nome:'',cor1:'#0486DE',cor2:'#00348A',dominio
 function sheetAdm(){
   const D=ADM.draft;if(!D)return null;const novo=!D.id;
   const prevB=ADM.logoB?ADM.logoB.url:D.logo_claro,prevW=ADM.logoW?ADM.logoW.url:D.logo_escuro;
-  const body='<div class="sec"><div class="field"><span>Nome da ótica</span><input type="text" data-abind="nome" value="'+esc(D.nome)+'"></div>'+
+  const body='<div class="sec"><div class="field"><span>Nome da empresa</span><input type="text" data-abind="nome" value="'+esc(D.nome)+'"></div>'+
     '<div class="grid2"><div class="field"><span>Nome do responsável</span><input type="text" data-abind="dono_nome" value="'+esc(D.dono_nome)+'"></div><div class="field"><span>WhatsApp do responsável</span><input type="text" inputmode="tel" data-mask="tel" data-abind="whatsapp_dono" value="'+esc(D.whatsapp_dono)+'"></div></div>'+
     '<div class="field"><span>Mensalidade (R$)</span><input type="text" inputmode="decimal" data-abind="mensalidade" value="'+esc(D.mensalidade)+'" placeholder="0,00"></div>'+
     '<div class="field"><span>Plano</span><select data-abind="plano"><option value="basico"'+(D.plano!=='premium'?' selected':'')+'>Básico (funções atuais)</option><option value="premium"'+(D.plano==='premium'?' selected':'')+'>Premium (novas funções e atualizações)</option></select></div>'+
-    '<div class="field"><span>Funções premium liberadas para esta ótica</span><div class="stack">'+MODS.map(m=>'<label class="modrow"><input type="checkbox" data-amod="'+m.k+'"'+((D.modulos||{})[m.k]?' checked':'')+'><span>'+esc(m.n)+(m.add?' (adicional, cobrado à parte)':'')+'</span></label>').join('')+'</div></div>'+
-    '<div class="field"><span>Funções exclusivas combinadas com esta ótica (anotação sua)</span><textarea data-abind="extras" placeholder="Ex.: relatório de comissões, integração com o laboratório">'+esc(D.extras||'')+'</textarea></div>'+
+    '<div class="field"><span>Funções premium liberadas para esta empresa</span><div class="stack">'+MODS.map(m=>'<label class="modrow"><input type="checkbox" data-amod="'+m.k+'"'+((D.modulos||{})[m.k]?' checked':'')+'><span>'+esc(m.n)+(m.add?' (adicional, cobrado à parte)':'')+'</span></label>').join('')+'</div></div>'+
+    '<div class="field"><span>Funções exclusivas combinadas com esta empresa (anotação sua)</span><textarea data-abind="extras" placeholder="Ex.: relatório de comissões, integração com o laboratório">'+esc(D.extras||'')+'</textarea></div>'+
     '<div class="grid2"><div class="field"><span>Implantação (R$)</span><input type="text" inputmode="decimal" data-abind="impl_valor" value="'+esc(D.impl_valor)+'" placeholder="0,00"></div><div class="field"><span>Data da implantação</span><input type="date" data-abind="impl_data" value="'+esc(D.impl_data)+'"></div></div>'+
     '<p class="sub" style="margin:0">A 1ª mensalidade vence 30 dias depois que a implantação for paga; as outras aparecem uma por mês, quando o mês começa. Se precisar, ajuste qualquer data na aba Mensalidades.</p>'+
     (novo?'<div class="field"><span>Identificador do link (letras minúsculas, números e hífen)</span><input type="text" data-abind="slug" value="'+esc(D.slug)+'" autocapitalize="none" placeholder="oticaexemplo"></div>':'<div class="field"><span>Identificador</span><input type="text" value="'+esc(D.slug)+'" disabled></div>')+
@@ -5060,16 +5060,16 @@ function sheetAdm(){
       '<div class="grid2"><div class="field"><span>Mostrar aviso após (dias de atraso)</span><input type="text" inputmode="numeric" data-abind="aviso_dias" value="'+esc(D.aviso_dias)+'"></div><div class="field"><span>Bloquear após (dias de atraso)</span><input type="text" inputmode="numeric" data-abind="bloqueio_dias" value="'+esc(D.bloqueio_dias)+'"></div></div>'+
       '<div class="field"><span>Situação</span><select data-abind="ativa"><option value="1"'+(D.ativa?' selected':'')+'>Ativa</option><option value="0"'+(!D.ativa?' selected':'')+'>Desativada (ninguém consegue entrar)</option></select></div>')+
     '<p class="hint bad" role="alert">'+esc(D.err)+'</p></div>'+(novo?'':equipeCard(D.id));
-  const foot='<button class="btn primary" data-act="admsalvar"'+(ADM.saving?' disabled':'')+'>'+(ADM.saving?'Salvando...':novo?'Cadastrar ótica':'Salvar alterações')+'</button>';
-  return sheetShell(novo?'Nova ótica':'Editar ótica',body,foot);
+  const foot='<button class="btn primary" data-act="admsalvar"'+(ADM.saving?' disabled':'')+'>'+(ADM.saving?'Salvando...':novo?'Cadastrar empresa':'Salvar alterações')+'</button>';
+  return sheetShell(novo?'Nova empresa':'Editar empresa',body,foot);
 }
 function sheetAdmOk(){
   const c=ADM.cred;if(!c)return null;
   const o=ADM.list.find(x=>x.id===c.id)||{nome:c.nome,slug:'',dono_nome:c.dono_nome,whatsapp_dono:c.whats,dominios:[]};
   const txt=fillTpl(admTpl('boasvindas'),Object.assign(admCtx(o,null,c.senha),{link:c.link,email:c.email,otica:c.nome}));
   const href=c.whats?waLink(c.whats,txt):'https://wa.me/?text='+encodeURIComponent(txt);
-  const body='<div class="sec"><dl class="kv"><dt>Ótica</dt><dd><b>'+esc(c.nome)+'</b></dd><dt>Link</dt><dd>'+esc(c.link)+'</dd><dt>E-mail</dt><dd>'+esc(c.email)+'</dd><dt>Senha</dt><dd>'+esc(c.senha)+'</dd></dl><p class="sub">Envie a mensagem de boas-vindas ao responsável. Ele pode trocar a senha em Ajustes.</p></div>';
-  return sheetShell('Ótica cadastrada',body,'<a class="btn wa"'+WAT+' data-admc="bv" data-id="'+c.id+'" href="'+esc(href)+'">'+(c.whats?'Enviar boas-vindas no WhatsApp':'Escolher contato e enviar boas-vindas')+'</a><button class="btn" data-act="admcopycred">Copiar mensagem</button>');
+  const body='<div class="sec"><dl class="kv"><dt>Empresa</dt><dd><b>'+esc(c.nome)+'</b></dd><dt>Link</dt><dd>'+esc(c.link)+'</dd><dt>E-mail</dt><dd>'+esc(c.email)+'</dd><dt>Senha</dt><dd>'+esc(c.senha)+'</dd></dl><p class="sub">Envie a mensagem de boas-vindas ao responsável. Ele pode trocar a senha em Ajustes.</p></div>';
+  return sheetShell('Empresa cadastrada',body,'<a class="btn wa"'+WAT+' data-admc="bv" data-id="'+c.id+'" href="'+esc(href)+'">'+(c.whats?'Enviar boas-vindas no WhatsApp':'Escolher contato e enviar boas-vindas')+'</a><button class="btn" data-act="admcopycred">Copiar mensagem</button>');
 }
 /* logo: lê o arquivo, gera a versão clara (original) e a branca (silhueta) */
 function lerImagem(file){return new Promise((ok,no)=>{const u=URL.createObjectURL(file);const im=new Image();im.onload=()=>ok({im:im,u:u});im.onerror=()=>no(new Error('Não foi possível ler a imagem.'));im.src=u})}
@@ -5162,12 +5162,12 @@ Object.assign(A,{
   pushon(){pushLigar()},
   async sitpix(){const c=sitPix();try{await navigator.clipboard.writeText(c);toast('Pix copiado. Cole no app do seu banco.')}catch(e){prompt('Copie o Pix:',c)}},
   async sitcheck(){await sitCheck();toast(sitBloq()?'Ainda não consta o pagamento. Se já pagou, envie o comprovante.':'Tudo certo, acesso liberado!')},
-  async pushtest(){try{const r=await navigator.serviceWorker.ready;await r.showNotification('👀 Teste: Ótica Exemplo abriu o demo',{body:'É assim que o aviso vai chegar.',icon:'/icons/adm-icon-192.png',data:{url:'/prospectar?tab=crm'}})}catch(e){toast('Não foi possível mostrar o teste')}},
+  async pushtest(){try{const r=await navigator.serviceWorker.ready;await r.showNotification('👀 Teste: Empresa Exemplo abriu o demo',{body:'É assim que o aviso vai chegar.',icon:'/icons/adm-icon-192.png',data:{url:'/prospectar?tab=crm'}})}catch(e){toast('Não foi possível mostrar o teste')}},
   async admcopypix(d){const c=(ADM.cobAll||ADM.cob).find(x=>x.id===d.id);if(!c)return;const code=admPix(c);try{await navigator.clipboard.writeText(code);toast('Pix copia e cola copiado ('+brl(c.valor)+')')}catch(e){prompt('Copie o Pix:',code)}},
   async admtplreset(d){delete ADM.cfg[d.k];await sb.from('adm_config').upsert({chave:d.k,valor:''});render()},
   async admsalvar(){
     const D=ADM.draft;if(!D||ADM.saving)return;const novo=!D.id;const fail=m=>{D.err=m;renderSheet()};
-    if(!D.nome.trim())return fail('Informe o nome da ótica.');
+    if(!D.nome.trim())return fail('Informe o nome da empresa.');
     if(!hexOk(D.cor1)||!hexOk(D.cor2))return fail('Escolha as duas cores.');
     if(novo){if(!/^[a-z0-9-]{2,40}$/.test(D.slug))return fail('O identificador precisa ter de 2 a 40 letras minúsculas, números ou hífen.');
       if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(D.email.trim()))return fail('Digite um e-mail válido para o dono.');
@@ -5197,7 +5197,7 @@ Object.assign(A,{
       await admLoad(true);
       if(OTICA&&id===OTICA.id){const o=(ADM.list||[]).find(x=>x.id===id);if(o){Object.assign(OTICA,{nome:o.nome,cor1:o.cor1,cor2:o.cor2,logo_claro:o.logo_claro,logo_escuro:o.logo_escuro,dominios:o.dominios,ativa:o.ativa});await applyBrand(OTICA)}}
       if(novo){const o=(ADM.list||[]).find(x=>x.id===id)||{slug:D.slug,dominios:doms};ADM.cred={id:id,nome:D.nome.trim(),link:admLink(o),email:D.email.trim(),senha:D.senha,whats:D.whatsapp_dono.trim(),dono_nome:D.dono_nome.trim()};ui.sheet={kind:'admok',id:id};ADM.draft=null;renderSheet();render()}
-      else{ADM.draft=null;closeSheet();render();toast('Ótica atualizada')}
+      else{ADM.draft=null;closeSheet();render();toast('Empresa atualizada')}
     }catch(x){ADM.saving=false;D.err='Não foi possível salvar: '+errTxt(x);renderSheet()}
   },
   eqpw(d){EQ.pw=EQ.pw===d.u?'':d.u;render();if(ui.sheet&&ui.sheet.kind==='adm')renderSheet()},
