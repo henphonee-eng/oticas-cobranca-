@@ -289,6 +289,11 @@ function fechar(t: string, c: Cfg) {
   return p.slice(0, 3).join("\n\n");
 }
 
+function disseQuePassou(t: string, c: Cfg) {
+  const primeiro = c.nome.split(" ")[0].normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  return new RegExp("(pass(ar|ando|o|ei)\\s+(a conversa\\s+)?(para o|pra o|pro|para)|avis(ar|ando|ei|o)\\s+o)\\s+" + primeiro, "i").test(t.normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
+}
+
 /* ações de verdade (modo msg) */
 function acoesReais(l: any, c: Cfg, feito: string[]) {
   const empresa = nomeCurto(l.nome);
@@ -388,8 +393,7 @@ async function atenderMsg(b: any) {
   }
   if (!resposta) return { ok: false, vazio: true };
   // rede de segurança: disse que vai passar para o Éder, mas não usou a ferramenta
-  const primeiro = c.nome.split(" ")[0].normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-  if (!feito.includes("passou") && new RegExp("pass(ar|ando|o)\\s+(a conversa\\s+)?(para o|pra o|pro|para)\\s+" + primeiro, "i").test(resposta.normalize("NFD").replace(/[\u0300-\u036f]/g, ""))) {
+  if (!feito.includes("passou") && disseQuePassou(resposta, c)) {
     await acoesReais(l, c, feito)("passar_para_eder", { resumo: `Quer fechar (${cl.motivo || "pediu para fechar"})` });
   }
   if (feito.includes("passou")) resposta = fechar(resposta, c);
@@ -472,6 +476,7 @@ async function teste(req: Request, b: any, interno = false) {
     return { ok: false };
   };
   let resposta = await vender(l, c, msgs, exec);
+  if (resposta && !acoes.some((x) => String(x.txt).startsWith("Passaria a conversa")) && disseQuePassou(resposta, c)) acoes.push({ txt: "Passaria a conversa para você (rede de segurança: ele disse que ia passar)" });
   if (resposta && acoes.some((x) => String(x.txt).startsWith("Passaria a conversa"))) resposta = fechar(resposta, c);
   return ok({ ok: true, cl, resposta, partes: resposta ? partes(resposta) : [], acoes });
 }
