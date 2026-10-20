@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#10142E">
+<meta name="robots" content="noindex">
+<title>Implantação do Agente · Connecta AI</title>
+<link rel="icon" href="/icons/adm-icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--noite:#10142E;--noite-2:#171C3D;--linha:#E2E5F0;--papel:#F6F7FB;--branco:#fff;--tinta:#141833;--nevoa:#5B6387;--ambar:#FFB547;--ambar-2:#FF8A3D;--menta:#13A97B;--erro:#D6453D;--zap:#0B141A;
+  --f-d:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;--f-t:"Figtree",ui-sans-serif,system-ui,sans-serif}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--papel);color:var(--tinta);font:400 16px/1.55 var(--f-t)}
+h1,h2,h3{font-family:var(--f-d);letter-spacing:-.02em;line-height:1.1;margin:0}
+p{margin:0}
+:focus-visible{outline:3px solid var(--ambar);outline-offset:2px;border-radius:6px}
+.topo{background:var(--noite);color:#EEF0FF;padding:18px 16px 26px}
+.topo .w{max-width:760px;margin:0 auto}
+.marca{display:flex;align-items:center;gap:8px;font:800 17px var(--f-d)}
+.marca i{width:22px;height:22px;border-radius:7px;background:conic-gradient(from 200deg,var(--ambar),#5EE6B5,#7C8CFF,var(--ambar))}
+.topo h1{font-size:clamp(26px,5vw,34px);margin-top:18px;font-weight:800}
+.topo p{color:#A4ACD3;margin-top:6px}
+main{max-width:760px;margin:-14px auto 0;padding:0 16px 120px}
+.card{background:var(--branco);border:1px solid var(--linha);border-radius:18px;padding:22px;box-shadow:0 10px 30px -18px rgba(16,20,46,.25)}
+.prog{height:6px;background:#E6E8F2;border-radius:6px;overflow:hidden;margin-bottom:6px}
+.prog i{display:block;height:100%;background:linear-gradient(90deg,var(--ambar),var(--ambar-2));transition:width .3s}
+.passo-n{font-size:13.5px;color:var(--nevoa);margin-bottom:16px;font-weight:600}
+.card h2{font-size:24px;font-weight:800;margin-bottom:6px}
+.card .sub{color:var(--nevoa);margin-bottom:20px}
+.campo{margin-bottom:18px}
+.campo>label,.campo>.rot{display:block;font-weight:700;margin-bottom:8px}
+.campo small{display:block;color:var(--nevoa);font-size:13.5px;margin-top:6px}
+input[type=text],input[type=email],input[type=tel],input[type=time],textarea{width:100%;font:500 16px var(--f-t);color:var(--tinta);background:var(--papel);border:1.5px solid var(--linha);border-radius:12px;padding:12px 14px;min-height:48px}
+textarea{min-height:90px;resize:vertical}
+input:focus,textarea:focus{border-color:var(--ambar);outline:none;background:#fff}
+.ops{display:flex;flex-wrap:wrap;gap:8px}
+.op{position:relative}
+.op input{position:absolute;opacity:0;pointer-events:none}
+.op span{display:inline-flex;align-items:center;gap:9px;min-height:44px;padding:9px 15px;border:1.5px solid var(--linha);border-radius:999px;background:#fff;cursor:pointer;font-weight:600;font-size:15px;transition:background-color .15s,border-color .15s}
+.op span::before{content:"";width:18px;height:18px;border-radius:50%;border:2px solid #B7BDD6;flex:none;transition:all .15s;box-sizing:border-box}
+.op input[type=checkbox]+span::before{border-radius:5px}
+.op input:checked+span{border-color:var(--ambar);background:#FFF6E8}
+.op input:checked+span::before{border:6px solid var(--ambar-2)}
+.op input[type=checkbox]:checked+span::before{border:0;background:var(--ambar-2) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E") center/14px no-repeat}
+.op input:focus-visible+span{outline:3px solid var(--ambar);outline-offset:2px}
+.ramos{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+@media (min-width:560px){.ramos{grid-template-columns:repeat(4,1fr)}}
+.ramos .op span{display:flex;flex-direction:column;align-items:flex-start;gap:6px;border-radius:14px;padding:14px;min-height:96px;font-size:14.5px;line-height:1.25}
+.ramos .op span::before{display:none}
+.ramos .op b{font-size:26px;line-height:1}
+.dias{display:grid;gap:8px}
+.dia{display:grid;grid-template-columns:118px 1fr;gap:10px;align-items:center}
+.dia .hs{display:flex;gap:8px;align-items:center}
+.dia .hs input{min-height:44px;padding:8px 10px}
+.dia .hs.off{opacity:.35;pointer-events:none}
+.atalhos{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.mini{font:600 14px var(--f-t);color:var(--tinta);background:var(--papel);border:1.5px dashed #C9CEE2;border-radius:999px;padding:8px 13px;cursor:pointer;min-height:40px}
+.mini:hover{border-color:var(--ambar)}
+.serv{display:grid;grid-template-columns:1fr 130px 40px;gap:8px;margin-bottom:8px}
+.serv input{min-height:46px}
+.serv button{border:0;background:none;color:var(--nevoa);font-size:22px;cursor:pointer;border-radius:10px}
+@media (max-width:520px){.serv{grid-template-columns:1fr 104px 36px}}
+.nav{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.96);backdrop-filter:blur(8px);border-top:1px solid var(--linha);padding:12px 16px calc(12px + env(safe-area-inset-bottom));z-index:5}
+.nav .w{max-width:760px;margin:0 auto;display:flex;gap:10px;align-items:center}
+.nav .salvo{color:var(--nevoa);font-size:13px;margin-right:auto}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:50px;padding:0 22px;border-radius:999px;font:700 16px var(--f-t);border:0;cursor:pointer;text-decoration:none}
+.btn-luz{background:linear-gradient(120deg,var(--ambar),var(--ambar-2));color:#2A1600}
+.btn-vidro{background:#fff;color:var(--tinta);border:1.5px solid var(--linha)}
+.btn:disabled{opacity:.55;cursor:default}
+.erro{background:#FDECEA;color:#8C2620;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-weight:600}
+.resumo{display:grid;gap:10px}
+.resumo div{display:grid;grid-template-columns:140px 1fr;gap:10px;padding:10px 0;border-top:1px solid var(--linha);font-size:15px}
+.resumo div:first-child{border-top:0}
+.resumo b{color:var(--nevoa);font-weight:600}
+@media (max-width:520px){.resumo div{grid-template-columns:1fr;gap:2px}}
+.feito{text-align:center;padding:36px 22px}
+.feito .ico{width:68px;height:68px;border-radius:50%;background:#E3F7EF;color:var(--menta);display:grid;place-items:center;margin:0 auto 16px;font-size:34px}
+.feito h2{margin-bottom:8px}
+.feito p{color:var(--nevoa);max-width:30em;margin:0 auto}
+/* contrato */
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
+@media (max-width:560px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--papel);border-radius:12px;padding:12px 14px}
+.kpi b{display:block;font:800 19px var(--f-d)}
+.kpi span{font-size:13.5px;color:var(--nevoa)}
+.contrato{white-space:pre-wrap;font-size:15px;line-height:1.65;background:#FCFCFE;border:1px solid var(--linha);border-radius:12px;padding:18px;max-height:56vh;overflow:auto}
+.assina{margin-top:20px;display:grid;gap:14px}
+/* teste */
+.abas{display:flex;gap:6px;background:#fff;border:1px solid var(--linha);border-radius:999px;padding:5px;margin-bottom:12px}
+.abas button{flex:1;border:0;background:none;border-radius:999px;min-height:42px;font:700 15px var(--f-t);color:var(--nevoa);cursor:pointer}
+.abas button[aria-selected=true]{background:var(--noite);color:#fff}
+.teste{display:grid;gap:14px}
+@media (min-width:900px){main.largo{max-width:1120px}.teste{grid-template-columns:1fr 1fr}.abas{display:none}.painel[hidden]{display:flex!important}}
+.painel{display:flex;flex-direction:column;background:#fff;border:1px solid var(--linha);border-radius:18px;overflow:hidden;height:min(640px,calc(100vh - 220px));min-height:440px}
+.painel header{padding:12px 14px;display:flex;gap:10px;align-items:center;border-bottom:1px solid var(--linha)}
+.painel header .av{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font:800 16px var(--f-d);color:#05261C;background:linear-gradient(140deg,#5EE6B5,#1FA382)}
+.painel header b{display:block;line-height:1.2}
+.painel header small{color:var(--nevoa)}
+.zap header{background:#202C33;color:#E9EDEF;border:0}.zap header small{color:#8696A0}
+.fio{flex:1;overflow:auto;padding:14px 12px;display:flex;flex-direction:column;gap:6px}
+.zap .fio{background:#0B141A radial-gradient(rgba(255,255,255,.03) 1px,transparent 1.2px) 0 0/22px 22px}
+.b{max-width:84%;padding:8px 11px;border-radius:12px;font-size:15px;line-height:1.4;white-space:pre-wrap;word-wrap:break-word}
+.zap .b.eu{align-self:flex-end;background:#005C4B;color:#E9EDEF;border-top-right-radius:3px}
+.zap .b.ele{align-self:flex-start;background:#202C33;color:#E9EDEF;border-top-left-radius:3px}
+.aj .b.eu{align-self:flex-end;background:#FFF1DC;border-top-right-radius:3px}
+.aj .b.ele{align-self:flex-start;background:var(--papel);border-top-left-radius:3px}
+.mud{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.mud span{font-size:12.5px;font-weight:700;color:#0B6B4D;background:#DDF5EC;border-radius:999px;padding:3px 9px}
+.dig{align-self:flex-start;background:#202C33;border-radius:12px;padding:11px 13px;display:flex;gap:4px}
+.aj .dig{background:var(--papel)}
+.dig i{width:6px;height:6px;border-radius:50%;background:#8696A0;animation:p 1.1s infinite}
+.dig i:nth-child(2){animation-delay:.15s}.dig i:nth-child(3){animation-delay:.3s}
+@keyframes p{0%,60%,100%{opacity:.3}30%{opacity:1}}
+.escrever{display:flex;gap:8px;padding:10px;border-top:1px solid var(--linha)}
+.zap .escrever{background:#0B141A;border-color:#1F2C34}
+.escrever textarea{min-height:46px;height:46px;border-radius:24px;padding:11px 16px;resize:none}
+.zap .escrever textarea{background:#202C33;border-color:#202C33;color:#E9EDEF}
+.escrever button{flex:none;width:48px;height:48px;border-radius:50%;border:0;background:var(--menta);color:#fff;cursor:pointer;display:grid;place-items:center}
+.escrever button svg{width:22px;height:22px}
+.dicas{display:flex;gap:6px;flex-wrap:wrap;padding:0 12px 10px}
+.zap .dicas{background:#0B141A}
+.dicas button{font:600 13px var(--f-t);border-radius:999px;border:1px solid var(--linha);background:#fff;color:var(--tinta);padding:6px 11px;cursor:pointer}
+.zap .dicas button{background:#202C33;border-color:#2A3942;color:#D1D7DB}
+.vazio{text-align:center;padding:60px 20px;color:var(--nevoa)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header class="topo"><div class="w"><div class="marca"><i aria-hidden="true"></i>Connecta AI</div><h1 id="tit">Carregando…</h1><p id="sub"></p></div></header>
+<main id="app"><div class="card vazio">Carregando…</div></main>
+<div class="nav" id="nav" hidden><div class="w"><span class="salvo" id="salvo"></span><button class="btn btn-vidro" id="voltar" type="button">Voltar</button><button class="btn btn-luz" id="seguir" type="button">Continuar</button></div></div>
+
+<script>
+(function(){
+'use strict';
+var SB='https://ovynkeifzhavhjdkjjui.supabase.co',KEY='sb_publishable_7RunIjZPQDCuWNSuPrD10w_Gy_lIUFl';
+var $=function(s){return document.querySelector(s)},app=$('#app');
+var esc=function(t){return String(t==null?'':t).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
+var brl=function(n){return 'R$ '+Number(n||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})};
+var m=location.pathname.match(/\/(cadastro|contrato|teste)\/([0-9a-f]{24})/)||[];
+var PAG=m[1]||new URLSearchParams(location.search).get('p')||'cadastro',TOKEN=m[2]||new URLSearchParams(location.search).get('t')||'';
+var D=null;
+function api(modo,extra){return fetch(SB+'/functions/v1/implantacao',{method:'POST',headers:{'Content-Type':'application/json',apikey:KEY},body:JSON.stringify(Object.assign({modo:modo,token:TOKEN},extra||{}))}).then(function(r){return r.json().then(function(j){if(!r.ok&&!j.error)j.error='Não deu certo agora. Tente de novo.';return j})}).catch(function(){return {error:'Sem conexão. Confira a internet e tente de novo.'}})}
+function topo(t,s){$('#tit').textContent=t;$('#sub').textContent=s||'';document.title=t+' · Connecta AI'}
+function erroTela(t){topo('Link inválido');app.innerHTML='<div class="card vazio">'+esc(t)+'<br><br>Se precisar, responda a mensagem no WhatsApp que a gente te ajuda.</div>'}
+
+/* ================= CADASTRO ================= */
+var RAMOS=[['odonto','🦷','Odontologia'],['clinica','🩺','Clínica ou consultório'],['advocacia','⚖️','Advocacia'],['restaurante','🍽️','Restaurante ou delivery'],['beleza','💈','Barbearia, salão ou estética'],['academia','🏋️','Academia ou estúdio'],['pet','🐾','Pet shop ou veterinária'],['outro','✨','Outro tipo']];
+var SIMNAO=['Sim','Não'];
+var Q={
+  odonto:[{k:'convenios',t:'Atende convênio?',r:SIMNAO},{k:'quais_convenios',t:'Quais convênios?',x:'Ex.: Amil, Bradesco Dental, OdontoPrev',se:['convenios','Sim']},{k:'avaliacao',t:'A avaliação é',r:['Gratuita','Paga','Não fazemos avaliação']},{k:'valor_avaliacao',t:'Valor da avaliação',x:'Ex.: R$ 80',se:['avaliacao','Paga']},{k:'urgencia',t:'Paciente com dor é atendido no mesmo dia?',r:['Sim, a gente encaixa','Só com horário marcado']},{k:'especialidades',t:'Especialidades',c:['Clínico geral','Ortodontia','Implante','Estética','Canal','Odontopediatria','Prótese','Periodontia','Harmonização']}],
+  clinica:[{k:'especialidades',t:'Especialidades',x:'Ex.: dermatologia, cardiologia, fisioterapia'},{k:'convenios',t:'Atende convênio?',r:SIMNAO},{k:'quais_convenios',t:'Quais convênios?',x:'Ex.: Unimed, Hapvida',se:['convenios','Sim']},{k:'retorno',t:'O retorno é',r:['Gratuito em até 30 dias','Gratuito em até 15 dias','Cobrado']},{k:'online',t:'Faz consulta online?',r:SIMNAO}],
+  advocacia:[{k:'areas',t:'Áreas de atuação',c:['Trabalhista','Família','Previdenciário (INSS)','Cível','Criminal','Consumidor','Empresarial','Imobiliário','Tributário']},{k:'consulta',t:'A primeira consulta é',r:['Gratuita','Paga','Primeiro uma análise do caso pelo WhatsApp']},{k:'valor_consulta',t:'Valor da consulta',x:'Ex.: R$ 200',se:['consulta','Paga']},{k:'online',t:'Atende online?',r:SIMNAO},{k:'documentos',t:'O agente pode pedir fotos de documentos do caso?',r:SIMNAO}],
+  restaurante:[{k:'pedidos',t:'Como vocês vendem?',c:['Delivery','Retirada no local','Comer no local','Reservas']},{k:'taxa_entrega',t:'Taxa de entrega e bairros atendidos',x:'Ex.: R$ 5 até 3 km; Boa Viagem e Pina'},{k:'pedido_minimo',t:'Pedido mínimo',x:'Ex.: R$ 30 (deixe vazio se não tiver)'},{k:'tempo_entrega',t:'Tempo médio de entrega',r:['Até 30 min','30 a 50 min','50 a 70 min','Mais de 1 hora']},{k:'cardapio',t:'Link do cardápio (se tiver)',x:'https://'}],
+  beleza:[{k:'atendimento',t:'Como atendem?',r:['Só com horário marcado','Horário marcado e ordem de chegada']},{k:'profissionais',t:'Profissionais (opcional)',x:'Ex.: Zé (barba e corte), Ana (unhas)'},{k:'atraso',t:'Tolerância de atraso',r:['10 minutos','15 minutos','Sem tolerância']}],
+  academia:[{k:'modalidades',t:'Modalidades',c:['Musculação','Funcional','Crossfit','Pilates','Dança','Lutas','Natação','Yoga']},{k:'aula_experimental',t:'A aula experimental é',r:['Gratuita','Paga','Não temos']},{k:'matricula',t:'Taxa de matrícula',x:'Ex.: isenta ou R$ 50'}],
+  pet:[{k:'servicos_pet',t:'O que vocês fazem?',c:['Banho e tosa','Veterinário','Vacinas','Hotel ou creche','Venda de ração e acessórios']},{k:'leva_e_traz',t:'Buscam e levam o pet?',r:SIMNAO},{k:'emergencia',t:'Emergência veterinária',r:['Atendemos emergência','Não atendemos emergência']}],
+  outro:[{k:'o_que_faz',t:'Conte em uma frase o que a empresa faz',x:'Ex.: escola de inglês para crianças e adultos'}]
+};
+var SUG={odonto:['Avaliação','Limpeza','Clareamento','Restauração','Canal','Extração','Aparelho','Manutenção do aparelho','Implante','Lente de contato dental'],clinica:['Consulta','Retorno','Exame','Procedimento'],advocacia:['Consulta','Ação trabalhista','Divórcio','Aposentadoria (INSS)','Contrato'],restaurante:['Prato do dia','Marmita','Pizza grande','Hambúrguer','Refrigerante'],beleza:['Corte','Barba','Corte e barba','Escova','Coloração','Manicure','Design de sobrancelha'],academia:['Plano mensal','Plano trimestral','Plano anual','Diária','Personal'],pet:['Banho','Banho e tosa','Consulta veterinária','Vacina'],outro:[]};
+var PASSOS=['Tipo de empresa','Sua empresa','Responsável','Horários','Serviços e preços','Do seu ramo','Como o agente atende','Revisar e enviar'];
+var C={empresa:{},dono:{},atendimento:{tom:'proximo',emojis:'sim',fora_horario:'responde'},horarios:{},servicos:[],pagamentos:[],agenda:{usa:'agente'},especificas:{},chamar:['reclamacao','pessoa']},passo=0,tSalvar=null;
+var DIAS=[['seg','Segunda'],['ter','Terça'],['qua','Quarta'],['qui','Quinta'],['sex','Sexta'],['sab','Sábado'],['dom','Domingo']];
+
+function campoTxt(id,rot,val,ph,dica,tipo){return '<div class="campo"><label for="'+id+'">'+rot+'</label><input type="'+(tipo||'text')+'" id="'+id+'" value="'+esc(val||'')+'" placeholder="'+esc(ph||'')+'"'+(tipo==='tel'?' inputmode="numeric"':'')+'>'+(dica?'<small>'+dica+'</small>':'')+'</div>'}
+function radios(nome,rot,ops,val){return '<div class="campo" role="radiogroup" aria-label="'+esc(rot)+'"><span class="rot">'+rot+'</span><div class="ops">'+ops.map(function(o){var v=Array.isArray(o)?o[0]:o,t=Array.isArray(o)?o[1]:o;return '<label class="op"><input type="radio" name="'+nome+'" value="'+esc(v)+'"'+(val===v?' checked':'')+'><span>'+esc(t)+'</span></label>'}).join('')+'</div></div>'}
+function checks(nome,rot,ops,vals){vals=vals||[];return '<div class="campo"><span class="rot">'+rot+'</span><div class="ops">'+ops.map(function(o){var v=Array.isArray(o)?o[0]:o,t=Array.isArray(o)?o[1]:o;return '<label class="op"><input type="checkbox" name="'+nome+'" value="'+esc(v)+'"'+(vals.indexOf(v)>=0?' checked':'')+'><span>'+esc(t)+'</span></label>'}).join('')+'</div></div>'}
+
+function telaPasso(){
+  var r=C.ramo,h='';
+  if(passo===0){h='<h2>Que tipo de empresa é a sua?</h2><p class="sub">Assim eu já faço as perguntas certas para o seu ramo.</p><div class="ramos" role="radiogroup" aria-label="Tipo de empresa">'+RAMOS.map(function(x){return '<label class="op"><input type="radio" name="ramo" value="'+x[0]+'"'+(r===x[0]?' checked':'')+'><span><b aria-hidden="true">'+x[1]+'</b>'+x[2]+'</span></label>'}).join('')+'</div>'}
+  else if(passo===1){var e=C.empresa;h='<h2>Sua empresa</h2><p class="sub">Esses dados vão no contrato e o agente usa o endereço e o Instagram nas respostas.</p>'+campoTxt('e-nome','Nome da empresa (como os clientes conhecem)',e.nome,'Ex.: Sorriso Perfeito')+campoTxt('e-razao','Razão social',e.razao,'Deixe vazio se for o mesmo nome')+campoTxt('e-doc','CNPJ ou CPF',e.doc,'00.000.000/0000-00','','tel')+campoTxt('e-end','Endereço',e.endereco,'Rua, número, bairro')+campoTxt('e-cid','Cidade',e.cidade,'Ex.: Recife/PE')+campoTxt('e-insta','Instagram (opcional)',e.instagram,'@suaempresa')+'<div class="campo"><label for="e-desc">Em uma frase, o que a empresa oferece de melhor? (opcional)</label><textarea id="e-desc" placeholder="Ex.: clínica com atendimento humanizado e avaliação gratuita">'+esc(e.descricao||'')+'</textarea></div>'}
+  else if(passo===2){var d=C.dono;h='<h2>Responsável</h2><p class="sub">Quem assina o contrato.</p>'+campoTxt('d-nome','Nome completo',d.nome,'Como no documento')+campoTxt('d-cpf','CPF',d.cpf,'000.000.000-00','','tel')+campoTxt('d-email','E-mail',d.email,'voce@email.com','','email')+campoTxt('d-zap','WhatsApp',d.whatsapp,'(81) 99999-9999','','tel')+radios('cargo','Você é',['Dono(a)','Sócio(a)','Gerente','Outro'],d.cargo)}
+  else if(passo===3){h='<h2>Horário de funcionamento</h2><p class="sub">Toque nos dias em que vocês abrem.</p><div class="atalhos"><button class="mini" type="button" data-pre="semana">Seg a sex, 8h às 18h</button><button class="mini" type="button" data-pre="sabado">Seg a sex 8h–18h e sáb 8h–12h</button><button class="mini" type="button" data-pre="comercio">Seg a sáb, 9h às 19h</button></div><div class="dias">'+DIAS.map(function(x){var v=C.horarios[x[0]]||{};return '<div class="dia"><label class="op"><input type="checkbox" data-dia="'+x[0]+'"'+(v.aberto?' checked':'')+'><span>'+x[1]+'</span></label><div class="hs'+(v.aberto?'':' off')+'" id="hs-'+x[0]+'"><input type="time" aria-label="'+x[1]+' abre" data-abre="'+x[0]+'" value="'+esc(v.abre||'08:00')+'"><span>às</span><input type="time" aria-label="'+x[1]+' fecha" data-fecha="'+x[0]+'" value="'+esc(v.fecha||'18:00')+'"></div></div>'}).join('')+'</div>'+radios('fora','Quando alguém escrever com a empresa fechada, o agente',[['responde','Responde normalmente e já agenda/anota'],['avisa','Responde e avisa que a equipe confirma ao abrir']],C.atendimento.fora_horario)}
+  else if(passo===4){var sg=(SUG[r]||[]).filter(function(n){return !C.servicos.some(function(s){return s.nome===n})});h='<h2>Serviços e preços</h2><p class="sub">O que o cliente mais pergunta. Se o preço varia, escreva "a partir de" ou deixe vazio.</p>'+(sg.length?'<div class="atalhos">'+sg.map(function(n){return '<button class="mini" type="button" data-sug="'+esc(n)+'">+ '+esc(n)+'</button>'}).join('')+'</div>':'')+'<div id="servs">'+C.servicos.map(function(s,i){return '<div class="serv"><input type="text" aria-label="Serviço" data-s="nome" data-i="'+i+'" value="'+esc(s.nome)+'" placeholder="Serviço"><input type="text" aria-label="Preço" data-s="preco" data-i="'+i+'" value="'+esc(s.preco)+'" placeholder="Preço"><button type="button" data-rm="'+i+'" aria-label="Tirar '+esc(s.nome||'serviço')+'">×</button></div>'}).join('')+'</div><button class="mini" type="button" id="add-serv">+ Outro serviço</button><div style="height:18px"></div>'+checks('pag','Formas de pagamento',[['pix','Pix'],['credito','Cartão de crédito'],['debito','Cartão de débito'],['dinheiro','Dinheiro'],['boleto','Boleto'],['transferencia','Transferência'],['convenio','Convênio']],C.pagamentos)+campoTxt('parc','Parcelamento (opcional)',C.parcela,'Ex.: até 10x sem juros no cartão')}
+  else if(passo===5){var qs=Q[r]||Q.outro;h='<h2>Sobre o seu ramo</h2><p class="sub">Perguntas que os clientes de '+esc((RAMOS.find(function(x){return x[0]===r})||RAMOS[7])[2].toLowerCase())+' costumam fazer.</p>'+qs.map(function(q){if(q.se&&C.especificas[q.se[0]]!==q.se[1])return '';var v=C.especificas[q.k];if(q.r)return radios('q-'+q.k,q.t,q.r,v);if(q.c)return checks('q-'+q.k,q.t,q.c,v);return campoTxt('q-'+q.k,q.t,v,q.x)}).join('')}
+  else if(passo===6){var a=C.atendimento;h='<h2>Como o agente atende</h2><p class="sub">O jeito de falar e o que ele faz sozinho.</p>'+campoTxt('a-nome','Nome do atendente (opcional)',a.assistente,'Ex.: Bia','Se deixar vazio, ele se apresenta como a equipe da empresa.')+radios('tom','Jeito de falar',[['formal','Formal (senhor/senhora)'],['proximo','Próximo e simpático'],['descontraido','Bem descontraído']],a.tom)+radios('emo','Pode usar emojis?',[['sim','Pode, com moderação'],['nao','Prefiro sem emojis']],a.emojis)+radios('agenda','Agendamento',[['agente','O agente marca o horário'],['pre','Ele anota e a equipe confirma'],['nao','Não trabalhamos com agenda']],C.agenda.usa)+(C.agenda.usa==='agente'?radios('dur','Quanto tempo dura cada atendimento?',['20 minutos','30 minutos','40 minutos','1 hora','Varia'],C.agenda.duracao):'')+checks('chamar','Quando ele deve chamar alguém da equipe?',[['fechar','Quando o cliente quiser pagar ou fechar'],['negociacao','Pedido de desconto'],['reclamacao','Reclamação'],['urgencia','Urgência'],['pessoa','Quando pedir para falar com uma pessoa'],['fora','Pergunta que ele não sabe responder']],C.chamar)}
+  else{var a2=C.atendimento,d2=C.dono,e2=C.empresa,hs=DIAS.filter(function(x){return (C.horarios[x[0]]||{}).aberto}).map(function(x){var v=C.horarios[x[0]];return x[1].slice(0,3)+' '+v.abre+'–'+v.fecha}).join(', ');
+    h='<h2>Revisar e enviar</h2><p class="sub">Confira e, se quiser, deixe alguma orientação a mais para o agente.</p><div class="resumo"><div><b>Empresa</b><span>'+esc(e2.nome||'—')+(e2.cidade?' · '+esc(e2.cidade):'')+'</span></div><div><b>Responsável</b><span>'+esc(d2.nome||'—')+(d2.whatsapp?' · '+esc(d2.whatsapp):'')+'</span></div><div><b>Horários</b><span>'+esc(hs||'—')+'</span></div><div><b>Serviços</b><span>'+esc(C.servicos.map(function(s){return s.nome+(s.preco?' ('+s.preco+')':'')}).join(', ')||'—')+'</span></div><div><b>Atendente</b><span>'+esc((a2.assistente||'Equipe da empresa')+' · '+({formal:'formal',proximo:'próximo',descontraido:'descontraído'}[a2.tom]||''))+'</span></div></div><div style="height:18px"></div>'+
+      '<div class="campo"><label for="faq">Perguntas que os clientes sempre fazem, com a resposta (opcional)</label><textarea id="faq" placeholder="Ex.: Tem estacionamento? Sim, na rua ao lado.">'+esc(C.faq||'')+'</textarea></div>'+
+      '<div class="campo"><label for="naofalar">Algo que o agente nunca deve falar ou prometer? (opcional)</label><textarea id="naofalar" placeholder="Ex.: não dar desconto; não falar de preço de implante sem avaliação">'+esc(C.nao_falar||'')+'</textarea></div>'+
+      '<div class="campo"><label for="extras">Mais alguma orientação? (opcional)</label><textarea id="extras">'+esc(C.extras||'')+'</textarea></div>'}
+  return '<div class="card"><div class="prog" aria-hidden="true"><i style="width:'+((passo+1)*100/PASSOS.length)+'%"></i></div><p class="passo-n">Etapa '+(passo+1)+' de '+PASSOS.length+' · '+PASSOS[passo]+'</p><div id="err"></div>'+h+'</div>';
+}
+function lerPasso(){
+  var v=function(id){var e=document.getElementById(id);return e?e.value.trim():undefined};
+  var rv=function(n){var e=document.querySelector('input[name="'+n+'"]:checked');return e?e.value:undefined};
+  var cv=function(n){return Array.prototype.map.call(document.querySelectorAll('input[name="'+n+'"]:checked'),function(e){return e.value})};
+  if(passo===0){var r=rv('ramo');if(r)C.ramo=r}
+  if(passo===1){C.empresa={nome:v('e-nome'),razao:v('e-razao'),doc:v('e-doc'),endereco:v('e-end'),cidade:v('e-cid'),instagram:v('e-insta'),descricao:v('e-desc')}}
+  if(passo===2){C.dono={nome:v('d-nome'),cpf:v('d-cpf'),email:v('d-email'),whatsapp:v('d-zap'),cargo:rv('cargo')}}
+  if(passo===3){DIAS.forEach(function(x){var k=x[0];C.horarios[k]={aberto:!!document.querySelector('[data-dia="'+k+'"]:checked'),abre:document.querySelector('[data-abre="'+k+'"]').value,fecha:document.querySelector('[data-fecha="'+k+'"]').value}});C.atendimento.fora_horario=rv('fora')||C.atendimento.fora_horario}
+  if(passo===4){document.querySelectorAll('[data-s]').forEach(function(e){var i=+e.dataset.i;if(C.servicos[i])C.servicos[i][e.dataset.s]=e.value.trim()});C.pagamentos=cv('pag');C.parcela=v('parc')}
+  if(passo===5){(Q[C.ramo]||Q.outro).forEach(function(q){if(q.r){var x=rv('q-'+q.k);if(x!==undefined)C.especificas[q.k]=x}else if(q.c)C.especificas[q.k]=cv('q-'+q.k);else{var t=v('q-'+q.k);if(t!==undefined)C.especificas[q.k]=t}})}
+  if(passo===6){C.atendimento.assistente=v('a-nome');C.atendimento.tom=rv('tom')||C.atendimento.tom;C.atendimento.emojis=rv('emo')||C.atendimento.emojis;C.agenda.usa=rv('agenda')||C.agenda.usa;C.agenda.duracao=rv('dur')||C.agenda.duracao;C.chamar=cv('chamar')}
+  if(passo===7){C.faq=v('faq');C.nao_falar=v('naofalar');C.extras=v('extras')}
+}
+function validar(){
+  var dg=function(t){return String(t||'').replace(/\D/g,'')};
+  if(passo===0&&!C.ramo)return 'Escolha o tipo de empresa.';
+  if(passo===1&&!C.empresa.nome)return 'Escreva o nome da empresa.';
+  if(passo===2){if(String(C.dono.nome||'').split(/\s+/).length<2)return 'Escreva o nome completo do responsável.';if(!cpfOk(C.dono.cpf))return 'Confira o CPF: ele precisa ter 11 números válidos.';if(dg(C.dono.whatsapp).length<10)return 'Escreva o WhatsApp com DDD.'}
+  if(passo===3&&!DIAS.some(function(x){return (C.horarios[x[0]]||{}).aberto}))return 'Marque pelo menos um dia de funcionamento.';
+  return '';
+}
+function cpfOk(c){c=String(c||'').replace(/\D/g,'');if(c.length!==11||/^(\d)\1+$/.test(c))return false;var s=0,i;for(i=0;i<9;i++)s+=+c[i]*(10-i);var d=(s*10)%11%10;if(d!==+c[9])return false;s=0;for(i=0;i<10;i++)s+=+c[i]*(11-i);return (s*10)%11%10===+c[10]}
+function mascara(e){var d=e.value.replace(/\D/g,'');if(e.id==='d-cpf'){d=d.slice(0,11);e.value=d.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})\.(\d{3})(\d)/,'$1.$2.$3').replace(/(\d{3})\.(\d{3})\.(\d{3})(\d)/,'$1.$2.$3-$4')}else if(e.id==='d-zap'){d=d.slice(0,11);e.value=d.length>10?d.replace(/(\d{2})(\d{5})(\d{0,4})/,'($1) $2-$3'):d.replace(/(\d{2})(\d{4})(\d{0,4})/,'($1) $2-$3').replace(/[-\s()]+$/,'')}else if(e.id==='e-doc'){d=d.slice(0,14);e.value=d.length>11?d.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{0,2})/,'$1.$2.$3/$4-$5'):d.replace(/(\d{3})(\d{3})(\d{3})(\d{0,2})/,'$1.$2.$3-$4')}}
+function guardar(){try{localStorage.setItem('impl-'+TOKEN,JSON.stringify({C:C,passo:passo}))}catch(e){}clearTimeout(tSalvar);$('#salvo').textContent='Salvando…';tSalvar=setTimeout(function(){api('salvar',{cadastro:C}).then(function(j){$('#salvo').textContent=j.error?'Não salvou agora':'Salvo ✓'})},1200)}
+function cadastro(){
+  topo('Cadastro da implantação','Plano '+D.plano+' · leva uns 5 minutos. Dá para parar e continuar depois.');
+  var loc=null;try{loc=JSON.parse(localStorage.getItem('impl-'+TOKEN)||'null')}catch(e){}
+  var base=D.cadastro||{};C=Object.assign(C,base);['empresa','dono','atendimento','horarios','agenda','especificas'].forEach(function(k){C[k]=Object.assign({},C[k]||{},base[k]||{})});
+  if(!C.ramo){var sg=(D.segmento||'').toLowerCase();C.ramo=/odonto|dent/.test(sg)?'odonto':/advoc|jur/.test(sg)?'advocacia':/restaur|pizz|lanch|deliv|hamb/.test(sg)?'restaurante':/barb|sal[aã]o|est[eé]t|beleza/.test(sg)?'beleza':/academ|crossfit|pilates/.test(sg)?'academia':/pet|veterin/.test(sg)?'pet':/cl[ií]nic|m[eé]dic|fisio|psic/.test(sg)?'clinica':undefined}
+  if(loc&&loc.C){C=loc.C;passo=Math.min(loc.passo||0,PASSOS.length-1)}
+  if(!(C.servicos||[]).length)C.servicos=[];
+  $('#nav').hidden=false;desenhar();
+}
+function desenhar(){app.innerHTML=telaPasso();$('#voltar').style.visibility=passo?'visible':'hidden';$('#seguir').textContent=passo===PASSOS.length-1?'Enviar cadastro':'Continuar';var f=app.querySelector('input,textarea');if(f&&passo&&window.innerWidth>700)f.focus({preventScroll:true});window.scrollTo(0,0)}
+app.addEventListener('input',function(e){if(/^(d-cpf|d-zap|e-doc)$/.test(e.target.id))mascara(e.target);if(PAG==='cadastro'){lerPasso();guardar()}});
+app.addEventListener('change',function(e){if(PAG!=='cadastro')return;var t=e.target;if(t.dataset.dia){document.getElementById('hs-'+t.dataset.dia).classList.toggle('off',!t.checked)}lerPasso();guardar();if((passo===5&&t.type==='radio')||(passo===6&&t.name==='agenda')||(passo===0&&t.name==='ramo')){var y=window.scrollY;desenhar();window.scrollTo(0,y);}});
+app.addEventListener('click',function(e){if(PAG!=='cadastro')return;if(passo===0&&e.target.closest('.ramos .op')&&e.detail!==0){clearTimeout(window._av);window._av=setTimeout(function(){lerPasso();if(C.ramo)$('#seguir').click()},220);return}var t=e.target.closest('button');if(!t)return;
+  if(t.dataset.pre){var p=t.dataset.pre;DIAS.forEach(function(x,i){var k=x[0];C.horarios[k]=p==='semana'?{aberto:i<5,abre:'08:00',fecha:'18:00'}:p==='sabado'?{aberto:i<6,abre:'08:00',fecha:i===5?'12:00':'18:00'}:{aberto:i<6,abre:'09:00',fecha:'19:00'}});guardar();desenhar()}
+  if(t.dataset.sug){lerPasso();C.servicos.push({nome:t.dataset.sug,preco:''});guardar();desenhar();var ins=document.querySelectorAll('[data-s="preco"]');if(ins.length)ins[ins.length-1].focus()}
+  if(t.id==='add-serv'){lerPasso();C.servicos.push({nome:'',preco:''});desenhar();var ns=document.querySelectorAll('[data-s="nome"]');ns[ns.length-1].focus()}
+  if(t.dataset.rm){lerPasso();C.servicos.splice(+t.dataset.rm,1);guardar();desenhar()}
+});
+$('#voltar').addEventListener('click',function(){lerPasso();passo=Math.max(0,passo-1);guardar();desenhar()});
+$('#seguir').addEventListener('click',function(){
+  lerPasso();var er=validar();if(er){$('#err').innerHTML='<div class="erro" role="alert">'+esc(er)+'</div>';return}
+  if(passo===4)C.servicos=C.servicos.filter(function(x){return x.nome});
+  if(passo<PASSOS.length-1){passo++;guardar();desenhar();return}
+  var b=$('#seguir');b.disabled=true;b.textContent='Enviando…';
+  api('enviar',{cadastro:C}).then(function(j){b.disabled=false;b.textContent='Enviar cadastro';
+    if(j.error){$('#err').innerHTML='<div class="erro" role="alert">'+esc(j.error)+'</div>';window.scrollTo(0,0);return}
+    try{localStorage.removeItem('impl-'+TOKEN)}catch(e){}
+    $('#nav').hidden=true;topo('Cadastro enviado','Obrigado! Agora é só assinar o contrato.');
+    app.innerHTML='<div class="card feito"><div class="ico" aria-hidden="true">✓</div><h2>Recebemos tudo!</h2><p>O contrato já foi liberado. Também mandei o link no seu WhatsApp.</p><div style="height:20px"></div><a class="btn btn-luz" href="/contrato/'+TOKEN+'">Ler e assinar o contrato</a></div>';
+  });
+});
+
+/* ================= CONTRATO ================= */
+function contrato(){
+  if(D.status==='cadastro'){topo('Contrato');app.innerHTML='<div class="card vazio">O contrato é liberado assim que o cadastro for enviado.<br><br><a class="btn btn-luz" href="/cadastro/'+TOKEN+'">Preencher o cadastro</a></div>';return}
+  var assinado=D.status!=='contrato';
+  topo(assinado?'Contrato assinado':'Seu contrato','Plano '+D.plano+' · '+esc(D.empresa));
+  var dt=D.assinado_em?new Date(D.assinado_em).toLocaleString('pt-BR'):'';
+  app.innerHTML='<div class="card"><div class="kpis"><div class="kpi"><b>'+brl(D.valor_implantacao)+'</b><span>Implantação · 50% no início e 50% na entrega</span></div><div class="kpi"><b>'+brl(D.valor_mensal)+'</b><span>Por mês · a primeira vence 30 dias depois de começar</span></div><div class="kpi"><b>Até 7 dias</b><span>Para o agente ficar pronto</span></div></div>'+
+    '<div class="contrato" tabindex="0" aria-label="Texto do contrato">'+esc(D.contrato||'')+'</div>'+
+    (assinado?'<div class="assina"><div class="erro" style="background:#E3F7EF;color:#0B6B4D">✓ Assinado por '+esc(D.assinatura&&D.assinatura.nome)+' em '+esc(dt)+'</div><a class="btn btn-luz" href="/teste/'+TOKEN+'">Testar o agente</a></div>':
+    '<form class="assina" id="fa"><div id="err"></div>'+campoTxt('s-nome','Seu nome completo','', 'Como no documento')+campoTxt('s-cpf','Seu CPF','','000.000.000-00','O mesmo CPF informado no cadastro.','tel')+'<label class="op"><input type="checkbox" id="s-ok"><span>Li e concordo com este contrato</span></label><button class="btn btn-luz" type="submit">Assinar contrato</button><small style="color:var(--nevoa)">A assinatura fica registrada com nome, CPF, data, hora e endereço IP.</small></form>')+'</div>';
+  var f=$('#fa');if(!f)return;
+  $('#s-cpf').addEventListener('input',function(){var d=this.value.replace(/\D/g,'').slice(0,11);this.value=d.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})\.(\d{3})(\d)/,'$1.$2.$3').replace(/(\d{3})\.(\d{3})\.(\d{3})(\d)/,'$1.$2.$3-$4')});
+  f.addEventListener('submit',function(ev){ev.preventDefault();var b=f.querySelector('button');b.disabled=true;b.textContent='Assinando…';
+    api('assinar',{nome:$('#s-nome').value,cpf:$('#s-cpf').value,aceite:$('#s-ok').checked}).then(function(j){b.disabled=false;b.textContent='Assinar contrato';
+      if(j.error){$('#err').innerHTML='<div class="erro" role="alert">'+esc(j.error)+'</div>';return}
+      topo('Contrato assinado','Agora é a parte boa: testar o agente.');
+      app.innerHTML='<div class="card feito"><div class="ico" aria-hidden="true">✓</div><h2>Contrato assinado!</h2><p>Antes de ligar no WhatsApp de vocês, testem o agente com as informações do cadastro e peçam os ajustes que quiserem.</p><div style="height:20px"></div><a class="btn btn-luz" href="/teste/'+TOKEN+'">Testar o agente agora</a></div>';
+    })});
+}
+
+/* ================= TESTE + AJUSTES ================= */
+var conv=[],env=false;
+function teste(){
+  if(['cadastro','contrato'].indexOf(D.status)>=0){topo('Teste do agente');app.innerHTML='<div class="card vazio">O teste é liberado depois que o contrato for assinado.<br><br><a class="btn btn-luz" href="/'+(D.status==='cadastro'?'cadastro':'contrato')+'/'+TOKEN+'">'+(D.status==='cadastro'?'Preencher o cadastro':'Assinar o contrato')+'</a></div>';return}
+  topo('Teste do agente da '+D.empresa,'Converse como se fosse um cliente. O que quiser mudar, peça ao lado.');
+  app.classList.add('largo');document.querySelector('.topo .w').style.maxWidth='1120px';
+  var nome=D.assistente||D.empresa,ini=(nome.replace(/[^A-Za-zÀ-ÿ0-9]/g,'').charAt(0)||'A').toUpperCase();
+  app.innerHTML='<div class="abas" role="tablist"><button role="tab" id="t1" aria-selected="true" aria-controls="p1">Conversar</button><button role="tab" id="t2" aria-selected="false" aria-controls="p2">Pedir ajustes</button></div>'+
+   '<div class="teste"><section class="painel zap" id="p1" role="tabpanel" aria-labelledby="t1"><header><span class="av">'+esc(ini)+'</span><div><b>'+esc(nome)+'</b><small id="st">online · teste</small></div></header><div class="fio" id="fz" aria-live="polite"></div><div class="dicas" id="dz"><button type="button">Oi, quanto custa?</button><button type="button">Vocês abrem sábado?</button><button type="button">Quero marcar um horário</button></div><form class="escrever" id="ez"><textarea id="tz" rows="1" placeholder="Escreva como um cliente" aria-label="Mensagem para o agente"></textarea><button type="submit" aria-label="Enviar"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3.4 20.4l17.5-7.5c.8-.4.8-1.5 0-1.8L3.4 3.6c-.7-.3-1.4.3-1.2 1l1.7 6.3 9.1 1.1-9.1 1.1-1.7 6.3c-.2.7.5 1.3 1.2 1z"/></svg></button></form></section>'+
+   '<section class="painel aj" id="p2" role="tabpanel" aria-labelledby="t2" hidden><header><span class="av" style="background:linear-gradient(140deg,#FFB547,#FF8A3D);color:#2A1600">✎</span><div><b>Ajustes do agente</b><small>Escreva o que quer mudar e eu atualizo na hora</small></div></header><div class="fio" id="fa2" aria-live="polite"></div><div class="dicas"><button type="button">Acrescentar um serviço</button><button type="button">Mudar um horário</button><button type="button">Falar mais curto</button></div><form class="escrever" id="ea"><textarea id="ta" rows="1" placeholder="Ex.: a limpeza agora custa R$ 200" aria-label="Pedido de ajuste"></textarea><button type="submit" aria-label="Enviar ajuste"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3.4 20.4l17.5-7.5c.8-.4.8-1.5 0-1.8L3.4 3.6c-.7-.3-1.4.3-1.2 1l1.7 6.3 9.1 1.1-9.1 1.1-1.7 6.3c-.2.7.5 1.3 1.2 1z"/></svg></button></form></section></div>';
+  var fz=$('#fz'),fa=$('#fa2');
+  function bolha(f,cls,t,mud){var d=document.createElement('div');d.className='b '+cls;d.textContent=t;if(mud&&mud.length){var w=document.createElement('div');w.className='mud';mud.forEach(function(x){var s=document.createElement('span');s.textContent='✓ '+x;w.appendChild(s)});d.appendChild(w)}f.appendChild(d);f.scrollTop=f.scrollHeight;return d}
+  function digit(f){var d=document.createElement('div');d.className='dig';d.innerHTML='<i></i><i></i><i></i>';f.appendChild(d);f.scrollTop=f.scrollHeight;return d}
+  (D.ajustes||[]).forEach(function(a){bolha(fa,a.de==='empresa'?'eu':'ele',(a.de==='eder'?'Éder: ':'')+a.texto,a.mudancas&&a.mudancas.itens)});
+  bolha(fz,'ele','Este é o agente de vocês, já com as informações do cadastro. Pode testar! 😊');
+  function aba(n){$('#t1').setAttribute('aria-selected',n===1);$('#t2').setAttribute('aria-selected',n===2);$('#p1').hidden=n!==1;$('#p2').hidden=n!==2}
+  $('#t1').onclick=function(){aba(1)};$('#t2').onclick=function(){aba(2)};
+  function enviarZap(t){t=t.trim();if(!t||env)return;env=true;conv.push({eu:true,texto:t});bolha(fz,'eu',t);$('#tz').value='';var dg=digit(fz);$('#st').textContent='digitando…';
+    api('chat',{mensagens:conv}).then(function(j){dg.remove();$('#st').textContent='online · teste';env=false;
+      if(j.error){bolha(fz,'ele','⚠️ '+j.error);return}
+      var ps=j.partes||[],i=0;(function prox(){if(i>=ps.length)return;var p=ps[i++];conv.push({eu:false,texto:p});bolha(fz,'ele',p);if(i<ps.length){var d2=digit(fz);setTimeout(function(){d2.remove();prox()},Math.min(2200,500+p.length*15))}})();
+    })}
+  function enviarAj(t){t=t.trim();if(!t)return;bolha(fa,'eu',t);$('#ta').value='';var dg=digit(fa);var b=$('#ea button');b.disabled=true;
+    api('ajuste',{texto:t}).then(function(j){dg.remove();b.disabled=false;if(j.error){bolha(fa,'ele','⚠️ '+j.error);return}bolha(fa,'ele',j.resposta,j.mudancas);if(j.mudancas&&j.mudancas.length){var n=document.createElement('div');n.className='b ele';n.style.cssText='align-self:center;background:#182229;color:#FFD279;font-size:13px';n.textContent='⚙️ Agente atualizado: '+j.mudancas.join('; ');fz.appendChild(n);fz.scrollTop=fz.scrollHeight}})}
+  $('#ez').onsubmit=function(e){e.preventDefault();enviarZap($('#tz').value)};
+  $('#ea').onsubmit=function(e){e.preventDefault();enviarAj($('#ta').value)};
+  [['#tz','#ez'],['#ta','#ea']].forEach(function(p){$(p[0]).addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();$(p[1]).requestSubmit()}})});
+  $('#dz').onclick=function(e){var b=e.target.closest('button');if(b)enviarZap(b.textContent)};
+  document.querySelector('#p2 .dicas').onclick=function(e){var b=e.target.closest('button');if(!b)return;var t=$('#ta');t.value=({'Acrescentar um serviço':'Acrescenta o serviço ','Mudar um horário':'Mudou o horário: ','Falar mais curto':'Quero que ele responda com mensagens mais curtas'})[b.textContent]||'';t.focus()};
+}
+
+if(!/^[0-9a-f]{24}$/.test(TOKEN)){erroTela('Este link não está completo.');return}
+api('ler').then(function(j){if(j.error){erroTela(j.error);return}D=j;
+  if(PAG==='cadastro'&&D.status!=='cadastro'){location.replace('/'+(D.status==='contrato'?'contrato':'teste')+'/'+TOKEN);return}
+  (PAG==='contrato'?contrato:PAG==='teste'?teste:cadastro)()});
+})();
+</script>
+</body>
+</html>

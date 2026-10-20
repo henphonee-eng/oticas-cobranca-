@@ -24,6 +24,18 @@
   ],
   "rewrites": [
     {
+      "source": "/teste/:t",
+      "destination": "/impl.html"
+    },
+    {
+      "source": "/contrato/:t",
+      "destination": "/impl.html"
+    },
+    {
+      "source": "/cadastro/:t",
+      "destination": "/impl.html"
+    },
+    {
       "source": "/ia",
       "destination": "/ia.html"
     },

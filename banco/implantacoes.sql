@@ -1,0 +1,4 @@
+-- Aplicado no Supabase em 2026-10-20 (migration implantacoes).
+-- Tabelas prosp_impl (cadastro, contrato, assinatura, config da IA), prosp_impl_ajustes (conversa de ajustes) e prosp_impl_uso (limite diário),
+-- todas com RLS só para administrador; a página pública usa a função implantacao pelo código do link.
+-- Dados da contratada ficam em app_segredos (contratada_nome, contratada_doc, contratada_endereco), fora do repositório.
