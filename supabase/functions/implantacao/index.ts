@@ -73,6 +73,14 @@ async function whatsapp(lead: any, partes: string[]) {
   return !r.error;
 }
 
+// função de pós-venda (cobranças, vigia, relatório)
+async function posVenda(body: Record<string, unknown>) {
+  try {
+    const k = await segredos(["agente_secret"]);
+    await fetch(`${URL_SB}/functions/v1/connecta-pos`, { method: "POST", signal: AbortSignal.timeout(15000), headers: { "Content-Type": "application/json", "x-agente": k.agente_secret || "" }, body: JSON.stringify(body) });
+  } catch (e: any) { console.error("pos-venda", e.message); }
+}
+
 /* ---------- OpenAI ---------- */
 async function chat(body: any) {
   const r = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -321,6 +329,8 @@ async function assinar(req: Request, b: any) {
       `Antes de colocar o agente para atender no WhatsApp de vocês, testem ele com as informações que vocês mandaram. Conversem como se fossem um cliente:\n${c.base}/teste/${impl.token}`,
       `Na mesma página tem a área *Pedir ajustes*: é só escrever o que querem acrescentar ou mudar que eu já atualizo. A implantação fica pronta em ${PRAZO}, e daqui para frente o ${c.eder} acompanha tudo com vocês.`,
     ]);
+    // cobrança da 1ª parte (50%) com o Pix copia e cola, logo depois destas mensagens
+    await posVenda({ modo: "assinou", impl: impl.id });
     await historico(lead.id, `📝 Contrato assinado por ${nome}. Link de teste real enviado. Daqui para frente é com você.`, { ag_estado: "passado", ag_em: new Date().toISOString() });
   }
   await avisar(`📝 ${empresa} assinou o contrato`, `Assinado por ${nome}. O teste real foi enviado para a empresa.`, true, impl.lead_id);
@@ -359,7 +369,7 @@ Regras:
 - Pedidos de comportamento ("fale mais curto", "sempre ofereça a avaliação") viram itens em regras_extras.
 - Se o pedido for algo que a configuração não resolve (integração com outro sistema, mudar número de WhatsApp, cobrança, contrato), não mude nada, diga com gentileza que o Éder vai ver isso pessoalmente e marque para_eder = true.
 - Se o pedido estiver confuso, não mude nada e pergunte o que a empresa quis dizer.
-- resposta: em português, curta e simpática, dizendo exatamente o que mudou e convidando a testar de novo. Escreva como a equipe da Connecta.
+- resposta: em português, curta e simpática, dizendo exatamente o que mudou e convidando a testar de novo${impl.otica_id ? " (o agente já está atendendo no WhatsApp: diga que a mudança já vale para os clientes)" : ""}. Escreva como a equipe da Connecta.
 Responda só JSON: {"config": {...configuração completa...}, "mudancas": ["frase curta por mudança"], "resposta": "...", "para_eder": false}` },
       { role: "user", content: `Configuração atual:\n${JSON.stringify(impl.config || {})}\n\nConversa recente de ajustes (mais nova primeiro):\n${(hist || []).map((x: any) => x.de + ": " + x.texto).join("\n")}\n\nPedido novo da empresa: ${texto}` },
     ],
@@ -371,6 +381,11 @@ Responda só JSON: {"config": {...configuração completa...}, "mudancas": ["fra
   const novo = o.config && typeof o.config === "object" && !Array.isArray(o.config) && o.config.empresa ? o.config : null;
   if (novo && mudancas.length && !o.para_eder) {
     await db.from("prosp_impl").update({ config: novo, atualizado_em: new Date().toISOString() }).eq("id", impl.id);
+    // agente já ligado no WhatsApp da empresa: o ajuste vale na hora para os clientes também
+    if (impl.otica_id) {
+      const { data: ag } = await db.from("agente_config").select("cfg").eq("otica_id", impl.otica_id).maybeSingle();
+      if (ag) await db.from("agente_config").update({ cfg: { ...(ag.cfg || {}), tipo: "empresa", empresa: novo }, atualizado_em: new Date().toISOString() }).eq("otica_id", impl.otica_id);
+    }
   } else if (!o.para_eder && mudancas.length && !novo) {
     resposta = "Não consegui aplicar esse ajuste agora. Pode escrever de outro jeito?";
   }

@@ -127,6 +127,28 @@ input:focus,textarea:focus{border-color:var(--ambar);outline:none;background:#ff
 .dicas button{font:600 13px var(--f-t);border-radius:999px;border:1px solid var(--linha);background:#fff;color:var(--tinta);padding:6px 11px;cursor:pointer}
 .zap .dicas button{background:#202C33;border-color:#2A3942;color:#D1D7DB}
 .vazio{text-align:center;padding:60px 20px;color:var(--nevoa)}
+/* área do cliente */
+.cabas{display:flex;gap:4px;background:#fff;border:1px solid var(--linha);border-radius:999px;padding:5px;margin-bottom:14px;overflow-x:auto}
+.cabas button{flex:1 0 auto;border:0;background:none;border-radius:999px;min-height:42px;padding:0 14px;font:700 14.5px var(--f-t);color:var(--nevoa);cursor:pointer;white-space:nowrap}
+.cabas button[aria-selected=true]{background:var(--noite);color:#fff}
+.st{display:flex;gap:14px;align-items:flex-start}.st h2{margin-bottom:4px}
+.dot{flex:none;width:14px;height:14px;border-radius:50%;margin-top:7px}.dot.ok{background:var(--menta);box-shadow:0 0 0 5px #DDF5EC}.dot.am{background:var(--ambar);box-shadow:0 0 0 5px #FFF1DC}
+.dot.pulsa{animation:pl 1.6s ease-in-out infinite}@keyframes pl{50%{box-shadow:0 0 0 9px #FFF1DC}}
+.qr{display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:center}
+.qr img{width:240px;max-width:100%;height:auto;background:#fff;border:1px solid var(--linha);border-radius:12px;padding:8px}
+.qr ol{margin:0;padding-left:20px;display:grid;gap:8px}
+@media (max-width:620px){.qr{grid-template-columns:1fr;justify-items:center}}
+.nums{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px}
+@media (max-width:620px){.nums{grid-template-columns:repeat(2,1fr)}}
+.nums div{background:var(--papel);border-radius:12px;padding:12px 14px}.nums b{display:block;font:800 26px/1.1 var(--f-d);font-variant-numeric:tabular-nums}.nums span{font-size:13.5px;color:var(--nevoa)}
+.pg{display:grid;grid-template-columns:1fr auto;gap:8px 12px;align-items:center;padding:14px 0;border-top:1px solid var(--linha)}.card h2+.pg,.card .sub+.pg{border-top:0}
+.pg-l b{display:block}.pg-l span{font-size:14px;color:var(--nevoa)}
+.chip{font-size:13px;font-weight:700;border-radius:999px;padding:4px 10px;background:var(--papel);color:var(--nevoa);white-space:nowrap}.chip.ok{background:#DDF5EC;color:#0B6B4D}.chip.er{background:#FDECEA;color:#8C2620}
+.pg-pix{grid-column:1/-1;display:grid;grid-template-columns:132px 1fr;gap:14px;align-items:center;background:var(--papel);border-radius:12px;padding:12px}
+.pg-qr{width:132px;height:132px;background:#fff;border-radius:8px}.pg-qr svg{width:100%;height:100%}
+.pg-pix small{display:block;color:var(--nevoa);font-size:13px;margin-top:8px}
+@media (max-width:520px){.pg-pix{grid-template-columns:1fr}.pg-qr{display:none}.pg-pix .btn{width:100%}}
+.aviso-pg{display:block;margin:0 0 12px;padding:12px 16px;border-radius:14px;background:#FFF6E8;border:1px solid #FFE0B0;color:var(--tinta);font-weight:700;text-decoration:none}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
@@ -142,9 +164,10 @@ var SB='https://ovynkeifzhavhjdkjjui.supabase.co',KEY='sb_publishable_7RunIjZPQD
 var $=function(s){return document.querySelector(s)},app=$('#app');
 var esc=function(t){return String(t==null?'':t).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
 var brl=function(n){return 'R$ '+Number(n||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})};
-var m=location.pathname.match(/\/(cadastro|contrato|teste)\/([0-9a-f]{24})/)||[];
+var m=location.pathname.match(/\/(cadastro|contrato|teste|cliente)\/([0-9a-f]{24})/)||[];
 var PAG=m[1]||new URLSearchParams(location.search).get('p')||'cadastro',TOKEN=m[2]||new URLSearchParams(location.search).get('t')||'';
 var D=null;
+function apiPos(extra){return fetch(SB+'/functions/v1/connecta-pos',{method:'POST',headers:{'Content-Type':'application/json',apikey:KEY},body:JSON.stringify(Object.assign({modo:'painel',token:TOKEN},extra||{}))}).then(function(r){return r.json()}).catch(function(){return {error:'Sem conexão.'}})}
 function api(modo,extra){return fetch(SB+'/functions/v1/implantacao',{method:'POST',headers:{'Content-Type':'application/json',apikey:KEY},body:JSON.stringify(Object.assign({modo:modo,token:TOKEN},extra||{}))}).then(function(r){return r.json().then(function(j){if(!r.ok&&!j.error)j.error='Não deu certo agora. Tente de novo.';return j})}).catch(function(){return {error:'Sem conexão. Confira a internet e tente de novo.'}})}
 function topo(t,s){$('#tit').textContent=t;$('#sub').textContent=s||'';document.title=t+' · Connecta AI'}
 function erroTela(t){topo('Link inválido');app.innerHTML='<div class="card vazio">'+esc(t)+'<br><br>Se precisar, responda a mensagem no WhatsApp que a gente te ajuda.</div>'}
@@ -265,19 +288,20 @@ function contrato(){
 
 /* ================= TESTE + AJUSTES ================= */
 var conv=[],env=false;
-function teste(){
+function teste(alvo){
+  var dentro=!!alvo;alvo=alvo||app;
   if(['cadastro','contrato'].indexOf(D.status)>=0){topo('Teste do agente');app.innerHTML='<div class="card vazio">O teste é liberado depois que o contrato for assinado.<br><br><a class="btn btn-luz" href="/'+(D.status==='cadastro'?'cadastro':'contrato')+'/'+TOKEN+'">'+(D.status==='cadastro'?'Preencher o cadastro':'Assinar o contrato')+'</a></div>';return}
-  topo('Teste do agente da '+D.empresa,'Converse como se fosse um cliente. O que quiser mudar, peça ao lado.');
-  app.classList.add('largo');document.querySelector('.topo .w').style.maxWidth='1120px';
+  if(!dentro){topo('Teste do agente da '+D.empresa,'Converse como se fosse um cliente. O que quiser mudar, peça ao lado.');
+  app.classList.add('largo');document.querySelector('.topo .w').style.maxWidth='1120px'}
   var nome=D.assistente||D.empresa,ini=(nome.replace(/[^A-Za-zÀ-ÿ0-9]/g,'').charAt(0)||'A').toUpperCase();
-  app.innerHTML='<div class="abas" role="tablist"><button role="tab" id="t1" aria-selected="true" aria-controls="p1">Conversar</button><button role="tab" id="t2" aria-selected="false" aria-controls="p2">Pedir ajustes</button></div>'+
+  alvo.innerHTML=(dentro||D.status!=='teste'?'':'<a class="aviso-pg" href="/cliente/'+TOKEN+'">Pagamentos e próximos passos da implantação ›</a>')+'<div class="abas" role="tablist"><button role="tab" id="t1" aria-selected="true" aria-controls="p1">Conversar</button><button role="tab" id="t2" aria-selected="false" aria-controls="p2">Pedir ajustes</button></div>'+
    '<div class="teste"><section class="painel zap" id="p1" role="tabpanel" aria-labelledby="t1"><header><span class="av">'+esc(ini)+'</span><div><b>'+esc(nome)+'</b><small id="st">online · teste</small></div></header><div class="fio" id="fz" aria-live="polite"></div><div class="dicas" id="dz"><button type="button">Oi, quanto custa?</button><button type="button">Vocês abrem sábado?</button><button type="button">Quero marcar um horário</button></div><form class="escrever" id="ez"><textarea id="tz" rows="1" placeholder="Escreva como um cliente" aria-label="Mensagem para o agente"></textarea><button type="submit" aria-label="Enviar"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3.4 20.4l17.5-7.5c.8-.4.8-1.5 0-1.8L3.4 3.6c-.7-.3-1.4.3-1.2 1l1.7 6.3 9.1 1.1-9.1 1.1-1.7 6.3c-.2.7.5 1.3 1.2 1z"/></svg></button></form></section>'+
    '<section class="painel aj" id="p2" role="tabpanel" aria-labelledby="t2" hidden><header><span class="av" style="background:linear-gradient(140deg,#FFB547,#FF8A3D);color:#2A1600">✎</span><div><b>Ajustes do agente</b><small>Escreva o que quer mudar e eu atualizo na hora</small></div></header><div class="fio" id="fa2" aria-live="polite"></div><div class="dicas"><button type="button">Acrescentar um serviço</button><button type="button">Mudar um horário</button><button type="button">Falar mais curto</button></div><form class="escrever" id="ea"><textarea id="ta" rows="1" placeholder="Ex.: a limpeza agora custa R$ 200" aria-label="Pedido de ajuste"></textarea><button type="submit" aria-label="Enviar ajuste"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3.4 20.4l17.5-7.5c.8-.4.8-1.5 0-1.8L3.4 3.6c-.7-.3-1.4.3-1.2 1l1.7 6.3 9.1 1.1-9.1 1.1-1.7 6.3c-.2.7.5 1.3 1.2 1z"/></svg></button></form></section></div>';
   var fz=$('#fz'),fa=$('#fa2');
   function bolha(f,cls,t,mud){var d=document.createElement('div');d.className='b '+cls;d.textContent=t;if(mud&&mud.length){var w=document.createElement('div');w.className='mud';mud.forEach(function(x){var s=document.createElement('span');s.textContent='✓ '+x;w.appendChild(s)});d.appendChild(w)}f.appendChild(d);f.scrollTop=f.scrollHeight;return d}
   function digit(f){var d=document.createElement('div');d.className='dig';d.innerHTML='<i></i><i></i><i></i>';f.appendChild(d);f.scrollTop=f.scrollHeight;return d}
   (D.ajustes||[]).forEach(function(a){bolha(fa,a.de==='empresa'?'eu':'ele',(a.de==='eder'?'Éder: ':'')+a.texto,a.mudancas&&a.mudancas.itens)});
-  bolha(fz,'ele','Este é o agente de vocês, já com as informações do cadastro. Pode testar! 😊');
+  bolha(fz,'ele',D.status==='ativa'?'Este é um teste do agente de vocês, com as mesmas informações que ele usa no WhatsApp. Nada daqui vai para os clientes. 😊':'Este é o agente de vocês, já com as informações do cadastro. Pode testar! 😊');
   function aba(n){$('#t1').setAttribute('aria-selected',n===1);$('#t2').setAttribute('aria-selected',n===2);$('#p1').hidden=n!==1;$('#p2').hidden=n!==2}
   $('#t1').onclick=function(){aba(1)};$('#t2').onclick=function(){aba(2)};
   function enviarZap(t){t=t.trim();if(!t||env)return;env=true;conv.push({eu:true,texto:t});bolha(fz,'eu',t);$('#tz').value='';var dg=digit(fz);$('#st').textContent='digitando…';
@@ -294,10 +318,60 @@ function teste(){
   document.querySelector('#p2 .dicas').onclick=function(e){var b=e.target.closest('button');if(!b)return;var t=$('#ta');t.value=({'Acrescentar um serviço':'Acrescenta o serviço ','Mudar um horário':'Mudou o horário: ','Falar mais curto':'Quero que ele responda com mensagens mais curtas'})[b.textContent]||'';t.focus()};
 }
 
+/* ================= ÁREA DO CLIENTE ================= */
+var P=null,abaC='inicio',tP=0,qrLib=null;
+function dataBR(d){return d?d.slice(8,10)+'/'+d.slice(5,7)+'/'+d.slice(0,4):''}
+var MES=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+function carregaQr(){if(qrLib)return qrLib;qrLib=new Promise(function(ok){var sc=document.createElement('script');sc.src='https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js';sc.onload=function(){ok(window.qrcode||null)};sc.onerror=function(){ok(null)};document.head.appendChild(sc)});return qrLib}
+function pixQr(el,code){carregaQr().then(function(q){if(!q||!el)return;try{var x=q(0,'M');x.addData(code);x.make();el.innerHTML=x.createSvgTag({cellSize:4,margin:2,scalable:true});var sv=el.querySelector('svg');if(sv){sv.setAttribute('role','img');sv.setAttribute('aria-label','QR Code do Pix')}}catch(e){}})}
+function nums(x){if(!x)return '';return '<div class="nums"><div><b>'+x.pessoas+'</b><span>'+(x.pessoas===1?'pessoa atendida':'pessoas atendidas')+'</span></div><div><b>'+x.respostas+'</b><span>respostas enviadas</span></div><div><b>'+x.fora_horario+'</b><span>atendidas fora do horário</span></div><div><b>'+x.chamou_equipe+'</b><span>vezes chamou a equipe</span></div></div>'}
+function cartaoWa(){var w=P.wa||{};
+  if(P.status==='encerrada')return '<div class="card"><h2>Atendimento encerrado</h2><p class="sub" style="margin:0">O agente foi desligado. Se quiser voltar, é só chamar a gente no WhatsApp.</p></div>';
+  if(P.status==='teste')return '<div class="card"><div class="st"><span class="dot am"></span><div><h2>Agente em teste</h2><p class="sub" style="margin:0">Testem e peçam ajustes na aba <b>Testar e ajustar</b>. Quando estiver tudo certo, o '+'Éder libera e vocês conectam o WhatsApp por aqui mesmo, lendo um QR Code.</p></div></div></div>';
+  if(w.online)return '<div class="card"><div class="st"><span class="dot ok"></span><div><h2>'+(w.agente_ativo?'Atendendo no WhatsApp':'Agente pausado')+'</h2><p class="sub" style="margin:0">'+(w.agente_ativo?'O agente está respondendo os clientes'+(w.numero?' no número terminado em '+esc(String(w.numero).slice(-4)):'')+', 24 horas por dia.':'O WhatsApp está conectado, mas o agente está pausado. Fale com a gente para religar.')+'</p></div></div></div>';
+  if(w.qr)return '<div class="card"><h2>Conecte o WhatsApp da empresa</h2><p class="sub">Faça isto pelo computador (ou outro aparelho) e leia o código com o celular da empresa.</p><div class="qr"><img alt="QR Code para conectar o WhatsApp" src="'+esc(w.qr)+'"><ol><li>No celular da empresa, abra o <b>WhatsApp</b>.</li><li>Toque em <b>⋮</b> ou <b>Configurações</b> › <b>Aparelhos conectados</b>.</li><li>Toque em <b>Conectar um aparelho</b> e aponte a câmera para este código.</li></ol></div><p class="sub" style="margin:12px 0 0">O código muda sozinho a cada minuto. Assim que conectar, esta tela muda para “Atendendo”.</p></div>';
+  return '<div class="card"><div class="st"><span class="dot am pulsa"></span><div><h2>'+(P.conectado_em?'WhatsApp desconectado':'Preparando a conexão')+'</h2><p class="sub" style="margin:0">'+(P.conectado_em?'O agente parou de responder. Em instantes aparece aqui um QR Code para conectar de novo.':'Em até 1 minuto aparece aqui o QR Code para conectar o WhatsApp da empresa. Deixe esta página aberta.')+'</p></div></div></div>'}
+function pagLinha(x){var st=x.pago?'<span class="chip ok">Pago em '+dataBR(x.pago_em)+'</span>':x.atraso>0?'<span class="chip er">'+x.atraso+(x.atraso===1?' dia':' dias')+' de atraso</span>':'<span class="chip">Vence '+dataBR(x.venc)+'</span>';
+  return '<div class="pg"><div class="pg-l"><b>'+esc(x.descricao.charAt(0).toUpperCase()+x.descricao.slice(1))+'</b><span>'+brl(x.valor)+' · vencimento '+dataBR(x.venc)+'</span></div>'+st+(x.pix?'<div class="pg-pix"><div class="pg-qr" data-pix="'+esc(x.pix)+'"></div><div><button class="btn btn-luz" type="button" data-copiar="'+esc(x.pix)+'">Copiar Pix copia e cola</button><small>Abra o app do banco › Pix › Pix copia e cola, ou leia o QR. Já vai com o valor. Depois mande o comprovante no WhatsApp.</small></div></div>':'')+'</div>'}
+function telaC(){
+  var abertos=(P.pagamentos||[]).filter(function(x){return !x.pago}),prox=abertos[0];
+  var h='<nav class="cabas" role="tablist">'+[['inicio','Início'],['teste','Testar'+(innerWidth>520?' e ajustar':'')],['pag','Pagamentos'+(abertos.some(function(x){return x.atraso>0})?' •':'')],['rel','Relatórios']].map(function(a){return '<button role="tab" data-c="'+a[0]+'" aria-selected="'+(abaC===a[0])+'">'+a[1]+'</button>'}).join('')+'</nav>';
+  h+='<div id="c-inicio"'+(abaC==='inicio'?'':' hidden')+'>'+cartaoWa()+
+    (P.mes_atual&&P.mes_atual.mensagens?'<div class="card" style="margin-top:14px"><h2>Este mês até agora</h2>'+nums(P.mes_atual)+'</div>':'')+
+    (prox?'<div class="card" style="margin-top:14px"><h2>Próximo pagamento</h2>'+pagLinha(prox)+'</div>':'')+
+    '<div class="card" style="margin-top:14px"><h2>Precisa mudar algo no agente?</h2><p class="sub">Preço novo, horário de feriado, um serviço a mais: peça na aba <b>Testar e ajustar</b> e o agente é atualizado na hora'+(P.status==='ativa'?', inclusive no WhatsApp':'')+'.</p><button class="btn btn-vidro" type="button" data-c="teste">Pedir um ajuste</button></div></div>';
+  h+='<div id="c-teste"'+(abaC==='teste'?'':' hidden')+'></div>';
+  h+='<div id="c-pag"'+(abaC==='pag'?'':' hidden')+'><div class="card"><h2>Pagamentos</h2><p class="sub">Implantação em duas partes (50% no início e 50% quando o agente começa a atender) e mensalidade a partir de 30 dias depois. Pix para '+esc(P.pix_nome||'')+(P.pix_chave?' ('+esc(P.pix_chave)+')':'')+'.</p>'+((P.pagamentos||[]).length?(P.pagamentos||[]).map(pagLinha).join(''):'<p class="sub">Nenhum pagamento por enquanto.</p>')+'</div></div>';
+  var rels=P.relatorios||[];
+  h+='<div id="c-rel"'+(abaC==='rel'?'':' hidden')+'>'+(P.mes_atual?'<div class="card"><h2>'+MES[new Date().getMonth()]+' (até hoje)</h2>'+nums(P.mes_atual)+'</div>':'<div class="card"><h2>Relatórios</h2><p class="sub" style="margin:0">Os números aparecem aqui assim que o agente começar a atender no WhatsApp. Todo dia 1º vocês também recebem o resumo do mês no WhatsApp.</p></div>')+
+    rels.map(function(r){return '<div class="card" style="margin-top:14px"><h2>'+MES[+r.mes.slice(5,7)-1]+' de '+r.mes.slice(0,4)+'</h2>'+nums(r)+'</div>'}).join('')+'</div>';
+  return h}
+function pintaC(){var y=window.scrollY,tem=document.getElementById('c-teste'),guardado=tem&&tem.firstChild?tem:null;
+  if(guardado)guardado.remove();
+  app.innerHTML=telaC();
+  if(guardado)document.getElementById('c-teste').replaceWith(guardado);
+  else if(abaC==='teste')teste(document.getElementById('c-teste'));
+  document.querySelectorAll('[data-pix]').forEach(function(el){pixQr(el,el.dataset.pix)});
+  window.scrollTo(0,y)}
+function cliente(){
+  topo(D.empresa,'Área do cliente · Plano '+D.plano);
+  apiPos().then(function(j){if(j.error){erroTela(j.error);return}P=j;pintaC();agendaC()});
+}
+function agendaC(){clearTimeout(tP);var w=(P&&P.wa)||{};var rapido=P&&P.status==='ativa'&&!w.online&&abaC==='inicio';tP=setTimeout(function(){if(document.hidden){agendaC();return}apiPos().then(function(j){if(!j.error){var mud=JSON.stringify(j)!==JSON.stringify(P);P=j;if(mud&&abaC!=='teste')pintaC()}agendaC()})},rapido?5000:60000)}
+app.addEventListener('click',function(e){if(PAG!=='cliente')return;var t=e.target.closest('[data-c],[data-copiar]');if(!t)return;
+  if(t.dataset.copiar){var c=t.dataset.copiar,ok=function(){t.textContent='Copiado ✓';setTimeout(function(){t.textContent='Copiar Pix copia e cola'},2500)};if(navigator.clipboard)navigator.clipboard.writeText(c).then(ok,function(){window.prompt('Copie o código:',c)});else window.prompt('Copie o código:',c);return}
+  abaC=t.dataset.c;
+  ['inicio','teste','pag','rel'].forEach(function(k){var el=document.getElementById('c-'+k);if(el)el.hidden=k!==abaC});
+  document.querySelectorAll('.cabas button').forEach(function(b){b.setAttribute('aria-selected',b.dataset.c===abaC)});
+  if(abaC==='teste'){var ct=document.getElementById('c-teste');if(!ct.firstChild)teste(ct);app.classList.add('largo');document.querySelector('.topo .w').style.maxWidth='1120px'}else{app.classList.remove('largo');document.querySelector('.topo .w').style.maxWidth=''}
+  window.scrollTo(0,0);agendaC()});
+
 if(!/^[0-9a-f]{24}$/.test(TOKEN)){erroTela('Este link não está completo.');return}
 api('ler').then(function(j){if(j.error){erroTela(j.error);return}D=j;
-  if(PAG==='cadastro'&&D.status!=='cadastro'){location.replace('/'+(D.status==='contrato'?'contrato':'teste')+'/'+TOKEN);return}
-  (PAG==='contrato'?contrato:PAG==='teste'?teste:cadastro)()});
+  if(PAG==='cadastro'&&D.status!=='cadastro'){location.replace('/'+(D.status==='contrato'?'contrato':['ativa','encerrada'].indexOf(D.status)>=0?'cliente':'teste')+'/'+TOKEN);return}
+  if(PAG==='teste'&&['ativa','encerrada'].indexOf(D.status)>=0){location.replace('/cliente/'+TOKEN);return}
+  if(PAG==='cliente'&&['cadastro','contrato'].indexOf(D.status)>=0){location.replace('/'+D.status+'/'+TOKEN);return}
+  (PAG==='contrato'?contrato:PAG==='teste'?function(){teste()}:PAG==='cliente'?cliente:cadastro)()});
 })();
 </script>
 </body>

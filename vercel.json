@@ -28,6 +28,10 @@
       "destination": "/impl.html"
     },
     {
+      "source": "/cliente/:t",
+      "destination": "/impl.html"
+    },
+    {
       "source": "/contrato/:t",
       "destination": "/impl.html"
     },
