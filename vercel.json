@@ -24,6 +24,10 @@
   ],
   "rewrites": [
     {
+      "source": "/ia",
+      "destination": "/ia.html"
+    },
+    {
       "source": "/d/:cod",
       "destination": "/demo/index.html"
     },
@@ -81,7 +85,7 @@
           "value": "teste-agente-ia.vercel.app"
         }
       ],
-      "destination": "/agente",
+      "destination": "/ia",
       "permanent": false
     }
   ]
