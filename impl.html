@@ -148,6 +148,33 @@ input:focus,textarea:focus{border-color:var(--ambar);outline:none;background:#ff
 .pg-qr{width:132px;height:132px;background:#fff;border-radius:8px}.pg-qr svg{width:100%;height:100%}
 .pg-pix small{display:block;color:var(--nevoa);font-size:13px;margin-top:8px}
 @media (max-width:520px){.pg-pix{grid-template-columns:1fr}.pg-qr{display:none}.pg-pix .btn{width:100%}}
+.tgs{display:grid;gap:10px}
+.tg{display:flex;gap:12px;align-items:flex-start;cursor:pointer;padding:10px 0}
+.tg input{position:absolute;opacity:0;pointer-events:none}
+.tg-s{flex:none;width:44px;height:26px;border-radius:999px;background:#D5D9E8;position:relative;transition:background-color .15s;margin-top:1px}
+.tg-s::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:transform .15s}
+.tg input:checked+.tg-s{background:var(--menta)}.tg input:checked+.tg-s::after{transform:translateX(18px)}
+.tg input:focus-visible+.tg-s{outline:3px solid var(--ambar);outline-offset:2px}
+.tg-t b{display:block}.tg-t small{display:block;color:var(--nevoa);font-size:13.5px}
+.tg.off{opacity:.45;cursor:default}
+.agd{font:800 15px var(--f-d);margin:16px 0 4px;display:flex;gap:8px;align-items:center}.agd span{font:700 12px var(--f-t);background:var(--papel);color:var(--nevoa);border-radius:999px;padding:2px 8px}
+.card h2+.agd{margin-top:10px}
+.agi{display:grid;grid-template-columns:64px 1fr auto;gap:12px;align-items:start;padding:12px 0;border-top:1px solid var(--linha)}
+.agd+.agi{border-top:0}
+.agi.canc{opacity:.5}.agi.canc .agc b{text-decoration:line-through}
+.agh b{display:block;font:800 18px/1.1 var(--f-d);font-variant-numeric:tabular-nums}.agh span{font-size:13px;color:var(--nevoa)}
+.agc b{display:block}.agc>span{font-size:14px;color:var(--nevoa)}
+.aga{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.aga .mini{min-height:34px;padding:5px 11px;font-size:13px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:0 12px}
+@media (max-width:560px){.g2,.g3{grid-template-columns:1fr}.agi{grid-template-columns:56px 1fr}.agi .chip{grid-column:2;justify-self:start}}
+input[type=date],input[type=datetime-local]{width:100%;font:500 16px var(--f-t);color:var(--tinta);background:var(--papel);border:1.5px solid var(--linha);border-radius:12px;padding:12px 14px;min-height:48px}
+details.card summary{cursor:pointer;list-style:none}details.card summary::-webkit-details-marker{display:none}details.card summary::after{content:"›";float:right;font-size:22px;color:var(--nevoa);transform:rotate(90deg);transition:transform .15s}details.card[open] summary::after{transform:rotate(-90deg)}
+.cl{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:10px 0;border-top:1px solid var(--linha)}.card h2+.cl,.campo+.cl{border-top:0}
+.cl b{font-variant-numeric:tabular-nums}.cl span small{display:block;color:var(--nevoa);font-size:13.5px}.cl>span{flex:1}
+.cl .mini{min-height:34px;padding:5px 12px;font-size:13px}
+.cp{padding:12px 0;border-top:1px solid var(--linha)}.card h2+.cp{border-top:0}
+.cp-t{display:flex;gap:10px;align-items:center;justify-content:space-between}.cp p{margin:6px 0;color:var(--tinta);font-size:15px;white-space:pre-wrap}.cp small{color:var(--nevoa)}
+.cp .mini{min-height:32px;padding:4px 11px;font-size:13px;margin-left:6px}
 .aviso-pg{display:block;margin:0 0 12px;padding:12px 16px;border-radius:14px;background:#FFF6E8;border:1px solid #FFE0B0;color:var(--tinta);font-weight:700;text-decoration:none}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -333,13 +360,93 @@ function cartaoWa(){var w=P.wa||{};
   return '<div class="card"><div class="st"><span class="dot am pulsa"></span><div><h2>'+(P.conectado_em?'WhatsApp desconectado':'Preparando a conexão')+'</h2><p class="sub" style="margin:0">'+(P.conectado_em?'O agente parou de responder. Em instantes aparece aqui um QR Code para conectar de novo.':'Em até 1 minuto aparece aqui o QR Code para conectar o WhatsApp da empresa. Deixe esta página aberta.')+'</p></div></div></div>'}
 function pagLinha(x){var st=x.pago?'<span class="chip ok">Pago em '+dataBR(x.pago_em)+'</span>':x.atraso>0?'<span class="chip er">'+x.atraso+(x.atraso===1?' dia':' dias')+' de atraso</span>':'<span class="chip">Vence '+dataBR(x.venc)+'</span>';
   return '<div class="pg"><div class="pg-l"><b>'+esc(x.descricao.charAt(0).toUpperCase()+x.descricao.slice(1))+'</b><span>'+brl(x.valor)+' · vencimento '+dataBR(x.venc)+'</span></div>'+st+(x.pix?'<div class="pg-pix"><div class="pg-qr" data-pix="'+esc(x.pix)+'"></div><div><button class="btn btn-luz" type="button" data-copiar="'+esc(x.pix)+'">Copiar Pix copia e cola</button><small>Abra o app do banco › Pix › Pix copia e cola, ou leia o QR. Já vai com o valor. Depois mande o comprovante no WhatsApp.</small></div></div>':'')+'</div>'}
+/* ================= AGENDA, CLIENTES E CAMPANHAS (recursos do plano) ================= */
+var RR=null,RRerr='',cEdit=null;
+var ZAP_EDER='https://wa.me/5581999707538?text='+encodeURIComponent('Olá, Éder! Quero saber como mudar o plano do meu agente para o Profissional.');
+function apiRec(extra){return fetch(SB+'/functions/v1/emp-recursos',{method:'POST',headers:{'Content-Type':'application/json',apikey:KEY},body:JSON.stringify(Object.assign({modo:'painel',token:TOKEN},extra||{}))}).then(function(r){return r.json()}).catch(function(){return {error:'Sem conexão.'}})}
+function carregaRec(){if(!P||P.status!=='ativa')return Promise.resolve();return apiRec({acao:'resumo'}).then(function(j){if(j.error){RRerr=j.error;return}RR=j;RRerr=''})}
+var DSEM=['domingo','segunda','terça','quarta','quinta','sexta','sábado'],DK=[['seg','Segunda'],['ter','Terça'],['qua','Quarta'],['qui','Quinta'],['sex','Sexta'],['sab','Sábado'],['dom','Domingo']];
+function hojeL(){var d=new Date();return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10)}
+function addD(d,n){return new Date(Date.parse(d+'T12:00:00Z')+n*864e5).toISOString().slice(0,10)}
+function nomeDia(d){var h=hojeL();if(d===h)return 'Hoje';if(d===addD(h,1))return 'Amanhã';var x=new Date(d+'T12:00:00Z');return DSEM[x.getUTCDay()].charAt(0).toUpperCase()+DSEM[x.getUTCDay()].slice(1)+', '+d.slice(8,10)+'/'+d.slice(5,7)}
+function fone(t){var d=String(t||'').replace(/\D/g,'').replace(/^55(?=\d{10,11}$)/,'');return d.length===11?'('+d.slice(0,2)+') '+d.slice(2,7)+'-'+d.slice(7):d.length===10?'('+d.slice(0,2)+') '+d.slice(2,6)+'-'+d.slice(6):t||''}
+function tog(k,rot,sub,on,dis){return '<label class="tg'+(dis?' off':'')+'"><input type="checkbox" data-auto="'+k+'"'+(on?' checked':'')+(dis?' disabled':'')+'><span class="tg-s" aria-hidden="true"></span><span class="tg-t"><b>'+rot+'</b>'+(sub?'<small>'+sub+'</small>':'')+'</span></label>'}
+function bloqueado(t,txt){return '<div class="card"><h2>'+t+'</h2><p class="sub">'+txt+'</p><a class="btn btn-luz" href="'+ZAP_EDER+'" target="_blank" rel="noopener">Quero o plano Profissional</a></div>'}
+var ST_AG={marcado:['Marcado',''],confirmado:['Confirmado','ok'],concluido:['Atendido','ok'],faltou:['Faltou','er'],cancelado:['Cancelado','er']};
+function agItem(a,passado){var st=ST_AG[a.status]||['',''];var bt=function(s,t){return '<button class="mini" type="button" data-r="st" data-id="'+a.id+'" data-v="'+s+'">'+t+'</button>'};
+  var acoes=a.status==='cancelado'||a.status==='concluido'||a.status==='faltou'?'':passado?bt('concluido','Atendido')+bt('faltou','Faltou'):(a.status==='marcado'?bt('confirmado','Confirmar'):'')+bt('cancelado','Cancelar');
+  return '<div class="agi'+(a.status==='cancelado'?' canc':'')+'"><div class="agh"><b>'+esc(a.hora)+'</b><span>'+esc(a.fim)+'</span></div><div class="agc"><b>'+esc(a.nome)+'</b><span>'+esc([a.servico,fone(a.telefone)].filter(Boolean).join(' · '))+(a.origem==='agente'?' · marcado pelo agente':'')+'</span>'+(acoes?'<div class="aga">'+acoes+'</div>':'')+'</div><span class="chip '+st[1]+'">'+st[0]+'</span></div>'}
+function vAgenda(){
+  if(!RR)return '<div class="card vazio">'+esc(RRerr||'Carregando…')+'</div>';
+  if(!RR.recursos.agenda)return bloqueado('Agenda própria','No plano Profissional o agente marca, remarca e cancela os horários sozinho, numa agenda só da sua empresa, e manda lembrete para o cliente na véspera e no dia. Assim cai o número de faltas.');
+  var h=hojeL(),L=RR.agenda||[],fut=L.filter(function(a){return a.data>=h}),pend=L.filter(function(a){return a.data<h&&(a.status==='marcado'||a.status==='confirmado')});
+  var dias={};fut.forEach(function(a){(dias[a.data]=dias[a.data]||[]).push(a)});
+  var g=RR.grade||{},gd=g.dias||{};
+  var x='<div class="card"><h2>Agenda</h2><p class="sub">Os horários que o agente marca pelo WhatsApp aparecem aqui na hora.</p><div class="tgs">'+tog('agenda','O agente marca os horários','Mostra os horários livres e marca direto na agenda.',RR.ativo.agenda)+tog('lembrete','Lembrete para o cliente','Na véspera (pedindo para confirmar) e umas 2 horas antes.',RR.ativo.lembrete,!RR.ativo.agenda)+'</div></div>';
+  if(pend.length)x+='<div class="card" style="margin-top:14px"><h2>Como foi?</h2><p class="sub">Marque quem foi atendido e quem faltou.</p>'+pend.map(function(a){return '<p class="agd">'+nomeDia(a.data)+'</p>'+agItem(a,true)}).join('')+'</div>';
+  x+='<div class="card" style="margin-top:14px"><h2>Próximos horários</h2>'+(Object.keys(dias).length?Object.keys(dias).sort().map(function(d){return '<p class="agd">'+nomeDia(d)+' <span>'+dias[d].filter(function(a){return a.status!=='cancelado'}).length+'</span></p>'+dias[d].map(function(a){return agItem(a,false)}).join('')}).join(''):'<p class="sub" style="margin:0">Nenhum horário marcado ainda. Quando um cliente marcar pelo WhatsApp, ele aparece aqui.</p>')+'</div>';
+  x+='<form class="card" id="f-ag" style="margin-top:14px"><h2>Marcar um horário</h2><p class="sub">Para quem ligou ou veio pessoalmente. Se tiver WhatsApp, o cliente também recebe o lembrete.</p><div id="e-ag"></div><div class="g2">'+campoTxt('ag-nome','Nome do cliente','','Nome completo')+campoTxt('ag-tel','WhatsApp (opcional)','','(81) 99999-9999','','tel')+'</div><div class="campo"><label for="ag-sv">Serviço</label><input type="text" id="ag-sv" list="ag-svs" placeholder="Ex.: Limpeza"><datalist id="ag-svs">'+(RR.servicos||[]).map(function(s){return '<option value="'+esc(s)+'">'}).join('')+'</datalist></div><div class="g2"><div class="campo"><label for="ag-dia">Dia</label><input type="date" id="ag-dia" min="'+h+'" value="'+h+'"></div><div class="campo"><label for="ag-hora">Hora</label><input type="time" id="ag-hora" step="300"></div></div><button class="btn btn-luz" type="submit">Marcar</button></form>';
+  x+='<details class="card" style="margin-top:14px"><summary><h2 style="display:inline">Horários da agenda</h2></summary><p class="sub" style="margin-top:10px">Em que dias e horários o agente pode marcar.</p><div class="dias">'+DK.map(function(k){var v=gd[k[0]]||{};return '<div class="dia"><label class="op"><input type="checkbox" data-gd="'+k[0]+'"'+(v.aberto?' checked':'')+'><span>'+k[1]+'</span></label><div class="hs'+(v.aberto?'':' off')+'" id="ghs-'+k[0]+'"><input type="time" aria-label="'+k[1]+' começa" data-ga="'+k[0]+'" value="'+esc(v.abre||'08:00')+'"><span>às</span><input type="time" aria-label="'+k[1]+' termina" data-gf="'+k[0]+'" value="'+esc(v.fecha||'18:00')+'"></div></div>'}).join('')+'</div><div style="height:14px"></div>'+
+    '<div class="g3"><div class="campo"><label for="g-dur">Cada atendimento (min)</label><input type="text" inputmode="numeric" id="g-dur" value="'+esc(g.dur||60)+'"></div><div class="campo"><label for="g-vag">Atende ao mesmo tempo</label><input type="text" inputmode="numeric" id="g-vag" value="'+esc(g.vagas||1)+'"></div><div class="campo"><label for="g-ant">Antecedência mínima (h)</label><input type="text" inputmode="numeric" id="g-ant" value="'+esc(g.antec_h==null?2:g.antec_h)+'"></div></div>'+
+    '<div class="g2"><div class="campo"><label for="g-ai">Pausa (almoço) das</label><input type="time" id="g-ai" value="'+esc((g.almoco||{}).ini||'')+'"></div><div class="campo"><label for="g-af">até</label><input type="time" id="g-af" value="'+esc((g.almoco||{}).fim||'')+'"></div></div>'+
+    '<div class="campo"><label for="g-blq">Dias sem atendimento (feriados, folgas)</label><textarea id="g-blq" placeholder="Um por linha, ex.: 25/12/2026">'+esc((g.bloqueios||[]).map(function(d){return d.split('-').reverse().join('/')}).join('\n'))+'</textarea></div><div id="e-gr"></div><button class="btn btn-vidro" type="button" data-r="grade">Salvar horários da agenda</button></details>';
+  return x}
+function vClientes(){
+  if(!RR)return '<div class="card vazio">'+esc(RRerr||'Carregando…')+'</div>';
+  var C=RR.contatos||[],mesN=new Date().getMonth()+1,an=C.filter(function(c){return c.aniv&&+c.aniv.slice(3,5)===mesN}).sort(function(a,b){return a.aniv<b.aniv?-1:1}),q=(cEdit&&cEdit.q)||'';
+  var x='<div class="card"><h2>Clientes</h2><p class="sub">Todo mundo que falou com o agente entra aqui sozinho.</p><div class="nums" style="grid-template-columns:repeat(3,1fr)"><div><b>'+C.length+'</b><span>clientes</span></div><div><b>'+C.filter(function(c){return c.aniv}).length+'</b><span>com aniversário</span></div><div><b>'+C.filter(function(c){return c.optout}).length+'</b><span>saíram das promoções</span></div></div></div>';
+  x+='<div class="card" style="margin-top:14px"><h2>O que o agente faz sozinho</h2><div class="tgs">'+tog('followup','Follow-up de quem não fechou','Cerca de 1 dia depois, uma mensagem para quem perguntou e parou de responder.',RR.ativo.followup)+(RR.recursos.aniversario?tog('aniversario','Parabéns no aniversário','Às 9h do dia, para quem tem o aniversário cadastrado. O agente pergunta a data depois de marcar.',RR.ativo.aniversario):'')+'</div>'+
+    (RR.recursos.aniversario?'<div class="campo" style="margin-top:14px"><label for="an-txt">Mensagem de aniversário</label><textarea id="an-txt">'+esc(RR.auto.aniversario_texto)+'</textarea><small>Use {nome} para o primeiro nome do cliente.</small></div>'+campoTxt('an-pre','Presente (opcional)',RR.auto.aniversario_presente,'Ex.: Você ganha 10% de desconto até o fim do mês 🎁')+'<button class="btn btn-vidro" type="button" data-r="aniv">Salvar mensagem</button>':'<p class="sub" style="margin:14px 0 0">Parabéns no aniversário e a campanha do mês fazem parte do plano Profissional. <a href="'+ZAP_EDER+'" target="_blank" rel="noopener">Falar com o Éder</a></p>')+'</div>';
+  if(RR.recursos.aniversario)x+='<div class="card" style="margin-top:14px"><h2>Aniversariantes de '+MES[mesN-1]+'</h2>'+(an.length?an.map(function(c){return '<div class="cl"><b>'+esc(c.aniv)+'</b><span>'+esc(c.nome||'Sem nome')+' · '+esc(fone(c.telefone))+'</span></div>'}).join(''):'<p class="sub" style="margin:0">Ninguém com aniversário cadastrado este mês.</p>')+'</div>';
+  x+='<form class="card" id="f-ct" style="margin-top:14px"><h2>'+(cEdit&&cEdit.tel?'Editar cliente':'Adicionar cliente')+'</h2><div id="e-ct"></div><div class="g3">'+campoTxt('ct-nome','Nome',cEdit&&cEdit.nome,'Nome do cliente')+campoTxt('ct-tel','WhatsApp',cEdit&&cEdit.tel?fone(cEdit.tel):'','(81) 99999-9999','','tel')+(RR.recursos.aniversario?campoTxt('ct-an','Aniversário',cEdit&&cEdit.aniv,'dia/mês, ex.: 25/12'):'')+'</div><button class="btn btn-luz" type="submit">Salvar</button>'+(cEdit&&cEdit.tel?' <button class="btn btn-vidro" type="button" data-r="ctnovo">Cancelar</button>':'')+'</form>';
+  var F=C.filter(function(c){if(!q)return true;var t=(c.nome||'')+' '+c.telefone;return t.toLowerCase().indexOf(q.toLowerCase())>=0||String(c.telefone).indexOf(q.replace(/\D/g,'')||'x')>=0});
+  x+='<div class="card" style="margin-top:14px"><div class="campo" style="margin-bottom:6px"><input type="text" id="ct-q" placeholder="Buscar por nome ou número" value="'+esc(q)+'" aria-label="Buscar cliente"></div>'+(F.slice(0,150).map(function(c){return '<div class="cl"><span><b>'+esc(c.nome||'Sem nome')+'</b><small>'+esc(fone(c.telefone))+(c.aniv?' · 🎂 '+esc(c.aniv):'')+(c.optout?' · saiu das promoções':'')+'</small></span><button class="mini" type="button" data-r="ctedit" data-tel="'+esc(c.telefone)+'">Editar</button></div>'}).join('')||'<p class="sub" style="margin:0">Ninguém por aqui ainda.</p>')+(F.length>150?'<p class="sub" style="margin:8px 0 0">Mostrando 150 de '+F.length+'. Use a busca.</p>':'')+'</div>';
+  return x}
+var CST={agendada:['Agendada',''],enviando:['Enviando','ok'],enviada:['Enviada','ok'],cancelada:['Cancelada','er']};
+function vCamp(){
+  if(!RR)return '<div class="card vazio">'+esc(RRerr||'Carregando…')+'</div>';
+  if(!RR.recursos.campanhas)return bloqueado('Campanha do mês','No plano Profissional vocês escrevem a promoção do mês e o agente manda para todos os clientes que já falaram com vocês, aos poucos e com a opção de sair. Quem responder, o agente atende na hora.');
+  var u=RR.campanhas_mes||{},livre=u.usadas<u.limite;
+  var x='<form class="card" id="f-cp"><h2>Promoção do mês</h2><p class="sub">'+(u.limite===1?'O seu plano tem 1 campanha por mês':'O seu plano tem '+u.limite+' campanhas por mês')+' · usadas neste mês: <b>'+u.usadas+'</b>. Vai para <b>'+RR.destinatarios+'</b> '+(RR.destinatarios===1?'cliente':'clientes')+'.</p><div id="e-cp"></div>'+
+    (livre?'<div class="campo"><label for="cp-txt">Mensagem</label><textarea id="cp-txt" style="min-height:140px" placeholder="Ex.: Oi, {nome}! Em novembro a limpeza está com 20% de desconto. Quer que eu já veja um horário para você?"></textarea><small>Use {nome} para o primeiro nome. No fim entra sozinho: “Se não quiser receber nossas promoções, responda SAIR.”</small></div>'+
+    radios('cp-q','Quando enviar',[['agora','Agora'],['depois','Escolher dia e hora']],'agora')+'<div class="campo" id="cp-quando" hidden><label for="cp-em">Começar em</label><input type="datetime-local" id="cp-em"></div><button class="btn btn-luz" type="submit">Programar campanha</button><p class="sub" style="margin:12px 0 0">As mensagens saem aos poucos, de segunda a sábado, das 9h às 19h, para proteger o número de vocês. Quem responder é atendido pelo agente, que já sabe da promoção.</p>':'<p class="sub" style="margin:0">A campanha deste mês já foi usada. No mês que vem vocês podem programar outra.</p>')+'</form>';
+  x+='<div class="card" style="margin-top:14px"><h2>Campanhas</h2>'+((RR.campanhas||[]).length?RR.campanhas.map(function(c){var st=CST[c.status]||['',''];return '<div class="cp"><div class="cp-t"><b>'+MES[+c.mes.slice(5,7)-1]+' de '+c.mes.slice(0,4)+'</b><span class="chip '+st[1]+'">'+st[0]+'</span></div><p>'+esc(c.texto.length>180?c.texto.slice(0,180)+'…':c.texto)+'</p><small>'+(c.status==='agendada'?'Começa '+new Date(c.enviar_em).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):c.status==='cancelada'?'':c.enviadas+' de '+c.total+' enviadas')+'</small>'+(c.status==='agendada'||c.status==='enviando'?' <button class="mini" type="button" data-r="cpcanc" data-id="'+c.id+'">'+(c.status==='agendada'?'Cancelar':'Parar o envio')+'</button>':'')+'</div>'}).join(''):'<p class="sub" style="margin:0">Nenhuma campanha ainda.</p>')+'</div>';
+  return x}
+function erroEm(id,t){var e=document.getElementById(id);if(e)e.innerHTML=t?'<div class="erro" role="alert">'+esc(t)+'</div>':''}
+function recAtualiza(){return carregaRec().then(pintaC)}
+function recClique(t){var r=t.dataset.r;
+  if(r==='st'){t.disabled=true;apiRec({acao:'agenda_status',id:t.dataset.id,status:t.dataset.v}).then(function(j){if(j.error){t.disabled=false;alert(j.error);return}recAtualiza()});return}
+  if(r==='grade'){var g={dias:{},dur:+$('#g-dur').value||60,vagas:+$('#g-vag').value||1,antec_h:+$('#g-ant').value,almoco:{ini:$('#g-ai').value,fim:$('#g-af').value},bloqueios:[]};
+    DK.forEach(function(k){g.dias[k[0]]={aberto:!!document.querySelector('[data-gd="'+k[0]+'"]:checked'),abre:document.querySelector('[data-ga="'+k[0]+'"]').value,fecha:document.querySelector('[data-gf="'+k[0]+'"]').value}});
+    $('#g-blq').value.split(/\n+/).forEach(function(l){var m=l.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);if(m)g.bloqueios.push(m[3]+'-'+('0'+m[2]).slice(-2)+'-'+('0'+m[1]).slice(-2))});
+    t.disabled=true;t.textContent='Salvando…';apiRec({acao:'grade',grade:g}).then(function(j){t.disabled=false;t.textContent='Salvar horários da agenda';if(j.error){erroEm('e-gr',j.error);return}t.textContent='Salvo ✓';setTimeout(recAtualiza,700)});return}
+  if(r==='aniv'){t.disabled=true;apiRec({acao:'auto',aniversario_texto:$('#an-txt').value,aniversario_presente:$('#an-pre').value}).then(function(j){t.disabled=false;t.textContent=j.error?'Não salvou':'Salvo ✓';setTimeout(function(){t.textContent='Salvar mensagem'},2000);if(!j.error)carregaRec()});return}
+  if(r==='ctedit'){var c=(RR.contatos||[]).find(function(x){return x.telefone===t.dataset.tel});cEdit=Object.assign({},cEdit||{},{tel:c.telefone,nome:c.nome||'',aniv:c.aniv||''});pintaC();var f=$('#f-ct');if(f)f.scrollIntoView({behavior:'smooth',block:'center'});return}
+  if(r==='ctnovo'){cEdit={q:(cEdit&&cEdit.q)||''};pintaC();return}
+  if(r==='cpcanc'){if(!confirm('Tem certeza?'))return;apiRec({acao:'campanha_cancelar',id:t.dataset.id}).then(recAtualiza);return}
+}
+app.addEventListener('change',function(e){if(PAG!=='cliente')return;var t=e.target;
+  if(t.dataset.auto){var o={acao:'auto'};o[t.dataset.auto]=t.checked;t.disabled=true;apiRec(o).then(function(j){t.disabled=false;if(j.error){t.checked=!t.checked;alert(j.error);return}recAtualiza()});return}
+  if(t.dataset.gd){var hs=document.getElementById('ghs-'+t.dataset.gd);if(hs)hs.classList.toggle('off',!t.checked)}
+  if(t.name==='cp-q'){var q=document.getElementById('cp-quando');if(q)q.hidden=t.value!=='depois'}});
+app.addEventListener('input',function(e){if(PAG!=='cliente'||e.target.id!=='ct-q')return;cEdit=Object.assign({},cEdit||{},{q:e.target.value});clearTimeout(window._cq);window._cq=setTimeout(function(){var p=e.target.selectionStart;pintaC();var i=$('#ct-q');if(i){i.focus();try{i.setSelectionRange(p,p)}catch(x){}}},250)});
+app.addEventListener('submit',function(e){if(PAG!=='cliente')return;var f=e.target,b=f.querySelector('button[type=submit]');e.preventDefault();
+  if(f.id==='f-ag'){erroEm('e-ag','');b.disabled=true;apiRec({acao:'agendar',nome:$('#ag-nome').value,telefone:$('#ag-tel').value,servico:$('#ag-sv').value,data:$('#ag-dia').value,hora:$('#ag-hora').value}).then(function(j){b.disabled=false;if(j.error||!j.ok){erroEm('e-ag',j.error||j.erro||'Não deu certo.');return}recAtualiza()});return}
+  if(f.id==='f-ct'){erroEm('e-ct','');b.disabled=true;var o={acao:'contato',nome:$('#ct-nome').value,telefone:$('#ct-tel').value};var an=$('#ct-an');if(an)o.aniv=an.value.trim();apiRec(o).then(function(j){b.disabled=false;if(j.error){erroEm('e-ct',j.error);return}cEdit={q:(cEdit&&cEdit.q)||''};recAtualiza()});return}
+  if(f.id==='f-cp'){erroEm('e-cp','');var dep=(document.querySelector('input[name="cp-q"]:checked')||{}).value==='depois',em=$('#cp-em')&&$('#cp-em').value;if(dep&&!em){erroEm('e-cp','Escolha o dia e a hora.');return}
+    if(!confirm('Programar a campanha para '+RR.destinatarios+' clientes?'))return;b.disabled=true;apiRec({acao:'campanha',texto:$('#cp-txt').value,enviar_em:dep?new Date(em).toISOString():null}).then(function(j){b.disabled=false;if(j.error){erroEm('e-cp',j.error);return}recAtualiza()});return}
+});
+
 function telaC(){
   var abertos=(P.pagamentos||[]).filter(function(x){return !x.pago}),prox=abertos[0];
-  var h='<nav class="cabas" role="tablist">'+[['inicio','Início'],['teste','Testar'+(innerWidth>520?' e ajustar':'')],['pag','Pagamentos'+(abertos.some(function(x){return x.atraso>0})?' •':'')],['rel','Relatórios']].map(function(a){return '<button role="tab" data-c="'+a[0]+'" aria-selected="'+(abaC===a[0])+'">'+a[1]+'</button>'}).join('')+'</nav>';
+  var ABAS=[['inicio','Início']];if(P.status==='ativa')ABAS.push(['agenda','Agenda'],['clientes','Clientes'],['camp','Campanhas']);ABAS.push(['teste','Testar'+(innerWidth>520?' e ajustar':'')],['pag','Pagamentos'+(abertos.some(function(x){return x.atraso>0})?' •':'')],['rel','Relatórios']);
+  var h='<nav class="cabas" role="tablist">'+ABAS.map(function(a){return '<button role="tab" data-c="'+a[0]+'" aria-selected="'+(abaC===a[0])+'">'+a[1]+'</button>'}).join('')+'</nav>';
   h+='<div id="c-inicio"'+(abaC==='inicio'?'':' hidden')+'>'+cartaoWa()+
+    (RR&&RR.recursos.agenda?(function(){var hj=hojeL(),L=(RR.agenda||[]).filter(function(a){return a.data===hj&&a.status!=='cancelado'});return '<div class="card" style="margin-top:14px"><h2>Hoje na agenda</h2>'+(L.length?L.slice(0,4).map(function(a){return agItem(a,false)}).join('')+(L.length>4?'<p class="sub" style="margin:8px 0 0">e mais '+(L.length-4)+'.</p>':''):'<p class="sub" style="margin:0">Nenhum horário marcado para hoje.</p>')+'<button class="btn btn-vidro" type="button" data-c="agenda" style="margin-top:12px">Ver a agenda</button></div>'})():'')+
     (P.mes_atual&&P.mes_atual.mensagens?'<div class="card" style="margin-top:14px"><h2>Este mês até agora</h2>'+nums(P.mes_atual)+'</div>':'')+
     (prox?'<div class="card" style="margin-top:14px"><h2>Próximo pagamento</h2>'+pagLinha(prox)+'</div>':'')+
     '<div class="card" style="margin-top:14px"><h2>Precisa mudar algo no agente?</h2><p class="sub">Preço novo, horário de feriado, um serviço a mais: peça na aba <b>Testar e ajustar</b> e o agente é atualizado na hora'+(P.status==='ativa'?', inclusive no WhatsApp':'')+'.</p><button class="btn btn-vidro" type="button" data-c="teste">Pedir um ajuste</button></div></div>';
+  if(P.status==='ativa')h+='<div id="c-agenda"'+(abaC==='agenda'?'':' hidden')+'>'+vAgenda()+'</div><div id="c-clientes"'+(abaC==='clientes'?'':' hidden')+'>'+vClientes()+'</div><div id="c-camp"'+(abaC==='camp'?'':' hidden')+'>'+vCamp()+'</div>';
   h+='<div id="c-teste"'+(abaC==='teste'?'':' hidden')+'></div>';
   h+='<div id="c-pag"'+(abaC==='pag'?'':' hidden')+'><div class="card"><h2>Pagamentos</h2><p class="sub">Implantação em duas partes (50% no início e 50% quando o agente começa a atender) e mensalidade a partir de 30 dias depois. Pix para '+esc(P.pix_nome||'')+(P.pix_chave?' ('+esc(P.pix_chave)+')':'')+'.</p>'+((P.pagamentos||[]).length?(P.pagamentos||[]).map(pagLinha).join(''):'<p class="sub">Nenhum pagamento por enquanto.</p>')+'</div></div>';
   var rels=P.relatorios||[];
@@ -355,13 +462,14 @@ function pintaC(){var y=window.scrollY,tem=document.getElementById('c-teste'),gu
   window.scrollTo(0,y)}
 function cliente(){
   topo(D.empresa,'Área do cliente · Plano '+D.plano);
-  apiPos().then(function(j){if(j.error){erroTela(j.error);return}P=j;pintaC();agendaC()});
+  apiPos().then(function(j){if(j.error){erroTela(j.error);return}P=j;carregaRec().then(function(){pintaC();agendaC()})});
 }
-function agendaC(){clearTimeout(tP);var w=(P&&P.wa)||{};var rapido=P&&P.status==='ativa'&&!w.online&&abaC==='inicio';tP=setTimeout(function(){if(document.hidden){agendaC();return}apiPos().then(function(j){if(!j.error){var mud=JSON.stringify(j)!==JSON.stringify(P);P=j;if(mud&&abaC!=='teste')pintaC()}agendaC()})},rapido?5000:60000)}
-app.addEventListener('click',function(e){if(PAG!=='cliente')return;var t=e.target.closest('[data-c],[data-copiar]');if(!t)return;
+function agendaC(){clearTimeout(tP);var w=(P&&P.wa)||{};var rapido=P&&P.status==='ativa'&&!w.online&&abaC==='inicio';tP=setTimeout(function(){if(document.hidden){agendaC();return}apiPos().then(function(j){var antes=JSON.stringify(RR);(['agenda','clientes','camp','inicio'].indexOf(abaC)>=0?carregaRec():Promise.resolve()).then(function(){if(!j.error){var mud=JSON.stringify(j)!==JSON.stringify(P)||JSON.stringify(RR)!==antes;P=j;var ae=document.activeElement,ocupado=ae&&/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)||!!document.querySelector('#c-'+abaC+' details[open]');if(mud&&abaC!=='teste'&&!ocupado)pintaC()}agendaC()})})},rapido?5000:60000)}
+app.addEventListener('click',function(e){if(PAG!=='cliente')return;var t=e.target.closest('[data-c],[data-copiar],[data-r]');if(!t)return;
+  if(t.dataset.r){recClique(t);return}
   if(t.dataset.copiar){var c=t.dataset.copiar,ok=function(){t.textContent='Copiado ✓';setTimeout(function(){t.textContent='Copiar Pix copia e cola'},2500)};if(navigator.clipboard)navigator.clipboard.writeText(c).then(ok,function(){window.prompt('Copie o código:',c)});else window.prompt('Copie o código:',c);return}
   abaC=t.dataset.c;
-  ['inicio','teste','pag','rel'].forEach(function(k){var el=document.getElementById('c-'+k);if(el)el.hidden=k!==abaC});
+  ['inicio','agenda','clientes','camp','teste','pag','rel'].forEach(function(k){var el=document.getElementById('c-'+k);if(el)el.hidden=k!==abaC});
   document.querySelectorAll('.cabas button').forEach(function(b){b.setAttribute('aria-selected',b.dataset.c===abaC)});
   if(abaC==='teste'){var ct=document.getElementById('c-teste');if(!ct.firstChild)teste(ct);app.classList.add('largo');document.querySelector('.topo .w').style.maxWidth='1120px'}else{app.classList.remove('largo');document.querySelector('.topo .w').style.maxWidth=''}
   window.scrollTo(0,0);agendaC()});
