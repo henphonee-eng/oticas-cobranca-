@@ -164,11 +164,12 @@ Demonstração com o nome da ótica (sistema e agente): ${link}`);
     L.push(`*Agente de IA 24 horas no WhatsApp da empresa*: atende os clientes a qualquer hora, inclusive à noite e no fim de semana; responde dúvidas, passa preços e horários; entende áudio e foto; agenda atendimentos ou anota pedidos; e chama a equipe quando o assunto precisa de uma pessoa. Responde só com as informações que a empresa cadastrar (serviços, valores, horários, endereço, perguntas frequentes) e a empresa testa antes de ligar.
 *Sistemas personalizados*: feitos para a rotina da empresa (agenda, cadastro de clientes, financeiro, cobranças e avisos automáticos pelo WhatsApp), com a marca dela.
 Teste do agente com o nome da empresa, como se fosse no WhatsApp: ${link}
+Página com tudo explicado (como funciona, planos, CRM e dúvidas), com o nome da empresa: ${c.baseEmp}/ia?c=${codigo(l.id)}
 
 ## Planos
-- *Essencial*: implantação R$ 497 + R$ 197 por mês. Tira dúvidas, passa preços e horários e chama a equipe.
-- *Profissional* (o que mais recomendamos): implantação R$ 797 + R$ 297 por mês. Tudo do Essencial + agenda ou pedidos, áudio e foto e lembretes automáticos.
-- *Sob medida*: implantação de R$ 1.997 por *R$ 1.457* (oferta) + a partir de R$ 497 por mês. Agente + sistema personalizado para a rotina da empresa.
+- *Essencial*: implantação R$ 497 + R$ 197 por mês. Tira dúvidas, passa preços e horários e chama a equipe. Vem com um CRM com a marca da empresa: clientes e histórico das conversas do agente.
+- *Profissional* (o que mais recomendamos): implantação R$ 797 + R$ 297 por mês. Tudo do Essencial + agenda ou pedidos, áudio e foto e lembretes automáticos. Vem com o CRM completo do ramo da empresa: agenda ou pedidos, clientes, lembretes e os números do dia.
+- *Sob medida*: implantação de R$ 1.997 por *R$ 1.457* (oferta) + a partir de R$ 497 por mês. Agente + um CRM feito do zero para a empresa: financeiro, cobranças, relatórios e o que mais ela precisar.
 Pagamento da implantação: *50% no início e 50% na entrega*. A primeira mensalidade só vence 30 dias depois que o agente começa a funcionar. Não existe outro desconto além da oferta do Sob medida; se pedirem desconto, diga que vai ver com o ${c.nome.split(" ")[0]} na conversa.`);
   }
   L.push(`
