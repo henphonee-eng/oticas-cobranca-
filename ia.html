@@ -1,0 +1,625 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#10142E">
+<title>Agente de IA no WhatsApp · Connecta AI</title>
+<meta name="description" content="Um agente de IA que atende o WhatsApp da sua empresa 24 horas, mais um CRM com a sua marca feito para o seu ramo. Teste agora com o nome da sua empresa.">
+<meta property="og:title" content="Seu WhatsApp respondendo 24 horas, até quando a loja fecha">
+<meta property="og:description" content="Conheça o Agente de IA da Connecta AI e teste agora com o nome da sua empresa.">
+<meta property="og:image" content="https://oticas-cobranca.vercel.app/icons/adm-icon-512.png">
+<meta property="og:type" content="website">
+<link rel="icon" href="/icons/adm-icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --noite:#10142E;--noite-2:#171C3D;--noite-3:#222851;--linha:#2E3566;
+  --papel:#EEF0FF;--nevoa:#A4ACD3;--ambar:#FFB547;--ambar-2:#FF8A3D;--menta:#5EE6B5;
+  --r-s:10px;--r-m:16px;--r-l:28px;
+  --f-d:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;--f-t:"Figtree",ui-sans-serif,system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{margin:0;background:var(--noite);color:var(--papel);font:400 17px/1.6 var(--f-t);overflow-x:hidden}
+a{color:inherit}
+img,svg{display:block}
+.wrap{width:min(1160px,100% - 32px);margin:0 auto}
+h1,h2,h3{font-family:var(--f-d);font-weight:800;letter-spacing:-.025em;line-height:1.02;margin:0;text-wrap:balance}
+h2{font-size:clamp(34px,6vw,60px)}
+h3{font-size:22px;font-weight:700;letter-spacing:-.01em;line-height:1.15}
+p{margin:0;text-wrap:pretty}
+.sub{color:var(--nevoa)}
+:focus-visible{outline:3px solid var(--ambar);outline-offset:3px;border-radius:6px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:52px;padding:0 24px;border-radius:999px;font:700 16px var(--f-t);text-decoration:none;border:0;cursor:pointer;transition:transform .15s cubic-bezier(.2,.8,.2,1),box-shadow .2s,background-color .2s}
+.btn:active{transform:scale(.97)}
+.btn-luz{background:linear-gradient(120deg,var(--ambar),var(--ambar-2));color:#2A1600;box-shadow:0 10px 30px -10px rgba(255,150,60,.7)}
+.btn-luz:hover{box-shadow:0 14px 40px -10px rgba(255,150,60,.9)}
+.btn-vidro{background:rgba(238,240,255,.06);color:var(--papel);border:1px solid var(--linha)}
+.btn-vidro:hover{background:rgba(238,240,255,.1)}
+.btn svg{width:20px;height:20px}
+
+/* topo */
+.topo{position:sticky;top:0;z-index:20;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);background:color-mix(in srgb,var(--noite) 78%,transparent);border-bottom:1px solid color-mix(in srgb,var(--linha) 60%,transparent)}
+.topo .wrap{display:flex;align-items:center;gap:20px;min-height:64px}
+.marca{font:800 20px var(--f-d);letter-spacing:-.02em;text-decoration:none;display:flex;align-items:center;gap:9px}
+.marca i{width:26px;height:26px;border-radius:8px;background:conic-gradient(from 200deg,var(--ambar),var(--menta),#7C8CFF,var(--ambar));display:block}
+.topo nav{margin-left:auto;display:flex;gap:22px}
+.topo nav a{text-decoration:none;color:var(--nevoa);font-weight:600;font-size:15px}
+.topo nav a:hover{color:var(--papel)}
+.topo .btn{min-height:42px;padding:0 18px;font-size:15px}
+@media (max-width:760px){.topo nav{display:none}.topo .btn{margin-left:auto}}
+
+/* abertura: a conversa da madrugada */
+.abre{position:relative;padding:56px 0 72px;overflow:hidden}
+.abre::before{content:"";position:absolute;inset:-20% -10% auto;height:120%;background:radial-gradient(60% 50% at 75% 30%,rgba(124,140,255,.22),transparent 70%),radial-gradient(40% 40% at 85% 70%,rgba(255,181,71,.16),transparent 70%);pointer-events:none}
+.abre .wrap{position:relative;display:grid;grid-template-columns:1.15fr .85fr;gap:64px;align-items:center}
+@media (max-width:900px){.abre .wrap{grid-template-columns:1fr;gap:40px}.abre{padding-top:36px}}
+.relogio{display:inline-flex;align-items:center;gap:10px;color:var(--nevoa);font-weight:600;font-size:15px;margin-bottom:22px}
+.relogio b{font:700 15px var(--f-d);color:var(--ambar);font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.relogio .lua{width:18px;height:18px;border-radius:50%;box-shadow:inset -5px -2px 0 0 var(--ambar)}
+h1{font-size:clamp(42px,6.4vw,80px);font-weight:800}
+h1 .fio{display:block;color:transparent;-webkit-text-stroke:1.5px color-mix(in srgb,var(--papel) 55%,transparent)}
+.abre p.sub{font-size:clamp(18px,2.2vw,21px);margin:22px 0 30px;max-width:34em}
+.para{margin:-12px 0 22px;font-weight:600;color:var(--menta)}
+.acoes{display:flex;flex-wrap:wrap;gap:12px}
+.selos{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:26px;color:var(--nevoa);font-size:14.5px}
+.selos span{display:inline-flex;align-items:center;gap:7px}
+.selos svg{width:16px;height:16px;color:var(--menta)}
+
+.fone{position:relative;justify-self:center;width:min(360px,100%);aspect-ratio:9/18.2;border-radius:46px;padding:12px;background:linear-gradient(160deg,#2A3062,#121634);box-shadow:0 40px 120px -30px rgba(10,12,40,.9),0 0 0 1px #343B70 inset,0 30px 80px -40px rgba(255,181,71,.35)}
+.tela{height:100%;border-radius:36px;overflow:hidden;display:flex;flex-direction:column;background:#0B141A}
+.tela-h{display:flex;align-items:center;gap:10px;padding:16px 14px 10px;background:#202C33;color:#E9EDEF}
+.tela-h .av{width:36px;height:36px;border-radius:50%;background:linear-gradient(140deg,var(--menta),#1FA382);display:grid;place-items:center;font:800 15px var(--f-d);color:#05261C}
+.tela-h b{display:block;font-size:15px;line-height:1.2}
+.tela-h small{display:block;font-size:12px;color:#8696A0}
+.fio-msgs{flex:1;padding:14px 12px;display:flex;flex-direction:column;gap:6px;overflow:hidden;background:#0B141A radial-gradient(rgba(255,255,255,.03) 1px,transparent 1.2px) 0 0/22px 22px;justify-content:flex-end}
+.b{max-width:84%;padding:7px 10px 8px;border-radius:10px;font-size:14px;line-height:1.38;color:#E9EDEF;box-shadow:0 1px .5px rgba(0,0,0,.25)}
+.b.cli{align-self:flex-start;background:#202C33;border-top-left-radius:2px}
+.b.ag{align-self:flex-end;background:#005C4B;border-top-right-radius:2px}
+.b small{display:block;text-align:right;font-size:10.5px;color:rgba(233,237,239,.6);margin-top:2px}
+.b.acao{align-self:center;background:#182229;color:#FFD279;font-size:12px;border-radius:8px;padding:5px 10px;box-shadow:none}
+.dig{align-self:flex-end;background:#005C4B;border-radius:10px;padding:10px 12px;display:flex;gap:4px}
+.dig i{width:6px;height:6px;border-radius:50%;background:#B9E3D8;opacity:.5;animation:pisca 1.1s infinite}
+.dig i:nth-child(2){animation-delay:.15s}.dig i:nth-child(3){animation-delay:.3s}
+@keyframes pisca{0%,60%,100%{opacity:.3}30%{opacity:1}}
+.tela-f{display:flex;gap:8px;padding:10px;background:#0B141A}
+.tela-f span{flex:1;height:38px;border-radius:20px;background:#202C33}
+.tela-f i{width:38px;height:38px;border-radius:50%;background:#00A884}
+.etq{position:absolute;padding:8px 12px;border-radius:12px;background:rgba(23,28,61,.86);border:1px solid var(--linha);backdrop-filter:blur(8px);font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;white-space:nowrap}
+.etq i{width:8px;height:8px;border-radius:50%;background:var(--menta);box-shadow:0 0 12px var(--menta)}
+.etq{left:calc(100% + 16px)}.etq.e1{top:30%}.etq.e2{top:46%}.etq.e3{top:62%}
+@media (max-width:1340px){.etq{display:none}}
+
+/* faixa de segmentos */
+.faixa{border-block:1px solid var(--linha);padding:18px 0;overflow:hidden;background:var(--noite-2)}
+.faixa .trilho{display:flex;gap:40px;width:max-content;animation:rola 40s linear infinite}
+.faixa span{font:700 20px var(--f-d);color:var(--nevoa);white-space:nowrap;letter-spacing:-.01em}
+.faixa span::after{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--ambar);margin-left:40px;vertical-align:middle}
+@keyframes rola{to{transform:translateX(-50%)}}
+
+section.bloco{padding:96px 0}
+@media (max-width:760px){section.bloco{padding:72px 0}}
+.titulo{max-width:760px;margin-bottom:44px}
+.titulo p{margin-top:16px;font-size:19px;color:var(--nevoa)}
+
+/* o que acontece de noite */
+.dores{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+@media (max-width:860px){.dores{grid-template-columns:1fr}}
+.dor{padding:26px;border-radius:var(--r-m);background:var(--noite-2);border:1px solid var(--linha)}
+.dor .hora{font:800 34px var(--f-d);color:var(--ambar);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.dor h3{margin:10px 0 8px}
+.dor p{color:var(--nevoa);font-size:16px}
+
+/* calculadora com o mostrador de 24 horas */
+.calc{display:grid;grid-template-columns:.9fr 1.1fr;gap:28px;align-items:stretch}
+@media (max-width:960px){.calc{grid-template-columns:1fr}}
+.painel{border-radius:var(--r-l);background:linear-gradient(180deg,var(--noite-2),#131735);border:1px solid var(--linha);padding:30px}
+.campo{margin-bottom:24px}
+.campo label{display:flex;justify-content:space-between;gap:12px;font-weight:600;margin-bottom:10px}
+.campo label output{font:800 20px var(--f-d);color:var(--ambar);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;appearance:none;-webkit-appearance:none;height:6px;border-radius:6px;background:linear-gradient(90deg,var(--ambar) var(--p,50%),var(--noite-3) var(--p,50%));outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:var(--papel);border:5px solid var(--ambar);cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.4)}
+input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--papel);border:5px solid var(--ambar);cursor:pointer}
+input[type=range]:focus-visible{outline:3px solid var(--ambar);outline-offset:6px}
+.campo small{display:block;color:var(--nevoa);font-size:14px;margin-top:8px}
+.resultado{display:grid;grid-template-columns:auto 1fr;gap:26px;align-items:center}
+@media (max-width:620px){.resultado{grid-template-columns:1fr;justify-items:center;text-align:center}}
+.dial{width:min(300px,78vw);height:auto}
+.dial text{font-family:var(--f-d)}
+.nums{display:grid;gap:20px}
+.num b{display:block;white-space:nowrap;font:800 clamp(34px,4vw,50px)/1 var(--f-d);letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.num b.luz{color:var(--ambar)}
+.num span{color:var(--nevoa);font-size:15.5px}
+.legenda{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:18px;font-size:14px;color:var(--nevoa)}
+.legenda i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.aviso{margin-top:18px;font-size:13.5px;color:var(--nevoa)}
+.barras{display:flex;align-items:flex-end;gap:3px;height:90px;margin-top:22px}
+.barras i{flex:1;border-radius:3px 3px 0 0;background:var(--noite-3);transition:height .5s cubic-bezier(.2,.8,.2,1),background-color .3s}
+.barras i.fora{background:var(--ambar)}
+.eixo{display:flex;justify-content:space-between;font-size:12px;color:var(--nevoa);margin-top:6px;font-variant-numeric:tabular-nums}
+
+/* como funciona */
+.passos{display:grid;grid-template-columns:repeat(4,1fr);gap:0;counter-reset:p;position:relative}
+@media (max-width:900px){.passos{grid-template-columns:1fr}}
+.passo{padding:0 22px 0 0;position:relative}
+.passo .n{width:54px;height:54px;border-radius:50%;display:grid;place-items:center;font:800 22px var(--f-d);background:var(--noite-2);border:1px solid var(--linha);color:var(--ambar);margin-bottom:20px;position:relative;z-index:1}
+.passo h3{margin-bottom:8px}
+.passo p{color:var(--nevoa);font-size:16px}
+.passos::before{content:"";position:absolute;left:27px;right:60px;top:27px;height:2px;background:linear-gradient(90deg,var(--ambar),var(--linha) var(--lin,0%),var(--linha))}
+@media (max-width:900px){.passos{gap:30px}.passos::before{left:27px;right:auto;top:27px;bottom:40px;width:2px;height:auto;background:linear-gradient(180deg,var(--ambar),var(--linha))}.passo{padding:0 0 0 78px}.passo .n{position:absolute;left:0;top:0;margin:0}}
+
+/* recursos */
+.recursos{display:grid;grid-template-columns:repeat(6,1fr);gap:18px}
+.rec{grid-column:span 2;padding:26px;border-radius:var(--r-m);background:var(--noite-2);border:1px solid var(--linha)}
+.rec.grande{grid-column:span 3;background:radial-gradient(120% 120% at 100% 0,rgba(94,230,181,.12),transparent 60%),var(--noite-2)}
+@media (max-width:900px){.recursos{grid-template-columns:1fr}.rec,.rec.grande{grid-column:auto}}
+.rec svg{width:30px;height:30px;color:var(--menta);margin-bottom:16px}
+.rec h3{margin-bottom:8px}
+.rec p{color:var(--nevoa);font-size:16px}
+
+.crm{display:grid;grid-template-columns:.85fr 1.15fr;gap:40px;align-items:start}
+.tela-crm{position:sticky;top:100px}
+@media (max-width:960px){.crm{grid-template-columns:1fr}.tela-crm{position:static}}
+.crm-txt p{color:var(--nevoa);font-size:18px;margin-top:16px}
+.crm-txt ul{list-style:none;padding:0;margin:22px 0 0;display:grid;gap:12px}
+.crm-txt li{display:flex;gap:10px}.crm-txt li svg{flex:none;width:20px;height:20px;color:var(--menta);margin-top:3px}
+.ramos{display:flex;flex-wrap:wrap;gap:8px;margin-top:26px}
+.ramos button{font:600 15px var(--f-t);color:var(--papel);background:transparent;border:1px solid var(--linha);border-radius:999px;padding:9px 16px;cursor:pointer;transition:background-color .2s,border-color .2s}
+.ramos button[aria-pressed=true]{background:var(--papel);color:var(--noite);border-color:var(--papel)}
+.tela-crm{border-radius:var(--r-l);background:#F6F7FC;color:#1A1F3D;overflow:hidden;box-shadow:0 40px 100px -40px rgba(0,0,0,.8);display:grid;grid-template-columns:150px 1fr;min-height:390px;font-size:14px}
+.tela-crm aside{background:var(--cor,#3B4BD8);color:#fff;padding:18px 12px;display:flex;flex-direction:column;gap:4px;transition:background-color .4s}
+.tela-crm .logo{display:flex;align-items:center;gap:8px;font:800 15px var(--f-d);margin-bottom:16px;line-height:1.1}
+.tela-crm .logo i{flex:none;width:30px;height:30px;border-radius:9px;background:rgba(255,255,255,.22);display:grid;place-items:center;font-style:normal}
+#crm-menu{display:grid;gap:4px}
+#crm-menu span{display:block;padding:7px 9px;border-radius:8px;font-weight:600;font-size:13px;opacity:.85;white-space:nowrap}
+#crm-menu span:first-child{background:rgba(255,255,255,.18);opacity:1}
+.crm-main{padding:20px;display:grid;gap:14px;align-content:start;min-width:0}
+.kpi{min-width:0}
+.crm-main h4{margin:0;font:700 18px var(--f-d)}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.kpi{background:#fff;border-radius:12px;padding:12px;border:1px solid #E3E6F3}
+.kpi b{display:block;font:800 22px var(--f-d);font-variant-numeric:tabular-nums}
+.kpi small{color:#5B6385;font-size:12px}
+.lista{background:#fff;border-radius:12px;border:1px solid #E3E6F3}
+.lista div{display:flex;justify-content:space-between;gap:10px;padding:10px 12px;border-top:1px solid #EEF0F7;font-size:13px}
+.lista div:first-child{border-top:0}
+.lista span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lista em{font-style:normal;font-size:12px;font-weight:700;padding:2px 8px;border-radius:999px;background:color-mix(in srgb,var(--cor,#3B4BD8) 14%,#fff);color:var(--cor,#3B4BD8);white-space:nowrap}
+
+@media (max-width:560px){.tela-crm{grid-template-columns:1fr;min-height:0}.tela-crm aside{padding:14px 14px 10px}.tela-crm .logo{margin-bottom:10px}#crm-menu{display:flex;overflow-x:auto;scrollbar-width:none}.crm-main{padding:14px}.kpis{gap:6px}.kpi{padding:10px}.kpi b{font-size:18px}.kpi small{font-size:11px}}
+.fio2{display:block;color:transparent;-webkit-text-stroke:1.5px color-mix(in srgb,var(--papel) 55%,transparent)}
+.crm-lead{color:var(--papel)!important;font-size:20px!important;font-weight:500}
+.seu{margin-top:24px;padding:18px;border-radius:var(--r-m);background:var(--noite-2);border:1px solid var(--linha)}
+.seu label{display:block;font-weight:700;margin-bottom:10px}
+.seu input{width:100%;min-height:48px;border-radius:12px;border:1px solid var(--linha);background:var(--noite);color:var(--papel);font:500 17px var(--f-t);padding:0 14px}
+.seu input:focus-visible{outline:3px solid var(--ambar);outline-offset:2px}
+.cores{display:flex;gap:10px;margin-top:12px}
+.cores button{width:34px;height:34px;border-radius:50%;border:3px solid transparent;cursor:pointer;background:var(--c);box-shadow:0 0 0 1px var(--linha)}
+.cores button[aria-pressed=true]{border-color:var(--papel)}
+/* chamada para testar */
+.teste{border-radius:var(--r-l);padding:56px;background:radial-gradient(80% 140% at 0% 100%,rgba(255,181,71,.25),transparent 60%),radial-gradient(70% 120% at 100% 0,rgba(124,140,255,.25),transparent 60%),var(--noite-2);border:1px solid var(--linha);display:grid;grid-template-columns:1.3fr auto;gap:30px;align-items:center}
+.teste p{margin-top:14px;font-size:19px;color:var(--nevoa);max-width:32em}
+@media (max-width:820px){.teste{grid-template-columns:1fr;padding:34px 24px}}
+
+/* planos */
+.planos{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;align-items:stretch}
+@media (max-width:960px){.planos{grid-template-columns:1fr}}
+.plano{display:flex;flex-direction:column;padding:30px;border-radius:var(--r-l);background:var(--noite-2);border:1px solid var(--linha)}
+.plano.destaque{background:linear-gradient(180deg,#232A5C,var(--noite-2));border-color:color-mix(in srgb,var(--ambar) 55%,var(--linha));box-shadow:0 30px 80px -40px rgba(255,181,71,.5)}
+.plano .tag{align-self:flex-start;font-size:13px;font-weight:700;padding:4px 10px;border-radius:999px;background:rgba(255,181,71,.14);color:var(--ambar);margin-bottom:14px}
+.plano h3{font-size:26px}
+.plano .para-quem{color:var(--nevoa);font-size:15.5px;margin:6px 0 22px;min-height:48px}
+.preco{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
+.preco b{font:800 46px/1 var(--f-d);letter-spacing:-.03em}
+.preco span{color:var(--nevoa)}
+.implant{margin:10px 0 22px;font-size:15px;color:var(--nevoa)}
+.implant s{opacity:.7}
+.implant strong{color:var(--ambar)}
+.plano ul{list-style:none;padding:0;margin:0 0 26px;display:grid;gap:11px;font-size:15.5px}
+.plano li{display:flex;gap:10px;align-items:flex-start}
+.plano li svg{flex:none;width:18px;height:18px;color:var(--menta);margin-top:3px}
+.plano .btn{margin-top:auto}
+.pagamento{margin-top:22px;display:flex;flex-wrap:wrap;gap:10px 28px;color:var(--nevoa);font-size:15px}
+.pagamento b{color:var(--papel)}
+
+/* dúvidas */
+.duvidas{max-width:860px}
+details.q{border-bottom:1px solid var(--linha)}
+details.q summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;gap:20px;align-items:center;padding:24px 0;font:700 clamp(19px,2.4vw,23px)/1.25 var(--f-d);letter-spacing:-.01em}
+details.q summary::-webkit-details-marker{display:none}
+details.q summary i{flex:none;width:32px;height:32px;border-radius:50%;border:1px solid var(--linha);position:relative;transition:transform .25s,background-color .2s}
+details.q summary i::before,details.q summary i::after{content:"";position:absolute;left:50%;top:50%;width:12px;height:2px;background:var(--papel);transform:translate(-50%,-50%)}
+details.q summary i::after{transform:translate(-50%,-50%) rotate(90deg);transition:transform .25s}
+details.q[open] summary i{background:var(--ambar);border-color:var(--ambar)}
+details.q[open] summary i::before,details.q[open] summary i::after{background:#2A1600}
+details.q[open] summary i::after{transform:translate(-50%,-50%) rotate(0)}
+details.q .r{padding:0 0 26px;color:var(--nevoa);font-size:17px;max-width:44em}
+
+/* fim */
+.fim{padding:110px 0 70px;text-align:center;position:relative;overflow:hidden}
+.fim::before{content:"";position:absolute;left:50%;top:40%;width:900px;height:900px;transform:translate(-50%,-50%);background:radial-gradient(closest-side,rgba(255,181,71,.18),transparent);pointer-events:none}
+.fim h2{position:relative;max-width:14em;margin:0 auto}
+.fim p{position:relative;margin:18px auto 30px;max-width:32em;color:var(--nevoa);font-size:19px}
+.fim .acoes{position:relative;justify-content:center}
+.rodape{border-top:1px solid var(--linha);padding:28px 0 calc(28px + env(safe-area-inset-bottom));color:var(--nevoa);font-size:14px}
+.rodape .wrap{display:flex;flex-wrap:wrap;gap:10px 24px;justify-content:space-between}
+.zap{position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom));z-index:30;width:58px;height:58px;border-radius:50%;background:#25D366;display:grid;place-items:center;box-shadow:0 12px 30px -8px rgba(37,211,102,.6)}
+.zap svg{width:30px;height:30px;color:#fff}
+
+@media (prefers-reduced-motion:reduce){.faixa .trilho,.dig i{animation:none}html{scroll-behavior:auto}.btn,.barras i{transition:none}}
+</style>
+</head>
+<body>
+<header class="topo">
+  <div class="wrap">
+    <a class="marca" href="#topo" aria-label="Connecta AI, início"><i aria-hidden="true"></i>Connecta AI</a>
+    <nav aria-label="Seções"><a href="#calculo">Quanto você perde</a><a href="#como">Como funciona</a><a href="#crm">CRM</a><a href="#planos">Planos</a><a href="#duvidas">Dúvidas</a></nav>
+    <a class="btn btn-luz js-testar" href="/agente">Testar agora</a>
+  </div>
+</header>
+
+<main id="topo">
+  <section class="abre">
+    <div class="wrap">
+      <div>
+        <div class="relogio"><span class="lua" aria-hidden="true"></span>Agora são <b id="hora">23:47</b><span id="hora-t"> e a sua loja está fechada</span></div>
+        <h1>Seu WhatsApp responde. <span class="fio">Mesmo de madrugada.</span></h1>
+        <p class="sub">Um agente de IA que atende os seus clientes no WhatsApp 24 horas: tira dúvidas, passa preços, entende áudio e foto, agenda e chama a sua equipe quando precisa de uma pessoa.</p>
+        <p class="para" id="para" hidden></p>
+        <div class="acoes">
+          <a class="btn btn-luz js-testar" href="/agente"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8.5 8.5 0 0 1-12.6 7.4L3 21l1.6-5.2A8.5 8.5 0 1 1 21 12z"/></svg><span id="txt-testar">Conversar com o agente</span></a>
+          <a class="btn btn-vidro" href="#planos">Ver planos</a>
+        </div>
+        <div class="selos">
+          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>No mesmo número de WhatsApp</span>
+          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>A gente configura tudo</span>
+          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Você testa antes de ligar</span>
+        </div>
+      </div>
+      <div class="fone" aria-label="Exemplo de conversa do agente no WhatsApp">
+        <div class="tela">
+          <div class="tela-h"><span class="av" id="av">S</span><div><b id="fone-nome">Sua Empresa</b><small id="fone-st">online</small></div></div>
+          <div class="fio-msgs" id="fio" aria-live="off"></div>
+          <div class="tela-f" aria-hidden="true"><span></span><i></i></div>
+        </div>
+        <div class="etq e1"><i></i>Entende áudio</div>
+        <div class="etq e2"><i></i>Agenda sozinho</div>
+        <div class="etq e3"><i></i>Chama a equipe</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="faixa" aria-hidden="true"><div class="trilho" id="trilho"></div></div>
+
+  <section class="bloco">
+    <div class="wrap">
+      <div class="titulo"><h2>O cliente não espera até amanhã</h2><p>Quem manda mensagem e não recebe resposta procura o próximo da lista. O agente cobre justamente os momentos em que ninguém consegue responder.</p></div>
+      <div class="dores">
+        <div class="dor"><div class="hora">22h</div><h3>Depois que a loja fecha</h3><p>É quando muita gente tem tempo de pesquisar, comparar e decidir. Sem resposta, a conversa esfria até de manhã.</p></div>
+        <div class="dor"><div class="hora">12h</div><h3>No horário de pico</h3><p>A equipe está atendendo quem está na sua frente, e o WhatsApp vai acumulando perguntas de preço e horário.</p></div>
+        <div class="dor"><div class="hora">Dom</div><h3>No fim de semana</h3><p>Quem escreve no domingo quer marcar para segunda. O agente já deixa marcado e avisa a sua equipe.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="bloco" id="calculo" style="padding-top:0">
+    <div class="wrap">
+      <div class="titulo"><h2>Quanto chega quando ninguém responde?</h2><p>Mexa nos números da sua empresa e veja, em 24 horas, a parte das mensagens que chega fora do horário de atendimento.</p></div>
+      <div class="calc">
+        <div class="painel">
+          <div class="campo"><label for="c-msg">Mensagens por dia no WhatsApp <output id="o-msg">40</output></label><input id="c-msg" type="range" min="5" max="300" step="5" value="40"></div>
+          <div class="campo"><label for="c-ini">Abre às <output id="o-ini">8h</output></label><input id="c-ini" type="range" min="5" max="12" step="1" value="8"></div>
+          <div class="campo"><label for="c-fim">Fecha às <output id="o-fim">18h</output></label><input id="c-fim" type="range" min="14" max="23" step="1" value="18"></div>
+          <div class="campo"><label for="c-conv">De cada 10 que perguntam, quantos viram cliente <output id="o-conv">3</output></label><input id="c-conv" type="range" min="1" max="8" step="1" value="3"></div>
+          <div class="campo" style="margin-bottom:0"><label for="c-tic">Quanto um cliente gasta, em média <output id="o-tic">R$ 150</output></label><input id="c-tic" type="range" min="30" max="3000" step="10" value="150"></div>
+        </div>
+        <div class="painel">
+          <div class="resultado">
+            <svg class="dial" id="dial" viewBox="0 0 300 300" role="img" aria-labelledby="dial-t"><title id="dial-t">Mostrador de 24 horas com o horário de atendimento e as mensagens fora do horário</title></svg>
+            <div class="nums">
+              <div class="num"><b class="luz" id="r-fora">0</b><span>mensagens por mês chegam com a loja fechada</span></div>
+              <div class="num"><b id="r-cli">0</b><span>clientes que podem estar indo para outro lugar por mês</span></div>
+              <div class="num"><b id="r-rs">R$ 0</b><span>em vendas em jogo todo mês</span></div>
+            </div>
+          </div>
+          <div class="barras" id="barras" aria-hidden="true"></div>
+          <div class="eixo" aria-hidden="true"><span>0h</span><span>6h</span><span>12h</span><span>18h</span><span>23h</span></div>
+          <div class="legenda"><span><i style="background:var(--ambar)"></i>Fora do horário</span><span><i style="background:var(--noite-3)"></i>Com a loja aberta</span></div>
+          <p class="aviso">É uma estimativa feita com os números que você colocou e com um jeito típico de as mensagens se espalharem pelo dia. Não é uma promessa de resultado.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="bloco" id="como" style="padding-top:0">
+    <div class="wrap">
+      <div class="titulo"><h2>Do primeiro papo ao agente ligado</h2><p>Você não precisa entender de tecnologia. A gente monta o agente com as informações da sua empresa.</p></div>
+      <div class="passos" id="passos">
+        <div class="passo"><div class="n">1</div><h3>Você conta como funciona</h3><p>Serviços, preços, horários, endereço e as perguntas que os clientes mais fazem.</p></div>
+        <div class="passo"><div class="n">2</div><h3>A gente configura</h3><p>Montamos o agente com o jeito de falar da sua empresa e o que ele pode ou não responder.</p></div>
+        <div class="passo"><div class="n">3</div><h3>Você testa</h3><p>Conversa com ele como se fosse um cliente e pede os ajustes que quiser, antes de ligar.</p></div>
+        <div class="passo"><div class="n">4</div><h3>Ele começa a atender</h3><p>Liga no seu WhatsApp e passa a responder. Quando precisa de uma pessoa, ele chama a sua equipe.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="bloco" style="padding-top:0">
+    <div class="wrap">
+      <div class="titulo"><h2>O que ele faz por você</h2></div>
+      <div class="recursos">
+        <div class="rec grande"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg><h3>Responde na hora, 24 horas</h3><p>De madrugada, no domingo ou no meio do movimento, cada cliente recebe resposta em segundos, com a mesma educação.</p></div>
+        <div class="rec grande"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M9 15l2 2 4-4"/></svg><h3>Agenda e anota pedidos</h3><p>Oferece os horários livres, marca o atendimento ou anota o pedido completo e avisa a sua equipe.</p></div>
+        <div class="rec"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z"/><path d="M19 11a7 7 0 0 1-14 0M12 18v3"/></svg><h3>Entende áudio e foto</h3><p>O cliente manda um áudio ou a foto de um documento, e ele entende como uma pessoa.</p></div>
+        <div class="rec"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M21 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg><h3>Chama a sua equipe</h3><p>Negociação, reclamação ou venda pronta para fechar: ele passa a conversa e avisa vocês.</p></div>
+        <div class="rec"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg><h3>Não inventa nada</h3><p>Responde só com o que a sua empresa cadastrou. Quando não sabe, diz que vai confirmar com a equipe.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="bloco" id="crm" style="padding-top:0">
+    <div class="wrap crm">
+      <div class="crm-txt">
+        <h2>Tem a sua marca. <span class="fio2">Então é seu.</span></h2>
+        <p class="crm-lead" id="crm-lead">Nada de sistema genérico com o logo de outra empresa. Quando a sua equipe abrir, vai ver o nome, o logo e as cores da sua empresa. Um sistema que é de vocês, feito do jeito de vocês.</p>
+        <p>Junto com o agente, você recebe um CRM de gestão criado para a rotina do seu ramo. Tudo o que o agente conversa, marca e anota cai direto nele.</p>
+        <div class="seu">
+          <label for="crm-in">Veja com o nome da sua empresa</label>
+          <input id="crm-in" type="text" maxlength="32" placeholder="Digite o nome da sua empresa" autocomplete="organization">
+          <div class="cores" role="group" aria-label="Cor da marca" id="cores"></div>
+        </div>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Seu logo, suas cores e o nome da sua empresa</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Montado de acordo com o que o seu ramo precisa</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Clientes, agenda, pedidos e conversas em um só lugar</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Funciona no computador e no celular</li>
+        </ul>
+        <div class="ramos" role="group" aria-label="Ver o CRM de um ramo" id="ramos"></div>
+      </div>
+      <div class="tela-crm" id="tela-crm" aria-live="polite">
+        <aside><div class="logo"><i id="crm-ini">S</i><span id="crm-nome">Sua Empresa</span></div><div id="crm-menu"></div></aside>
+        <div class="crm-main"><h4 id="crm-tit">Hoje</h4><div class="kpis" id="crm-kpis"></div><div class="lista" id="crm-lista"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="bloco" style="padding-top:0">
+    <div class="wrap">
+      <div class="teste">
+        <div><h2 id="teste-tit">Teste agora, como se fosse um cliente</h2><p>Abra a conversa e pergunte o que seus clientes costumam perguntar: preço, horário, se dá para marcar. É o próprio agente respondendo.</p></div>
+        <a class="btn btn-luz js-testar" href="/agente">Conversar com o agente</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="bloco" id="planos" style="padding-top:0">
+    <div class="wrap">
+      <div class="titulo"><h2>Planos</h2><p>Escolha pelo que a sua empresa precisa hoje. Dá para mudar de plano depois.</p></div>
+      <div class="planos">
+        <div class="plano">
+          <h3>Essencial</h3><p class="para-quem">Para quem quer parar de deixar cliente sem resposta.</p>
+          <div class="preco"><b>R$ 197</b><span>por mês</span></div>
+          <p class="implant">Implantação: R$ 497</p>
+          <ul>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Atendimento 24 horas no WhatsApp</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Tira dúvidas, passa preços e horários</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Chama a sua equipe quando precisa</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>CRM com o seu logo e as suas cores</li>
+          </ul>
+          <a class="btn btn-vidro js-plano" data-plano="Essencial" href="#">Quero o Essencial</a>
+        </div>
+        <div class="plano destaque">
+          <span class="tag">O que mais recomendamos</span>
+          <h3>Profissional</h3><p class="para-quem">Para quem vive de agenda ou de pedidos.</p>
+          <div class="preco"><b>R$ 297</b><span>por mês</span></div>
+          <p class="implant">Implantação: R$ 797</p>
+          <ul>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Tudo do Essencial</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Agenda atendimentos ou anota pedidos</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Entende áudio e foto</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Lembretes automáticos</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>CRM com a sua marca, montado para o seu ramo</li>
+          </ul>
+          <a class="btn btn-luz js-plano" data-plano="Profissional" href="#">Quero o Profissional</a>
+        </div>
+        <div class="plano">
+          <span class="tag">Oferta</span>
+          <h3>Sob medida</h3><p class="para-quem">Agente e um CRM completo, feito do zero para a rotina da sua empresa.</p>
+          <div class="preco"><span>a partir de</span><b>R$ 497</b><span>por mês</span></div>
+          <p class="implant">Implantação: <s>R$ 1.997</s> por <strong>R$ 1.457</strong></p>
+          <ul>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Tudo do Profissional</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>CRM completo sob medida: agenda, clientes, financeiro e o que mais o seu ramo precisar</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Avisos e cobranças pelo WhatsApp</li>
+          </ul>
+          <a class="btn btn-vidro js-plano" data-plano="Sob medida" href="#">Quero o Sob medida</a>
+        </div>
+      </div>
+      <div class="pagamento"><span><b>Implantação:</b> 50% no início e 50% na entrega</span><span><b>Primeira mensalidade:</b> só 30 dias depois que o agente começa a funcionar</span></div>
+    </div>
+  </section>
+
+  <section class="bloco" id="duvidas" style="padding-top:0">
+    <div class="wrap">
+      <div class="titulo"><h2>Dúvidas que todo mundo tem</h2></div>
+      <div class="duvidas">
+        <details class="q"><summary>Meus clientes vão perceber que é um robô?<i aria-hidden="true"></i></summary><div class="r">Ele escreve como uma pessoa, em mensagens curtas e no tom da sua empresa, e entende áudio. Para quem perguntar, ele não esconde que é um assistente virtual. O mais importante é que o cliente é respondido na hora, em vez de esperar até o dia seguinte.</div></details>
+        <details class="q"><summary>E se ele responder alguma coisa errada?<i aria-hidden="true"></i></summary><div class="r">Ele só usa as informações que vocês cadastrarem: preços, serviços, horários e regras. Quando a pergunta foge disso, ele diz que vai confirmar e chama a sua equipe. E antes de ligar, vocês testam e ajustam o quanto quiserem.</div></details>
+        <details class="q"><summary>Eu já tenho uma pessoa no atendimento.<i aria-hidden="true"></i></summary><div class="r">Ótimo, ele não substitui ninguém. Ele cobre a noite, o fim de semana e o horário de pico, e entrega o cliente pronto para a sua equipe continuar.</div></details>
+        <details class="q"><summary>Preciso trocar de número ou de celular?<i aria-hidden="true"></i></summary><div class="r">Não. O agente funciona no mesmo número de WhatsApp que os seus clientes já conhecem.</div></details>
+        <details class="q"><summary>Não tenho tempo para configurar nada.<i aria-hidden="true"></i></summary><div class="r">A gente faz a configuração. Vocês só contam como a empresa funciona e confirmam se as respostas estão do jeito que querem.</div></details>
+        <details class="q"><summary>Como é esse CRM com a minha marca?<i aria-hidden="true"></i></summary><div class="r">É um sistema de gestão com o logo, as cores e o nome da sua empresa, montado de acordo com o ramo: agenda para clínica, pedidos para restaurante, processos e prazos para advocacia, e assim por diante. O que o agente conversa e marca já aparece nele. Os modelos nesta página são exemplos; o seu é montado com você.</div></details>
+        <details class="q"><summary>Vale o investimento?<i aria-hidden="true"></i></summary><div class="r">Use a calculadora acima com os seus números. Em muitas empresas, um ou dois clientes a mais por mês já pagam a mensalidade. E dá para começar pelo Essencial.</div></details>
+        <details class="q"><summary>Como funciona o pagamento?<i aria-hidden="true"></i></summary><div class="r">A implantação é paga 50% no início e 50% na entrega. A primeira mensalidade só vence 30 dias depois que o agente começa a funcionar.</div></details>
+      </div>
+    </div>
+  </section>
+
+  <section class="fim">
+    <div class="wrap">
+      <h2 id="fim-tit">Que tal ver ele atendendo a sua empresa?</h2>
+      <p>Converse com o agente agora ou fale direto comigo para montar o seu.</p>
+      <div class="acoes">
+        <a class="btn btn-luz js-testar" href="/agente">Conversar com o agente</a>
+        <a class="btn btn-vidro js-zap" href="#" target="_blank" rel="noopener">Falar com o Éder no WhatsApp</a>
+      </div>
+    </div>
+  </section>
+</main>
+<footer class="rodape"><div class="wrap"><span>Connecta AI · Éder Henrique · Agentes de IA e sistemas personalizados para empresas</span><span>Recife, PE</span></div></footer>
+<a class="zap js-zap" href="#" target="_blank" rel="noopener" aria-label="Falar com o Éder no WhatsApp"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.3-.7-2.8-1.1-4.5-3.9-4.7-4.1-.1-.2-1.1-1.5-1.1-2.8s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.4 0 .5l-.3.5-.4.4c-.1.2-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.1 1 2.1 1.3 2.4 1.5.3.1.5.1.6-.1l.9-1c.2-.3.4-.2.7-.1l1.9.9c.3.1.5.2.5.3.1.2.1.7-.1 1.3z"/></svg></a>
+
+<script src="https://cdn.jsdelivr.net/npm/motion@11.11.17/dist/motion.js" integrity="sha384-YXUklWfH/2mt4JRj3K/QEMSu5vCe7gjRtLG44/RHcttBZYOzbK7crTzfjEXcFXng" crossorigin="anonymous" defer></script>
+<script>
+(function(){
+  'use strict';
+  var SB='https://ovynkeifzhavhjdkjjui.supabase.co',KEY='sb_publishable_7RunIjZPQDCuWNSuPrD10w_Gy_lIUFl',CTA='5581999707538';
+  var $=function(s){return document.querySelector(s)},$$=function(s){return Array.prototype.slice.call(document.querySelectorAll(s))};
+  var reduz=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var M=function(){return (!reduz&&window.Motion&&window.Motion.animate)?window.Motion:null};
+  var E={nome:'',seg:'',cod:''};
+
+  /* conversas de exemplo por tipo de empresa */
+  var CENAS=[
+    [/odonto|dentist/i,['Boa noite! Vocês fazem clareamento? Quanto fica?','Boa noite! 😊 Fazemos sim, a partir de R$ 600. A avaliação é grátis. Quer que eu veja um horário para você?','Quero, pode ser sábado de manhã','Tenho sábado às 9h ou às 10h. Qual prefere?','9h','Marcou a avaliação para sábado às 9h e avisou a equipe']],
+    [/advoca|advogad|jur[ií]dic/i,['Oi, fui demitido e não recebi a rescisão. Vocês atendem esse tipo de caso?','Oi! Atendemos sim. Para eu entender melhor: quando foi a demissão?','Semana passada','Entendi. O ideal é uma consulta com o advogado. Tenho amanhã às 10h ou às 15h, qual fica melhor?','15h','Marcou a consulta para amanhã às 15h e avisou o escritório']],
+    [/barbe/i,['Fala! Tem horário amanhã?','Fala! Tenho amanhã às 10h, 14h ou 17h. Corte, barba ou os dois?','Os dois, às 17h','Fechado: corte e barba amanhã às 17h, R$ 60. Te espero! 💈','👍','Marcou corte e barba para amanhã às 17h']],
+    [/restaur|pizza|lanch|hamb|delivery|a[cç]a[ií]|padaria/i,['Ainda dá pra pedir?','Dá sim! 😊 Hoje temos pizza grande a partir de R$ 49. O que vai querer?','Uma calabresa grande pra entrega','Anotado: 1 pizza grande de calabresa. Me passa o endereço e a forma de pagamento?','Rua das Flores, 120. Pix','Registrou o pedido e avisou a cozinha']],
+    [/academia|crossfit|pilates|muscula/i,['Quanto é a mensalidade?','O plano mensal é R$ 99, e a aula experimental é grátis. Quer agendar uma para conhecer?','Quero, amanhã cedo','Tenho amanhã às 7h ou às 8h. Qual prefere?','7h','Marcou a aula experimental para amanhã às 7h']],
+    [/cl[ií]nica|m[eé]dic|consult|fisio|psic|nutri|sa[uú]de/i,['Boa noite, tem horário com o doutor essa semana?','Boa noite! Tenho quinta às 14h ou sexta às 9h. Particular ou convênio?','Convênio, sexta às 9h','Perfeito, sua consulta fica para sexta às 9h. Leve a carteirinha do convênio, tá?','Ok, obrigada','Marcou a consulta para sexta às 9h e avisou a recepção']]
+  ];
+  var GERAL=['Boa noite! Vocês estão abertos amanhã?','Boa noite! 😊 Amanhã abrimos às 8h. Posso já deixar um horário reservado para você?','Pode sim, de manhã','Tenho às 9h ou às 10h30. Qual fica melhor?','9h','Reservou o horário de amanhã às 9h e avisou a equipe'];
+  function cena(){var t=E.seg+' '+E.nome;for(var i=0;i<CENAS.length;i++)if(CENAS[i][0].test(t))return CENAS[i][1];return GERAL}
+
+  /* relógio de verdade (hora de Recife) */
+  function hora(){try{return new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',timeZone:'America/Recife'})}catch(e){var d=new Date();return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')}}
+  function horaRel(){var t=hora(),hh=+t.slice(0,2),noite=hh>=19||hh<7;$('#hora').textContent=t;$('#hora-t').textContent=noite?' e muita loja já fechou':'. E quando a loja fechar?'}
+
+  /* a conversa no celular: digita, responde, marca */
+  var fio=$('#fio'),rodando=0;
+  function bolha(cls,txt){var d=document.createElement('div');d.className='b '+cls;if(cls==='acao'){d.textContent='⚙️ '+txt}else{d.textContent=txt;var s=document.createElement('small');s.textContent=hora()+(cls==='ag'?' ✓✓':'');d.appendChild(s)}return d}
+  function entra(el){fio.appendChild(el);var m=M();if(m)m.animate(el,{opacity:[0,1],transform:['translateY(14px) scale(.96)','translateY(0px) scale(1)']},{duration:.42,ease:[.2,.9,.25,1.2]});while(fio.children.length>8)fio.removeChild(fio.firstChild)}
+  function espera(ms){return new Promise(function(r){setTimeout(r,ms)})}
+  async function conversa(){
+    var id=++rodando,c=cena();fio.innerHTML='';
+    if(reduz){c.forEach(function(t,i){fio.appendChild(bolha(i===5?'acao':(i%2?'ag':'cli'),t))});return}
+    for(var i=0;i<c.length&&id===rodando;i++){
+      if(i%2===1&&i<5){var dg=document.createElement('div');dg.className='dig';dg.innerHTML='<i></i><i></i><i></i>';entra(dg);$('#fone-st').textContent='digitando…';await espera(1300);if(dg.parentNode)dg.remove();$('#fone-st').textContent='online'}
+      else await espera(i===0?700:1500);
+      if(id!==rodando)return;
+      entra(bolha(i===5?'acao':(i%2?'ag':'cli'),c[i]));
+    }
+    await espera(5200);if(id===rodando&&!document.hidden)conversa();else if(id===rodando)rodando++;
+  }
+  document.addEventListener('visibilitychange',function(){if(!document.hidden&&!fio.children.length)conversa()});
+
+  /* faixa de tipos de empresa */
+  var SEG=['Clínicas','Dentistas','Advocacia','Barbearias','Salões de beleza','Restaurantes','Academias','Escolas','Imobiliárias','Pet shops','Oficinas','Contabilidade','Lojas','Pousadas'];
+  $('#trilho').innerHTML=SEG.concat(SEG).map(function(s){return '<span>'+s+'</span>'}).join('');
+
+  /* calculadora: mostrador de 24 horas */
+  var PESO=[.2,.1,.05,.05,.05,.15,.4,.8,1.2,1.6,1.8,1.9,2,1.8,1.7,1.7,1.6,1.6,1.7,1.9,2,1.8,1.2,.6]; // jeito típico das mensagens ao longo do dia
+  var SOMA=PESO.reduce(function(a,b){return a+b},0);
+  var NS='http://www.w3.org/2000/svg',dial=$('#dial');
+  function arco(cx,cy,r,a0,a1){var p=function(a){var t=(a-90)*Math.PI/180;return [cx+r*Math.cos(t),cy+r*Math.sin(t)]};var s=p(a0),e=p(a1),g=(a1-a0)>180?1:0;return 'M'+s[0].toFixed(2)+' '+s[1].toFixed(2)+'A'+r+' '+r+' 0 '+g+' 1 '+e[0].toFixed(2)+' '+e[1].toFixed(2)}
+  var segs=[];
+  (function montar(){
+    var bg=document.createElementNS(NS,'circle');bg.setAttribute('cx',150);bg.setAttribute('cy',150);bg.setAttribute('r',112);bg.setAttribute('fill','none');bg.setAttribute('stroke','#1B2047');bg.setAttribute('stroke-width','34');dial.appendChild(bg);
+    for(var h=0;h<24;h++){var p=document.createElementNS(NS,'path');p.setAttribute('d',arco(150,150,112,h*15+1.2,(h+1)*15-1.2));p.setAttribute('fill','none');p.setAttribute('stroke-width','30');p.setAttribute('stroke-linecap','butt');dial.appendChild(p);segs.push(p)}
+    [0,6,12,18].forEach(function(h){var t=(h*15-90)*Math.PI/180,tx=document.createElementNS(NS,'text');tx.setAttribute('x',(150+150*.6*Math.cos(t)).toFixed(1));tx.setAttribute('y',(150+150*.6*Math.sin(t)+5).toFixed(1));tx.setAttribute('text-anchor','middle');tx.setAttribute('font-size','13');tx.setAttribute('fill','#A4ACD3');tx.textContent=h+'h';dial.appendChild(tx)});
+    var c1=document.createElementNS(NS,'text');c1.setAttribute('x',150);c1.setAttribute('y',150);c1.setAttribute('text-anchor','middle');c1.setAttribute('font-size','46');c1.setAttribute('font-weight','800');c1.setAttribute('fill','#FFB547');c1.id='d-pct';c1.textContent='0%';dial.appendChild(c1);
+    var c2=document.createElementNS(NS,'text');c2.setAttribute('x',150);c2.setAttribute('y',176);c2.setAttribute('text-anchor','middle');c2.setAttribute('font-size','13');c2.setAttribute('fill','#A4ACD3');c2.textContent='fora do horário';dial.appendChild(c2);
+  })();
+  var barras=$('#barras');barras.innerHTML=PESO.map(function(){return '<i></i>'}).join('');
+  var fmt=function(n){return Math.round(n).toLocaleString('pt-BR')};
+  var ant={fora:0,cli:0,rs:0,pct:0};
+  function conta(el,de,ate,f){var m=M();if(!m||!m.animate){el.textContent=f(ate);return}m.animate(de,ate,{duration:.6,ease:[.2,.8,.2,1],onUpdate:function(v){el.textContent=f(v)}})}
+  function calcular(){
+    var msg=+$('#c-msg').value,ini=+$('#c-ini').value,fim=+$('#c-fim').value,conv=+$('#c-conv').value/10,tic=+$('#c-tic').value;
+    $('#o-msg').textContent=msg;$('#o-ini').textContent=ini+'h';$('#o-fim').textContent=fim+'h';$('#o-conv').textContent=+$('#c-conv').value;$('#o-tic').textContent='R$ '+fmt(tic);
+    $$('input[type=range]').forEach(function(r){r.style.setProperty('--p',((r.value-r.min)/(r.max-r.min)*100)+'%')});
+    var foraP=0,mx=Math.max.apply(null,PESO);
+    for(var h=0;h<24;h++){var fora=h<ini||h>=fim;if(fora)foraP+=PESO[h];segs[h].setAttribute('stroke',fora?'#FFB547':'#2E3566');var b=barras.children[h];b.className=fora?'fora':'';b.style.height=(8+PESO[h]/mx*82)+'px'}
+    var pct=foraP/SOMA,foraMes=msg*pct*30,cli=foraMes*conv*0.5,rs=cli*tic; // metade de quem fica sem resposta procura outro lugar (estimativa conservadora)
+    conta($('#r-fora'),ant.fora,foraMes,fmt);conta($('#r-cli'),ant.cli,cli,fmt);conta($('#r-rs'),ant.rs,rs,function(v){return 'R$ '+fmt(v)});conta($('#d-pct'),ant.pct,pct*100,function(v){return Math.round(v)+'%'});
+    ant={fora:foraMes,cli:cli,rs:rs,pct:pct*100};
+  }
+  $$('#calculo input[type=range]').forEach(function(r){r.addEventListener('input',calcular)});
+  $('#c-ini').addEventListener('change',function(){if(+this.value>=+$('#c-fim').value)$('#c-fim').value=Math.min(23,+this.value+1);calcular()});
+
+
+  /* o CRM de cada ramo (exemplo ilustrativo) */
+  var RAMOS=[
+    {k:'Clínica',rx:/cl[ií]nica|m[eé]dic|fisio|psic|nutri|sa[uú]de/i,cor:'#2F7DD1',menu:['Agenda','Pacientes','Prontuário','Convênios','Financeiro'],tit:'Agenda de hoje',kpi:[['18','consultas'],['4','retornos'],['2','encaixes']],l:[['09:00 · Ana Lima','Confirmada'],['10:30 · Carlos Souza','Pelo agente'],['14:00 · Júlia Reis','Retorno']]},
+    {k:'Odontologia',rx:/odonto|dentist/i,cor:'#0E9F8E',menu:['Agenda','Pacientes','Orçamentos','Tratamentos','Financeiro'],tit:'Agenda de hoje',kpi:[['12','atendimentos'],['5','orçamentos'],['3','avaliações']],l:[['09:00 · Clareamento','Confirmada'],['11:00 · Avaliação','Pelo agente'],['15:30 · Manutenção','Aparelho']]},
+    {k:'Advocacia',rx:/advoca|advogad|jur[ií]dic/i,cor:'#5B4BC4',menu:['Clientes','Processos','Prazos','Consultas','Honorários'],tit:'Prazos da semana',kpi:[['7','prazos'],['3','consultas'],['24','processos']],l:[['Contestação · Silva','Amanhã'],['Consulta trabalhista','Pelo agente'],['Audiência · Moura','Sexta']]},
+    {k:'Restaurante',rx:/restaur|pizza|lanch|hamb|delivery|a[cç]a[ií]|padaria/i,cor:'#D9480F',menu:['Pedidos','Cardápio','Entregas','Clientes','Caixa'],tit:'Pedidos agora',kpi:[['31','pedidos'],['6','em entrega'],['R$ 1,9 mil','hoje']],l:[['#214 · Pizza calabresa','Pelo agente'],['#213 · 2 hambúrgueres','Saiu'],['#212 · Açaí 500ml','Pronto']]},
+    {k:'Barbearia e salão',rx:/barbe|sal[aã]o|beleza|est[eé]tic|manicure/i,cor:'#B5297A',menu:['Agenda','Clientes','Serviços','Profissionais','Caixa'],tit:'Agenda de hoje',kpi:[['22','horários'],['3','profissionais'],['5','pelo agente']],l:[['10:00 · Corte e barba','Pelo agente'],['14:00 · Escova','Confirmado'],['17:00 · Corte','Confirmado']]},
+    {k:'Academia',rx:/academia|crossfit|pilates|muscula/i,cor:'#2B8A3E',menu:['Alunos','Planos','Aulas','Avaliações','Mensalidades'],tit:'Hoje na academia',kpi:[['148','alunos'],['6','aulas experimentais'],['9','a vencer']],l:[['07:00 · Aula experimental','Pelo agente'],['Mensalidade · Rafael','Vence hoje'],['Avaliação · Bruna','16:00']]}
+  ];
+  var ramoAt=0,nomeEsc='',corEsc='';
+  var CORES=['#3B4BD8','#0E9F8E','#D9480F','#B5297A','#2B8A3E','#1A1F3D'];
+  function crm(i){
+    ramoAt=i;var r=RAMOS[i];
+    $$('#ramos button').forEach(function(b,j){b.setAttribute('aria-pressed',j===i)});
+    var t=$('#tela-crm');t.style.setProperty('--cor',corEsc||r.cor);
+    var nome=nomeEsc||E.nome||'Sua Empresa';$('#crm-nome').textContent=nome;$('#crm-ini').textContent=(nome.replace(/[^A-Za-zÀ-ÿ0-9]/g,'').charAt(0)||'S').toUpperCase();
+    $('#crm-menu').innerHTML=r.menu.map(function(m){return '<span>'+m+'</span>'}).join('');
+    $('#crm-tit').textContent=r.tit;
+    $('#crm-kpis').innerHTML=r.kpi.map(function(k){return '<div class="kpi"><b>'+k[0]+'</b><small>'+k[1]+'</small></div>'}).join('');
+    $('#crm-lista').innerHTML=r.l.map(function(x){return '<div><span>'+x[0]+'</span><em>'+x[1]+'</em></div>'}).join('');
+    var m=M();if(m)m.animate($$('#crm-kpis .kpi, #crm-lista div'),{opacity:[0,1],transform:['translateY(8px)','translateY(0px)']},{duration:.35,delay:m.stagger(.04),ease:[.2,.8,.2,1]});
+  }
+  $('#ramos').innerHTML=RAMOS.map(function(r,i){return '<button type="button" aria-pressed="false" data-i="'+i+'">'+r.k+'</button>'}).join('');
+  $$('#ramos button').forEach(function(b){b.addEventListener('click',function(){crm(+b.dataset.i)})});
+  $('#cores').innerHTML=CORES.map(function(c){return '<button type="button" aria-pressed="false" aria-label="Cor '+c+'" style="--c:'+c+'" data-c="'+c+'"></button>'}).join('');
+  $$('#cores button').forEach(function(b){b.addEventListener('click',function(){corEsc=b.dataset.c;$$('#cores button').forEach(function(x){x.setAttribute('aria-pressed',x===b)});crm(ramoAt)})});
+  $('#crm-in').addEventListener('input',function(){nomeEsc=this.value.trim().slice(0,32);crm(ramoAt);var m=M();if(m)m.animate('#tela-crm .logo',{transform:['scale(.94)','scale(1)']},{duration:.3,ease:[.3,1.4,.5,1]})});
+  function ramoDaEmpresa(){var t=E.seg+' '+E.nome;for(var i=0;i<RAMOS.length;i++)if(RAMOS[i].rx.test(t))return i;return 0}
+
+  /* links de teste e de contato */
+  function testeHref(){return E.cod?'/a/'+E.cod:('/agente'+(E.nome?'?e='+encodeURIComponent(E.nome)+(E.seg?'&s='+encodeURIComponent(E.seg):''):''))}
+  function zap(t){return 'https://wa.me/'+CTA+'?text='+encodeURIComponent(t)}
+  function aplicar(){
+    $$('.js-testar').forEach(function(a){a.href=testeHref()});
+    var quem=E.nome?' Sou da '+E.nome+'.':'';
+    $$('.js-zap').forEach(function(a){a.href=zap('Olá, Éder!'+quem+' Vi a página do Agente de IA e quero saber mais.')});
+    $$('.js-plano').forEach(function(a){a.href=zap('Olá, Éder!'+quem+' Tenho interesse no plano '+a.dataset.plano+' do Agente de IA.');a.target='_blank';a.rel='noopener'});
+    crm(ramoDaEmpresa());
+    if(E.nome){
+      $('#para').hidden=false;$('#para').textContent='Montamos um teste com o nome da '+E.nome+'. Converse com ele como se fosse um cliente.';
+      $('#fone-nome').textContent=E.nome;$('#crm-lead').textContent='Nada de sistema genérico com o logo de outra empresa. Quando a equipe da '+E.nome+' abrir, vai ver o nome, o logo e as cores de vocês. Um sistema que é da '+E.nome+', feito do jeito de vocês.';$('#crm-in').value=E.nome;$('#av').textContent=(E.nome.replace(/[^A-Za-zÀ-ÿ0-9]/g,'').charAt(0)||'S').toUpperCase();
+      $('#txt-testar').textContent='Testar o agente da '+E.nome;$('#teste-tit').textContent='Teste o agente da '+E.nome;
+      document.title='Agente de IA para '+E.nome+' · Connecta AI';
+    }
+  }
+  function nomeCurto(n){var s=String(n||'').trim(),c=s.split(/\s*(?::|\||\s[-–—]\s)\s*/)[0].trim();return (c.length>=3?c:s).slice(0,40)}
+
+  /* entrada da primeira tela: uma única sequência */
+  function abertura(){
+    var m=M();if(!m){$('#passos').style.setProperty('--lin','100%');return}
+    var it=[$('.relogio'),$('h1'),$('.abre p.sub'),$('.acoes'),$('.selos')];
+    m.animate(it,{opacity:[0,1],transform:['translateY(18px)','translateY(0px)']},{duration:.7,delay:m.stagger(.09),ease:[.2,.8,.2,1]});
+    m.animate('.fone',{opacity:[0,1],transform:['translateY(40px) rotate(-3deg)','translateY(0px) rotate(0deg)']},{duration:.9,delay:.25,ease:[.2,.8,.2,1]});
+    m.animate('.etq',{opacity:[0,1],transform:['scale(.8)','scale(1)']},{duration:.5,delay:m.stagger(.15,{startDelay:.9}),ease:[.3,1.4,.5,1]});
+    // a linha do passo a passo se preenche quando a seção aparece
+    if(m.inView)m.inView('#passos',function(){m.animate(0,100,{duration:1.4,ease:[.4,0,.2,1],onUpdate:function(v){$('#passos').style.setProperty('--lin',v+'%')}})},{amount:.4});
+  }
+
+  var q=new URLSearchParams(location.search);
+  E.cod=(q.get('c')||'').toLowerCase().replace(/[^0-9a-f]/g,'').slice(0,12);
+  E.nome=nomeCurto(q.get('e')||'');E.seg=q.get('s')||'';
+  horaRel();setInterval(horaRel,30000);aplicar();calcular();
+  function comecar(){abertura();conversa()}
+  if(document.readyState==='complete')setTimeout(comecar,50);else window.addEventListener('load',comecar);
+  if(E.cod&&E.cod.length>=7){
+    fetch(SB+'/rest/v1/rpc/prosp_agente_codigo',{method:'POST',headers:{'Content-Type':'application/json',apikey:KEY},body:JSON.stringify({p_cod:E.cod})})
+      .then(function(r){return r.ok?r.json():null}).then(function(r){if(r&&r.nome){E.nome=nomeCurto(r.nome);E.seg=r.segmento||E.seg;aplicar();conversa()}}).catch(function(){});
+  }
+})();
+</script>
+</body>
+</html>
