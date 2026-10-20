@@ -92,6 +92,30 @@ button.stat{cursor:pointer}button.stat:hover{background:var(--surface-2)}
 .sec>h2{margin-bottom:8px}
 .fld{margin-bottom:10px}
 /* visuais */
+.fech{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--s6);border-radius:var(--r);box-shadow:var(--shadow);padding:12px 16px 14px;margin-bottom:14px}
+.fech h3{margin:0 0 2px;font-size:15px;font-weight:600}
+.fech .it{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 12px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.fech .it:first-of-type{border-top:0}
+.fech .it b{font-size:14px}.fech .it p{margin:2px 0 0;font-size:13px;color:var(--muted)}
+.fech .it .acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.fech .esp{font-size:12px;font-weight:600;color:var(--s6)}
+@media (max-width:640px){.fech .it{grid-template-columns:1fr}.fech .it .acts{justify-content:flex-start}}
+.rsl{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:12px 16px 14px;margin-bottom:14px;display:block}
+.rsl .sub{font-size:12.5px;color:var(--muted)}
+.rsl .top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}
+.rsl h3{margin:0 0 2px;font-size:14px;font-weight:600}
+.rsl .per{display:flex;gap:6px}
+.rsl .etapas{display:grid;gap:7px;margin-top:10px}
+.rsl .et{display:grid;grid-template-columns:170px minmax(0,1fr) 92px;align-items:center;gap:10px;font-size:13px}
+.rsl .et .bar{height:18px;background:var(--surface-2);border-radius:2px;overflow:hidden}
+.rsl .et .bar i{display:block;height:100%;background:var(--c,var(--s1));min-width:2px}
+.rsl .et b{text-align:right;font-family:'IBM Plex Sans Condensed',sans-serif;font-size:15px}
+.rsl .et b small{font-weight:400;color:var(--muted);font-size:12px;margin-left:4px}
+.rsl .tb{overflow-x:auto;margin-top:14px}.rsl table{width:100%;border-collapse:collapse;font-size:13px;min-width:420px}
+.rsl th,.rsl td{text-align:left;padding:6px 8px;border-top:1px solid var(--line)}
+.rsl th{font-weight:600;color:var(--muted);font-size:12px}
+.rsl td.n,.rsl th.n{text-align:right;font-variant-numeric:tabular-nums}
+@media (max-width:640px){.rsl .et{grid-template-columns:minmax(0,108px) minmax(0,1fr) 66px;gap:8px;font-size:12.5px}}
 .viz{display:grid;gap:12px;grid-template-columns:minmax(0,1fr);margin-bottom:14px}
 @media (min-width:1000px){.viz{grid-template-columns:minmax(0,5fr) minmax(0,7fr)}}
 .vz{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:12px 16px 14px;min-width:0}
@@ -656,7 +680,7 @@ function vBuscar(){
 /* funil por status e atividade dos últimos 14 dias */
 /* ---------- WhatsApp do CRM: conversas do chip de prospecção ---------- */
 const k8=t=>digits(t).slice(-8);
-const leadDe=k=>st.leads.find(l=>k8(l.whatsapp)===k||k8(l.telefone)===k);
+const leadDe=k=>k&&st.leads.find(l=>k8(l.whatsapp)===k||k8(l.telefone)===k||k8(l.wa_extra)===k);
 const zNao=()=>st.msgs.filter(m=>!m.de_mim&&!m.lido).length;
 function zConvs(){
   const G={};st.msgs.forEach(m=>{const k=k8(m.telefone);if(!k)return;const g=G[k]||(G[k]={k,msgs:[],tel:m.telefone,nao:0,resp:false,nomeWa:''});g.msgs.push(m);if(!m.de_mim){g.resp=true;if(!m.lido)g.nao++;if(m.nome&&!g.nomeWa)g.nomeWa=m.nome}});
@@ -736,6 +760,56 @@ function vizCrm(c){
     '<div class="axis">'+dias.map((d,i)=>'<span>'+(i%2===0||dias.length<10?fmtD(d).slice(0,2):'')+'</span>').join('')+'</div><div class="lg"><span><i style="background:var(--s1)"></i>Abordagens</span><span><i style="background:var(--gold)"></i>Acessos ao demo</span></div></div>';
   return '<div class="viz">'+fun+cols+'</div>';
 }
+
+/* ---------- empresas que o agente passou para fechar ---------- */
+function paraFechar(){
+  return st.leads.filter(l=>l.ag_estado==='passado'&&!['fechou','sem_interesse'].includes(l.status)&&(l.historico||[]).some(h=>/^🔥/.test(h.txt||''))).map(l=>{
+    const h=[...(l.historico||[])].reverse().find(x=>/^🔥/.test(x.txt||''));
+    return {l,em:h.em,resumo:String(h.txt).replace(/^🔥[^:]*:\s*/,'')};
+  }).sort((a,b)=>a.em.localeCompare(b.em));
+}
+function esperando(iso){const m=Math.round((Date.now()-Date.parse(iso))/6e4);if(m<60)return 'há '+Math.max(1,m)+' min';const h=Math.round(m/60);if(h<48)return 'há '+h+' h';return 'há '+Math.round(h/24)+' dias'}
+function vFechar(){
+  const L=paraFechar();if(!L.length)return '';
+  return '<section class="fech" aria-label="Empresas para você fechar"><h3>🔥 Para você fechar ('+L.length+')</h3><p class="small muted" style="margin:0 0 6px">O agente já vendeu: a empresa escolheu o plano e está esperando você para a implantação e o contrato.</p>'+
+    L.map(x=>'<div class="it"><div><b>'+esc(nomeCurto(x.l.nome))+'</b> <span class="esp">'+esperando(x.em)+'</span><p>'+esc(x.resumo)+'</p></div><div class="acts">'+
+      '<button class="btn sm pri" data-a="zabrir" data-id="'+x.l.id+'">Abrir conversa</button>'+
+      '<button class="btn sm" data-a="fechou" data-id="'+x.l.id+'">Fechou ✅</button>'+
+      '<button class="btn sm" data-a="agretomar" data-id="'+x.l.id+'">Devolver ao agente</button></div></div>').join('')+'</section>';
+}
+
+/* ---------- painel de resultados ---------- */
+function vResultados(){
+  if(!st.leads.length)return '';
+  const dias=st.resDias||7,ini=Date.now()-dias*864e5,no=iso=>iso&&Date.parse(iso)>=ini;
+  const emp=st.leads.filter(l=>!ehOtica(l));
+  const tem=(l,rx)=>(l.historico||[]).some(h=>no(h.em)&&rx.test(h.txt||''));
+  const ac=(l,t)=>(st.ac[l.id]||[]).some(a=>a.tipo===t&&no(a.em));
+  // grupo: as empresas abordadas no período, e o que cada uma fez depois
+  const algum=(l,rx)=>(l.historico||[]).some(h=>rx.test(h.txt||''));
+  const acT=(l,t)=>(st.ac[l.id]||[]).some(a=>a.tipo===t);
+  const abord=emp.filter(l=>no(l.enviado_em)&&!['pagina','indicacao'].includes(l.origem)),
+        teste=abord.filter(l=>acT(l,'agente')),pag=abord.filter(l=>acT(l,'pagina')),
+        resp=abord.filter(l=>algum(l,/^Respondeu no WhatsApp/)),
+        conv=abord.filter(l=>algum(l,/^Respondeu no WhatsApp/)&&['humano','passado'].includes(l.ag_estado)),
+        pass=abord.filter(l=>algum(l,/^🔥/)),
+        fech=abord.filter(l=>l.status==='fechou'),
+        novos=emp.filter(l=>['pagina','indicacao'].includes(l.origem)&&no(l.criado_em));
+  const base=Math.max(1,abord.length);
+  const E=[['Abordadas',abord.length,'var(--s1)'],['Abriram o teste',teste.length,'var(--gold)'],['Abriram a página',pag.length,'var(--gold)'],['Responderam',resp.length,'var(--s2)'],['Conversaram com o agente',conv.length,'var(--s4)'],['Passadas para você',pass.length,'var(--s6)'],['Fecharam',fech.length,'var(--s5)']];
+  const mx=Math.max(1,...E.map(e=>e[1]));
+  const pct=n=>abord.length?Math.round(n*100/base)+'%':'';
+  // por tipo de empresa
+  const seg={};abord.forEach(l=>{const k=(segPerfil(l).tipo||l.segmento||'Outras').replace(/^./,c=>c.toUpperCase());(seg[k]=seg[k]||{a:0,r:0,f:0});seg[k].a++;if(algum(l,/^Respondeu no WhatsApp/))seg[k].r++;if(l.status==='fechou')seg[k].f++});
+  const linhas=Object.entries(seg).sort((a,b)=>b[1].a-a[1].a).slice(0,8);
+  return '<section class="rsl" aria-label="Resultados"><div class="top"><div><h3>Resultados com outras empresas</h3><p class="sub" style="margin:0">Empresas abordadas '+(dias===7?'nos últimos 7 dias':'nos últimos 30 dias')+' e até onde cada uma chegou. A porcentagem é sobre as abordadas.</p></div>'+
+    '<div class="per" role="group" aria-label="Período"><button class="chip '+(dias===7?'on':'')+'" data-a="resdias" data-d="7" aria-pressed="'+(dias===7)+'">7 dias</button><button class="chip '+(dias===30?'on':'')+'" data-a="resdias" data-d="30" aria-pressed="'+(dias===30)+'">30 dias</button></div></div>'+
+    '<div class="etapas">'+E.map(e=>'<div class="et"><span>'+e[0]+'</span><span class="bar"><i style="width:'+(e[1]*100/mx)+'%;--c:'+e[2]+'"></i></span><b>'+e[1]+(e[0]!=='Abordadas'&&abord.length?'<small>'+pct(e[1])+'</small>':'')+'</b></div>').join('')+'</div>'+
+    (novos.length?'<p class="small" style="margin:10px 0 0">🌐 Mais '+novos.length+' '+(novos.length===1?'contato chegou':'contatos chegaram')+' pela página compartilhada (fora das abordagens).</p>':'')+
+    (linhas.length?'<div class="tb"><table><thead><tr><th>Tipo de empresa</th><th class="n">Abordadas</th><th class="n">Responderam</th><th class="n">Taxa</th><th class="n">Fecharam</th></tr></thead><tbody>'+linhas.map(([k,v])=>'<tr><td>'+esc(k)+'</td><td class="n">'+v.a+'</td><td class="n">'+v.r+'</td><td class="n">'+(v.a?Math.round(v.r*100/v.a)+'%':'–')+'</td><td class="n">'+v.f+'</td></tr>').join('')+'</tbody></table></div>':'')+
+  '</section>';
+}
+
 function vCrm(){
   const c={};st.leads.forEach(l=>c[l.status]=(c[l.status]||0)+1);
   const fu=st.leads.filter(l=>l.follow_up&&l.follow_up<=today()&&['enviado','respondeu','interessada'].includes(l.status));
@@ -748,7 +822,8 @@ function vCrm(){
     '<div class="stat k3"><b>'+(abord?Math.round(resp*100/abord):0)+'<span>%</span></b><span>Taxa de resposta ('+resp+' de '+abord+')</span></div>'+
     '<button class="stat k4" data-f="hoje"><b>'+fu.length+'</b><span>Follow-up para hoje</span></button>'+
     '<button class="stat k5" data-f="fechou"><b>'+(c.fechou||0)+'</b><span>Fecharam</span></button></div>';
-  if(st.leads.length)h+=vizCrm(c);
+  h=vFechar()+h;
+  if(st.leads.length)h+=vizCrm(c)+vResultados();
   if(!st.leads.length)return h+'<div class="empty">Nenhuma ótica no CRM ainda.<br><br><button class="btn pri" data-tab="buscar">Buscar óticas</button></div>';
   const COR={todos:'var(--fg)',hoje:'var(--s4)',abriu:'var(--gold)',novo:'var(--line-2)',enviado:'var(--s1)',respondeu:'var(--s2)',interessada:'var(--s4)',fechou:'var(--gold)',sem_interesse:'var(--s6)'};
   const chip=(k,n,x)=>'<button class="ftile'+(st.f===k?' on':'')+'" data-f="'+k+'" aria-pressed="'+(st.f===k)+'" style="--fc:'+COR[k]+'"><b>'+x+'</b><span>'+n.replace('👀 ','')+'</span></button>';
@@ -878,6 +953,9 @@ document.addEventListener('click',async e=>{
     case 'agtlimpar':st.agt=agtNovo(st.agt?st.agt.seg:0);return render();
     case 'reuncanc':{if(!confirm('Cancelar esta conversa marcada?'))return;const r=await sb.from('prosp_reunioes').update({status:'cancelada'}).eq('id',d.id);if(r.error)return toast(r.error.message);st.reun=(st.reun||[]).map(x=>x.id===d.id?Object.assign({},x,{status:'cancelada'}):x);toast('Conversa cancelada');return render()}
     case 'agpausar':{const l=st.leads.find(x=>x.id===d.id);if(!l)return;await upd(l.id,{ag_estado:'pausado',historico:hist(l,'Agente de vendas pausado nesta conversa')});return toast('O agente não vai mais responder esta empresa')}
+    case 'zabrir':{const l=st.leads.find(x=>x.id===d.id);if(!l)return;const um=[...st.msgs].reverse().find(m=>!m.de_mim&&m.lead_id===l.id);st.tab='zap';st.zsel=k8(um?um.telefone:foneDe(l));render();try{zRolar()}catch(e){}return}
+    case 'fechou':{const l=st.leads.find(x=>x.id===d.id);if(!l)return;await upd(l.id,{status:'fechou',historico:hist(l,'✅ Fechou o contrato')});return toast('Parabéns! '+nomeCurto(l.nome)+' marcada como fechada')}
+    case 'resdias':{st.resDias=+d.d||7;return render()}
     case 'agretomar':{const l=st.leads.find(x=>x.id===d.id);if(!l)return;await upd(l.id,{ag_estado:null,historico:hist(l,'Agente de vendas retomado nesta conversa')});return toast('O agente volta a responder esta empresa')}
     case 'entrar':{const r=await sb.auth.signInWithPassword({email:$('#g-e').value.trim(),password:$('#g-p').value});if(r.error){$('#g-err').textContent='E-mail ou senha incorretos.';return}return boot()}
     case 'sair':await sb.auth.signOut();st.user=false;st.loaded=false;return render();

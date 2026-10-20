@@ -2,7 +2,7 @@
 // 1) Separa resposta automática / robô de pessoa de verdade (só conversa com pessoa).
 // 2) Explica, quebra objeções, fala dos planos, entende áudio e foto, faz perguntas sobre a empresa.
 // 3) Faz a venda inteira e só passa a conversa para o Éder quando a empresa decide contratar (implantação e contrato).
-// Modos: msg (o banco chama quando chega resposta), midia (o conector manda áudio/foto),
+// Modos: msg (o banco chama quando chega resposta), midia (o conector manda áudio/foto), retomar e resumo (agendados no banco),
 //        aberto (a página /a/ avisa que a empresa abriu o teste), teste (tela do CRM, sem enviar nada).
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { sendPush } from "./webpush.js";
@@ -52,7 +52,12 @@ async function config() {
 type Cfg = Awaited<ReturnType<typeof config>>;
 
 /* ---------------- aviso no celular do Éder ---------------- */
-async function avisar(title: string, body: string, tag: string) {
+// urgente = chega na hora no celular (quer fechar, conversa marcada, agente travou); o resto vai para o resumo
+async function avisar(title: string, body: string, tag: string, op: { urgente?: boolean; tipo?: string; lead?: string } = {}) {
+  if (!op.urgente) {
+    await db.from("prosp_avisos").insert({ tipo: op.tipo || "outro", lead_id: op.lead || null, titulo: s(title, 120), texto: s(body, 300) });
+    return;
+  }
   try {
     const [{ data: subs }, { data: seg }] = await Promise.all([
       db.from("prosp_push").select("endpoint,sub"),
@@ -355,12 +360,12 @@ function acoesReais(l: any, c: Cfg, feito: string[], tel = "") {
       if (ja?.length) return { ok: false, erro: "horário ocupado, ofereça outro" };
       await db.from("prosp_reunioes").insert({ lead_id: l.id, inicio, nome: s(a.nome, 80), forma: s(a.forma, 20) || "WhatsApp", assunto: s(a.assunto, 400) });
       await historico(l.id, `🗓️ Agente marcou conversa com você: ${fmtDia(a.data)} às ${a.hora} (${s(a.forma, 20) || "WhatsApp"}) com ${s(a.nome, 60)}`, { status: "interessada", follow_up: a.data });
-      await avisar(`🗓️ ${empresa}: conversa marcada`, `${fmtDia(a.data)} às ${a.hora} · ${s(a.forma, 20) || "WhatsApp"} com ${s(a.nome, 60)}${a.assunto ? ". " + s(a.assunto, 150) : ""}`, "ag-" + l.id);
+      await avisar(`🗓️ ${empresa}: conversa marcada`, `${fmtDia(a.data)} às ${a.hora} · ${s(a.forma, 20) || "WhatsApp"} com ${s(a.nome, 60)}${a.assunto ? ". " + s(a.assunto, 150) : ""}`, "ag-" + l.id, { urgente: true });
       feito.push("marcou"); return { ok: true };
     }
     if (n === "passar_para_eder") {
       await historico(l.id, `🔥 Quer fechar. Agente passou a conversa para você: ${s(a.resumo, 300)}`, { status: "interessada", ag_estado: "passado", ag_em: new Date().toISOString() });
-      await avisar(`🔥 ${empresa} quer fechar`, s(a.resumo, 250) + " · Continue a conversa no WhatsApp.", "ag-" + l.id);
+      await avisar(`🔥 ${empresa} quer fechar`, s(a.resumo, 250) + " · Continue a conversa no WhatsApp.", "ag-" + l.id, { urgente: true });
       feito.push("passou"); return { ok: true };
     }
     if (n === "anotar") {
@@ -434,7 +439,7 @@ async function atenderMsg(b: any) {
   try { resposta = await vender(l, c, msgs, acoesReais(l, c, feito, tel)); }
   catch (e: any) {
     console.error("agente-vendas", e.message);
-    await avisar(`📩 ${nomeCurto(l.nome)} respondeu`, "O agente não conseguiu responder agora. Responda pelo WhatsApp.", "ag-" + lead);
+    await avisar(`📩 ${nomeCurto(l.nome)} respondeu`, "O agente não conseguiu responder agora. Responda pelo WhatsApp.", "ag-" + lead, { urgente: true });
     return { ok: false };
   }
   if (!resposta) return { ok: false, vazio: true };
@@ -457,7 +462,7 @@ async function atenderMsg(b: any) {
   if (ins.error) throw new Error(ins.error.message);
   if (cl.intencao === "interesse" && !feito.length && l.status !== "interessada") {
     await db.from("prosp_leads").update({ status: "interessada" }).eq("id", l.id);
-    await avisar(`💬 ${nomeCurto(l.nome)} se interessou`, "O agente está conversando. Toque para acompanhar.", "ag-" + l.id);
+    await avisar(`💬 ${nomeCurto(l.nome)} se interessou`, "O agente está conversando. Toque para acompanhar.", "ag-" + l.id, { tipo: "interesse", lead: l.id });
   }
   return { ok: true, cl, feito };
 }
@@ -494,8 +499,60 @@ async function aberto(b: any) {
     db.from("prosp_leads").select("nome").eq("id", lead).maybeSingle(),
     db.from("prosp_acessos").select("id", { count: "exact", head: true }).eq("lead_id", lead).eq("tipo", pagina ? "pagina" : "agente"),
   ]);
-  await avisar(`👀 ${nomeCurto(l?.nome || "Uma empresa")} abriu ${pagina ? "a página de vendas" : "o teste do agente"}`, `${count && count > 1 ? count + "º acesso" : "Primeiro acesso"}${b.aparelho ? " · " + s(b.aparelho, 60) : ""}. Bom momento para chamar no WhatsApp.`, "agt-" + lead);
+  await avisar(`👀 ${nomeCurto(l?.nome || "Uma empresa")} abriu ${pagina ? "a página de vendas" : "o teste do agente"}`, `${count && count > 1 ? count + "º acesso" : "Primeiro acesso"}${b.aparelho ? " · " + s(b.aparelho, 60) : ""}. Bom momento para chamar no WhatsApp.`, "agt-" + lead, { tipo: pagina ? "pagina" : "agente", lead });
   return ok({ ok: true, novo: true });
+}
+
+/* ---------------- modo retomar: a empresa sumiu no meio da conversa (o banco chama 1 vez por silêncio) ---------------- */
+async function retomar(b: any) {
+  const lead = String(b.lead || "");
+  if (!/^[0-9a-f-]{36}$/.test(lead)) return { ignorado: "dados" };
+  const c = await config();
+  if (!c.on) return { ignorado: "desligado" };
+  const { data: l } = await db.from("prosp_leads").select("*").eq("id", lead).maybeSingle();
+  if (!l || l.ag_estado !== "humano" || !["respondeu", "interessada"].includes(l.status)) return { ignorado: "estado" };
+  const msgs = await conversa(lead);
+  if (!msgs.length || !msgs[msgs.length - 1].de_mim) return { ignorado: "empresa_respondeu" };
+  const { data: um } = await db.from("prosp_wa_msg").select("telefone").eq("lead_id", lead).eq("de_mim", false).order("criado_em", { ascending: false }).limit(1).maybeSingle();
+  const tel = String(um?.telefone || l.whatsapp || l.telefone || "").replace(/\D/g, "");
+  if (tel.length < 10) return { ignorado: "sem_telefone" };
+  const horas = Math.round((Date.now() - Date.parse(msgs[msgs.length - 1].em)) / 3600e3);
+  l._acessos = await acessosTexto(lead);
+  const conv: any[] = [{ role: "system", content: sistemaVendas(l, c) + `\n\n## Agora\nA empresa parou de responder há cerca de ${horas} horas. Escreva UMA mensagem curta (1 ou 2 frases) retomando exatamente do ponto em que a conversa parou, leve e sem pressão, terminando com uma pergunta simples que seja fácil de responder. Não repita o que já foi dito, não mande links e não ofereça desconto.` }];
+  for (const m of msgs) conv.push({ role: m.de_mim ? "assistant" : "user", content: m.texto });
+  conv.push({ role: "user", content: "[sem resposta da empresa desde a última mensagem]" });
+  const j = await chat({ messages: conv, temperature: 0.5, max_tokens: 160 });
+  const txt = s(j.choices?.[0]?.message?.content, 400).split(/\n\s*\n/)[0].trim();
+  if (!txt) return { ok: false };
+  await db.from("prosp_wa_fila").insert({ lead_id: lead, tipo: "manual", telefone: tel, texto: txt, status: "aguardando", enviar_apos: new Date(Date.now() + 5000).toISOString(), origem: "agente" });
+  await historico(lead, `🔁 A empresa parou de responder; o agente retomou a conversa: «${s(txt, 200)}»`);
+  return { ok: true, txt };
+}
+
+/* ---------------- modo resumo: junta os avisos que não são urgentes num aviso só (12h e 18h) ---------------- */
+async function resumo() {
+  const { data: av } = await db.from("prosp_avisos").select("id,tipo,lead_id,titulo").is("enviado_em", null).order("em").limit(300);
+  if (!av?.length) return { ok: true, vazio: true };
+  const ids = [...new Set(av.map((x: any) => x.lead_id).filter(Boolean))];
+  const { data: ls } = ids.length ? await db.from("prosp_leads").select("id,nome").in("id", ids) : { data: [] as any[] };
+  const nome: Record<string, string> = {};
+  (ls || []).forEach((x: any) => { nome[x.id] = nomeCurto(x.nome); });
+  const grupo = (tipos: string[], rot: string) => {
+    const g = av.filter((x: any) => tipos.includes(x.tipo));
+    if (!g.length) return "";
+    const ns = [...new Set(g.map((x: any) => nome[x.lead_id] || ""))].filter(Boolean);
+    return `${ns.length || g.length} ${rot}${ns.length ? " (" + ns.slice(0, 3).join(", ") + (ns.length > 3 ? " e mais " + (ns.length - 3) : "") + ")" : ""}`;
+  };
+  const partes2 = [
+    grupo(["interesse"], "em conversa com o agente"),
+    grupo(["agente"], "abriram o teste do agente"),
+    grupo(["pagina"], "abriram a página de vendas"),
+    grupo(["demo"], "abriram o demo da ótica"),
+    grupo(["outro"], "outros avisos"),
+  ].filter(Boolean);
+  await avisar("📋 Resumo do CRM", partes2.join(" · "), "resumo", { urgente: true });
+  await db.from("prosp_avisos").update({ enviado_em: new Date().toISOString() }).in("id", av.map((x: any) => x.id));
+  return { ok: true, n: av.length };
 }
 
 /* ---------------- modo teste: tela do CRM (só o administrador, nada é enviado) ---------------- */
@@ -544,6 +601,8 @@ Deno.serve(async (req) => {
       if (!data || seg !== data.valor) return ok({ erro: "negado" }, 401);
       if (!OPENAI) return ok({ erro: "sem_chave" }, 500);
       if (b.modo === "teste") return await teste(req, b, true); // verificação interna
+      if (b.modo === "retomar") return ok(await retomar(b));
+      if (b.modo === "resumo") return ok(await resumo());
       return ok(await atenderMsg(b));
     }
     if (b.modo === "midia") return await midia(b);
