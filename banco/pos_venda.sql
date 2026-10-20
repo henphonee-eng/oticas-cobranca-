@@ -42,3 +42,7 @@ create policy prosp_relatorios_admin on public.prosp_relatorios for all using (s
 -- agente_config (cfg.tipo='empresa' com a configuração da implantação), avisos para o dono e o WhatsApp na nuvem (QR Code).
 -- prosp_cobr_comprovante (gatilho em prosp_wa_msg): a empresa mandou comprovante/“paguei” com cobrança em aberto -> avisa o Éder.
 -- crons: connecta-vigia (*/10), connecta-cobranca (diário 12:10 UTC), connecta-relatorio (dia 1, 13:05 UTC).
+
+-- prospecção no Instagram (migration prosp_ig): empresas que o Éder escolhe, segue e aborda pelo Direct.
+-- O sistema não segue nem envia: só abre o perfil/Direct e copia a mensagem. Etapas: seguir, seguido, abordado, respondeu, cliente, descartado.
+-- create table prosp_ig(id, usuario unique, nome, origem, etapa, seguiu_volta, seguido_em, abordado_em, respondeu_em, nota, criado_em) + RLS sou_admin()

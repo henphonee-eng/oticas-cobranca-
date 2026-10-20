@@ -222,6 +222,8 @@ button.stat{cursor:pointer}button.stat:hover{background:var(--surface-2)}
 .subtabs{display:flex;gap:0;margin:0 0 14px;border-bottom:1px solid var(--line-2);overflow-x:auto}
 .subtabs .chip{border:0;border-radius:0;background:none;padding:9px 14px;border-bottom:2px solid transparent;margin-bottom:-1px;color:var(--muted);font-size:14px;font-weight:500}
 .subtabs .chip.on{background:none;color:var(--fg);border-bottom-color:var(--gold)}
+.igc .igu{font-weight:650;color:var(--fg);text-decoration:none;word-break:break-all}.igc .igu:hover{text-decoration:underline}
+.igacts{margin-top:10px;gap:6px;flex-wrap:wrap}
 .subtabs .chip .n{background:var(--gold);color:var(--gold-ink);font-size:11.5px;border-radius:9px;padding:0 6px;margin-left:5px;font-weight:600}
 @media (min-width:900px){
   .mtop,.pnav{display:none}
@@ -452,8 +454,9 @@ async function load(){
   st.ac={};((ar&&ar.data)||[]).forEach(a=>{(st.ac[a.lead_id]=st.ac[a.lead_id]||[]).push(a)});
   await loadFila();
   await loadImpl();
+  await loadIg();
   try{const rr=await sb.from('prosp_reunioes').select('*').gte('inicio',new Date(Date.now()-864e5).toISOString()).order('inicio');st.reun=(rr&&rr.data)||[]}catch(e){st.reun=[]}
-  st.loaded=true;const qt=new URLSearchParams(location.search).get('tab');if(qt&&['crm','buscar','msg','auto','zap','camp','impl','fin'].includes(qt))st.tab=qt;else if(!st.leads.length)st.tab='buscar';render();
+  st.loaded=true;const qt=new URLSearchParams(location.search).get('tab');if(qt&&['crm','buscar','ig','msg','auto','zap','camp','impl','fin'].includes(qt))st.tab=qt;else if(!st.leads.length)st.tab='buscar';render();
 }
 async function loadImpl(){
   try{const [ir,ar,cr,rr]=await Promise.all([sb.from('prosp_impl').select('*').neq('status','cancelada').order('criado_em',{ascending:false}),sb.from('prosp_impl_ajustes').select('*').order('em').limit(3000),sb.from('prosp_cobr').select('*').order('venc').limit(5000),sb.from('prosp_relatorios').select('*').order('mes',{ascending:false}).limit(500)]);
@@ -703,13 +706,13 @@ function render(){if(st.tab==='auto'&&!wQrT)setTimeout(wQrPoll,0);
   if(!st.user)return a.innerHTML=gate();
   if(!st.admin)return a.innerHTML='<div class="gate"><div class="card"><h1>Sem acesso</h1><p class="muted">Essa área é só do administrador.</p><button class="btn" data-a="sair">Sair</button></div></div>';
   if(!st.loaded)return a.innerHTML='<div class="empty">Carregando leads…</div>';
-  const sec=st.tab==='buscar'?'buscar':'crm';
+  const sec=(st.tab==='buscar'||st.tab==='ig')?'buscar':'crm';
   const item=n=>n[2]?'<a href="'+n[2]+'"'+(sec===n[0]?' class="on"':'')+'>'+n[3]+'<span>'+n[1]+'</span></a>':'<a href="/prospectar?tab='+n[0]+'" data-tab="'+n[0]+'"'+(sec===n[0]?' class="on" aria-current="page"':'')+'>'+n[3]+'<span>'+n[1]+'</span></a>';
-  const head=st.tab==='buscar'?['Prospecção','Encontre empresas no Google Maps e adicione ao CRM']:st.tab==='zap'?['WhatsApp do CRM','Conversas do chip de prospecção: quem respondeu e o follow-up']:st.tab==='auto'?['Envio automático','Fila de abordagens e follow-ups pelo chip do CRM']:st.tab==='msg'?['Modelos de mensagem','Textos da abordagem e do follow-up']:st.tab==='camp'?['Campanha','Tráfego Orgânico e Agente de IA para as óticas que você já abordou']:st.tab==='impl'?['Implantações','Cadastro, contrato, teste, WhatsApp e pagamentos de cada empresa que fechou']:st.tab==='fin'?['Financeiro','Quanto entra por mês, o que falta receber e quem está em atraso']:['CRM','Funil de empresas, follow-up e acessos ao demo'];
-  const sub=st.tab==='buscar'?'':'<div class="subtabs"><button class="chip '+(st.tab==='crm'?'on':'')+'" data-tab="crm">Empresas ('+st.leads.length+')</button><button class="chip '+(st.tab==='zap'?'on':'')+'" data-tab="zap">WhatsApp'+(zNao()?'<span class="n">'+zNao()+'</span>':'')+'</button><button class="chip '+(st.tab==='auto'?'on':'')+'" data-tab="auto">Envio automático ('+st.fila.filter(naFila).length+')</button><button class="chip '+(st.tab==='camp'?'on':'')+'" data-tab="camp">Campanha</button><button class="chip '+(st.tab==='msg'?'on':'')+'" data-tab="msg">Modelos de mensagem</button><button class="chip '+(st.tab==='impl'?'on':'')+'" data-tab="impl">Implantações'+((st.impl||[]).filter(x=>!['ativa','encerrada'].includes(x.status)).length?' ('+(st.impl||[]).filter(x=>!['ativa','encerrada'].includes(x.status)).length+')':'')+'</button><button class="chip '+(st.tab==='fin'?'on':'')+'" data-tab="fin">Financeiro'+((st.cobr||[]).filter(c=>!c.pago&&!c.cancelada&&c.venc<hojeR()).length?'<span class="n">'+(st.cobr||[]).filter(c=>!c.pago&&!c.cancelada&&c.venc<hojeR()).length+'</span>':'')+'</button></div>';
+  const head=st.tab==='buscar'?['Prospecção','Encontre empresas no Google Maps e adicione ao CRM']:st.tab==='ig'?['Prospecção','Empresas do Instagram para seguir e abordar pelo Direct']:st.tab==='zap'?['WhatsApp do CRM','Conversas do chip de prospecção: quem respondeu e o follow-up']:st.tab==='auto'?['Envio automático','Fila de abordagens e follow-ups pelo chip do CRM']:st.tab==='msg'?['Modelos de mensagem','Textos da abordagem e do follow-up']:st.tab==='camp'?['Campanha','Tráfego Orgânico e Agente de IA para as óticas que você já abordou']:st.tab==='impl'?['Implantações','Cadastro, contrato, teste, WhatsApp e pagamentos de cada empresa que fechou']:st.tab==='fin'?['Financeiro','Quanto entra por mês, o que falta receber e quem está em atraso']:['CRM','Funil de empresas, follow-up e acessos ao demo'];
+  const sub=(st.tab==='buscar'||st.tab==='ig')?'<div class="subtabs"><button class="chip '+(st.tab==='buscar'?'on':'')+'" data-tab="buscar">Google</button><button class="chip '+(st.tab==='ig'?'on':'')+'" data-tab="ig">Instagram'+(igProntas()?'<span class="n">'+igProntas()+'</span>':'')+'</button></div>':'<div class="subtabs"><button class="chip '+(st.tab==='crm'?'on':'')+'" data-tab="crm">Empresas ('+st.leads.length+')</button><button class="chip '+(st.tab==='zap'?'on':'')+'" data-tab="zap">WhatsApp'+(zNao()?'<span class="n">'+zNao()+'</span>':'')+'</button><button class="chip '+(st.tab==='auto'?'on':'')+'" data-tab="auto">Envio automático ('+st.fila.filter(naFila).length+')</button><button class="chip '+(st.tab==='camp'?'on':'')+'" data-tab="camp">Campanha</button><button class="chip '+(st.tab==='msg'?'on':'')+'" data-tab="msg">Modelos de mensagem</button><button class="chip '+(st.tab==='impl'?'on':'')+'" data-tab="impl">Implantações'+((st.impl||[]).filter(x=>!['ativa','encerrada'].includes(x.status)).length?' ('+(st.impl||[]).filter(x=>!['ativa','encerrada'].includes(x.status)).length+')':'')+'</button><button class="chip '+(st.tab==='fin'?'on':'')+'" data-tab="fin">Financeiro'+((st.cobr||[]).filter(c=>!c.pago&&!c.cancelada&&c.venc<hojeR()).length?'<span class="n">'+(st.cobr||[]).filter(c=>!c.pago&&!c.cancelada&&c.venc<hojeR()).length+'</span>':'')+'</button></div>';
   a.innerHTML='<aside class="pside"><div class="brand"><b>Connecta AI</b><small>Controle geral</small></div><nav>'+NAV.map(item).join('')+'</nav><div class="foot"><div>'+esc((st.user&&st.user.email)||'')+'</div><button data-a="sair">Sair</button></div></aside>'+
    '<header class="mtop"><b>Connecta AI</b><span class="sp"></span><button data-a="sair">Sair</button></header>'+
-   '<main><div class="ph"><h1>'+head[0]+'</h1><p>'+head[1]+'</p></div>'+sub+(st.tab==='buscar'?vBuscar():st.tab==='msg'?vMsg():st.tab==='auto'?vAuto():st.tab==='zap'?vZap():st.tab==='camp'?vCamp():st.tab==='impl'?vImpl():st.tab==='fin'?vFin():vCrm())+'</main>';
+   '<main><div class="ph"><h1>'+head[0]+'</h1><p>'+head[1]+'</p></div>'+sub+(st.tab==='buscar'?vBuscar():st.tab==='ig'?vIg():st.tab==='msg'?vMsg():st.tab==='auto'?vAuto():st.tab==='zap'?vZap():st.tab==='camp'?vCamp():st.tab==='impl'?vImpl():st.tab==='fin'?vFin():vCrm())+'</main>';
   barraNav(NAV.map(item).join(''));
 }
 /* barra de baixo (celular): fica fora do #app e só muda quando a aba muda.
@@ -899,6 +902,96 @@ function vImpl(){
 }
 
 /* ---------- financeiro: o negócio inteiro num lugar só ---------- */
+/* ---------- prospecção no Instagram ----------
+   Você escolhe as empresas (ex.: olhando quem segue perfis do seu nicho), segue e aborda pelo Direct.
+   O sistema não segue nem envia nada sozinho: abre o perfil ou o Direct e deixa a mensagem copiada. */
+DEF.ig_msg='Oi, tudo bem? 😊 Aqui é o {seu_nome}, da Connecta Digital.\n\nVi o perfil de vocês e queria mostrar uma coisa: a gente coloca um Agente de IA para atender o WhatsApp da empresa 24 horas por dia. Ele responde dúvidas de preço e horário, entende áudio, agenda atendimentos e chama a equipe quando precisa de uma pessoa.\n\nPreparei uma página mostrando como funciona, com exemplos e valores:\n👉 {link}\n\nSe quiserem conversar, é só chamar no WhatsApp:\n📲 {whatsapp}\n\nSem fidelidade: se não fizer sentido, vocês cancelam.';
+DEF.ig_link='https://connecta-digital.vercel.app';DEF.ig_wa='https://wa.me/5581999707538';DEF.ig_limite='30';
+const IG_ET={seguir:'Para seguir',seguido:'Seguidas',abordado:'Abordadas',respondeu:'Responderam',cliente:'Clientes',descartado:'Descartadas'};
+const IG_TAG={seguir:'',seguido:'acc',abordado:'warn',respondeu:'hot',cliente:'ok',descartado:'bad'};
+const IG_RES=['p','reel','reels','explore','stories','accounts','direct','tv','about','legal','developer'];
+const igDia=s=>s?new Date(new Date(s).getTime()-3*3600e3).toISOString().slice(0,10):'';
+const igDias=s=>s?Math.floor((Date.now()-new Date(s).getTime())/864e5):0;
+const igProntas=()=>(st.ig||[]).filter(x=>x.etapa==='seguido'&&(x.seguiu_volta||igDias(x.seguido_em)>=1)).length;
+const igGet=id=>(st.ig||[]).find(x=>x.id===id);
+const igLim=()=>Math.max(1,+cfg('ig_limite')||30);
+const igHoje=k=>(st.ig||[]).filter(x=>igDia(x[k])===hojeR()).length;
+function igParse(t){const out=[];String(t||'').split(/[\s,;]+/).forEach(w=>{if(!w)return;
+  let m=w.match(/instagram\.com\/([A-Za-z0-9._]{1,30})/i)||w.match(/^@?([A-Za-z0-9._]{1,30})$/);
+  if(!m)return;const u=m[1].toLowerCase().replace(/\.+$/,'');if(!u||IG_RES.includes(u)||/^\d+$/.test(u)||out.includes(u))return;out.push(u)});return out}
+function igMsg(x){return cfg('ig_msg').replace(/\{seu_nome\}/g,(cfg('seu_nome')||'').split(' ')[0]).replace(/\{empresa\}/g,x.nome||'@'+x.usuario).replace(/\{link\}/g,cfg('ig_link')).replace(/\{whatsapp\}/g,cfg('ig_wa'))}
+async function loadIg(){try{const r=await sb.from('prosp_ig').select('*').order('criado_em',{ascending:false});if(!r.error)st.ig=r.data||[]}catch(e){}st.ig=st.ig||[]}
+async function igUp(x,patch){const antes={...x};Object.assign(x,patch);render();
+  const r=await sb.from('prosp_ig').update(patch).eq('id',x.id);if(r.error){Object.assign(x,antes);render();toast('Não salvou: '+r.error.message);return false}return true}
+function igAbrir(url){const w=window.open(url,'_blank','noopener');if(!w)location.href=url}
+function igCopiar(t){try{if(navigator.clipboard&&window.isSecureContext){navigator.clipboard.writeText(t).catch(()=>{});return true}}catch(e){}return false}
+function vIg(){
+  const L=st.ig||[],c={};L.forEach(x=>c[x.etapa]=(c[x.etapa]||0)+1);
+  const lim=igLim(),sh=igHoje('seguido_em'),ah=igHoje('abordado_em');
+  const ab=L.filter(x=>x.abordado_em).length,rs=L.filter(x=>x.respondeu_em).length;
+  let h='<div class="stats"><div class="stat k1"><b>'+sh+'<span>/'+lim+'</span></b><span>Seguidas hoje</span></div><div class="stat k2"><b>'+ah+'<span>/'+lim+'</span></b><span>Abordadas hoje</span></div><div class="stat k3"><b>'+rs+'</b><span>Responderam</span></div><div class="stat k4"><b>'+(ab?Math.round(rs*100/ab):0)+'<span>%</span></b><span>Taxa de resposta</span></div></div>';
+  if(sh>=lim||ah>=lim)h+='<div class="note warn sec">Você chegou a '+lim+' '+(ah>=lim?'abordagens':'perfis seguidos')+' hoje. Continue amanhã: passar disso faz o Instagram travar seguir e mandar Direct.</div>';
+  h+='<div class="card sec"><h2 style="margin:0 0 4px">Adicionar empresas</h2><p class="small muted" style="margin:0 0 10px">Abra no Instagram o perfil de uma empresa do seu nicho, toque em <b>Seguidores</b> e copie o @ das <b>empresas</b> que aparecem ali. Cole aqui, quantas quiser de uma vez.</p>'+
+    '<div class="fld"><label for="ig-add">Perfis</label><textarea id="ig-add" style="min-height:90px" placeholder="@clinicasorriso&#10;@barbeariadojoao&#10;https://instagram.com/studiobeleza">'+esc(st.igTxt||'')+'</textarea></div>'+
+    '<div class="fld"><label for="ig-orig">De onde vieram (opcional)</label><input id="ig-orig" type="text" list="ig-origs" value="'+esc(st.igOrig||'')+'" placeholder="ex.: seguidores de @agenciax"><datalist id="ig-origs">'+[...new Set(L.map(x=>x.origem).filter(Boolean))].slice(0,30).map(o=>'<option value="'+esc(o)+'">').join('')+'</datalist></div>'+
+    '<button class="btn pri" data-a="igadd">Adicionar ao CRM</button></div>';
+  h+='<details class="card sec cx" data-sec="igcomo"'+secOpen('igcomo',!L.length)+'><summary><h2>Como funciona</h2><span class="cx-i" aria-hidden="true"></span></summary><div class="cx-b"><ol class="small" style="margin:0;padding-left:20px;line-height:1.6">'+
+    '<li><b>Para seguir:</b> toque em <b>Abrir e seguir</b>. O perfil abre no Instagram, você segue e a empresa passa para Seguidas.</li>'+
+    '<li><b>Espere 1 ou 2 dias.</b> Quem segue você de volta já te conhece quando a mensagem chega. Marque <b>Seguiu de volta</b> para ela subir na lista.</li>'+
+    '<li><b>Mandar mensagem:</b> a mensagem fica copiada e o Direct da empresa abre. Cole e envie.</li>'+
+    '<li>Quando a empresa responder, marque <b>Respondeu</b> e leve a conversa para o WhatsApp.</li></ol>'+
+    '<p class="small muted" style="margin:10px 0 0">Quem segue e envia é você, no seu ritmo: até '+lim+' por dia é seguro. O Instagram trava contas que seguem ou mandam Direct demais de uma vez.</p></div></details>';
+  const f=st.igf||'seguir';
+  h+='<div class="row sec" style="gap:6px;flex-wrap:wrap">'+Object.keys(IG_ET).map(k=>'<button class="chip'+(f===k?' on':'')+'" data-igf="'+k+'">'+IG_ET[k]+' ('+(c[k]||0)+')</button>').join('')+'</div>';
+  let V=L.filter(x=>x.etapa===f);
+  if(f==='seguido')V=V.slice().sort((a,b)=>(b.seguiu_volta-a.seguiu_volta)||(new Date(a.seguido_em)-new Date(b.seguido_em)));
+  if(!V.length)return h+'<div class="empty">'+(f==='seguir'?(L.length?'Ninguém para seguir agora. Adicione mais empresas acima.':'Adicione os primeiros perfis acima.'):'Nenhuma empresa em '+IG_ET[f]+'.')+'</div>';
+  h+='<div class="list two">'+V.map(igCard).join('')+'</div>';
+  h+='<details class="card sec cx" data-sec="igmsg"'+secOpen('igmsg',false)+'><summary><h2>Mensagem do Direct</h2><span class="cx-i" aria-hidden="true"></span></summary><div class="cx-b"><p class="small muted" style="margin:0 0 8px">Use {seu_nome}, {empresa} (o @ da empresa), {link} e {whatsapp}.</p>'+
+    '<div class="fld"><textarea data-cfg="ig_msg" aria-label="Mensagem do Direct" style="min-height:220px">'+esc(cfg('ig_msg'))+'</textarea></div>'+
+    '<div class="list two"><div class="fld"><label>Link da página</label><input type="text" data-cfg="ig_link" value="'+esc(cfg('ig_link'))+'"></div><div class="fld"><label>Link do WhatsApp</label><input type="text" data-cfg="ig_wa" value="'+esc(cfg('ig_wa'))+'"></div><div class="fld"><label>Limite por dia</label><input type="number" min="5" max="80" data-cfg="ig_limite" value="'+esc(cfg('ig_limite'))+'"></div></div>'+
+    '<div class="row" style="margin-top:8px"><button class="btn sm pri" data-a="salvarcfg">Salvar</button><button class="btn sm" data-a="igpadrao">Voltar ao texto padrão</button></div></div></details>';
+  return h;
+}
+function igCard(x){
+  const u=esc(x.usuario),info=[];
+  if(x.origem)info.push(esc(x.origem));
+  if(x.etapa==='seguido'&&x.seguido_em){const d=igDias(x.seguido_em);info.push(d?'seguida há '+d+(d===1?' dia':' dias'):'seguida hoje')}
+  if(x.etapa==='abordado'&&x.abordado_em){const d=igDias(x.abordado_em);info.push(d?'mensagem há '+d+(d===1?' dia':' dias'):'mensagem hoje')}
+  const B=(attr,txt,pri)=>'<button class="btn sm'+(pri?' pri':'')+'" '+attr+'>'+txt+'</button>';
+  let a='';
+  if(x.etapa==='seguir')a=B('data-igseg="'+x.id+'"','Abrir e seguir',1)+B('data-iget="'+x.id+'" data-v="seguido"','Já sigo');
+  else if(x.etapa==='seguido')a=B('data-igdm="'+x.id+'"','Mandar mensagem',igDias(x.seguido_em)>=1||x.seguiu_volta)+B('data-igvolta="'+x.id+'" aria-pressed="'+!!x.seguiu_volta+'"',x.seguiu_volta?'★ Seguiu de volta':'☆ Seguiu de volta');
+  else if(x.etapa==='abordado')a=B('data-iget="'+x.id+'" data-v="respondeu"','Respondeu',1)+B('data-igdm="'+x.id+'"','Abrir Direct');
+  else if(x.etapa==='respondeu')a=B('data-iget="'+x.id+'" data-v="cliente"','Virou cliente',1)+B('data-igdm="'+x.id+'"','Abrir Direct');
+  else a=B('data-iget="'+x.id+'" data-v="seguir"','Voltar para Para seguir');
+  a+=x.etapa==='descartado'?B('data-igdel="'+x.id+'"','Remover'):x.etapa!=='cliente'?B('data-iget="'+x.id+'" data-v="descartado"','Descartar'):'';
+  const ult=st.igUlt===x.id?'<div class="fld" style="margin:10px 0 0"><label class="small muted">Mensagem copiada. Se não colar, copie daqui:</label><textarea readonly style="min-height:90px" onfocus="this.select()">'+esc(igMsg(x))+'</textarea></div>':'';
+  return '<div class="card igc"><div class="row" style="align-items:flex-start;gap:8px"><div class="grow" style="min-width:0"><a class="igu" href="https://instagram.com/'+u+'" target="_blank" rel="noopener">@'+u+'</a>'+(info.length?'<div class="small muted">'+info.join(' · ')+'</div>':'')+'</div><span class="tag '+IG_TAG[x.etapa]+'">'+IG_ET[x.etapa]+'</span></div><div class="row igacts">'+a+'</div>'+ult+'</div>';
+}
+async function igClick(d){
+  if(d.igf){st.igf=d.igf;return render()}
+  if(d.igseg){const x=igGet(d.igseg);if(!x)return;igAbrir('https://instagram.com/'+x.usuario);
+    if(igHoje('seguido_em')>=igLim())toast('Já são '+igLim()+' hoje. Melhor continuar amanhã');
+    await igUp(x,{etapa:'seguido',seguido_em:new Date().toISOString()});return}
+  if(d.igdm){const x=igGet(d.igdm);if(!x)return;const t=igMsg(x);const ok=igCopiar(t);igAbrir('https://ig.me/m/'+x.usuario);st.igUlt=x.id;
+    if(x.etapa==='seguido'){if(igHoje('abordado_em')>=igLim())toast('Já são '+igLim()+' hoje. Melhor continuar amanhã');else toast(ok?'Mensagem copiada: no Direct, cole e envie':'Copie a mensagem do cartão e cole no Direct');
+      await igUp(x,{etapa:'abordado',abordado_em:new Date().toISOString()})}else{toast(ok?'Mensagem copiada':'Abra o Direct');render()}return}
+  if(d.igvolta){const x=igGet(d.igvolta);if(x)await igUp(x,{seguiu_volta:!x.seguiu_volta});return}
+  if(d.iget){const x=igGet(d.iget);if(!x)return;const p={etapa:d.v},agora=new Date().toISOString();
+    if(d.v==='seguido'&&!x.seguido_em)p.seguido_em=agora;if(d.v==='respondeu'&&!x.respondeu_em)p.respondeu_em=agora;
+    if(await igUp(x,p))toast(IG_ET[d.v]==='Para seguir'?'Voltou para Para seguir':'Movida para '+IG_ET[d.v]);return}
+  if(d.igdel){const x=igGet(d.igdel);if(!x||!confirm('Remover @'+x.usuario+'?'))return;const r=await sb.from('prosp_ig').delete().eq('id',x.id);if(r.error)return toast(r.error.message);st.ig=st.ig.filter(y=>y.id!==x.id);return render()}
+  if(d.a==='igadd'){const ta=$('#ig-add'),oi=$('#ig-orig');const us=igParse(ta&&ta.value);st.igOrig=oi?oi.value.trim():'';
+    if(!us.length){st.igTxt=ta?ta.value:'';return toast('Cole pelo menos um @ ou link de perfil')}
+    const ja=new Set((st.ig||[]).map(x=>x.usuario)),nv=us.filter(u=>!ja.has(u));
+    if(nv.length){const r=await sb.from('prosp_ig').upsert(nv.map(u=>({usuario:u,origem:st.igOrig||null})),{onConflict:'usuario',ignoreDuplicates:true}).select();
+      if(r.error){st.igTxt=ta.value;return toast('Não salvou: '+r.error.message)}st.ig=(r.data||[]).concat(st.ig||[])}
+    st.igTxt='';st.igf='seguir';toast(nv.length+(nv.length===1?' empresa adicionada':' empresas adicionadas')+(us.length-nv.length?' · '+(us.length-nv.length)+' já estavam na lista':''));return render()}
+  if(d.a==='igpadrao'){st.cfg.ig_msg='';await sb.from('prosp_config').upsert([{chave:'ig_msg',valor:''}]);toast('Texto padrão');return render()}
+  return 'nada';
+}
+
 function vFin(){
   if(!st.finOk){loadFin();return '<div class="empty">Carregando…</div>'}
   const h=hojeR(),mes=h.slice(0,7),cs=(st.cobr||[]).filter(c=>!c.cancelada),I=st.impl||[];
@@ -1110,6 +1203,7 @@ document.addEventListener('submit',async e=>{
 document.addEventListener('click',async e=>{
   const b=e.target.closest('button,[data-tab]');if(!b)return;const d=b.dataset;
   if(d.tab){e.preventDefault();return go(d.tab)}
+  if(d.igf||d.igseg||d.igdm||d.igvolta||d.iget||d.igdel||d.a==='igadd'||d.a==='igpadrao')return igClick(d);
   if(d.f){st.f=d.f;return render()}
   if(d.open){st.open=st.open===d.open?null:d.open;return render()}
   if(d.env)return enviar(d.env,d.k);
