@@ -280,6 +280,15 @@ function partes(t: string) {
   return p.length ? p : [String(t || "").trim()];
 }
 
+/* depois de passar para o Éder: sem perguntas e sempre com o 50/50 (não depende da IA lembrar) */
+function fechar(t: string, c: Cfg) {
+  const eder = c.nome.split(" ")[0];
+  const p = partes(t).map((x) => x.split(/(?<=[.!?])\s+/).filter((f) => !f.includes("?")).join(" ").trim()).filter(Boolean);
+  if (!p.length) p.push(`Perfeito! Já passei para o ${eder} fazer a implantação e o contrato com vocês.`);
+  if (!/50\s*%/.test(p.join(" "))) p.push(`A implantação é *50% no início e 50% na entrega*. O ${eder} continua com vocês por aqui mesmo, nesta conversa.`);
+  return p.slice(0, 3).join("\n\n");
+}
+
 /* ações de verdade (modo msg) */
 function acoesReais(l: any, c: Cfg, feito: string[]) {
   const empresa = nomeCurto(l.nome);
@@ -383,6 +392,7 @@ async function atenderMsg(b: any) {
   if (!feito.includes("passou") && new RegExp("pass(ar|ando|o)\\s+(a conversa\\s+)?(para o|pra o|pro|para)\\s+" + primeiro, "i").test(resposta.normalize("NFD").replace(/[\u0300-\u036f]/g, ""))) {
     await acoesReais(l, c, feito)("passar_para_eder", { resumo: `Quer fechar (${cl.motivo || "pediu para fechar"})` });
   }
+  if (feito.includes("passou")) resposta = fechar(resposta, c);
   // como uma pessoa: várias mensagens curtas, cada uma com o seu tempo de digitação
   let t = Date.now();
   const rows = partes(resposta).map((p, i) => {
@@ -461,7 +471,8 @@ async function teste(req: Request, b: any, interno = false) {
     if (n === "sem_interesse") { acoes.push({ txt: "Marcaria como sem interesse e pararia" }); return { ok: true }; }
     return { ok: false };
   };
-  const resposta = await vender(l, c, msgs, exec);
+  let resposta = await vender(l, c, msgs, exec);
+  if (resposta && acoes.some((x) => String(x.txt).startsWith("Passaria a conversa"))) resposta = fechar(resposta, c);
   return ok({ ok: true, cl, resposta, partes: resposta ? partes(resposta) : [], acoes });
 }
 
