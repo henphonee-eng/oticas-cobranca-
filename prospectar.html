@@ -363,7 +363,9 @@ const SEG_GERAL={tipo:'empresas',cli:'cliente',clis:'clientes',dor:'cada mensage
 const segPerfil=l=>{const sg=String((l&&l.segmento)||''),nm=String((l&&l.nome)||'');return (sg&&SEGP.find(x=>x.rx.test(sg)))||SEGP.find(x=>x.rx.test(nm))||SEG_GERAL};
 const beneficio=l=>segPerfil(l).beneficio;
 /* link do teste do agente para outras empresas: /a/ + o mesmo código do demo */
-const agenteLink=(l,meu)=>linkBase()+'/a/'+String(l.id).replace(/-/g,'').slice(0,7)+(meu?'?eu=1':'');
+/* o teste do agente para outras empresas pode usar um endereço próprio (sem "oticas" no nome) */
+const linkBaseEmp=()=>{let b=String(cfg('link_base_emp')||'').trim().replace(/\/+$/,'');if(b&&!/^https?:\/\//i.test(b))b='https://'+b;return b||linkBase()};
+const agenteLink=(l,meu)=>linkBaseEmp()+'/a/'+String(l.id).replace(/-/g,'').slice(0,7)+(meu?'?eu=1':'');
 function msg(kind,l){let t=(!ehOtica(l)&&DEF[kind+'_emp'])?cfg(kind+'_emp'):cfg(kind);
   // abordagem para quem não tem site: entra o parágrafo do site demonstrativo antes da pergunta final
   if(kind==='abordagem'){const bloco=SITE_ON&&!l.site&&cfg('site_extra')?cfg('site_extra'):'';
@@ -829,7 +831,7 @@ async function campEnfileirar(){
 function vMsg(){
   const ex={id:'00000000-0000-0000-0000-000000000000',nome:'Ótica Exemplo',cidade:'Recife'};
   const f=(k,lbl,area,ph)=>'<div class="fld" style="margin-bottom:10px"><label>'+lbl+'</label>'+(area?'<textarea data-cfg="'+k+'">'+esc(cfg(k))+'</textarea>':'<input type="text" data-cfg="'+k+'" value="'+esc(st.cfg[k]||DEF[k]||'')+'" placeholder="'+esc(ph||'')+'">')+'</div>';
-  return '<div class="card">'+f('seu_nome','Seu nome (aparece na mensagem)',0,'ex.: Henrique')+f('limite','Limite de abordagens por dia (aviso)',0,'25')+
+  return '<div class="card">'+f('seu_nome','Seu nome (aparece na mensagem)',0,'ex.: Henrique')+f('link_base_emp','Endereço do teste do agente para empresas (sem "oticas" no nome)',0,'ex.: ia-para-empresas.vercel.app')+f('limite','Limite de abordagens por dia (aviso)',0,'25')+
     '<p class="small muted" style="margin:0">Use <b>{otica}</b>, <b>{link}</b> (demo com o nome da ótica), <b>{link_agente}</b> (demo aberta direto no Agente de IA), <b>{site}</b> (site demonstrativo da ótica), <b>{cidade}</b> e <b>{seu_nome}</b>.</p></div>'+
     '<div class="sec"><h2>Primeira mensagem</h2><div class="card">'+f('abordagem','Texto',1)+'<label class="small muted">Prévia</label><div class="prev">'+esc(msg('abordagem',ex))+'</div></div></div>'+
     (SITE_ON?    '<div class="sec"><h2>Parágrafo do site (só para óticas sem site no Google)</h2><div class="card"><p class="small muted" style="margin:0 0 8px">Entra na primeira mensagem, antes da pergunta final, só para as óticas que não têm site. Se quiser escolher o lugar, escreva {site_bloco} na primeira mensagem.</p>'+f('site_extra','Texto',1)+'<label class="small muted">Prévia da primeira mensagem para uma ótica sem site</label><div class="prev">'+esc(msg('abordagem',ex))+'</div></div></div>':'')+
