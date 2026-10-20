@@ -173,8 +173,12 @@ section.bloco{padding:96px 0}
 .caso b.r{display:block;font:700 13px var(--f-t);color:var(--nevoa);margin-bottom:6px}
 .caso p.q{margin-top:16px;color:var(--nevoa)}
 /* investimento */
-.inv{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+.inv{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media (max-width:900px){.inv{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:560px){.inv{grid-template-columns:1fr}}
 .inv .cx b{font-size:22px}
+.inv .cx p.imp{color:var(--ambar);font-weight:600;font-size:15px;margin:4px 0 6px}
+.combo{margin-top:16px;padding:16px 20px;border-radius:var(--r-m);border:1px solid color-mix(in srgb,var(--ambar) 45%,var(--linha));background:rgba(255,181,71,.07);font-size:16px}.combo b,.combo strong{color:var(--papel)}.combo a{color:var(--ambar);font-weight:700;margin-left:6px}
 .inv .cx b{display:block;font-family:var(--f-d);font-weight:800;margin-top:6px;line-height:1.2}
 .regras{display:flex;flex-wrap:wrap;gap:10px 28px;margin-top:22px;color:var(--nevoa);font-size:15px}.regras b{color:var(--papel)}
 /* dúvidas */
@@ -318,15 +322,17 @@ details.q .r{padding:0 0 24px;color:var(--nevoa);max-width:44em}
   </div></section>
 
   <section class="bloco" id="investimento" style="padding-top:0"><div class="wrap">
-    <div class="titulo"><h2>Investimento</h2><p>O diagnóstico é gratuito. Os valores abaixo são de entrada; a implantação é combinada depois do diagnóstico.</p></div>
+    <div class="titulo"><h2>Investimento</h2><p>Cada serviço tem uma implantação, paga uma vez, e uma mensalidade para manter tudo funcionando. O diagnóstico é gratuito.</p></div>
     <div class="inv">
-      <div class="cx"><h3>Agente de IA</h3><b>R$ 197/mês</b><p>Implantação a partir de R$ 497. <a href="#agente" style="color:var(--ambar)">Ver planos</a></p></div>
-      <div class="cx"><h3>Landing page</h3><b>a partir de R$ 80/mês</b><p>Uma página para vender um produto ou serviço.</p></div>
-      <div class="cx"><h3>Site institucional</h3><b>a partir de R$ 100/mês</b><p>Até 5 páginas, rápido no celular.</p></div>
-      <div class="cx"><h3>Dashboard / BI</h3><b>a partir de R$ 150/mês</b><p>Os números da empresa num painel.</p></div>
-      <div class="cx"><h3>Sistema sob medida</h3><b>a partir de R$ 150/mês</b><p>CRM, vendas, cobrança ou estoque.</p></div>
+      <div class="cx"><h3>Agente de IA</h3><b>R$ 197/mês</b><p class="imp">Implantação a partir de R$ 497</p><p>Atendimento 24h no WhatsApp, com CRM. <a href="#agente" style="color:var(--ambar)">Ver planos</a></p></div>
+      <div class="cx"><h3>Landing page</h3><b>R$ 67/mês</b><p class="imp">Implantação R$ 397</p><p>Uma página para vender um produto ou serviço. Mensalidade com hospedagem, domínio e pequenos ajustes.</p></div>
+      <div class="cx"><h3>Site institucional</h3><b>R$ 97/mês</b><p class="imp">Implantação R$ 897</p><p>Até 5 páginas, rápido no celular. Mensalidade com hospedagem, atualizações e suporte.</p></div>
+      <div class="cx"><h3>Automações</h3><b>a partir de R$ 97/mês</b><p class="imp">Implantação a partir de R$ 397</p><p>Lembretes, cobranças e relatórios automáticos pelo WhatsApp, Pix e planilhas.</p></div>
+      <div class="cx"><h3>Dashboard / BI</h3><b>R$ 197/mês</b><p class="imp">Implantação R$ 997</p><p>Os números da empresa num painel que se atualiza sozinho.</p></div>
+      <div class="cx"><h3>Sistema sob medida</h3><b>a partir de R$ 297/mês</b><p class="imp">Implantação a partir de R$ 1.997</p><p>CRM, vendas, cobrança ou estoque com a sua marca.</p></div>
     </div>
-    <div class="regras"><span><b>Pagamento:</b> 50% no início e 50% na entrega</span><span><b>Sem fidelidade:</b> cancelamento com 30 dias de aviso</span><span><b>Diagnóstico:</b> gratuito e sem compromisso</span></div>
+    <div class="combo"><b>Site + Agente de IA:</b> quem contrata a landing page ou o site junto com o agente ganha <strong>50% de desconto na implantação do site</strong>. <a class="js-zap" data-msg="Olá, Éder! Quero saber do combo site + Agente de IA." href="#" target="_blank" rel="noopener">Quero o combo</a></div>
+    <div class="regras"><span><b>Implantação:</b> 50% no início e 50% na entrega</span><span><b>Sem fidelidade:</b> cancela quando quiser com 30 dias de aviso</span><span><b>Diagnóstico:</b> gratuito e sem compromisso</span></div>
   </div></section>
 
   <section class="bloco" id="duvidas" style="padding-top:0"><div class="wrap">
