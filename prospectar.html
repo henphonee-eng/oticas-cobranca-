@@ -193,6 +193,7 @@ button.stat{cursor:pointer}button.stat:hover{background:var(--surface-2)}
 .mtop b{font-size:17px;font-weight:600}
 .mtop .sp{flex:1}
 .mtop button{background:none;border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:4px;padding:6px 12px;font:inherit;font-size:13.5px;cursor:pointer}
+.zh .zoff{color:var(--bad);border-color:color-mix(in srgb,var(--bad) 40%,var(--line-2))}
 .pnav{position:fixed;left:0;right:0;bottom:0;z-index:10;-webkit-transform:translateZ(0);transform:translateZ(0);background:var(--nav);display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);padding-bottom:env(safe-area-inset-bottom,0px)}
 .pnav a{display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 2px 8px;color:var(--nav-fg);font-size:11px;font-weight:500;text-decoration:none;min-width:0;border-top:2px solid transparent}
 .pnav a span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
@@ -773,7 +774,7 @@ function vZap(){
   let main='<div class="zm vazio" style="display:grid;place-items:center"><p class="small muted">Escolha uma conversa.</p></div>';
   if(g){const l=g.lead;
     const sts=l?['respondeu','interessada','fechou','sem_interesse'].filter(k=>k!==l.status).map(k=>'<button class="btn sm" data-st="'+l.id+'" data-v="'+k+'">'+STATUS[k]+'</button>').join(''):'';
-    main='<div class="zm"><div class="zh"><button class="btn sm zback" data-zback="1" aria-label="Voltar para a lista">‹</button><div class="grow" style="min-width:0"><b>'+esc(g.nome)+'</b><div class="small muted">'+esc(fmtFone(g.tel))+(l?' · <span class="tag '+STAG[l.status]+'">'+STATUS[l.status]+'</span>':'')+'</div></div>'+(l?'<a class="btn sm" href="'+esc(demoLink(l,true))+'" target="_blank" rel="noopener">Ver demo</a>':'')+'</div>'+
+    main='<div class="zm"><div class="zh"><button class="btn sm zback" data-zback="1" aria-label="Voltar para a lista">‹</button><div class="grow" style="min-width:0"><b>'+esc(g.nome)+'</b><div class="small muted">'+esc(fmtFone(g.tel))+(l?' · <span class="tag '+STAG[l.status]+'">'+STATUS[l.status]+'</span>':'')+'</div></div>'+(l&&cfg('ag_on')==='true'?(['pausado','passado'].includes(l.ag_estado)?'<button class="btn sm" data-a="agretomar" data-id="'+l.id+'" title="O agente volta a responder esta empresa">▶ Ligar agente</button>':'<button class="btn sm zoff" data-a="agpausar" data-id="'+l.id+'" title="O agente para de responder esta empresa">⏸ Desligar agente</button>'):'')+(l?'<a class="btn sm" href="'+esc(ehOtica(l)?demoLink(l,true):agenteLink(l,true))+'" target="_blank" rel="noopener">'+(ehOtica(l)?'Ver demo':'Ver teste')+'</a>':'')+'</div>'+
       '<div class="zt" id="zthread">'+zMsgs(g)+'</div>'+
       '<div class="ze">'+(l?'<div class="row" style="gap:6px"><button class="btn sm" data-zfu="followup">Usar o texto do follow-up</button><button class="btn sm" data-zfu="interesse">Se interessou: como funciona e valores</button><button class="btn sm" data-zfu="agradecimento">Sem interesse: agradecer</button>'+sts+'</div>':'')+
       '<div class="row" style="align-items:flex-end"><textarea id="ztxt" rows="2" placeholder="Escreva a mensagem" aria-label="Mensagem">'+esc(st.ztxt[g.k]||'')+'</textarea><button class="btn pri" data-zenv="1">Enviar</button></div></div></div>';}
