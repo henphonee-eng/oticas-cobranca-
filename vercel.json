@@ -71,5 +71,18 @@
       "source": "/agendar",
       "destination": "/agendar.html"
     }
+  ],
+  "redirects": [
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "host",
+          "value": "teste-agente-ia.vercel.app"
+        }
+      ],
+      "destination": "/agente",
+      "permanent": false
+    }
   ]
 }
