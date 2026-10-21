@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#10142E">
+<title>Teste o Agente de IA no seu WhatsApp · Connecta AI</title>
+<meta name="description" content="Veja o Agente de IA atendendo como se fosse na sua empresa, direto no seu WhatsApp.">
+<meta property="og:title" content="Teste o Agente de IA no seu WhatsApp">
+<meta property="og:description" content="Preencha em 2 minutos e converse com o atendente virtual da sua empresa no seu próprio WhatsApp.">
+<link rel="icon" href="/icons/adm-icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--noite:#10142E;--linha:#E2E5F0;--papel:#F6F7FB;--branco:#fff;--tinta:#141833;--nevoa:#5B6387;--ambar:#FFB547;--ambar-2:#FF8A3D;--menta:#13A97B;
+  --f-d:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;--f-t:"Figtree",ui-sans-serif,system-ui,sans-serif}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--papel);color:var(--tinta);font:400 16px/1.55 var(--f-t)}
+h1,h2{font-family:var(--f-d);letter-spacing:-.02em;line-height:1.08;margin:0}
+p{margin:0}
+:focus-visible{outline:3px solid var(--ambar);outline-offset:2px;border-radius:6px}
+.topo{background:var(--noite);color:#EEF0FF;padding:20px 16px 44px}
+.w{max-width:680px;margin:0 auto}
+.marca{display:flex;align-items:center;gap:8px;font:800 17px var(--f-d)}
+.marca i{width:22px;height:22px;border-radius:7px;background:conic-gradient(from 200deg,var(--ambar),#5EE6B5,#7C8CFF,var(--ambar))}
+.topo h1{font-size:clamp(30px,7vw,44px);font-weight:800;margin-top:22px}
+.topo p{color:#A4ACD3;margin-top:10px;max-width:34em}
+.passos{display:flex;gap:16px;flex-wrap:wrap;margin-top:18px;color:#D9DDF5;font-size:14.5px}
+.passos span{display:flex;align-items:center;gap:8px}
+.passos b{width:24px;height:24px;border-radius:50%;background:rgba(255,181,71,.18);color:var(--ambar);display:grid;place-items:center;font-size:13px}
+main{max-width:680px;margin:-26px auto 0;padding:0 16px 60px}
+.card{background:var(--branco);border:1px solid var(--linha);border-radius:18px;padding:22px;box-shadow:0 10px 30px -18px rgba(16,20,46,.25)}
+.card+.card{margin-top:14px}
+.card h2{font-size:21px;font-weight:800;margin-bottom:4px}
+.sub{color:var(--nevoa);margin-bottom:16px;font-size:15px}
+.campo{margin-bottom:16px}
+.campo>label,.campo>.rot{display:block;font-weight:700;margin-bottom:7px}
+.campo small{display:block;color:var(--nevoa);font-size:13.5px;margin-top:6px}
+input,textarea{width:100%;font:500 16px var(--f-t);color:var(--tinta);background:var(--papel);border:1.5px solid var(--linha);border-radius:12px;padding:12px 14px;min-height:48px}
+textarea{min-height:110px;resize:vertical}
+input:focus,textarea:focus{border-color:var(--ambar);outline:none;background:#fff}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+@media (max-width:560px){.g2{grid-template-columns:1fr}}
+.ramos{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+@media (min-width:560px){.ramos{grid-template-columns:repeat(3,1fr)}}
+.ramos label{position:relative}
+.ramos input{position:absolute;opacity:0;pointer-events:none;width:1px;height:1px}
+.ramos span{display:flex;align-items:center;gap:8px;min-height:48px;padding:9px 12px;border:1.5px solid var(--linha);border-radius:12px;background:#fff;cursor:pointer;font-weight:600;font-size:14.5px;line-height:1.2}
+.ramos span b{font-size:20px;flex:none}
+.ramos input:checked+span{border-color:var(--ambar);background:#FFF6E8}
+.ramos input:focus-visible+span{outline:3px solid var(--ambar);outline-offset:2px}
+.btn{display:flex;align-items:center;justify-content:center;width:100%;min-height:54px;border:0;border-radius:999px;font:700 17px var(--f-t);cursor:pointer;background:linear-gradient(120deg,var(--ambar),var(--ambar-2));color:#2A1600}
+.btn:disabled{opacity:.6;cursor:default}
+.erro{background:#FDECEA;color:#8C2620;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-weight:600}
+.priv{color:var(--nevoa);font-size:13.5px;text-align:center;margin-top:12px}
+.feito{text-align:center;padding:36px 22px}
+.feito .ico{width:68px;height:68px;border-radius:50%;background:#E3F7EF;color:var(--menta);display:grid;place-items:center;margin:0 auto 16px;font-size:34px}
+.feito h2{margin-bottom:10px;font-size:26px}
+.feito p{color:var(--nevoa);max-width:30em;margin:0 auto}
+.feito p+p{margin-top:10px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header class="topo"><div class="w">
+  <div class="marca"><i aria-hidden="true"></i>Connecta AI</div>
+  <h1>Veja o atendente virtual da sua empresa no seu WhatsApp</h1>
+  <p>Conte o básico da sua empresa. A gente liga um teste e você conversa com o agente no seu próprio WhatsApp, como se fosse um cliente: pergunte preço, peça para marcar, mande áudio.</p>
+  <div class="passos"><span><b>1</b>Preencha aqui</span><span><b>2</b>A gente liga o teste</span><span><b>3</b>Você conversa no WhatsApp</span></div>
+</div></header>
+<main id="app">
+<form id="f" novalidate>
+  <div class="card">
+    <h2>Seus dados</h2>
+    <p class="sub">É neste WhatsApp que você vai conversar com o agente.</p>
+    <div id="err"></div>
+    <div class="g2">
+      <div class="campo"><label for="nome">Seu nome</label><input id="nome" autocomplete="name" placeholder="Como você se chama"></div>
+      <div class="campo"><label for="tel">Seu WhatsApp</label><input id="tel" type="tel" inputmode="numeric" autocomplete="tel" placeholder="(81) 99999-9999"></div>
+    </div>
+    <div class="campo"><label for="emp">Nome da empresa</label><input id="emp" placeholder="Como os clientes conhecem"></div>
+  </div>
+  <div class="card">
+    <h2>O que a empresa faz</h2>
+    <p class="sub">Assim o agente já atende do jeito do seu ramo.</p>
+    <div class="ramos" role="radiogroup" aria-label="Ramo da empresa" id="ramos"></div>
+  </div>
+  <div class="card">
+    <h2>O que o agente precisa saber</h2>
+    <p class="sub">Só o básico. Quanto mais detalhe, mais real fica o teste.</p>
+    <div class="campo"><label for="serv">Produtos ou serviços, com os preços</label><textarea id="serv" placeholder="Ex.: corte R$ 40, barba R$ 30, corte + barba R$ 60"></textarea></div>
+    <div class="g2">
+      <div class="campo"><label for="hor">Horário de funcionamento</label><input id="hor" placeholder="Ex.: seg a sáb, 9h às 19h"></div>
+      <div class="campo"><label for="pag">Formas de pagamento</label><input id="pag" placeholder="Ex.: Pix, cartão e dinheiro"></div>
+    </div>
+    <div class="campo"><label for="end">Endereço ou região que atende</label><input id="end" placeholder="Ex.: Rua X, 100, Boa Viagem, Recife"></div>
+    <div class="campo"><label for="mais">O que os clientes mais perguntam? (opcional)</label><textarea id="mais" style="min-height:80px" placeholder="Ex.: Tem estacionamento? Sim, na rua ao lado. Faz entrega? Sim, até 5 km."></textarea></div>
+    <div class="campo"><label for="ag">Nome do atendente virtual (opcional)</label><input id="ag" placeholder="Ex.: Bia"><small>Se deixar vazio, ele se apresenta como a equipe da empresa.</small></div>
+    <button class="btn" type="submit" id="enviar">Quero testar no meu WhatsApp</button>
+    <p class="priv">Usamos estes dados só para montar o seu teste. Nada é enviado aos seus clientes.</p>
+  </div>
+</form>
+</main>
+<script>
+(function(){
+'use strict';
+var SB='https://ovynkeifzhavhjdkjjui.supabase.co',KEY='sb_publishable_7RunIjZPQDCuWNSuPrD10w_Gy_lIUFl';
+var $=function(s){return document.querySelector(s)};
+var esc=function(t){return String(t==null?'':t).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
+var RAMOS=[['salao','💇','Salão de beleza','Ex.: corte feminino R$ 70, escova R$ 45, manicure R$ 30'],['barbearia','💈','Barbearia','Ex.: corte R$ 40, barba R$ 30, corte + barba R$ 60'],['estetica','✨','Estética','Ex.: limpeza de pele R$ 150, drenagem R$ 120, avaliação grátis'],['odonto','🦷','Odontologia','Ex.: avaliação grátis, limpeza R$ 180, clareamento R$ 800'],['clinica','🩺','Clínica ou consultório','Ex.: consulta R$ 250 com retorno grátis, atende Unimed'],['advocacia','⚖️','Advocacia','Ex.: trabalhista e família, primeira consulta R$ 200'],['contabilidade','📊','Contabilidade','Ex.: MEI R$ 99/mês, abertura de empresa R$ 600'],['restaurante','🍽️','Restaurante','Ex.: prato executivo R$ 32, parmegiana R$ 45, entrega R$ 5'],['pizzaria','🍕','Pizzaria','Ex.: pizza grande R$ 59, média R$ 45, borda + R$ 8, entrega R$ 6'],['lanchonete','🍔','Hamburgueria','Ex.: X-bacon R$ 28, combo + R$ 15, entrega R$ 5'],['doceria','🎂','Doceria','Ex.: bolo a partir de R$ 90 o kg, cento de docinhos R$ 120'],['roupas','👗','Loja de roupas','Ex.: vestidos a partir de R$ 89, jeans R$ 129, P ao GG, 4x sem juros'],['otica','👓','Ótica','Ex.: armações a partir de R$ 99, exame R$ 80, lentes a partir de R$ 180'],['pet','🐾','Pet shop','Ex.: banho a partir de R$ 45, banho e tosa R$ 70, consulta R$ 150'],['academia','🏋️','Academia ou estúdio','Ex.: mensal R$ 99, pilates R$ 180/mês, aula experimental grátis'],['imobiliaria','🏠','Imobiliária','Ex.: aluguel e venda em Boa Viagem, 2 quartos a partir de R$ 2.300'],['oficina','🔧','Oficina','Ex.: revisão a partir de R$ 250, troca de óleo R$ 120'],['escola','📚','Escola ou curso','Ex.: inglês R$ 260/mês, aula experimental grátis'],['outro','🏪','Outro ramo','Ex.: o que vocês vendem ou fazem, com os preços']];
+$('#ramos').innerHTML=RAMOS.map(function(r){return '<label><input type="radio" name="ramo" value="'+r[0]+'"><span><b aria-hidden="true">'+r[1]+'</b>'+esc(r[2])+'</span></label>'}).join('');
+$('#ramos').addEventListener('change',function(e){var r=RAMOS.find(function(x){return x[0]===e.target.value});if(r)$('#serv').placeholder=r[3]});
+var ramoUrl=new URLSearchParams(location.search).get('ramo');if(ramoUrl){var i=document.querySelector('input[name=ramo][value="'+ramoUrl+'"]');if(i){i.checked=true;i.dispatchEvent(new Event('change',{bubbles:true}))}}
+$('#tel').addEventListener('input',function(){var d=this.value.replace(/\D/g,'').replace(/^55(?=\d{10,11}$)/,'').slice(0,11);this.value=d.length>10?d.replace(/(\d{2})(\d{5})(\d{0,4})/,'($1) $2-$3'):d.replace(/(\d{2})(\d{4})(\d{0,4})/,'($1) $2-$3').replace(/[-\s()]+$/,'')});
+function erro(t,foco){$('#err').innerHTML='<div class="erro" role="alert">'+esc(t)+'</div>';$('#err').scrollIntoView({behavior:'smooth',block:'center'});if(foco)setTimeout(function(){foco.focus({preventScroll:true})},300)}
+$('#f').addEventListener('submit',function(e){e.preventDefault();
+  var v=function(id){return $('#'+id).value.trim()},r=(document.querySelector('input[name=ramo]:checked')||{}).value;
+  var tel=v('tel').replace(/\D/g,'');
+  if(v('nome').length<2)return erro('Escreva o seu nome.',$('#nome'));
+  if(tel.length<10)return erro('Escreva o seu WhatsApp com DDD.',$('#tel'));
+  if(!v('emp'))return erro('Escreva o nome da empresa.',$('#emp'));
+  if(!r)return erro('Escolha o ramo da empresa.');
+  if(v('serv').length<5)return erro('Conte pelo menos os principais produtos ou serviços, com os preços.',$('#serv'));
+  var info=['Produtos e serviços: '+v('serv'),v('hor')&&'Horário de funcionamento: '+v('hor'),v('pag')&&'Formas de pagamento: '+v('pag'),v('end')&&'Endereço: '+v('end'),v('mais')&&'Perguntas frequentes: '+v('mais')].filter(Boolean).join('\n');
+  var b=$('#enviar');b.disabled=true;b.textContent='Enviando…';
+  fetch(SB+'/rest/v1/rpc/agente_teste_pedir',{method:'POST',headers:{'Content-Type':'application/json',apikey:KEY,Authorization:'Bearer '+KEY},body:JSON.stringify({p_nome:v('nome'),p_tel:tel,p_empresa:v('emp'),p_ramo:r,p_info:info,p_agente:v('ag')})})
+    .then(function(x){return x.json()}).then(function(j){b.disabled=false;b.textContent='Quero testar no meu WhatsApp';
+      if(!j||!j.ok)return erro((j&&(j.erro||j.message))||'Não deu certo agora. Tente de novo.');
+      $('#app').innerHTML='<div class="card feito"><div class="ico" aria-hidden="true">✓</div><h2>Pedido recebido!</h2><p>Assim que o teste for ligado, você recebe uma mensagem no WhatsApp <b>'+esc($('#tel')?$('#tel').value:tel)+'</b>.</p><p>Aí é só conversar como se fosse um cliente da <b>'+esc(v('emp'))+'</b>. Para recomeçar a conversa do zero, mande <b>REINICIAR</b>.</p></div>';window.scrollTo(0,0)})
+    .catch(function(){b.disabled=false;b.textContent='Quero testar no meu WhatsApp';erro('Sem conexão. Confira a internet e tente de novo.')});
+});
+})();
+</script>
+</body>
+</html>
