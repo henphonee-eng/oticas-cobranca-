@@ -35,7 +35,7 @@ main{max-width:1440px;margin:0 auto;padding:18px 16px calc(96px + env(safe-area-
 .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;box-shadow:var(--shadow)}
 .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .grow{flex:1;min-width:0}
-input[type=text],input[type=email],input[type=password],input[type=date],input[type=time],input[type=number],input[type=search],select,textarea{width:100%;background:var(--surface);border:1px solid var(--line-2);border-radius:4px;padding:9px 11px;outline:none}
+input[type=text],input[type=email],input[type=password],input[type=date],input[type=time],input[type=number],input[type=search],input[type=tel],select,textarea{width:100%;background:var(--surface);border:1px solid var(--line-2);border-radius:4px;padding:9px 11px;outline:none}
 input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
 textarea{resize:vertical;min-height:110px}
 .btn{border:1px solid var(--line-2);background:var(--surface);border-radius:4px;padding:8px 13px;cursor:pointer;font-weight:500;display:inline-flex;align-items:center;gap:6px;text-decoration:none;white-space:nowrap;color:var(--fg)}
@@ -223,6 +223,8 @@ button.stat{cursor:pointer}button.stat:hover{background:var(--surface-2)}
 .subtabs .chip{border:0;border-radius:0;background:none;padding:9px 14px;border-bottom:2px solid transparent;margin-bottom:-1px;color:var(--muted);font-size:14px;font-weight:500}
 .subtabs .chip.on{background:none;color:var(--fg);border-bottom-color:var(--gold)}
 .igc .igu{font-weight:650;color:var(--fg);text-decoration:none;word-break:break-all}.igc .igu:hover{text-decoration:underline}
+.atr{display:flex;flex-wrap:wrap;gap:6px}.atr .chip{border-radius:999px}
+.atl{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:10px 0;border-top:1px solid var(--line);flex-wrap:wrap}.card h2+.atl{border-top:0}
 .igacts{margin-top:10px;gap:6px;flex-wrap:wrap}
 .subtabs .chip .n{background:var(--gold);color:var(--gold-ink);font-size:11.5px;border-radius:9px;padding:0 6px;margin-left:5px;font-weight:600}
 @media (min-width:900px){
@@ -280,7 +282,7 @@ h1,h2,h3{font-weight:650;letter-spacing:-.018em}
 .btn.pri:hover{filter:none;background:color-mix(in srgb,var(--accent) 88%,#000)}
 .btn.wa{box-shadow:0 1px 2px rgba(15,25,45,.12)}
 .btn:disabled{opacity:1;background:var(--surface-2);color:color-mix(in srgb,var(--muted) 75%,transparent);box-shadow:none}
-input[type=text],input[type=email],input[type=password],input[type=date],input[type=time],input[type=number],input[type=search],select,textarea{border-radius:10px;border-color:var(--line);padding:10px 12px;box-shadow:var(--shadow);transition:border-color .15s,box-shadow .15s}
+input[type=text],input[type=email],input[type=password],input[type=date],input[type=time],input[type=number],input[type=search],input[type=tel],select,textarea{border-radius:10px;border-color:var(--line);padding:10px 12px;box-shadow:var(--shadow);transition:border-color .15s,box-shadow .15s}
 input:focus,select:focus,textarea:focus{box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 16%,transparent)}
 .tag{border-radius:999px;padding:2px 9px;font-size:11.5px;font-weight:600}
 .chip{border-radius:999px;padding:6px 13px;font-weight:600;color:var(--muted);border-color:var(--line)}
@@ -455,8 +457,9 @@ async function load(){
   await loadFila();
   await loadImpl();
   await loadIg();
+  await loadAt();
   try{const rr=await sb.from('prosp_reunioes').select('*').gte('inicio',new Date(Date.now()-864e5).toISOString()).order('inicio');st.reun=(rr&&rr.data)||[]}catch(e){st.reun=[]}
-  st.loaded=true;const qt=new URLSearchParams(location.search).get('tab');if(qt&&['crm','buscar','ig','msg','auto','zap','camp','impl','fin'].includes(qt))st.tab=qt;else if(!st.leads.length)st.tab='buscar';render();
+  st.loaded=true;const qt=new URLSearchParams(location.search).get('tab');if(qt&&['crm','buscar','ig','msg','auto','zap','camp','impl','fin','agteste'].includes(qt))st.tab=qt;else if(!st.leads.length)st.tab='buscar';render();
 }
 async function loadImpl(){
   try{const [ir,ar,cr,rr]=await Promise.all([sb.from('prosp_impl').select('*').neq('status','cancelada').order('criado_em',{ascending:false}),sb.from('prosp_impl_ajustes').select('*').order('em').limit(3000),sb.from('prosp_cobr').select('*').order('venc').limit(5000),sb.from('prosp_relatorios').select('*').order('mes',{ascending:false}).limit(500)]);
@@ -701,6 +704,7 @@ const NAV=[
   ['mensal','Mensalidades','/adm?tab=mensal',IC('<rect x="4" y="5" width="16" height="15" rx="2.5"/><path d="M4 10h16M9 3v4M15 3v4M8.5 14.5h3"/>')],
   ['iauso','Agente de IA','/adm?tab=iauso',IC('<rect x="5" y="8" width="14" height="11" rx="3"/><path d="M12 4v4"/><circle cx="9.5" cy="13" r="1"/><circle cx="14.5" cy="13" r="1"/><path d="M10 16.5h4"/>')],
   ['buscar','Prospecção',null,IC('<circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/>')],
+  ['agteste','Agente teste',null,IC('<rect x="6" y="3" width="12" height="18" rx="2.5"/><path d="M10 6h4"/><path d="M9.5 12.5l1.8 1.8 3.5-3.6"/>')],
   ['crm','CRM',null,IC('<rect x="3.5" y="4.5" width="5" height="15" rx="1.5"/><rect x="9.5" y="4.5" width="5" height="10" rx="1.5"/><rect x="15.5" y="4.5" width="5" height="6" rx="1.5"/>')]];
 function render(){if(st.tab==='auto'&&!wQrT)setTimeout(wQrPoll,0);
   const a=$('#app');
@@ -709,13 +713,13 @@ function render(){if(st.tab==='auto'&&!wQrT)setTimeout(wQrPoll,0);
   if(!st.user)return a.innerHTML=gate();
   if(!st.admin)return a.innerHTML='<div class="gate"><div class="card"><h1>Sem acesso</h1><p class="muted">Essa área é só do administrador.</p><button class="btn" data-a="sair">Sair</button></div></div>';
   if(!st.loaded)return a.innerHTML='<div class="empty">Carregando leads…</div>';
-  const sec=(st.tab==='buscar'||st.tab==='ig')?'buscar':'crm';
+  const sec=(st.tab==='buscar'||st.tab==='ig')?'buscar':st.tab==='agteste'?'agteste':'crm';
   const item=n=>n[2]?'<a href="'+n[2]+'"'+(sec===n[0]?' class="on"':'')+'>'+n[3]+'<span>'+n[1]+'</span></a>':'<a href="/prospectar?tab='+n[0]+'" data-tab="'+n[0]+'"'+(sec===n[0]?' class="on" aria-current="page"':'')+'>'+n[3]+'<span>'+n[1]+'</span></a>';
-  const head=st.tab==='buscar'?['Prospecção','Encontre empresas no Google Maps e adicione ao CRM']:st.tab==='ig'?['Prospecção','Empresas do Instagram para seguir e abordar pelo Direct']:st.tab==='zap'?['WhatsApp do CRM','Conversas do chip de prospecção: quem respondeu e o follow-up']:st.tab==='auto'?['Envio automático','Fila de abordagens e follow-ups pelo chip do CRM']:st.tab==='msg'?['Modelos de mensagem','Textos da abordagem e do follow-up']:st.tab==='camp'?['Campanha','Tráfego Orgânico e Agente de IA para as óticas que você já abordou']:st.tab==='impl'?['Implantações','Cadastro, contrato, teste, WhatsApp e pagamentos de cada empresa que fechou']:st.tab==='fin'?['Financeiro','Quanto entra por mês, o que falta receber e quem está em atraso']:['CRM','Funil de empresas, follow-up e acessos ao demo'];
-  const sub=(st.tab==='buscar'||st.tab==='ig')?'<div class="subtabs"><button class="chip '+(st.tab==='buscar'?'on':'')+'" data-tab="buscar">Google</button><button class="chip '+(st.tab==='ig'?'on':'')+'" data-tab="ig">Instagram'+(igProntas()?'<span class="n">'+igProntas()+'</span>':'')+'</button></div>':'<div class="subtabs"><button class="chip '+(st.tab==='crm'?'on':'')+'" data-tab="crm">Empresas ('+st.leads.length+')</button><button class="chip '+(st.tab==='zap'?'on':'')+'" data-tab="zap">WhatsApp'+(zNao()?'<span class="n">'+zNao()+'</span>':'')+'</button><button class="chip '+(st.tab==='auto'?'on':'')+'" data-tab="auto">Envio automático ('+st.fila.filter(naFila).length+')</button><button class="chip '+(st.tab==='camp'?'on':'')+'" data-tab="camp">Campanha</button><button class="chip '+(st.tab==='msg'?'on':'')+'" data-tab="msg">Modelos de mensagem</button><button class="chip '+(st.tab==='impl'?'on':'')+'" data-tab="impl">Implantações'+((st.impl||[]).filter(x=>!['ativa','encerrada'].includes(x.status)).length?' ('+(st.impl||[]).filter(x=>!['ativa','encerrada'].includes(x.status)).length+')':'')+'</button><button class="chip '+(st.tab==='fin'?'on':'')+'" data-tab="fin">Financeiro'+((st.cobr||[]).filter(c=>!c.pago&&!c.cancelada&&c.venc<hojeR()).length?'<span class="n">'+(st.cobr||[]).filter(c=>!c.pago&&!c.cancelada&&c.venc<hojeR()).length+'</span>':'')+'</button></div>';
+  const head=st.tab==='buscar'?['Prospecção','Encontre empresas no Google Maps e adicione ao CRM']:st.tab==='ig'?['Prospecção','Empresas do Instagram para seguir e abordar pelo Direct']:st.tab==='agteste'?['Agente teste','O cliente experimenta o agente no WhatsApp dele']:st.tab==='zap'?['WhatsApp do CRM','Conversas do chip de prospecção: quem respondeu e o follow-up']:st.tab==='auto'?['Envio automático','Fila de abordagens e follow-ups pelo chip do CRM']:st.tab==='msg'?['Modelos de mensagem','Textos da abordagem e do follow-up']:st.tab==='camp'?['Campanha','Tráfego Orgânico e Agente de IA para as óticas que você já abordou']:st.tab==='impl'?['Implantações','Cadastro, contrato, teste, WhatsApp e pagamentos de cada empresa que fechou']:st.tab==='fin'?['Financeiro','Quanto entra por mês, o que falta receber e quem está em atraso']:['CRM','Funil de empresas, follow-up e acessos ao demo'];
+  const sub=st.tab==='agteste'?'':(st.tab==='buscar'||st.tab==='ig')?'<div class="subtabs"><button class="chip '+(st.tab==='buscar'?'on':'')+'" data-tab="buscar">Google</button><button class="chip '+(st.tab==='ig'?'on':'')+'" data-tab="ig">Instagram'+(igProntas()?'<span class="n">'+igProntas()+'</span>':'')+'</button></div>':'<div class="subtabs"><button class="chip '+(st.tab==='crm'?'on':'')+'" data-tab="crm">Empresas ('+st.leads.length+')</button><button class="chip '+(st.tab==='zap'?'on':'')+'" data-tab="zap">WhatsApp'+(zNao()?'<span class="n">'+zNao()+'</span>':'')+'</button><button class="chip '+(st.tab==='auto'?'on':'')+'" data-tab="auto">Envio automático ('+st.fila.filter(naFila).length+')</button><button class="chip '+(st.tab==='camp'?'on':'')+'" data-tab="camp">Campanha</button><button class="chip '+(st.tab==='msg'?'on':'')+'" data-tab="msg">Modelos de mensagem</button><button class="chip '+(st.tab==='impl'?'on':'')+'" data-tab="impl">Implantações'+((st.impl||[]).filter(x=>!['ativa','encerrada'].includes(x.status)).length?' ('+(st.impl||[]).filter(x=>!['ativa','encerrada'].includes(x.status)).length+')':'')+'</button><button class="chip '+(st.tab==='fin'?'on':'')+'" data-tab="fin">Financeiro'+((st.cobr||[]).filter(c=>!c.pago&&!c.cancelada&&c.venc<hojeR()).length?'<span class="n">'+(st.cobr||[]).filter(c=>!c.pago&&!c.cancelada&&c.venc<hojeR()).length+'</span>':'')+'</button></div>';
   a.innerHTML='<aside class="pside"><div class="brand"><b>Connecta AI</b><small>Controle geral</small></div><nav>'+NAV.map(item).join('')+'</nav><div class="foot"><div>'+esc((st.user&&st.user.email)||'')+'</div><button data-a="sair">Sair</button></div></aside>'+
    '<header class="mtop"><b>Connecta AI</b><span class="sp"></span><button data-a="sair">Sair</button></header>'+
-   '<main><div class="ph"><h1>'+head[0]+'</h1><p>'+head[1]+'</p></div>'+sub+(st.tab==='buscar'?vBuscar():st.tab==='ig'?vIg():st.tab==='msg'?vMsg():st.tab==='auto'?vAuto():st.tab==='zap'?vZap():st.tab==='camp'?vCamp():st.tab==='impl'?vImpl():st.tab==='fin'?vFin():vCrm())+'</main>';
+   '<main><div class="ph"><h1>'+head[0]+'</h1><p>'+head[1]+'</p></div>'+sub+(st.tab==='buscar'?vBuscar():st.tab==='ig'?vIg():st.tab==='agteste'?vAt():st.tab==='msg'?vMsg():st.tab==='auto'?vAuto():st.tab==='zap'?vZap():st.tab==='camp'?vCamp():st.tab==='impl'?vImpl():st.tab==='fin'?vFin():vCrm())+'</main>';
   barraNav(NAV.map(item).join(''));
 }
 /* barra de baixo (celular): fica fora do #app e só muda quando a aba muda.
@@ -995,6 +999,79 @@ async function igClick(d){
   return 'nada';
 }
 
+/* ---------- Agente teste: o cliente experimenta o agente no WhatsApp dele ----------
+   Quem está com o teste ligado conversa com o número do CRM e quem responde é o agente de teste do ramo escolhido.
+   Nada entra no CRM; a conversa some ao mandar REINICIAR ou ao desligar. */
+const AT_RAMOS=[
+ ['salao','💇','Salão de beleza','Serviços: corte feminino R$ 70, escova R$ 45, progressiva a partir de R$ 180, coloração a partir de R$ 120, manicure R$ 30, pedicure R$ 35, design de sobrancelha R$ 35.\nProfissionais: Carla (cabelo) e Juliana (unhas).\nHorário: terça a sábado, 9h às 19h.\nEndereço: Rua das Flores, 120, Boa Viagem, Recife.\nPagamento: Pix, cartão e dinheiro.'],
+ ['barbearia','💈','Barbearia','Serviços: corte R$ 40, barba R$ 30, corte + barba R$ 60, sobrancelha R$ 15, pigmentação R$ 25.\nBarbeiros: Rafa e Diego.\nHorário: segunda a sábado, 9h às 20h. Atende com hora marcada e por ordem de chegada.\nEndereço: Av. Conselheiro Aguiar, 500, Boa Viagem.\nPagamento: Pix, cartão e dinheiro.'],
+ ['estetica','✨','Clínica de estética','Procedimentos: limpeza de pele R$ 150, peeling a partir de R$ 200, drenagem linfática R$ 120 (pacote com 10 sessões R$ 990), depilação a laser a partir de R$ 99 por sessão, botox a partir de R$ 900 (com avaliação).\nAvaliação gratuita.\nHorário: segunda a sexta, 8h às 19h; sábado, 8h às 13h.\nEndereço: Rua Padre Carapuceiro, 800, Boa Viagem.'],
+ ['odonto','🦷','Odontologia','Serviços: avaliação gratuita, limpeza R$ 180, clareamento R$ 800, restauração a partir de R$ 150, canal a partir de R$ 600, aparelho a partir de R$ 150 de manutenção por mês, implante a partir de R$ 2.500 (com avaliação).\nAtende convênio: Amil Dental e OdontoPrev.\nPaciente com dor é encaixado no mesmo dia.\nHorário: segunda a sexta, 8h às 18h; sábado, 8h às 12h.\nEndereço: Av. Domingos Ferreira, 1000, Boa Viagem.'],
+ ['clinica','🩺','Clínica ou consultório','Especialidades: clínico geral, dermatologia e nutrição.\nConsulta particular: R$ 250 (retorno grátis em até 30 dias).\nConvênios: Unimed e Hapvida.\nHorário: segunda a sexta, 7h às 18h.\nEndereço: Rua Real da Torre, 300, Madalena, Recife.\nTambém faz consulta on-line.'],
+ ['advocacia','⚖️','Advocacia','Áreas: trabalhista, família (divórcio, pensão), previdenciário (aposentadoria e INSS) e consumidor.\nPrimeira consulta: R$ 200 (ou análise gratuita do caso pelo WhatsApp).\nAtende presencial e on-line.\nHorário: segunda a sexta, 9h às 18h.\nEndereço: Av. Agamenon Magalhães, 2000, sala 501, Recife.'],
+ ['contabilidade','📊','Contabilidade','Serviços: abertura de empresa a partir de R$ 600, contabilidade para MEI R$ 99/mês, Simples Nacional a partir de R$ 390/mês, imposto de renda pessoa física a partir de R$ 180.\nAtendimento on-line para todo o Brasil.\nHorário: segunda a sexta, 8h às 17h.'],
+ ['restaurante','🍽️','Restaurante','Cardápio: prato executivo R$ 32 (arroz, feijão, salada e carne do dia), parmegiana R$ 45, peixe grelhado R$ 52, salada da casa R$ 28, suco natural R$ 9, sobremesa do dia R$ 12.\nDelivery: taxa R$ 5 até 4 km, entrega em 40 min. Também faz reservas para grupos.\nHorário: todos os dias, 11h às 15h e 18h às 22h.\nPagamento: Pix, cartão e dinheiro.'],
+ ['pizzaria','🍕','Pizzaria','Cardápio: pizza grande (8 fatias) R$ 59, média (6 fatias) R$ 45. Sabores: calabresa, mussarela, frango com catupiry, portuguesa, margherita, quatro queijos. Meio a meio cobra o sabor mais caro. Borda recheada + R$ 8.\nBebidas: refrigerante 2L R$ 12, lata R$ 6.\nEntrega: R$ 6 em Boa Viagem e Pina, 40 a 50 minutos.\nHorário: todos os dias, 18h às 23h30.\nPagamento: Pix, cartão e dinheiro.'],
+ ['lanchonete','🍔','Hamburgueria ou lanchonete','Cardápio: X-burger R$ 22, X-bacon R$ 28, smash duplo R$ 32, combo (lanche + fritas + refri) + R$ 15, batata frita R$ 16, milkshake R$ 18.\nAdicionais: bacon R$ 4, cheddar R$ 3, ovo R$ 2.\nEntrega: R$ 5, cerca de 35 minutos.\nHorário: terça a domingo, 18h às 23h.\nPagamento: Pix, cartão e dinheiro.'],
+ ['doceria','🎂','Doceria ou confeitaria','Encomendas: bolo de aniversário a partir de R$ 90 o kg (sabores: chocolate, ninho com morango, red velvet, prestígio), cento de docinhos R$ 120, bolo de pote R$ 12.\nPrazo: encomendas com 3 dias de antecedência.\nRetirada na loja ou entrega (taxa a partir de R$ 8).\nHorário: segunda a sábado, 9h às 19h.'],
+ ['roupas','👗','Loja de roupas e calçados','Produtos: vestidos a partir de R$ 89, blusas a partir de R$ 49, calças jeans R$ 129, tênis a partir de R$ 159, sandálias a partir de R$ 79. Tamanhos do P ao GG e numeração 34 a 40.\nNovidades toda semana. Troca em até 7 dias com etiqueta.\nEntrega em Recife (R$ 10) ou retirada na loja. Separa peça por 24h.\nHorário: segunda a sábado, 9h às 19h.\nPagamento: Pix, cartão em até 4x sem juros.'],
+ ['otica','👓','Ótica','Produtos: armações a partir de R$ 99, lentes visão simples com antirreflexo a partir de R$ 180 o par, multifocais a partir de R$ 390, óculos de sol a partir de R$ 89.\nExame de vista: grátis na compra do óculos completo, só o exame R$ 80.\nEntrega dos óculos em 3 a 7 dias úteis. Parcela em até 10x no cartão.\nHorário: segunda a sexta, 9h às 18h; sábado, 9h às 13h.'],
+ ['pet','🐾','Pet shop ou veterinária','Serviços: banho a partir de R$ 45 (porte pequeno), banho e tosa a partir de R$ 70, consulta veterinária R$ 150, vacinas a partir de R$ 90.\nLeva e traz o pet: R$ 10.\nHorário: segunda a sábado, 8h às 18h.\nEndereço: Rua dos Navegantes, 900, Boa Viagem.'],
+ ['academia','🏋️','Academia ou estúdio','Planos: mensal R$ 99, trimestral R$ 270, anual R$ 89/mês. Modalidades: musculação, funcional e pilates (pilates R$ 180/mês, 2x por semana).\nAula experimental gratuita. Matrícula isenta neste mês.\nHorário: segunda a sexta, 5h às 22h; sábado, 8h às 14h.'],
+ ['imobiliaria','🏠','Imobiliária','Imóveis: apartamentos para venda e aluguel em Boa Viagem, Pina e Graças. Exemplos: 2 quartos em Boa Viagem para alugar R$ 2.300 + condomínio; 3 quartos nas Graças à venda por R$ 650 mil.\nAgenda visitas de segunda a sábado.\nHorário: segunda a sexta, 9h às 18h; sábado, 9h às 13h.'],
+ ['oficina','🔧','Oficina mecânica','Serviços: revisão a partir de R$ 250, troca de óleo a partir de R$ 120, alinhamento e balanceamento R$ 90, freios a partir de R$ 180 (mão de obra), diagnóstico eletrônico R$ 80. Também faz lavagem e polimento.\nHorário: segunda a sexta, 8h às 18h; sábado, 8h às 12h.\nEndereço: Av. Recife, 1500, Ipsep.'],
+ ['escola','📚','Escola ou curso','Cursos: inglês para crianças, adolescentes e adultos (R$ 260/mês, 2 aulas por semana), espanhol (R$ 230/mês). Turmas de manhã, tarde e noite e aulas on-line.\nAula experimental gratuita. Material: R$ 180 por semestre.\nHorário de atendimento: segunda a sexta, 8h às 20h; sábado, 8h às 12h.'],
+ ['outro','🏪','Outro tipo de empresa','Escreva aqui o que a empresa faz, os produtos ou serviços com os preços, o horário de funcionamento, o endereço e as formas de pagamento.']];
+const atRamo=k=>AT_RAMOS.find(r=>r[0]===k)||AT_RAMOS[AT_RAMOS.length-1];
+const atFone=t=>{let d=String(t||'').replace(/\D/g,'');if(d.length===10||d.length===11)d='55'+d;return d};
+const atMsg=x=>'Oi'+(x.cliente?', '+String(x.cliente).split(' ')[0]:'')+'! 👋 Liguei aqui o teste do *Agente de IA* da *'+x.empresa+'* para você ver ele funcionando no seu WhatsApp.\n\nA partir de agora, quem responde este número é o agente. Converse como se fosse um cliente: pergunte preços e horários, peça para marcar ou fazer um pedido, mande áudio ou foto.\n\nPara começar uma conversa nova do zero, é só mandar *REINICIAR*.';
+async function loadAt(){try{const r=await sb.from('agente_testes').select('id,telefone,cliente,ramo,nome_agente,empresa,info,tom,ativo,ativado_em,msgs,atualizado_em').order('atualizado_em',{ascending:false});if(!r.error)st.at=r.data||[]}catch(e){}st.at=st.at||[]}
+function vAt(){
+  const L=st.at||[],ed=st.atEd||null,on=L.filter(x=>x.ativo);
+  let h='<div class="note sec"><b>Como funciona:</b> cadastre o WhatsApp do cliente e a empresa dele e toque em <b>Ligar teste</b>. A partir daí, quando ele mandar mensagem para o número do CRM, quem responde é o agente do ramo escolhido, como se ele fosse um cliente da empresa dele. Entende áudio e foto. Para começar do zero, ele manda <b>REINICIAR</b>. Nada fica salvo no CRM; ao desligar, a conversa volta para você e o agente de vendas.</div>';
+  if(on.length)h+='<div class="card sec"><h2 style="margin:0 0 8px">Ligados agora ('+on.length+')</h2>'+on.map(atLinha).join('')+'</div>';
+  const f=ed||{ramo:'',tom:'proximo'};const r=f.ramo?atRamo(f.ramo):null;
+  h+='<div class="card sec" id="at-form"><h2 style="margin:0 0 4px">'+(ed&&ed.id?'Editar teste':'Novo teste')+'</h2><p class="small muted" style="margin:0 0 12px">Só para testar: depois de fechar, a configuração de verdade é feita na implantação.</p>'+
+    '<div class="list two"><div class="fld"><label for="at-tel">WhatsApp do cliente</label><input id="at-tel" type="tel" inputmode="numeric" placeholder="(81) 99999-9999" value="'+esc(f.telefone?fmtFone(f.telefone):'')+'"></div><div class="fld"><label for="at-cli">Nome do cliente (opcional)</label><input id="at-cli" type="text" placeholder="Ex.: Carla" value="'+esc(f.cliente||'')+'"></div></div>'+
+    '<div class="fld"><label>Ramo da empresa</label><div class="atr">'+AT_RAMOS.map(x=>'<button type="button" class="chip'+(f.ramo===x[0]?' on':'')+'" data-atramo="'+x[0]+'">'+x[1]+' '+esc(x[2])+'</button>').join('')+'</div></div>'+
+    '<div class="list two"><div class="fld"><label for="at-emp">Nome da empresa</label><input id="at-emp" type="text" placeholder="Ex.: Sorriso Perfeito" value="'+esc(f.empresa||'')+'"></div><div class="fld"><label for="at-ag">Nome do agente (opcional)</label><input id="at-ag" type="text" placeholder="Ex.: Bia" value="'+esc(f.nome_agente||'')+'"></div></div>'+
+    '<div class="fld"><label for="at-tom">Jeito de falar</label><select id="at-tom">'+[['proximo','Próximo e simpático'],['formal','Formal (senhor/senhora)'],['descontraido','Bem descontraído']].map(o=>'<option value="'+o[0]+'"'+(f.tom===o[0]?' selected':'')+'>'+o[1]+'</option>').join('')+'</select></div>'+
+    '<div class="fld"><label for="at-info">Informações da empresa (serviços, preços, horários, endereço)</label><textarea id="at-info" style="min-height:170px" placeholder="Escolha o ramo para começar com um exemplo e ajuste com o que o cliente te contou">'+esc(f.info||'')+'</textarea>'+(r?'<button type="button" class="btn sm" data-a="atexemplo" style="margin-top:6px">Usar o exemplo de '+esc(r[2].toLowerCase())+'</button>':'')+'</div>'+
+    '<label class="row small" style="gap:8px;margin:4px 0 12px"><input type="checkbox" id="at-avisar"'+(st.atAvisar===false?'':' checked')+'> Mandar uma mensagem para o cliente avisando que o teste começou</label>'+
+    '<div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn pri" data-a="atsalvar" data-ligar="1">Salvar e ligar teste</button><button class="btn" data-a="atsalvar">Só salvar</button>'+(ed&&ed.id?'<button class="btn" data-a="atnovo">Cancelar</button>':'')+'</div></div>';
+  const off=L.filter(x=>!x.ativo);
+  if(off.length)h+='<div class="card sec"><h2 style="margin:0 0 8px">Testes desligados</h2>'+off.map(atLinha).join('')+'</div>';
+  return h;
+}
+function atLinha(x){const r=atRamo(x.ramo);
+  return '<div class="atl"><div class="grow" style="min-width:0"><b>'+r[1]+' '+esc(x.empresa)+'</b><div class="small muted">'+esc([x.cliente,fmtFone(x.telefone),r[2]].filter(Boolean).join(' · '))+(x.ativo&&x.ativado_em?' · ligado '+fmtDH(x.ativado_em):'')+(x.msgs?' · '+x.msgs+' mensagens':'')+'</div></div>'+
+    '<div class="row" style="gap:6px;flex-wrap:wrap">'+(x.ativo?'<span class="tag ok">Ligado</span><button class="btn sm" data-atoff="'+x.id+'">Desligar</button>':'<button class="btn sm pri" data-aton="'+x.id+'">Ligar teste</button>')+'<button class="btn sm" data-ated="'+x.id+'">Editar</button>'+(x.ativo?'':'<button class="btn sm" data-atdel="'+x.id+'">Remover</button>')+'</div></div>'}
+function atLer(){const v=id=>{const e=document.getElementById(id);return e?e.value.trim():''};
+  return {telefone:atFone(v('at-tel')),cliente:v('at-cli')||null,ramo:(st.atEd&&st.atEd.ramo)||'',empresa:v('at-emp'),nome_agente:v('at-ag')||null,tom:v('at-tom')||'proximo',info:v('at-info')}}
+async function atLigar(x,on){const av=on&&document.getElementById('at-avisar')?document.getElementById('at-avisar').checked:on;
+  const r=await sb.rpc('agente_teste_ligar',{p_id:x.id,p_on:on,p_msg:on&&av?atMsg(x):null});
+  if(r.error||!(r.data&&r.data.ok))return toast('Não deu certo: '+((r.error&&r.error.message)||(r.data&&r.data.erro)||''));
+  await loadAt();toast(on?(av?'Teste ligado. O cliente já recebeu a mensagem':'Teste ligado'):'Teste desligado. A conversa voltou para o CRM');render()}
+async function atClick(d,b){
+  if(d.atramo){st.atEd=Object.assign({},st.atEd||{},atLer(),{ramo:d.atramo});if(!st.atEd.info||AT_RAMOS.some(r=>r[3]===st.atEd.info))st.atEd.info=atRamo(d.atramo)[3];const y=scrollY;render();scrollTo(0,y);return}
+  if(d.a==='atexemplo'){st.atEd=Object.assign({},st.atEd||{},atLer());st.atEd.info=atRamo(st.atEd.ramo)[3];const y=scrollY;render();scrollTo(0,y);return}
+  if(d.a==='atnovo'){st.atEd=null;return render()}
+  if(d.ated){const x=(st.at||[]).find(y=>y.id===d.ated);st.atEd=Object.assign({},x);render();const f=document.getElementById('at-form');if(f)f.scrollIntoView({behavior:'smooth'});return}
+  if(d.aton||d.atoff){const x=(st.at||[]).find(y=>y.id===(d.aton||d.atoff));if(x)await atLigar(x,!!d.aton);return}
+  if(d.atdel){const x=(st.at||[]).find(y=>y.id===d.atdel);if(!x||!confirm('Remover o teste de '+x.empresa+'?'))return;const r=await sb.from('agente_testes').delete().eq('id',x.id);if(r.error)return toast(r.error.message);await loadAt();return render()}
+  if(d.a==='atsalvar'){const x=atLer();st.atAvisar=!!(document.getElementById('at-avisar')||{}).checked;
+    if(x.telefone.length<12)return toast('Escreva o WhatsApp do cliente com DDD');
+    if(!x.ramo)return toast('Escolha o ramo da empresa');
+    if(!x.empresa)return toast('Escreva o nome da empresa');
+    b.disabled=true;const id=st.atEd&&st.atEd.id;
+    const r=id?await sb.from('agente_testes').update(Object.assign({},x,{atualizado_em:new Date().toISOString()})).eq('id',id).select().single():await sb.from('agente_testes').upsert(x,{onConflict:'telefone'}).select().single();
+    b.disabled=false;if(r.error)return toast('Não salvou: '+r.error.message);
+    st.atEd=null;await loadAt();
+    if(d.ligar){const n=(st.at||[]).find(y=>y.id===r.data.id);if(n){if(n.ativo){await sb.rpc('agente_teste_ligar',{p_id:n.id,p_on:true,p_msg:null});await loadAt();toast('Teste atualizado. Ele já vale na próxima mensagem');return render()}return atLigar(n,true)}}
+    toast('Teste salvo');return render()}
+  return 'nada';
+}
+
 function vFin(){
   if(!st.finOk){loadFin();return '<div class="empty">Carregando…</div>'}
   const h=hojeR(),mes=h.slice(0,7),cs=(st.cobr||[]).filter(c=>!c.cancelada),I=st.impl||[];
@@ -1206,6 +1283,7 @@ document.addEventListener('submit',async e=>{
 document.addEventListener('click',async e=>{
   const b=e.target.closest('button,[data-tab]');if(!b)return;const d=b.dataset;
   if(d.tab){e.preventDefault();return go(d.tab)}
+  if(d.atramo||d.ated||d.aton||d.atoff||d.atdel||['atsalvar','atexemplo','atnovo'].includes(d.a))return atClick(d,b);
   if(d.igf||d.igseg||d.igdm||d.igvolta||d.iget||d.igdel||d.a==='igadd'||d.a==='igpadrao')return igClick(d);
   if(d.f){st.f=d.f;return render()}
   if(d.open){st.open=st.open===d.open?null:d.open;return render()}

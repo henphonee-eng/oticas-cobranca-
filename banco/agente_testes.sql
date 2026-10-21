@@ -1,0 +1,7 @@
+-- Agente teste (migrations agente_testes e agente_testes_funcoes): o cliente experimenta o agente no WhatsApp dele.
+-- agente_testes(telefone único, cliente, ramo, nome_agente, empresa, info, tom, ativo, ativado_em, hist, msgs) + RLS sou_admin()
+-- agente_teste_de(tel): id do teste ligado para o número (últimos 8 dígitos)
+-- agente_teste_add(id, papel, texto): guarda a conversa do teste (últimas 30 mensagens) enquanto ele está ligado
+-- agente_teste_ligar(id, on, msg): liga/desliga pelo ADM, limpa a conversa e manda a mensagem de boas-vindas pelo chip do CRM
+-- prosp_wa_receber: número com teste ligado -> agente-vendas modo demo_wa (não entra no CRM nem no agente de vendas)
+-- prosp_wa_registrar: mensagens de número com teste ligado não são gravadas em prosp_wa_msg
