@@ -1024,11 +1024,18 @@ const AT_RAMOS=[
  ['outro','🏪','Outro tipo de empresa','Escreva aqui o que a empresa faz, os produtos ou serviços com os preços, o horário de funcionamento, o endereço e as formas de pagamento.']];
 const atRamo=k=>AT_RAMOS.find(r=>r[0]===k)||AT_RAMOS[AT_RAMOS.length-1];
 const atFone=t=>{let d=String(t||'').replace(/\D/g,'');if(d.length===10||d.length===11)d='55'+d;return d};
-const atMsg=x=>'Oi'+(x.cliente?', '+String(x.cliente).split(' ')[0]:'')+'! 👋 Liguei aqui o teste do *Agente de IA* da *'+x.empresa+'* para você ver ele funcionando no seu WhatsApp.\n\nA partir de agora, quem responde este número é o agente. Converse como se fosse um cliente: pergunte preços e horários, peça para marcar ou fazer um pedido, mande áudio ou foto.\n\nPara começar uma conversa nova do zero, é só mandar *REINICIAR*.';
-async function loadAt(){try{const r=await sb.from('agente_testes').select('id,telefone,cliente,ramo,nome_agente,empresa,info,tom,ativo,ativado_em,msgs,atualizado_em').order('atualizado_em',{ascending:false});if(!r.error)st.at=r.data||[]}catch(e){}st.at=st.at||[]}
+const AT_TEMPO=[['','Sem limite'],['30','30 minutos'],['60','1 hora'],['120','2 horas'],['1440','24 horas'],['outro','Outro tempo']];
+const atMinTxt=m=>!m?'':m<60?m+' minutos':m%1440===0?(m/1440)+(m===1440?' dia':' dias'):m%60===0?(m/60)+(m===60?' hora':' horas'):Math.floor(m/60)+'h'+String(m%60).padStart(2,'0');
+const atLigado=x=>x.ativo&&(!x.expira_em||Date.parse(x.expira_em)>Date.now());
+const atPedido=x=>x.pedido_em&&!atLigado(x)&&(!x.ativado_em||Date.parse(x.pedido_em)>Date.parse(x.ativado_em));
+const atLink=()=>{let b=String(cfg('link_base_emp')||location.origin).trim().replace(/\/+$/,'');if(!/^https?:\/\//.test(b))b='https://'+b;return b+'/experimente'};
+const atMsg=(x,min)=>'Oi'+(x.cliente?', '+String(x.cliente).split(' ')[0]:'')+'! 👋 Liguei aqui o teste do *Agente de IA* da *'+x.empresa+'* para você ver ele funcionando no seu WhatsApp.\n\nA partir de agora, quem responde este número é o agente. Converse como se fosse um cliente: pergunte preços e horários, peça para marcar ou fazer um pedido, mande áudio ou foto.\n\nPara começar uma conversa nova do zero, é só mandar *REINICIAR*.'+(min?'\n\nO teste fica ligado por *'+atMinTxt(min)+'*.':'');
+async function loadAt(){try{const r=await sb.from('agente_testes').select('id,telefone,cliente,ramo,nome_agente,empresa,info,tom,ativo,ativado_em,expira_em,pedido_em,msgs,atualizado_em').order('atualizado_em',{ascending:false});if(!r.error)st.at=r.data||[]}catch(e){}st.at=st.at||[]}
 function vAt(){
-  const L=st.at||[],ed=st.atEd||null,on=L.filter(x=>x.ativo);
-  let h='<div class="note sec"><b>Como funciona:</b> cadastre o WhatsApp do cliente e a empresa dele e toque em <b>Ligar teste</b>. A partir daí, quando ele mandar mensagem para o número do CRM, quem responde é o agente do ramo escolhido, como se ele fosse um cliente da empresa dele. Entende áudio e foto. Para começar do zero, ele manda <b>REINICIAR</b>. Nada fica salvo no CRM; ao desligar, a conversa volta para você e o agente de vendas.</div>';
+  const L=st.at||[],ed=st.atEd||null,on=L.filter(atLigado),ped=L.filter(atPedido);
+  let h='<div class="card sec"><div class="row" style="gap:10px;flex-wrap:wrap"><div class="grow" style="min-width:220px"><b>Link para o cliente pedir o teste</b><div class="small muted">Ele preenche o nome, o WhatsApp e o básico da empresa, e o pedido aparece aqui (com aviso no seu celular).</div><div class="small" style="margin-top:4px;word-break:break-all"><a href="'+esc(atLink())+'" target="_blank" rel="noopener">'+esc(atLink())+'</a></div></div><button class="btn sm pri" data-a="atcopiar">Copiar link</button><button class="btn sm" data-a="atzap">Mandar pelo WhatsApp</button></div></div>';
+  if(ped.length)h+='<div class="card sec" style="border-color:var(--gold)"><h2 style="margin:0 0 8px">Pedidos de teste ('+ped.length+')</h2>'+ped.map(atLinha).join('')+'</div>';
+  h+='<div class="note sec"><b>Como funciona:</b> cadastre o WhatsApp do cliente e a empresa dele e toque em <b>Ligar teste</b>. A partir daí, quando ele mandar mensagem para o número do CRM, quem responde é o agente do ramo escolhido, como se ele fosse um cliente da empresa dele. Entende áudio e foto. Para começar do zero, ele manda <b>REINICIAR</b>. Nada fica salvo no CRM; ao desligar, a conversa volta para você e o agente de vendas.</div>';
   if(on.length)h+='<div class="card sec"><h2 style="margin:0 0 8px">Ligados agora ('+on.length+')</h2>'+on.map(atLinha).join('')+'</div>';
   const f=ed||{ramo:'',tom:'proximo'};const r=f.ramo?atRamo(f.ramo):null;
   h+='<div class="card sec" id="at-form"><h2 style="margin:0 0 4px">'+(ed&&ed.id?'Editar teste':'Novo teste')+'</h2><p class="small muted" style="margin:0 0 12px">Só para testar: depois de fechar, a configuração de verdade é feita na implantação.</p>'+
@@ -1037,26 +1044,31 @@ function vAt(){
     '<div class="list two"><div class="fld"><label for="at-emp">Nome da empresa</label><input id="at-emp" type="text" placeholder="Ex.: Sorriso Perfeito" value="'+esc(f.empresa||'')+'"></div><div class="fld"><label for="at-ag">Nome do agente (opcional)</label><input id="at-ag" type="text" placeholder="Ex.: Bia" value="'+esc(f.nome_agente||'')+'"></div></div>'+
     '<div class="fld"><label for="at-tom">Jeito de falar</label><select id="at-tom">'+[['proximo','Próximo e simpático'],['formal','Formal (senhor/senhora)'],['descontraido','Bem descontraído']].map(o=>'<option value="'+o[0]+'"'+(f.tom===o[0]?' selected':'')+'>'+o[1]+'</option>').join('')+'</select></div>'+
     '<div class="fld"><label for="at-info">Informações da empresa (serviços, preços, horários, endereço)</label><textarea id="at-info" style="min-height:170px" placeholder="Escolha o ramo para começar com um exemplo e ajuste com o que o cliente te contou">'+esc(f.info||'')+'</textarea>'+(r?'<button type="button" class="btn sm" data-a="atexemplo" style="margin-top:6px">Usar o exemplo de '+esc(r[2].toLowerCase())+'</button>':'')+'</div>'+
+    '<div class="list two"><div class="fld"><label for="at-min">Tempo do teste</label><select id="at-min">'+AT_TEMPO.map(o=>'<option value="'+o[0]+'"'+(String(st.atMinSel==null?'60':st.atMinSel)===o[0]?' selected':'')+'>'+o[1]+'</option>').join('')+'</select></div><div class="fld" id="at-min-o"'+(st.atMinSel==='outro'?'':' hidden')+'><label for="at-min-n">Quantos minutos</label><input id="at-min-n" type="number" min="5" max="43200" step="5" value="'+esc(st.atMinN||45)+'"></div></div>'+
     '<label class="row small" style="gap:8px;margin:4px 0 12px"><input type="checkbox" id="at-avisar"'+(st.atAvisar===false?'':' checked')+'> Mandar uma mensagem para o cliente avisando que o teste começou</label>'+
     '<div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn pri" data-a="atsalvar" data-ligar="1">Salvar e ligar teste</button><button class="btn" data-a="atsalvar">Só salvar</button>'+(ed&&ed.id?'<button class="btn" data-a="atnovo">Cancelar</button>':'')+'</div></div>';
-  const off=L.filter(x=>!x.ativo);
+  const off=L.filter(x=>!atLigado(x)&&!atPedido(x));
   if(off.length)h+='<div class="card sec"><h2 style="margin:0 0 8px">Testes desligados</h2>'+off.map(atLinha).join('')+'</div>';
   return h;
 }
 function atLinha(x){const r=atRamo(x.ramo);
-  return '<div class="atl"><div class="grow" style="min-width:0"><b>'+r[1]+' '+esc(x.empresa)+'</b><div class="small muted">'+esc([x.cliente,fmtFone(x.telefone),r[2]].filter(Boolean).join(' · '))+(x.ativo&&x.ativado_em?' · ligado '+fmtDH(x.ativado_em):'')+(x.msgs?' · '+x.msgs+' mensagens':'')+'</div></div>'+
-    '<div class="row" style="gap:6px;flex-wrap:wrap">'+(x.ativo?'<span class="tag ok">Ligado</span><button class="btn sm" data-atoff="'+x.id+'">Desligar</button>':'<button class="btn sm pri" data-aton="'+x.id+'">Ligar teste</button>')+'<button class="btn sm" data-ated="'+x.id+'">Editar</button>'+(x.ativo?'':'<button class="btn sm" data-atdel="'+x.id+'">Remover</button>')+'</div></div>'}
+  const lig=atLigado(x),ped=atPedido(x);
+  return '<div class="atl"><div class="grow" style="min-width:0"><b>'+r[1]+' '+esc(x.empresa)+'</b><div class="small muted">'+esc([x.cliente,fmtFone(x.telefone),r[2]].filter(Boolean).join(' · '))+(lig&&x.ativado_em?' · ligado '+fmtDH(x.ativado_em):'')+(lig&&x.expira_em?' · termina '+fmtDH(x.expira_em):'')+(ped?' · pediu '+fmtDH(x.pedido_em):'')+(x.msgs?' · '+x.msgs+' mensagens':'')+'</div></div>'+
+    '<div class="row" style="gap:6px;flex-wrap:wrap">'+(lig?'<span class="tag ok">Ligado</span><button class="btn sm" data-atoff="'+x.id+'">Desligar</button>':ped?'<button class="btn sm pri" data-ated="'+x.id+'">Ver e ligar</button>':'<button class="btn sm pri" data-aton="'+x.id+'">Ligar teste</button>')+(ped?'':'<button class="btn sm" data-ated="'+x.id+'">Editar</button>')+(lig?'':'<button class="btn sm" data-atdel="'+x.id+'">Remover</button>')+'</div></div>'}
 function atLer(){const v=id=>{const e=document.getElementById(id);return e?e.value.trim():''};
   return {telefone:atFone(v('at-tel')),cliente:v('at-cli')||null,ramo:(st.atEd&&st.atEd.ramo)||'',empresa:v('at-emp'),nome_agente:v('at-ag')||null,tom:v('at-tom')||'proximo',info:v('at-info')}}
-async function atLigar(x,on){const av=on&&document.getElementById('at-avisar')?document.getElementById('at-avisar').checked:on;
-  const r=await sb.rpc('agente_teste_ligar',{p_id:x.id,p_on:on,p_msg:on&&av?atMsg(x):null});
+function atMinutos(){const s=document.getElementById('at-min');const v=s?s.value:(st.atMinSel==null?'60':st.atMinSel);if(v==='outro'){const n=+(document.getElementById('at-min-n')||{}).value||+st.atMinN||0;return n>0?Math.round(n):null}return v?+v:null}
+async function atLigar(x,on){const av=on&&document.getElementById('at-avisar')?document.getElementById('at-avisar').checked:on;const min=on?atMinutos():null;
+  const r=await sb.rpc('agente_teste_ligar_tempo',{p_id:x.id,p_on:on,p_msg:on&&av?atMsg(x,min):null,p_min:min});
   if(r.error||!(r.data&&r.data.ok))return toast('Não deu certo: '+((r.error&&r.error.message)||(r.data&&r.data.erro)||''));
-  await loadAt();toast(on?(av?'Teste ligado. O cliente já recebeu a mensagem':'Teste ligado'):'Teste desligado. A conversa voltou para o CRM');render()}
+  await loadAt();toast(on?(av?'Teste ligado'+(min?' por '+atMinTxt(min):'')+'. O cliente já recebeu a mensagem':'Teste ligado'+(min?' por '+atMinTxt(min):'')):'Teste desligado. A conversa voltou para o CRM');render()}
 async function atClick(d,b){
   if(d.atramo){st.atEd=Object.assign({},st.atEd||{},atLer(),{ramo:d.atramo});if(!st.atEd.info||AT_RAMOS.some(r=>r[3]===st.atEd.info))st.atEd.info=atRamo(d.atramo)[3];const y=scrollY;render();scrollTo(0,y);return}
   if(d.a==='atexemplo'){st.atEd=Object.assign({},st.atEd||{},atLer());st.atEd.info=atRamo(st.atEd.ramo)[3];const y=scrollY;render();scrollTo(0,y);return}
   if(d.a==='atnovo'){st.atEd=null;return render()}
-  if(d.ated){const x=(st.at||[]).find(y=>y.id===d.ated);st.atEd=Object.assign({},x);render();const f=document.getElementById('at-form');if(f)f.scrollIntoView({behavior:'smooth'});return}
+  if(d.a==='atcopiar'){const l=atLink();try{await navigator.clipboard.writeText(l);toast('Link copiado')}catch(e){prompt('Copie o link:',l)}return}
+  if(d.a==='atzap'){const t='Oi! Quer ver o atendente virtual funcionando na sua empresa, direto no seu WhatsApp? Preencha aqui rapidinho (2 minutos) que eu já ligo o teste para você:\n'+atLink();window.open('https://wa.me/?text='+encodeURIComponent(t),'_blank','noopener');return}
+  if(d.ated){const x=(st.at||[]).find(y=>y.id===d.ated);st.atEd=Object.assign({},x);if(!st.atEd.info)st.atEd.info=atRamo(x.ramo)[3];render();const f=document.getElementById('at-form');if(f)f.scrollIntoView({behavior:'smooth'});return}
   if(d.aton||d.atoff){const x=(st.at||[]).find(y=>y.id===(d.aton||d.atoff));if(x)await atLigar(x,!!d.aton);return}
   if(d.atdel){const x=(st.at||[]).find(y=>y.id===d.atdel);if(!x||!confirm('Remover o teste de '+x.empresa+'?'))return;const r=await sb.from('agente_testes').delete().eq('id',x.id);if(r.error)return toast(r.error.message);await loadAt();return render()}
   if(d.a==='atsalvar'){const x=atLer();st.atAvisar=!!(document.getElementById('at-avisar')||{}).checked;
@@ -1067,7 +1079,7 @@ async function atClick(d,b){
     const r=id?await sb.from('agente_testes').update(Object.assign({},x,{atualizado_em:new Date().toISOString()})).eq('id',id).select().single():await sb.from('agente_testes').upsert(x,{onConflict:'telefone'}).select().single();
     b.disabled=false;if(r.error)return toast('Não salvou: '+r.error.message);
     st.atEd=null;await loadAt();
-    if(d.ligar){const n=(st.at||[]).find(y=>y.id===r.data.id);if(n){if(n.ativo){await sb.rpc('agente_teste_ligar',{p_id:n.id,p_on:true,p_msg:null});await loadAt();toast('Teste atualizado. Ele já vale na próxima mensagem');return render()}return atLigar(n,true)}}
+    if(d.ligar){const n=(st.at||[]).find(y=>y.id===r.data.id);if(n){if(atLigado(n)){const mn=atMinutos();await sb.rpc('agente_teste_ligar_tempo',{p_id:n.id,p_on:true,p_msg:null,p_min:mn});await loadAt();toast('Teste atualizado. Ele já vale na próxima mensagem');return render()}return atLigar(n,true)}}
     toast('Teste salvo');return render()}
   return 'nada';
 }
@@ -1269,6 +1281,7 @@ function vMsg(){
 }
 
 /* ---------- eventos ---------- */
+document.addEventListener('change',e=>{const t0=e.target;if(t0&&t0.id==='at-min'){st.atMinSel=t0.value;const o=document.getElementById('at-min-o');if(o)o.hidden=t0.value!=='outro';return}if(t0&&t0.id==='at-min-n'){st.atMinN=t0.value;return}});
 document.addEventListener('change',e=>{const t=e.target;if(t&&t.dataset&&t.dataset.agtseg){st.agt=agtNovo(+t.value||0);return render()}if(t&&t.dataset&&t.dataset.agdia){const c=t.closest('.chip');if(c)c.classList.toggle('on',t.checked);return}if(t&&t.dataset&&t.dataset.prevseg){document.querySelectorAll('[data-cfg]').forEach(i=>{if(i.value!==String(cfg(i.dataset.cfg)??''))st.cfg[i.dataset.cfg]=i.value});st.prevSeg=+t.value||0;const y=scrollY;render();scrollTo(0,y)}});
 document.addEventListener('submit',async e=>{
   const f=e.target;

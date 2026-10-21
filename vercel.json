@@ -24,6 +24,10 @@
   ],
   "rewrites": [
     {
+      "source": "/experimente",
+      "destination": "/experimente.html"
+    },
+    {
       "source": "/teste/:t",
       "destination": "/impl.html"
     },
