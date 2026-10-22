@@ -245,6 +245,8 @@ textarea{padding:10px 12px;min-height:96px;line-height:1.4;resize:vertical}
 .seg label{position:relative}
 .seg input{position:absolute;opacity:0;pointer-events:none}
 .seg span{display:grid;place-items:center;min-height:38px;border-radius:9px;font-weight:600;color:var(--muted)}
+.seg.s3{grid-template-columns:repeat(3,1fr)}
+.seg.s3 span{text-align:center;line-height:1.2;padding:4px 6px}
 .seg input:checked+span{background:var(--surface);color:var(--accent);box-shadow:0 1px 2px rgba(0,0,0,.14)}
 .seg input:focus-visible+span{outline:2px solid var(--accent)}
 .item{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:8px}
@@ -1374,7 +1376,7 @@ function validCpf(s){const d=digits(s);if(d.length!==11||/^(\d)\1+$/.test(d))ret
   let sum=0;for(let i=0;i<9;i++)sum+=+d[i]*(10-i);let r=(sum*10)%11%10;if(r!==+d[9])return false;
   sum=0;for(let i=0;i<10;i++)sum+=+d[i]*(11-i);r=(sum*10)%11%10;return r===+d[10]}
 function waNumber(raw){const d=digits(raw);if(d.startsWith('55')&&d.length>=12)return d;if(d.length<=11)return '55'+d;return d}
-const fillTpl=(t,c)=>String(t||'').replace(/\{(\w+)\}/g,(m,k)=>c[k]!==undefined?c[k]:m);
+const fillTpl=(t,c)=>{let o=String(t||'').replace(/\{(\w+)\}/g,(m,k)=>c[k]!==undefined?c[k]:m);if(o.includes('\u0000'))o=o.replace(/^.*\u0000.*(\n|$)/gm,'').replace(/\n{3,}/g,'\n\n').trim();return o};
 function calcVenda(itens,jurosVenda,entrada){
   let base=0,sub=0;
   const linhas=itens.map(it=>{const b=Math.round(it.valor*it.qtd);const t=Math.round(b*(1+(it.juros||0)/100));base+=b;sub+=t;return {b:b,t:t}});
@@ -1627,7 +1629,7 @@ function makeVenda(clienteId,d){
   if(c.entrada>0)parcelas.push({n:0,tipo:'entrada',venc:d.data,valor:c.entrada,pago:true,pagoEm:d.data,contatoEm:null,forma:d.formaEntrada||'Pix'});
   splitParcelas(c.saldo,d.n,d.primeira).forEach(p=>parcelas.push(p));
   return {id:uid(),clienteId:clienteId,data:d.data,itens:d.itens.map(it=>({tipo:it.tipo,nome:it.nome,qtd:it.qtd,valor:it.valor,juros:it.juros,lenteId:it.lenteId||''})),
-    jurosVenda:d.jurosVenda||0,base:c.base,juros:c.juros,total:c.total,entrada:c.entrada,saldo:c.saldo,n:parcelas.filter(p=>p.tipo==='parcela').length,forma:d.forma,obs:String(d.obs||'').trim(),parcelas:parcelas,criadoEm:Date.now()};
+    jurosVenda:d.jurosVenda||0,base:c.base,juros:c.juros,total:c.total,entrada:c.entrada,saldo:c.saldo,n:parcelas.filter(p=>p.tipo==='parcela').length,forma:d.forma,obs:String(d.obs||'').trim(),parcelas:parcelas,criadoEm:Date.now(),...(d.forma==='Cartão de crédito'?{cartaoN:Math.max(1,Math.min(24,parseInt(d.cartaoN,10)||1)),cartaoParc:d.cartaoParc||0}:{})};
 }
 const vendasOk=()=>Object.values(S.vendas).filter(v=>!v.aguardando);
 const orcamentos=()=>Object.values(S.vendas).filter(v=>v.aguardando).sort((a,b)=>(b.criadoEm||0)-(a.criadoEm||0));
@@ -1664,11 +1666,13 @@ const aniPend=()=>aniversariantes(0).filter(x=>x.c.aniEm!==todayStr().slice(0,4)
 const sumT=a=>a.reduce((s,v)=>s+v.total,0);
 const itensTxt=v=>v.itens.map(i=>(i.qtd>1?i.qtd+'x ':'')+i.nome).join(', ');
 const pLabel=(v,p)=>(p.tipo==='entrada'?'Entrada':'Parcela '+p.n+'/'+v.n)+(p.parte===1?' (parcial)':p.parte===2?' (restante)':'');
-function pagamentoTxt(v){const c=cfg();if(v&&v.forma==='Boleto')return 'Pagamento por boleto.';return c.pix?'Pagamento via Pix. Chave Pix: '+c.pix:'Pagamento via Pix.'}
-function parcelasTxt(v){return v.parcelas.map(p=>pLabel(v,p)+': '+brl(p.valor)+' - '+fmtDate(p.venc)+(p.pago?' (pago)':'')).join('\n')}
+const ehCartao=v=>!!v&&v.forma==='Cartão de crédito';
+const cartaoTxt=v=>'Cartão de crédito em '+(v.cartaoN>1?v.cartaoN+'x':'1x')+(v.cartaoParc?' de '+brl(v.cartaoParc):'');
+function pagamentoTxt(v){const c=cfg();if(v&&v.forma==='Boleto')return 'Pagamento por boleto.';if(ehCartao(v))return '\u0000';return c.pix?'Pagamento via Pix. Chave Pix: '+c.pix:'Pagamento via Pix.'}
+function parcelasTxt(v){if(ehCartao(v))return cartaoTxt(v)+(v.aguardando?'':' (pago)');return v.parcelas.map(p=>pLabel(v,p)+': '+brl(p.valor)+' - '+fmtDate(p.venc)+(p.pago?' (pago)':'')).join('\n')}
 function ctx(v,p,cli){
   const c=cli||(v&&S.clientes[v.clienteId])||{};const o={cliente:firstName(c.nome),otica:cfg().nome,pix:cfg().pix};
-  if(v){o.itens=v.itens.map(i=>'• '+(i.qtd>1?i.qtd+'x ':'')+i.nome).join('\n');o.total=brl(v.total);o.entrada=brl(v.entrada);o.resumo=parcelasTxt(v);o.pagamento=pagamentoTxt(v);o.forma=v.forma}
+  if(v){o.itens=v.itens.map(i=>'• '+(i.qtd>1?i.qtd+'x ':'')+i.nome).join('\n');o.total=brl(v.total);o.entrada=brl(v.entrada);o.resumo=parcelasTxt(v);o.pagamento=pagamentoTxt(v);o.forma=v.forma;if(ehCartao(v))o.entrada='\u0000'}
   if(p){const e=encargos(p);o.multa=brl(e.multa);o.juros=brl(e.juros);o.atualizado=brl(e.total);o.encargos=e.total>p.valor?' Com multa e juros, o valor atualizado é de '+brl(e.total)+'.':'';o.recebido=brl(recv(p));o.datapago=fmtDate(p.pagoEm);o.valor=brl(p.valor);o.parcela=p.tipo==='entrada'?'de entrada':p.n+'/'+v.n;o.vencimento=fmtDate(p.venc);o.dias=plural(Math.max(0,diffDays(todayStr(),p.venc)),'dia','dias')}
   if(c.id){const r=refRevisao(c);if(r)o.tempo=tempoTxt(r)}
   premCtx(o,v,p);
@@ -2591,7 +2595,7 @@ function sheetVenda(id){
   (S.clientes[v.clienteId]?'<div><button class="btn sm" data-act="editcliente" data-c="'+c.id+'">Editar dados do cliente</button></div>':'')+'</div>'+
   '<div class="sec"><h3>Itens</h3><div class="stack">'+v.itens.map(i=>{const b=Math.round(i.valor*i.qtd);const t=Math.round(b*(1+(i.juros||0)/100));return '<div class="sum-row"><span>'+(i.qtd>1?i.qtd+'x ':'')+esc(i.nome)+(i.juros?' <span class="meta">(+'+String(i.juros).replace('.',',')+'% de juros)</span>':'')+'</span><b class="num">'+brl(t)+'</b></div>'}).join('')+'</div>'+
   '<div class="sum">'+(v.juros>0?'<div class="sum-row"><span>Itens sem juros</span><span>'+brl(v.base)+'</span></div><div class="sum-row"><span>Juros'+(v.jurosVenda?' (inclui '+String(v.jurosVenda).replace('.',',')+'% sobre a venda)':'')+'</span><span>'+brl(v.juros)+'</span></div>':'')+
-  '<div class="sum-row big"><span>Total</span><span>'+brl(v.total)+'</span></div><div class="sum-row"><span>Entrada</span><span>'+brl(v.entrada)+'</span></div><div class="sum-row"><span>Saldo parcelado</span><span>'+(v.n?v.n+'x · '+brl(v.saldo):'-')+'</span></div>'+(v.aguardando?'':'<div class="sum-row hl"><span>Já recebido</span><span>'+brl(pago)+'</span></div>')+'</div></div>'+
+  '<div class="sum-row big"><span>Total</span><span>'+brl(v.total)+'</span></div>'+(ehCartao(v)?'<div class="sum-row"><span>Cartão de crédito</span><span>'+esc((v.cartaoN||1)+'x'+(v.cartaoParc?' de '+brl(v.cartaoParc):''))+'</span></div>':'<div class="sum-row"><span>Entrada</span><span>'+brl(v.entrada)+'</span></div><div class="sum-row"><span>Saldo parcelado</span><span>'+(v.n?v.n+'x · '+brl(v.saldo):'-')+'</span></div>')+(v.aguardando?'':'<div class="sum-row hl"><span>Já recebido</span><span>'+brl(pago)+'</span></div>')+'</div></div>'+
   (v.obs?'<div class="sec"><h3>Observações</h3><p style="margin:0;overflow-wrap:anywhere">'+esc(v.obs)+'</p></div>':'')+
   (v.aguardando?'<div class="sec"><h3>Plano combinado</h3><div class="stack">'+v.parcelas.map(p=>'<div class="sum-row"><span>'+esc(pLabel(v,p))+' · '+(p.tipo==='entrada'?'na confirmação':fmtDate(p.venc))+'</span><b class="num">'+brl(p.valor)+'</b></div>').join('')+'</div><p class="sub">Nada disso conta como venda ainda. Ao confirmar o pagamento, a venda é criada e a entrada é registrada como recebida.</p></div>':'<div class="sec"><h3>Parcelas</h3><div class="stack">'+v.parcelas.map((p,i)=>pRow({v:v,p:p,i:i,c:c},{sheet:true})).join('')+'</div></div>')+
   (v.aguardando?'':entregaSec(v,c))+
@@ -2608,12 +2612,12 @@ const newItem=tipo=>({tipo:tipo,nome:'',qtd:'1',valor:'',juros:'',lenteId:''});
 const cliFalta=c=>{const f=[];if(digits(c.whatsapp||'').length<10)f.push('WhatsApp');if(digits(c.cpf||'').length<11)f.push('CPF');if(!String(c.endereco||'').trim())f.push('endereço');if(!String(c.nascimento||'').trim())f.push('data de nascimento');return f};
 const listaTxt=a=>a.length<2?a.join(''):a.slice(0,-1).join(', ')+' e '+a[a.length-1];
 const avisoFalta=c=>{const f=cliFalta(c);return f.length?'Falta preencher: '+listaTxt(f)+'. Você pode salvar assim e completar depois.':''};
-function newDraft(cid){return {editId:'',clienteId:cid||(Object.keys(S.clientes).length?'':'__novo'),novo:{nome:'',cpf:'',whatsapp:'',endereco:'',nascimento:'',receitas:[blankReceita()]},vendedorId:'',entrega:'',itens:[newItem('produto')],jurosVenda:'',entrada:'',formaEntrada:'Pix',n:'3',primeira:addMonths(todayStr(),1),forma:'Pix',data:todayStr(),obs:'',aguardando:false}}
+function newDraft(cid){return {editId:'',clienteId:cid||(Object.keys(S.clientes).length?'':'__novo'),novo:{nome:'',cpf:'',whatsapp:'',endereco:'',nascimento:'',receitas:[blankReceita()]},vendedorId:'',entrega:'',itens:[newItem('produto')],jurosVenda:'',entrada:'',formaEntrada:'Pix',n:'3',primeira:addMonths(todayStr(),1),forma:'Pix',cartaoN:'1',cartaoParc:'',data:todayStr(),obs:'',aguardando:false}}
 function editDraft(v){
   const par=v.parcelas.filter(p=>p.tipo==='parcela'&&p.parte!==2);const pct=x=>x?String(x).replace('.',','):'';const ent=v.parcelas.find(p=>p.tipo==='entrada');
   return {editId:v.id,clienteId:v.clienteId,novo:{nome:'',cpf:'',whatsapp:'',endereco:''},
     itens:v.itens.map(i=>({tipo:i.tipo,nome:i.nome,qtd:String(i.qtd),valor:centsToStr(i.valor),juros:pct(i.juros),lenteId:i.lenteId||''})),
-    jurosVenda:pct(v.jurosVenda),entrada:v.entrada?centsToStr(v.entrada):'',formaEntrada:(ent&&ent.forma)||'Pix',n:String(par.length),primeira:par.length?par[0].venc:addMonths(todayStr(),1),forma:v.forma,legPix:v.forma==='Pix'&&par.length>0,data:v.data,obs:v.obs||'',aguardando:!!v.aguardando,vendedorId:v.vendedorId||'',entrega:v.entregaPrev||''};
+    jurosVenda:pct(v.jurosVenda),entrada:v.entrada?centsToStr(v.entrada):'',formaEntrada:(ent&&ent.forma)||'Pix',n:String(par.length),primeira:par.length?par[0].venc:addMonths(todayStr(),1),forma:v.forma,legPix:v.forma==='Pix'&&par.length>0,cartaoN:String(v.cartaoN||1),cartaoParc:v.cartaoParc?centsToStr(v.cartaoParc):'',data:v.data,obs:v.obs||'',aguardando:!!v.aguardando,vendedorId:v.vendedorId||'',entrega:v.entregaPrev||''};
 }
 function sheetNova(){
   const D=ui.draft;const cs=Object.values(S.clientes).sort((a,b)=>a.nome.localeCompare(b.nome));
@@ -2627,8 +2631,9 @@ function sheetNova(){
   '<details><summary>Grau do cliente (opcional)</summary><div style="margin-top:10px">'+receitaForm((D.novo.receitas||(D.novo.receitas=[blankReceita()]))[0],0,'bind','novo.receitas.',false)+'</div></details></div></div>'+
   '<div class="sec"><h3>Itens da venda</h3><div id="items" class="stack"></div><div class="foot-row"><button class="btn" data-act="additem" data-t="produto">+ Produto</button><button class="btn" data-act="additem" data-t="lente">+ Lente</button></div>'+
   '<div class="field" data-pgparc'+(isAvista(D)?' hidden':'')+'><span>Juros sobre o total da venda (%), opcional</span><input type="text" inputmode="decimal" data-bind="jurosVenda" value="'+esc(D.jurosVenda)+'" placeholder="0"></div></div>'+
-  premVendSale(D)+'<div class="sec"><h3>Pagamento</h3>'+((!D.editId||(S.vendas[D.editId]&&S.vendas[D.editId].aguardando))?'<label class="aguard-box"><input type="checkbox" data-aguard'+(D.aguardando?' checked':'')+'><span><b>Aguardando pagamento</b><small>Use para orçamento: o cliente ainda vai pagar ou dar a entrada. Não conta como venda, nem no caixa, nem nas cobranças. Vira venda quando você marcar como pago.</small></span></label>':'')+'<div class="field"><span>Forma de pagamento</span><div class="seg" role="radiogroup" aria-label="Forma de pagamento"><label><input type="radio" name="forma" value="Pix" data-bind="forma"'+(D.forma==='Pix'?' checked':'')+'><span>'+(D.legPix?'Pix':'Pix à vista')+'</span></label><label><input type="radio" name="forma" value="Boleto" data-bind="forma"'+(D.forma==='Boleto'?' checked':'')+'><span>Boleto parcelado</span></label></div></div>'+
-  '<p class="sub" data-pgav'+(isAvista(D)?'':' hidden')+' style="margin:0 0 10px">Pagamento à vista no Pix: o valor total entra como recebido na data da venda, sem parcelas.</p>'+
+  premVendSale(D)+'<div class="sec"><h3>Pagamento</h3>'+((!D.editId||(S.vendas[D.editId]&&S.vendas[D.editId].aguardando))?'<label class="aguard-box"><input type="checkbox" data-aguard'+(D.aguardando?' checked':'')+'><span><b>Aguardando pagamento</b><small>Use para orçamento: o cliente ainda vai pagar ou dar a entrada. Não conta como venda, nem no caixa, nem nas cobranças. Vira venda quando você marcar como pago.</small></span></label>':'')+'<div class="field"><span>Forma de pagamento</span><div class="seg s3" role="radiogroup" aria-label="Forma de pagamento"><label><input type="radio" name="forma" value="Pix" data-bind="forma"'+(D.forma==='Pix'?' checked':'')+'><span>'+(D.legPix?'Pix':'Pix à vista')+'</span></label><label><input type="radio" name="forma" value="Boleto" data-bind="forma"'+(D.forma==='Boleto'?' checked':'')+'><span>Boleto parcelado</span></label><label><input type="radio" name="forma" value="Cartão de crédito" data-bind="forma"'+(D.forma==='Cartão de crédito'?' checked':'')+'><span>Cartão de crédito</span></label></div></div>'+
+  '<p class="sub" data-pgpix'+(isAvista(D)&&D.forma!=='Cartão de crédito'?'':' hidden')+' style="margin:0 0 10px">Pagamento à vista no Pix: o valor total entra como recebido na data da venda, sem parcelas.</p>'+
+  '<div data-pgcart'+(D.forma==='Cartão de crédito'?'':' hidden')+'><div class="grid2"><div class="field"><span>Em quantas vezes</span><select data-bind="cartaoN">'+Array.from({length:18},(_,i)=>i+1).map(k=>'<option value="'+k+'"'+(String(D.cartaoN||'1')===String(k)?' selected':'')+'>'+(k===1?'1x (à vista)':k+'x')+'</option>').join('')+'</select></div><div class="field"><span>Valor de cada parcela (R$), opcional</span><input type="text" inputmode="decimal" data-bind="cartaoParc" value="'+esc(D.cartaoParc||'')+'" placeholder="0,00"></div></div><p class="sub" style="margin:0 0 10px">O valor total entra como recebido na data da venda e o cliente não fica com parcelas para cobrar. Anote aqui quanto ficou cada parcela na maquininha, já com os juros dela. É só anotação, não muda o total da venda.</p></div>'+
   '<div class="grid2"><div class="field"><span>Data da venda</span><input type="date" data-bind="data" value="'+esc(D.data)+'"></div><div class="field"><span>Data de entrega (opcional)</span><input type="date" data-bind="entrega" value="'+esc(D.entrega||'')+'"></div></div>'+
   '<div class="grid2" data-pgparc'+(isAvista(D)?' hidden':'')+'><div class="field"><span>Entrada (R$)</span><input type="text" inputmode="decimal" data-bind="entrada" value="'+esc(D.entrada)+'" placeholder="0,00"></div><div class="field"><span>Entrada paga em</span><select data-bind="formaEntrada">'+FORMAS.map(f=>'<option'+(D.formaEntrada===f?' selected':'')+'>'+f+'</option>').join('')+'</select></div></div>'+
   '<div class="grid2" data-pgparc'+(isAvista(D)?' hidden':'')+'><div class="field"><span>Parcelas</span><input type="number" min="0" max="36" inputmode="numeric" data-bind="n" value="'+esc(D.n)+'"></div><div class="field"><span>Vencimento da 1ª parcela</span><input type="date" data-bind="primeira" value="'+esc(D.primeira)+'"></div></div>'+
@@ -2649,8 +2654,8 @@ function renderItems(){
   }).join('')+((D.itens.some(i=>i.tipo==='lente')&&!ls.length)?'<p class="sub">Cadastre suas lentes na aba Lentes e volte aqui.</p>':'');
 }
 // Pix = à vista (sem parcelas e sem juros); Boleto = parcelado. Vendas antigas parceladas no Pix continuam como estavam.
-const isAvista=D=>!!D&&D.forma==='Pix'&&!D.legPix;
-function pgToggle(){const av=isAvista(ui.draft);document.querySelectorAll('[data-pgparc]').forEach(el=>el.hidden=av);document.querySelectorAll('[data-pgav]').forEach(el=>el.hidden=!av)}
+const isAvista=D=>!!D&&((D.forma==='Pix'&&!D.legPix)||D.forma==='Cartão de crédito');
+function pgToggle(){const av=isAvista(ui.draft),cc=!!ui.draft&&ui.draft.forma==='Cartão de crédito';document.querySelectorAll('[data-pgparc]').forEach(el=>el.hidden=av);document.querySelectorAll('[data-pgpix]').forEach(el=>el.hidden=!av||cc);document.querySelectorAll('[data-pgcart]').forEach(el=>el.hidden=!cc)}
 function draftState(){
   const D=ui.draft;const errs=[],targets=[];const E=(m,sel)=>{errs.push(m);targets.push(sel||'')};
   if(D.clienteId==='__novo'){if(!D.novo.nome.trim())E('Informe o nome do cliente','[data-bind="novo.nome"]');else if(cpfDup(D.novo.cpf))E('Já existe cliente com este CPF: '+cpfDup(D.novo.cpf).nome,'[data-bind="novo.cpf"]')}
@@ -2675,7 +2680,8 @@ function updateVenda(){
   let h='<div class="sum-row"><span>Itens sem juros</span><span>'+brl(c.base)+'</span></div>';
   if(c.juros>0)h+='<div class="sum-row"><span>Juros aplicados</span><span>'+brl(c.juros)+'</span></div>';
   h+='<div class="sum-row big"><span>Total</span><span>'+brl(c.total)+'</span></div>';
-  if(st.av)h+='<div class="sum-row hl"><span>À vista no Pix</span><span>'+brl(c.total)+'</span></div>';
+  if(st.av&&ui.draft.forma==='Cartão de crédito'){const nn=parseInt(ui.draft.cartaoN,10)||1,pc=parseMoney(ui.draft.cartaoParc||'');h+='<div class="sum-row hl"><span>Cartão de crédito em '+nn+'x</span><span>'+(pc?nn+'x de '+brl(pc):brl(c.total))+'</span></div>';if(pc&&nn*pc!==c.total)h+='<div class="meta">Na maquininha o cliente paga '+brl(nn*pc)+' no total. Na venda fica '+brl(c.total)+'.</div>'}
+  else if(st.av)h+='<div class="sum-row hl"><span>À vista no Pix</span><span>'+brl(c.total)+'</span></div>';
   else{h+='<div class="sum-row"><span>Entrada</span><span>'+brl(c.entrada)+'</span></div>';
   h+='<div class="sum-row hl"><span>Saldo parcelado</span><span>'+(st.parc.length?st.parc.length+'x de '+brl(st.parc[0].valor):brl(c.saldo))+'</span></div>';
   if(st.parc.length){h+='<div class="meta">Vencimentos: '+st.parc.slice(0,4).map(p=>fmtShort(p.venc)).join(', ')+(st.parc.length>4?' ... '+fmtDate(st.parc[st.parc.length-1].venc):'')+'</div>';if(st.parc[st.parc.length-1].valor!==st.parc[0].valor)h+='<div class="meta">A última parcela leva a diferença dos centavos: '+brl(st.parc[st.parc.length-1].valor)+'</div>'}}
@@ -2689,7 +2695,7 @@ function salvarVenda(){
   if(!ui.draft)return;const st=draftState();if(st.errs.length){toast(st.errs[0]);return}
   const D=ui.draft;let cid=D.clienteId;
   if(cid==='__novo'){const cl=makeCliente(D.novo);cid=cl.id;S.clientes[cid]=cl;persist('clientes',cid);premWaHook('bv',null,null,cl)}
-  const v=makeVenda(cid,{itens:st.itens,jurosVenda:st.jv,entrada:st.entrada,formaEntrada:st.av?'Pix':D.formaEntrada,n:st.n,primeira:D.primeira,forma:D.forma,data:D.data,obs:D.obs});
+  const v=makeVenda(cid,{itens:st.itens,jurosVenda:st.jv,entrada:st.entrada,formaEntrada:st.av?(D.forma==='Cartão de crédito'?'Cartão de crédito':'Pix'):D.formaEntrada,n:st.n,primeira:D.primeira,forma:D.forma,data:D.data,obs:D.obs,cartaoN:D.cartaoN,cartaoParc:parseMoney(D.cartaoParc||'')});
   const old=D.editId?S.vendas[D.editId]:null;
   if(D.aguardando&&(!old||old.aguardando)){v.aguardando=true;v.parcelas.forEach(p=>{if(p.tipo==='entrada'){p.pago=false;p.pagoEm=null;p.forma=null}})}
   if(old){
@@ -2934,7 +2940,7 @@ function pdfBlob(v){
   v.parcelas.forEach(p=>{need(7);const st=pStatus(p);T(pLabel(v,p),M+2,y);T(fmtDate(p.venc),80,y);T(brl(p.valor),128,y,{align:'right'});
     if(st==='pago'){doc.setTextColor(23,112,63);T('Pago em '+fmtDate(p.pagoEm),140,y)}else if(st==='atraso'){doc.setTextColor(179,38,30);T('Em atraso',140,y)}else{doc.setTextColor(110,125,130);T('Em aberto',140,y)}
     doc.setTextColor(30,40,44);y+=5.5;doc.setDrawColor(228,236,238);doc.line(M,y-3.5,R,y-3.5)});
-  y+=5;section('Pagamento');kv('Parcelas via',v.forma);if(v.forma==='Pix')kv('Chave Pix',c.pix);kv('Observações',v.obs);
+  y+=5;section('Pagamento');kv('Parcelas via',v.forma);if(ehCartao(v))kv('No cartão',(v.cartaoN||1)+'x'+(v.cartaoParc?' de '+brl(v.cartaoParc):''));if(v.forma==='Pix')kv('Chave Pix',c.pix);kv('Observações',v.obs);
   const pages=doc.getNumberOfPages();
   for(let i=1;i<=pages;i++){doc.setPage(i);doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(130,142,146);T(c.nome+' - gerado em '+fmtDate(todayStr())+' - página '+i+' de '+pages,W/2,290,{align:'center'})}
   return doc.output('blob');
