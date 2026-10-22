@@ -131,7 +131,7 @@ function transcricao(msgs: Msg[]) {
 }
 
 /* ---------------- 1) quem está escrevendo: pessoa ou resposta automática? ---------------- */
-type Classe = { autor: "humano" | "automatico"; confianca: number; intencao: string; motivo: string; leitura?: string };
+type Classe = { autor: "humano" | "automatico"; confianca: number; intencao: string; motivo: string; leitura?: string; testeReal?: boolean };
 async function classificar(msgs: Msg[]): Promise<Classe> {
   const j = await chat({
     temperature: 0, max_tokens: 600, response_format: { type: "json_object" },
@@ -149,7 +149,8 @@ Também faça a LEITURA da conversa, para quem vai responder entender a pessoa d
 - clima: como a pessoa está (fria, curiosa, com pressa, educada mas sem interesse, animada).
 - quer_agora: o que ela espera da próxima mensagem, em uma frase.
 - proximo_passo: a melhor próxima ação, em uma frase, sem forçar venda.
-Responda só JSON: {"autor":"humano|automatico","confianca":0.0-1.0,"intencao":"...","motivo":"frase curta","ja_disse":["..."],"nao_perguntar":["..."],"clima":"...","quer_agora":"...","proximo_passo":"..."}` },
+- teste_real: true só quando a ÚLTIMA mensagem da [EMPRESA] aceita ou pede o teste real no WhatsApp dela (ex.: "quero o teste real", "pode preparar", "quero testar no meu WhatsApp"); senão false.
+Responda só JSON: {"autor":"humano|automatico","confianca":0.0-1.0,"intencao":"...","motivo":"frase curta","teste_real":false,"ja_disse":["..."],"nao_perguntar":["..."],"clima":"...","quer_agora":"...","proximo_passo":"..."}` },
       { role: "user", content: transcricao(msgs) },
     ],
   });
@@ -158,7 +159,7 @@ Responda só JSON: {"autor":"humano|automatico","confianca":0.0-1.0,"intencao":"
     const lista = (x: any) => (Array.isArray(x) ? x : []).map((y: any) => s(y, 160)).filter(Boolean).slice(0, 8);
     const jd = lista(o.ja_disse), np = lista(o.nao_perguntar);
     const leitura = [jd.length ? "O que a pessoa já disse (ou deixou claro): " + jd.join("; ") + "." : "", np.length ? "NÃO pergunte de novo: " + np.join("; ") + "." : "", o.clima ? "Clima da pessoa: " + s(o.clima, 120) + "." : "", o.quer_agora ? "O que ela espera agora: " + s(o.quer_agora, 200) + "." : "", o.proximo_passo ? "Melhor próximo passo: " + s(o.proximo_passo, 200) + "." : ""].filter(Boolean).join("\n");
-    return { autor: o.autor === "humano" ? "humano" : "automatico", confianca: Math.max(0, Math.min(1, Number(o.confianca) || 0)), intencao: s(o.intencao, 20) || "outro", motivo: s(o.motivo, 200), leitura };
+    return { autor: o.autor === "humano" ? "humano" : "automatico", confianca: Math.max(0, Math.min(1, Number(o.confianca) || 0)), intencao: s(o.intencao, 20) || "outro", motivo: s(o.motivo, 200), leitura, testeReal: o.teste_real === true };
   } catch { return { autor: "automatico", confianca: 0, intencao: "outro", motivo: "não deu para analisar" }; }
 }
 
@@ -357,6 +358,13 @@ function fechar(t: string, c: Cfg) {
   return p.slice(0, 3).join("\n\n");
 }
 
+/* a empresa topou o teste real: manda sempre o link para ela preencher (não depende da IA lembrar) */
+function linkReal(c: Cfg, l: any) { return `${c.baseEmp}/experimente?e=${encodeURIComponent(nomeCurto(l.nome))}`; }
+function comTesteReal(t: string, c: Cfg, l: any) {
+  if (/experimente/.test(t)) return t;
+  return `Combinado! É só preencher o básico aqui (serviços com preços e horário) que eu ligo o teste no WhatsApp de vocês:\n${linkReal(c, l)}\n\nQuando estiver pronto, chega uma mensagem pra vocês conversarem com o agente como se fossem um cliente.`;
+}
+
 function disseQuePassou(t: string, c: Cfg) {
   const primeiro = c.nome.split(" ")[0].normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   return new RegExp("(pass(ar|ando|o|ei)\\s+(a conversa\\s+)?(para o|pra o|pro|para)|avis(ar|ando|ei|o)\\s+o)\\s+" + primeiro, "i").test(t.normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
@@ -495,6 +503,7 @@ async function atenderMsg(b: any) {
     await acoesReais(l, c, feito, tel)("passar_para_eder", { resumo: `Quer fechar (${cl.motivo || "pediu para fechar"})` });
   }
   if (feito.includes("passou")) resposta = fechar(resposta, c);
+  else if (cl.testeReal && !ehOtica(l)) resposta = comTesteReal(resposta, c, l);
   if (l.segmento === "a confirmar" && ["pagina", "indicacao"].includes(l.origem || "")) {
     const e = await extrairEmpresa(msgs);
     if (e) await acoesReais(l, c, feito, tel)("registrar_empresa", e);
@@ -752,6 +761,7 @@ async function teste(req: Request, b: any, interno = false) {
   }
   if (resposta && !acoes.some((x) => String(x.txt).startsWith("Passaria a conversa")) && cl.intencao === "fechar" && disseQuePassou(resposta, c)) acoes.push({ txt: "Passaria a conversa para você (rede de segurança: ele disse que ia passar)" });
   if (resposta && acoes.some((x) => String(x.txt).startsWith("Passaria a conversa"))) resposta = fechar(resposta, c);
+  else if (resposta && cl.testeReal && !ehOtica(l)) { resposta = comTesteReal(resposta, c, l); acoes.push({ txt: "Mandou o link do teste real no WhatsApp" }); }
   if (l.origem && !acoes.some((x) => String(x.txt).startsWith("Registraria a empresa"))) { const e = await extrairEmpresa(msgs); if (e) acoes.push({ txt: `Registraria a empresa: ${e.nome}${e.segmento ? " (" + e.segmento + ")" : ""} (rede de segurança)` }); }
   return ok({ ok: true, cl, resposta, partes: resposta ? partes(resposta) : [], acoes });
 }
