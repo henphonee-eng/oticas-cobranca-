@@ -70,6 +70,7 @@ button,textarea{font:inherit;color:inherit}
 .cta-card{align-self:center;width:min(360px,94%);background:var(--in);color:var(--in-fg);border-radius:12px;padding:14px;margin:12px 0 6px;text-align:center;box-shadow:0 2px 8px rgba(11,20,26,.12)}
 .cta-card b{display:block;font-size:15px;margin-bottom:4px}
 .cta-card p{margin:0 0 12px;color:var(--meta);font-size:13.5px}
+.cta-real{display:block;margin-top:10px;color:inherit;font-size:13.5px;font-weight:600;text-decoration:underline;text-underline-offset:3px}
 .btn-cta{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:999px;background:var(--cta);color:var(--cta-fg);font-weight:700;padding:11px 18px;text-decoration:none;font-size:14.5px}
 .btn-cta svg{width:18px;height:18px}
 .sug{position:relative;z-index:1;display:flex;gap:8px;overflow-x:auto;padding:8px 10px 2px;scrollbar-width:none}
@@ -173,6 +174,7 @@ button,textarea{font:inherit;color:inherit}
   function fmt(s){return esc(s).replace(/\*([^*\n]+)\*/g,'<b>$1</b>').replace(/_([^_\n]+)_/g,'<i>$1</i>')}
   function hora(){var d=new Date();return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')}
   var TICK='<svg viewBox="0 0 16 11" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 6l3 3 6-7"/><path d="M6 9l1 1 6-8"/></svg>';
+  function realHref(){return '/experimente'+(E.nome&&E.nome!=='Sua Empresa'?'?e='+encodeURIComponent(E.nome):'')}
   function ctaHref(){return 'https://wa.me/'+CTA_NUM+'?text='+encodeURIComponent('Olá, Éder! Testei o Agente de IA'+(E.nome&&E.nome!=='Sua Empresa'?' ('+E.nome+')':'')+' e quero ele no WhatsApp da minha empresa.')}
 
   function desenhar(){
@@ -181,7 +183,7 @@ button,textarea{font:inherit;color:inherit}
     var prev='';
     chat.forEach(function(m){
       if(m.acao){h+='<div class="act">⚙️ '+esc(m.acao)+'</div>';prev='';return}
-      if(m.cta){h+='<div class="cta-card"><b>Gostou do atendimento?</b><p>Coloco esse agente no WhatsApp de vocês, com os serviços, valores e horários de verdade.</p><a class="btn-cta" target="_blank" rel="noopener" href="'+esc(ctaHref())+'">Quero esse agente</a></div>';prev='';return}
+      if(m.cta){h+='<div class="cta-card"><b>Gostou do atendimento?</b><p>Coloco esse agente no WhatsApp de vocês, com os serviços, valores e horários de verdade.</p><a class="btn-cta" target="_blank" rel="noopener" href="'+esc(ctaHref())+'">Quero esse agente</a><a class="cta-real" target="_blank" rel="noopener" href="'+esc(realHref())+'">Antes, quero testar no meu WhatsApp</a></div>';prev='';return}
       var k=m.eu?'out':'in';
       h+='<div class="msg '+k+(prev!==k?' first':'')+'">'+fmt(m.t)+'<span class="t">'+m.h+(m.eu?' '+TICK:'')+'</span></div>';prev=k;
     });
