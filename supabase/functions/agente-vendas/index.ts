@@ -131,24 +131,34 @@ function transcricao(msgs: Msg[]) {
 }
 
 /* ---------------- 1) quem está escrevendo: pessoa ou resposta automática? ---------------- */
-type Classe = { autor: "humano" | "automatico"; confianca: number; intencao: string; motivo: string };
+type Classe = { autor: "humano" | "automatico"; confianca: number; intencao: string; motivo: string; leitura?: string };
 async function classificar(msgs: Msg[]): Promise<Classe> {
   const j = await chat({
-    temperature: 0, max_tokens: 200, response_format: { type: "json_object" },
+    temperature: 0, max_tokens: 600, response_format: { type: "json_object" },
     messages: [
       { role: "system", content: `Você analisa conversas de WhatsApp entre uma empresa de tecnologia ([NÓS]) e empresas que ela prospectou ([EMPRESA]). Decida quem escreveu a ÚLTIMA mensagem da [EMPRESA] e o que ela quer.
 autor = "automatico" quando for mensagem automática ou de robô: saudação ou ausência do WhatsApp Business ("Olá! Obrigado por entrar em contato", "Em breve retornaremos", "nosso horário de atendimento é..."), menus ("digite 1", "escolha uma opção"), assistente virtual ou chatbot da empresa, mensagem genérica que não responde ao que dissemos, link de cardápio/catálogo enviado sozinho, ou texto que chegou poucos segundos depois da nossa mensagem com cara de modelo pronto. Também conta como automático um agente de IA da empresa que responde de forma genérica, repete apresentações ou faz perguntas de triagem padrão.
 Atenção: muitos robôs e agentes de IA se apresentam com nome de pessoa ("Eu sou a Eloisa e vou te acompanhar no atendimento", "Aqui é a Ana, assistente virtual") e perguntam "como posso ajudar?". Isso é AUTOMÁTICO, mesmo com emoji e tom pessoal, quando a mensagem não comenta nada específico do que dissemos (agente de IA, Connecta, o teste, o preço). Também é automático: "seu atendimento está sendo direcionado", "um de nossos atendentes vai continuar", "aguarde", protocolo de atendimento, pesquisa de satisfação. Se a [EMPRESA] já mandou mensagens automáticas antes nesta conversa, só marque "humano" quando a mensagem responder claramente ao que nós dissemos.
 Mensagem que começa com "Olá, Éder!" e fala da página do Agente de IA ou de um plano (às vezes termina com "(ref. ...)") foi enviada por uma pessoa que clicou na nossa página: autor = "humano".
 autor = "humano" quando a mensagem reage de forma específica ao que dissemos (pergunta preço, pede detalhes, diz que tem interesse ou que não tem, faz uma pergunta sobre o agente, responde com informalidade natural, cumprimenta de forma pessoal como "boa noite, quem fala?").
-intencao: "interesse" (quer saber mais, quer contratar, pediu proposta), "pergunta" (pergunta algo sobre a oferta, preço, como funciona, quem é), "objecao" (acha caro, já tem atendente, não confia em IA, sem tempo), "saudacao" (só cumprimentou), "sem_interesse" (disse que não quer, pediu para não mandar mais), "outro".
-Responda só JSON: {"autor":"humano|automatico","confianca":0.0-1.0,"intencao":"...","motivo":"frase curta"}` },
+intencao: "fechar" (decidiu contratar: escolheu o plano, disse que quer começar, pediu contrato, Pix, forma de pagamento ou proposta com valores), "interesse" (quer saber mais, topou ver uma demonstração ou testar), "pergunta" (pergunta algo sobre a oferta, preço, como funciona, quem é), "objecao" (acha caro, já tem atendente, não confia em IA, sem tempo), "saudacao" (só cumprimentou), "sem_interesse" (disse que não quer, pediu para não mandar mais), "outro".
+Atenção: "pode sim", "ok", "pode mandar" depois de oferecermos mostrar ou testar é "interesse", não "fechar".
+Também faça a LEITURA da conversa, para quem vai responder entender a pessoa de verdade:
+- ja_disse: tudo o que a [EMPRESA] já contou, inclusive o que ficou implícito (ex.: "a franquia já tem uma própria" = já tem um atendimento/agente da rede e a decisão provavelmente é da franquia).
+- nao_perguntar: perguntas que NÃO podem ser feitas porque já foram respondidas ou estão implícitas.
+- clima: como a pessoa está (fria, curiosa, com pressa, educada mas sem interesse, animada).
+- quer_agora: o que ela espera da próxima mensagem, em uma frase.
+- proximo_passo: a melhor próxima ação, em uma frase, sem forçar venda.
+Responda só JSON: {"autor":"humano|automatico","confianca":0.0-1.0,"intencao":"...","motivo":"frase curta","ja_disse":["..."],"nao_perguntar":["..."],"clima":"...","quer_agora":"...","proximo_passo":"..."}` },
       { role: "user", content: transcricao(msgs) },
     ],
   });
   try {
     const o = JSON.parse(j.choices?.[0]?.message?.content || "{}");
-    return { autor: o.autor === "humano" ? "humano" : "automatico", confianca: Math.max(0, Math.min(1, Number(o.confianca) || 0)), intencao: s(o.intencao, 20) || "outro", motivo: s(o.motivo, 200) };
+    const lista = (x: any) => (Array.isArray(x) ? x : []).map((y: any) => s(y, 160)).filter(Boolean).slice(0, 8);
+    const jd = lista(o.ja_disse), np = lista(o.nao_perguntar);
+    const leitura = [jd.length ? "O que a pessoa já disse (ou deixou claro): " + jd.join("; ") + "." : "", np.length ? "NÃO pergunte de novo: " + np.join("; ") + "." : "", o.clima ? "Clima da pessoa: " + s(o.clima, 120) + "." : "", o.quer_agora ? "O que ela espera agora: " + s(o.quer_agora, 200) + "." : "", o.proximo_passo ? "Melhor próximo passo: " + s(o.proximo_passo, 200) + "." : ""].filter(Boolean).join("\n");
+    return { autor: o.autor === "humano" ? "humano" : "automatico", confianca: Math.max(0, Math.min(1, Number(o.confianca) || 0)), intencao: s(o.intencao, 20) || "outro", motivo: s(o.motivo, 200), leitura };
   } catch { return { autor: "automatico", confianca: 0, intencao: "outro", motivo: "não deu para analisar" }; }
 }
 
@@ -179,7 +189,7 @@ A primeira mensagem que a empresa recebeu já tinha os dois links (o teste e a p
 - *Essencial*: implantação R$ 497 + R$ 197 por mês. Atende 24h, tira dúvidas, passa preços e horários, entende áudio e foto, faz follow-up automático de quem perguntou e não fechou (uma mensagem cerca de 1 dia depois) e chama a equipe. Vem com um CRM com a marca da empresa: clientes e histórico das conversas do agente.
 - *Profissional* (o que mais recomendamos): implantação R$ 797 + R$ 297 por mês. Tudo do Essencial + agenda própria (o agente vê os horários livres e marca, remarca e cancela sozinho), lembrete do horário na véspera (pedindo para confirmar) e umas 2 horas antes, mensagem de parabéns no aniversário do cliente (o agente pergunta a data) e 1 campanha da promoção do mês para os clientes que já falaram com a empresa (com opção de sair). Tudo isso a empresa liga, desliga e acompanha na área do cliente. Vem com o CRM completo do ramo da empresa: agenda ou pedidos, clientes, lembretes e os números do dia.
 - *Sob medida*: implantação de R$ 1.997 por *R$ 1.457* (oferta) + a partir de R$ 497 por mês. Tudo do Profissional, até 4 campanhas por mês, e um CRM feito do zero para a empresa: financeiro, cobranças, relatórios e o que mais ela precisar.
-Se a empresa disser que já tem um chatbot ou outro agente: pergunte o que ele faz hoje e mostre a diferença. Chatbot comum só responde com menu; o nosso conversa como uma pessoa, entende áudio e foto, marca na agenda própria, lembra o cliente na véspera, chama de volta quem não fechou, manda parabéns e a promoção do mês, e tudo fica num CRM com a marca dela. Sugira que ela teste o nosso agente para comparar.
+Se a empresa disser que já tem um chatbot ou outro agente: se ela ainda não contou, pergunte o que ele faz hoje; depois mostre UMA diferença que tenha a ver com o que ela contou (não a lista toda). Diferenças possíveis: chatbot comum só responde com menu; o nosso conversa como uma pessoa, entende áudio e foto, marca na agenda própria, lembra o cliente na véspera, chama de volta quem não fechou, manda parabéns e a promoção do mês, e tudo fica num CRM com a marca dela. Sugira que ela teste o nosso agente para comparar.
 Pagamento da implantação: *50% no início e 50% na entrega*. A primeira mensalidade só vence 30 dias depois que o agente começa a funcionar. Prazo de implantação: *até 7 dias* depois que a empresa envia o cadastro, assina o contrato e paga a primeira parte. Como funciona depois do fechamento: a empresa preenche um cadastro rápido pelo celular (quase tudo é tocar nas opções), assina o contrato on-line e recebe um teste real do agente já com as informações dela, onde pede os ajustes que quiser antes de ligar. Não tem fidelidade nem multa: a empresa não fica presa e pode cancelar quando quiser, só avisando com 30 dias de antecedência; o contrato é só de prestação de serviço (o que a gente entrega, prazo, pagamento e cuidado com os dados). Use isso quando a empresa hesitar, tiver medo de se comprometer ou perguntar sobre contrato, fidelidade ou cancelamento, por exemplo: "Você não fica preso a nada, se não gostar é só avisar com 30 dias." Não existe outro desconto além da oferta do Sob medida; se pedirem desconto, diga que vai ver com o ${c.nome.split(" ")[0]} na conversa.`);
   }
   L.push(`
@@ -194,6 +204,18 @@ Se a empresa perguntar se a gente faz outro tipo de serviço, ou citar um destes
 - *Diagnóstico gratuito*: uma conversa com o ${c.nome.split(" ")[0]} para entender a empresa e indicar o que faz sentido.
 Não puxe esses serviços por conta própria: o foco da conversa é o Agente de IA. Quando fizer sentido (ex.: a empresa não tem site), pode citar o combo uma vez. Para automações e sistema sob medida, o valor final depende do que a empresa precisa: diga o "a partir de" e que o ${c.nome.split(" ")[0]} fecha o valor exato. Se a empresa quiser contratar algum desses serviços, use passar_para_eder com o serviço no resumo. Não invente outros serviços além destes.`);
   L.push(`
+## Escute antes de vender (o mais importante)
+Antes de escrever, releia a conversa inteira e entenda o que a pessoa disse, inclusive o que ficou nas entrelinhas. Uma pessoa atenciosa da equipe faria assim:
+- Comece reagindo ao que ela acabou de dizer, com as palavras dela, de um jeito específico (nada de "Que ótimo!", "Perfeito!" ou "Legal, Fulana!" no começo de toda resposta; varie e só use o nome dela de vez em quando).
+- Nunca pergunte algo que ela já respondeu ou que ficou implícito. Ex.: se ela disse "a franquia já tem uma própria", ela já tem um atendimento ou agente da rede: não pergunte se o atendimento é 24h nem se usam sistema.
+- Se ela escreve curto e seco, responda curto (1 ou 2 mensagens). Não despeje vantagens; uma ideia por vez.
+- Quando ela já tem uma solução, respeite. Em vez de listar vantagens, faça UMA pergunta curiosa sobre algo que talvez falte (ex.: "E quando o paciente marca e não aparece, alguém lembra ele na véspera?") ou ofereça o teste para comparar. Se ela não mostrar abertura, agradeça e deixe a porta aberta, sem insistir.
+- Franquia ou rede: quem decide costuma ser a franqueadora. Pergunte com leveza se a unidade pode escolher as próprias ferramentas ou se isso vem da rede; se vem da rede, agradeça, deixe o contato e não insista.
+- Faça só o que você consegue cumprir. Não prometa proposta, estudo, material ou retorno do ${c.nome.split(" ")[0]} quando a pessoa não pediu para fechar nem para falar com ele.
+- Quando oferecer mostrar como funciona e ela topar ("pode sim", "pode mandar"), mostre na hora: mande o link do teste do agente com o nome da empresa (${link}) e diga em uma frase o que testar (ex.: pedir um horário, mandar um áudio). Se ela quiser testar no próprio WhatsApp, mande ${c.baseEmp}/experimente (ela preenche o básico e a gente liga o teste). Isso NÃO é fechamento: não passe para o ${c.nome.split(" ")[0]} e não fale de pagamento.
+- Só fale de valores, implantação ou forma de pagamento quando ela perguntar ou quando decidir contratar.
+- Não diga que o agente integra com o sistema que a empresa já usa: isso não está confirmado. Se perguntarem, diga que o ${c.nome.split(" ")[0]} confirma caso a caso.
+
 ## Como conduzir
 1. Responda o que perguntaram primeiro, de forma simples. Se perguntarem quanto custa, diga logo o valor de entrada (para empresas: a partir de R$ 197 por mês no Essencial, com implantação de R$ 497; para óticas: a partir de R$ 47 por mês) e explique em seguida que depende do que a empresa precisa. Depois faça UMA pergunta para entender a empresa: quantas mensagens recebem por dia, quem responde o WhatsApp hoje, o que mais perguntam, se perdem clientes fora do horário, se usam agenda ou algum sistema, o que mais precisam além do atendimento.
 Se a pessoa disser que testou o agente ou viu a página, pergunte o que achou ou o que mais chamou a atenção, e conecte com a realidade da empresa. Se a mensagem veio da página (ex.: "Vi a página do Agente de IA e quero saber mais" ou "Tenho interesse no plano Profissional"), trate como interesse: confirme o plano, tire a dúvida e pergunte se querem começar a implantação; se já escolheu o plano e quer fechar, use passar_para_eder. Ignore o código "(ref. ...)" no fim da mensagem, ele é só para identificar a empresa.
@@ -204,11 +226,11 @@ Se a pessoa disser que testou o agente ou viu a página, pergunte o que achou ou
 - "Cliente não gosta de robô": ele conversa de forma natural, entende áudio e chama uma pessoa quando precisa; convide para testar no link.
 - "Não tenho tempo": a gente configura tudo, a empresa só confirma as informações.
 - "Preciso trocar de número?": não, funciona no mesmo número que os clientes já conhecem.
-- "Já tenho um sistema": o CRM vem junto e já recebe tudo o que o agente faz; se quiserem manter o sistema atual, o ${c.nome.split(" ")[0]} vê na conversa como fica.
+- "Já tenho um sistema": tudo bem, o agente cuida da conversa no WhatsApp e o CRM vem junto; se quiserem manter o sistema atual, o ${c.nome.split(" ")[0]} vê como fica (não prometa integração).
 - "Vou pensar": respeite, pergunte o que falta para decidir e resolva essa dúvida você mesmo.
 4. Você faz a venda inteira: explica, tira todas as dúvidas, quebra as objeções, ajuda a escolher o plano e conduz até a empresa decidir contratar. Não ofereça reunião nem ligação por conta própria. Quando sentir interesse, avance: indique o plano que faz sentido e pergunte se querem começar a implantação.
 Só ofereça uma conversa com o ${c.nome.split(" ")[0]} quando a empresa pedir para falar com ele ou com uma pessoa, ou quando perguntar algo que você não pode responder (contrato, prazo exato, integração com um sistema específico). Nesse caso use horarios_conversa, ofereça no máximo 3 opções, pergunte o nome de quem vai participar e só marque (marcar_conversa) depois que a pessoa escolher. Confirme dia e hora.
-5. Quando a empresa decidir contratar (escolheu o plano, disse que quer começar, pediu contrato, Pix ou proposta), use passar_para_eder e diga que vai passar para o ${c.nome.split(" ")[0]} fazer a implantação e o contrato, lembrando que a implantação é *50% no início e 50% na entrega*. Diga que ele continua por aqui mesmo, nesta conversa. Depois disso não faça nenhuma pergunta (nem telefone, nem horário): só confirme que ele já vai chamar.
+5. Quando a empresa decidir contratar (escolheu o plano, disse que quer começar, pediu contrato, Pix ou proposta com valores), use passar_para_eder. Topar ver um teste ou uma demonstração NÃO é decidir contratar. Ao passar, diga que vai passar para o ${c.nome.split(" ")[0]} fazer a implantação e o contrato, lembrando que a implantação é *50% no início e 50% na entrega*. Diga que ele continua por aqui mesmo, nesta conversa. Depois disso não faça nenhuma pergunta (nem telefone, nem horário): só confirme que ele já vai chamar.
 6. Use anotar para guardar o que a empresa contou (volume de mensagens, dificuldades, o que precisa).
 7. Se a empresa disser que não tem interesse, agradeça em uma frase, sem insistir, e use sem_interesse.
 8. Nunca invente funcionalidades, integrações, prazos ou casos de clientes. Se perguntarem algo que você não sabe (integração com um sistema específico, detalhes do contrato), diga que o ${c.nome.split(" ")[0]} confirma na conversa.
@@ -293,11 +315,12 @@ function ferramentas() {
   return T;
 }
 
-async function vender(l: any, c: Cfg, msgs: Msg[], exec: (n: string, a: any) => Promise<unknown>) {
+async function vender(l: any, c: Cfg, msgs: Msg[], exec: (n: string, a: any) => Promise<unknown>, extra = "") {
   const conv: any[] = [{ role: "system", content: sistemaVendas(l, c) }];
   for (const m of msgs) conv.push({ role: m.de_mim ? "assistant" : "user", content: m.texto });
   // a API pede que a conversa termine com a empresa
   while (conv.length > 1 && conv[conv.length - 1].role === "assistant") conv.pop();
+  if (l._leitura || extra) conv.push({ role: "system", content: ["Leitura interna desta conversa (não mostre isto à empresa):", l._leitura || "", extra].filter(Boolean).join("\n") });
   for (let i = 0; i < 6; i++) {
     const j = await chat({ messages: conv, tools: ferramentas(), temperature: 0.4, max_tokens: 450 });
     const m = j.choices?.[0]?.message;
@@ -450,9 +473,16 @@ async function atenderMsg(b: any) {
 
   l._acessos = await acessosTexto(lead);
   l._quem = quemE(l, tel);
+  l._leitura = cl.leitura || "";
   const feito: string[] = [];
   let resposta = "";
-  try { resposta = await vender(l, c, msgs, acoesReais(l, c, feito, tel)); }
+  try {
+    resposta = await vender(l, c, msgs, acoesReais(l, c, feito, tel));
+    // disse que vai passar para o Éder sem a empresa ter decidido contratar: reescreve seguindo a conversa
+    if (resposta && !feito.includes("passou") && cl.intencao !== "fechar" && disseQuePassou(resposta, c)) {
+      resposta = await vender(l, c, msgs, acoesReais(l, c, feito, tel), `Atenção: a empresa NÃO decidiu contratar, então não passe a conversa para o ${c.nome.split(" ")[0]}, não prometa proposta e não fale de pagamento. Continue você mesmo com o melhor próximo passo (se ela topou ver como funciona, mande o link do teste).`);
+    }
+  }
   catch (e: any) {
     console.error("agente-vendas", e.message);
     await avisar(`📩 ${nomeCurto(l.nome)} respondeu`, "O agente não conseguiu responder agora. Responda pelo WhatsApp.", "ag-" + lead, { urgente: true });
@@ -460,7 +490,7 @@ async function atenderMsg(b: any) {
   }
   if (!resposta) return { ok: false, vazio: true };
   // rede de segurança: disse que vai passar para o Éder, mas não usou a ferramenta
-  if (!feito.includes("passou") && disseQuePassou(resposta, c)) {
+  if (!feito.includes("passou") && cl.intencao === "fechar" && disseQuePassou(resposta, c)) {
     await acoesReais(l, c, feito, tel)("passar_para_eder", { resumo: `Quer fechar (${cl.motivo || "pediu para fechar"})` });
   }
   if (feito.includes("passou")) resposta = fechar(resposta, c);
@@ -476,7 +506,7 @@ async function atenderMsg(b: any) {
   });
   const ins = await db.from("prosp_wa_fila").insert(rows);
   if (ins.error) throw new Error(ins.error.message);
-  if (cl.intencao === "interesse" && !feito.length && l.status !== "interessada") {
+  if (["interesse", "fechar"].includes(cl.intencao) && !feito.length && l.status !== "interessada") {
     await db.from("prosp_leads").update({ status: "interessada" }).eq("id", l.id);
     await avisar(`💬 ${nomeCurto(l.nome)} se interessou`, "O agente está conversando. Toque para acompanhar.", "ag-" + l.id, { tipo: "interesse", lead: l.id });
   }
@@ -713,8 +743,13 @@ async function teste(req: Request, b: any, interno = false) {
     if (n === "registrar_empresa") { acoes.push({ txt: `Registraria a empresa: ${s(a.nome, 80)}${a.segmento ? " (" + s(a.segmento, 60) + ")" : ""}${a.outra_empresa ? " como contato separado" : ""}` }); return { ok: true }; }
     return { ok: false };
   };
+  l._leitura = cl.leitura || "";
   let resposta = await vender(l, c, msgs, exec);
-  if (resposta && !acoes.some((x) => String(x.txt).startsWith("Passaria a conversa")) && disseQuePassou(resposta, c)) acoes.push({ txt: "Passaria a conversa para você (rede de segurança: ele disse que ia passar)" });
+  if (resposta && !acoes.some((x) => String(x.txt).startsWith("Passaria a conversa")) && cl.intencao !== "fechar" && disseQuePassou(resposta, c)) {
+    acoes.push({ txt: "Reescreveu: ia passar para você sem a empresa ter decidido" });
+    resposta = await vender(l, c, msgs, exec, `Atenção: a empresa NÃO decidiu contratar, então não passe a conversa para o ${c.nome.split(" ")[0]}, não prometa proposta e não fale de pagamento. Continue você mesmo com o melhor próximo passo (se ela topou ver como funciona, mande o link do teste).`);
+  }
+  if (resposta && !acoes.some((x) => String(x.txt).startsWith("Passaria a conversa")) && cl.intencao === "fechar" && disseQuePassou(resposta, c)) acoes.push({ txt: "Passaria a conversa para você (rede de segurança: ele disse que ia passar)" });
   if (resposta && acoes.some((x) => String(x.txt).startsWith("Passaria a conversa"))) resposta = fechar(resposta, c);
   if (l.origem && !acoes.some((x) => String(x.txt).startsWith("Registraria a empresa"))) { const e = await extrairEmpresa(msgs); if (e) acoes.push({ txt: `Registraria a empresa: ${e.nome}${e.segmento ? " (" + e.segmento + ")" : ""} (rede de segurança)` }); }
   return ok({ ok: true, cl, resposta, partes: resposta ? partes(resposta) : [], acoes });
