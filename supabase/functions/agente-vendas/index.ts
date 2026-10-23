@@ -397,6 +397,14 @@ function comVideo(resp: string, ultCliente: string, l: any, c: Cfg, msgs: Msg[] 
   if (!c.video || !pede || String(resp).includes(c.video) || msgs.some((m) => m.de_mim && m.texto.includes(c.video))) return resp;
   return `Tenho sim! Nesse vídeo dá para ver em menos de 1 minuto o agente atendendo no WhatsApp e o CRM feito sob medida para cada empresa:\n${c.video}\n\nE se quiser sentir na prática, dá para conversar com o agente com o nome de vocês aqui: ${linkTeste(l, c)}`;
 }
+/* arquivo .mp4 do vídeo de demonstração (o conector manda como vídeo no WhatsApp; a legenda leva o link da página) */
+function arquivoVideo(c: Cfg) {
+  const v = c.video || "";
+  if (/\.mp4(\?|#|$)/i.test(v)) return v;
+  try { const u = new URL(v); if (/^\/video\/?$/.test(u.pathname)) return u.origin + "/video/connecta-demo.mp4"; } catch (_) { /* sem vídeo */ }
+  return "";
+}
+const jaMandouVideo = (msgs: Msg[]) => msgs.some((m) => m.de_mim && /^🎬 Vídeo/.test(m.texto));
 const disseQuePede = (t: string, c: Cfg) => new RegExp("(pedi|vou pedir|pedir|avisei|vou avisar)\\s+(para|pro|pra|ao|o)\\s+(o\\s+)?" + c.nome.split(" ")[0].normalize("NFD").replace(/[\u0300-\u036f]/g, ""), "i").test(String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
 
 function disseQuePassou(t: string, c: Cfg) {
@@ -578,9 +586,13 @@ async function atenderMsg(b: any) {
   }
   // como uma pessoa: várias mensagens curtas, cada uma com o seu tempo de digitação
   let t = Date.now();
+  const arq = arquivoVideo(c);
+  let comArquivo = !!arq && !jaMandouVideo(msgs);
   const rows = partes(resposta).map((p, i) => {
     t += (i === 0 ? 3000 : 2500) + Math.min(14000, p.length * 45);
-    return { lead_id: l.id, tipo: "manual", telefone: tel, texto: p, status: "aguardando", enviar_apos: new Date(t).toISOString(), criado_em: new Date(Date.now() + i).toISOString(), origem: "agente" };
+    const midia = comArquivo && p.includes(c.video) ? arq : null;
+    if (midia) comArquivo = false; // o arquivo vai uma vez só, junto com a mensagem que tem o link
+    return { lead_id: l.id, tipo: "manual", telefone: tel, texto: p, midia, status: "aguardando", enviar_apos: new Date(t).toISOString(), criado_em: new Date(Date.now() + i).toISOString(), origem: "agente" };
   });
   const ins = await db.from("prosp_wa_fila").insert(rows);
   if (ins.error) throw new Error(ins.error.message);
@@ -866,6 +878,7 @@ async function teste(req: Request, b: any, interno = false) {
   if (resposta) { resposta = semPerguntaOferta(semMarcacao(resposta)); if (prometeuMaterial(resposta, c)) resposta = `Vou pedir para o ${c.nome.split(" ")[0]} te mandar isso aqui mesmo na conversa, tá? Ele já foi avisado.`; }
   if (resposta && acoes.some((x) => String(x.txt).startsWith("Passaria a conversa"))) resposta = fechar(resposta, c);
   else if (resposta && cl.testeReal && !ehOtica(l)) { resposta = comTesteReal(resposta, c, l); acoes.push({ txt: "Mandou o link do teste real no WhatsApp" }); }
+  if (resposta && c.video && resposta.includes(c.video) && arquivoVideo(c)) acoes.push({ txt: "Mandaria o vídeo como arquivo no WhatsApp, com o link na legenda" });
   if (l.origem && !acoes.some((x) => String(x.txt).startsWith("Registraria a empresa"))) { const e = await extrairEmpresa(msgs); if (e) acoes.push({ txt: `Registraria a empresa: ${e.nome}${e.segmento ? " (" + e.segmento + ")" : ""} (rede de segurança)` }); }
   return ok({ ok: true, cl, resposta, partes: resposta ? partes(resposta) : [], acoes });
 }
