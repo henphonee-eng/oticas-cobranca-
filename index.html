@@ -3085,38 +3085,52 @@ async function osWord(){
       if(!v.os){const o=osBase(v);c.os=o;v.os=o;persist('clientes',c.id)} // cada OS nova ganha o próximo número
       if(btn)btn.textContent='Gerando '+(i+1)+' de '+lista.length+'…';
       const j=await pdfParaJpg(osBlob(v),300);const u=new Uint8Array(await j.arrayBuffer());
-      const bm=await createImageBitmap(j);imgs.push({data:u,w:bm.width,h:bm.height});bm.close&&bm.close();
+      const bm=await createImageBitmap(j);imgs.push({data:u,w:bm.width,h:bm.height,v:v});bm.close&&bm.close();
     }
     if(!imgs.length)return toast('Nenhuma OS para gerar');
     await saveFile('OS_para_imprimir_'+todayStr()+'.docx',docxImagens(imgs),plural(imgs.length,'OS','OS')+' no Word, '+plural(Math.ceil(imgs.length/2),'folha','folhas'));
+    imgs.forEach(im=>osMarcar(im.v));ui.osSel={};
   }catch(e){toast('Não deu para gerar o arquivo agora. Confira a internet e tente de novo.')}
   finally{if($('#oslist'))$('#oslist').innerHTML=osLista()}
 }
+/* OS baixada: guarda quando foi baixada/impressa; se chegar receita mais nova, ela volta a ser "nova" */
+function osUltRec(c){const r=(c&&c.receitas||[]).filter(x=>!receitaVazia(x)).sort((a,b)=>(b.data||'').localeCompare(a.data||''))[0];return r&&r.data||''}
+function osMarcar(v){if(!v)return;const em=new Date().toISOString();
+  if(v._c){v._c.osBaixa={em:em,rec:osUltRec(v._c)};persist('clientes',v._c.id)}
+  else if(S.vendas[v.id]){v.osBaixa={em:em};persist('vendas',v.id)}}
+const osFoiBaixada=c=>!!(c.osBaixa&&c.osBaixa.em&&(c.osBaixa.rec||'')>=osUltRec(c));
+function osQuando(iso){try{const d=new Date(iso);return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',timeZone:'America/Recife'})+' às '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',timeZone:'America/Recife'})}catch(e){return ''}}
 function osGerar(id,imprimir){
   const v=osSubj(id);if(!v)return;
   if(!window.jspdf){toast('O gerador de PDF não carregou. Recarregue a página.');return}
   if(ui.os&&ui.os._v===id){const o=JSON.parse(JSON.stringify(ui.os));delete o._v;v.os=o;if(v._c){v._c.os=o;persist('clientes',v._c.id)}else persist('vendas',v.id)}
   const blob=osBlob(v);const cli=S.clientes[v.clienteId]||{};
-  if(imprimir){const url=URL.createObjectURL(blob);const w=window.open(url,'_blank');setTimeout(()=>URL.revokeObjectURL(url),60000);if(w){toast('OS aberta para imprimir');return}}
+  if(imprimir){const url=URL.createObjectURL(blob);const w=window.open(url,'_blank');setTimeout(()=>URL.revokeObjectURL(url),60000);if(w){osMarcar(v);osAtualizar();toast('OS aberta para imprimir');return}}
   const nome='OS_'+slug(cli.nome||'cliente')+'_'+(v.os&&v.os.num||'');
   toast('Gerando a imagem da OS…');
   pdfParaJpg(blob,300).then(j=>saveFile(nome+'.jpg',j,'Imagem da OS pronta (JPG)'))
-    .catch(()=>saveFile(nome+'.pdf',blob,'Não deu para gerar a imagem agora: baixei a OS em PDF'));
+    .catch(()=>saveFile(nome+'.pdf',blob,'Não deu para gerar a imagem agora: baixei a OS em PDF'))
+    .then(()=>{osMarcar(v);osAtualizar()});
 }
 /* ---------- aba Ordens de serviço ---------- */
-function osClientes(){
-  const q=(ui.osQ||'').trim().toLowerCase();
-  return Object.values(S.clientes).map(c=>{const r=(c.receitas||[]).filter(x=>!receitaVazia(x)).sort((a,b)=>(b.data||'').localeCompare(a.data||''))[0];return r?{c:c,r:r}:null}).filter(x=>x&&(!q||x.c.nome.toLowerCase().includes(q))).sort((a,b)=>a.c.nome.localeCompare(b.c.nome));
+function osAtualizar(){const el=$('#oslist');if(el)el.innerHTML=osLista()}
+function osClientes(todas){
+  const q=(ui.osQ||'').trim().toLowerCase(),f=todas?'todas':(ui.osF||'novas');
+  return Object.values(S.clientes).map(c=>{const r=(c.receitas||[]).filter(x=>!receitaVazia(x)).sort((a,b)=>(b.data||'').localeCompare(a.data||''))[0];return r?{c:c,r:r}:null}).filter(x=>x&&(!q||x.c.nome.toLowerCase().includes(q))&&(f==='todas'||(f==='baixadas')===osFoiBaixada(x.c))).sort((a,b)=>a.c.nome.localeCompare(b.c.nome));
 }
 function osLista(){
-  const l=osClientes();ui.osSel=ui.osSel||{};
+  const tudo=osClientes(true),l=osClientes();ui.osSel=ui.osSel||{};const f=ui.osF||'novas';
+  const nB=tudo.filter(x=>osFoiBaixada(x.c)).length;
+  const filtros=tudo.length?'<div class="filters" style="margin-bottom:12px">'+[['novas','Novas para baixar',tudo.length-nB],['baixadas','Já baixadas',nB],['todas','Todas',tudo.length]].map(c=>'<button class="fchip" data-act="osfiltro" data-f="'+c[0]+'" aria-pressed="'+(f===c[0])+'">'+c[1]+' ('+c[2]+')</button>').join('')+'</div>':'';
   const nSel=Object.keys(ui.osSel).filter(k=>ui.osSel[k]&&S.clientes[k]).length;
-  const barra=l.length?'<div class="card" style="margin-bottom:12px"><b>Imprimir várias OS</b><div class="meta">Marque as ordens de serviço e baixe um arquivo do Word com duas OS por folha.</div><div style="display:flex;flex-direction:row;gap:8px;flex-wrap:wrap;justify-content:flex-start;margin-top:10px">'+
+  const barra=!l.length?'':'<div class="card" style="margin-bottom:12px"><b>Imprimir várias OS</b><div class="meta">Marque as ordens de serviço e baixe um arquivo do Word com duas OS por folha.</div><div style="display:flex;flex-direction:row;gap:8px;flex-wrap:wrap;justify-content:flex-start;margin-top:10px">'+
     '<button class="btn sm" data-act="osseltodas">Selecionar todas</button>'+(nSel?'<button class="btn sm" data-act="osseltira">Limpar seleção</button>':'')+
-    '<button class="btn sm primary" data-act="osword"'+(nSel?'':' disabled')+'>Baixar no Word'+(nSel?' ('+nSel+(nSel===1?' OS, 1 folha)':' OS, '+Math.ceil(nSel/2)+(Math.ceil(nSel/2)===1?' folha)':' folhas)')):'')+'</button></div></div>':'';
-  if(!l.length)return '<div class="empty">'+GLASSES+'<h3>Nenhum cliente com grau cadastrado</h3><p>Cadastre o grau na ficha do cliente (receita) para poder imprimir a ordem de serviço aqui.</p></div>';
+    '<button class="btn sm primary" data-act="osword"'+(nSel?'':' disabled')+'>Baixar no Word'+(nSel?' ('+nSel+(nSel===1?' OS, 1 folha)':' OS, '+Math.ceil(nSel/2)+(Math.ceil(nSel/2)===1?' folha)':' folhas)')):'')+'</button></div></div>';
+  if(!tudo.length&&!(ui.osQ||'').trim())return '<div class="empty">'+GLASSES+'<h3>Nenhum cliente com grau cadastrado</h3><p>Cadastre o grau na ficha do cliente (receita) para poder imprimir a ordem de serviço aqui.</p></div>';
+  if(!l.length)return filtros+'<div class="empty">'+GLASSES+(ui.osQ&&ui.osQ.trim()&&!tudo.length?'<h3>Nenhum cliente encontrado</h3><p>Confira o nome digitado na busca.</p>':f==='novas'?'<h3>Nenhuma OS nova</h3><p>Todas as ordens de serviço já foram baixadas. Quando você cadastrar o grau de um cliente, ou uma receita nova, a OS aparece aqui.</p>':'<h3>Nenhuma OS baixada ainda</h3><p>As ordens de serviço que você baixar ou imprimir passam a aparecer aqui.</p>')+'</div>';
   const g=(o)=>{o=o||{};return [o.esf,o.cil,o.eixo].filter(Boolean).join(' / ')||'-'};
-  return barra+'<div class="gridlist">'+l.map(x=>'<div class="card"><div class="sale-top"><label style="display:flex;align-items:center;gap:8px;min-width:0"><input type="checkbox" data-ossel="'+x.c.id+'"'+(ui.osSel[x.c.id]?' checked':'')+' aria-label="Selecionar a OS de '+esc(x.c.nome)+'" style="width:20px;height:20px;flex:none"><button class="link" data-act="editcliente" data-c="'+x.c.id+'">'+esc(x.c.nome)+demoTag(x.c)+'</button></label>'+(x.c.os?'<span class="chip ok">OS '+esc(x.c.os.num||'')+'</span>':'')+'</div>'+
+  return filtros+barra+'<div class="gridlist">'+l.map(x=>'<div class="card"><div class="sale-top"><label style="display:flex;align-items:center;gap:8px;min-width:0"><input type="checkbox" data-ossel="'+x.c.id+'"'+(ui.osSel[x.c.id]?' checked':'')+' aria-label="Selecionar a OS de '+esc(x.c.nome)+'" style="width:20px;height:20px;flex:none"><button class="link" data-act="editcliente" data-c="'+x.c.id+'">'+esc(x.c.nome)+demoTag(x.c)+'</button></label>'+(x.c.os?'<span class="chip ok">OS '+esc(x.c.os.num||'')+'</span>':'')+'</div>'+
+    (osFoiBaixada(x.c)?'<div class="meta"><b>Baixada em '+esc(osQuando(x.c.osBaixa.em))+'</b> · pode baixar de novo quando quiser</div>':'<div class="meta"><b style="color:var(--accent)">Nova, ainda não baixada</b></div>')+
     '<div class="meta">Receita de '+fmtDate(x.r.data)+(x.r.medico?' · '+esc(x.r.medico):'')+'</div>'+
     '<div class="meta num">OD '+esc(g(x.r.od))+' · OE '+esc(g(x.r.oe))+(x.r.adicao?' · Adição '+esc(x.r.adicao):'')+'</div>'+
     '<div class="acts" style="justify-content:flex-start"><button class="btn sm primary" data-act="osabrir" data-v="c:'+x.c.id+'">Imprimir OS</button><button class="btn sm" data-act="osbaixar" data-v="c:'+x.c.id+'">Baixar imagem (JPG)</button></div></div>').join('')+'</div>';
@@ -5345,6 +5359,7 @@ Object.assign(A,{
   osimprimir(d){osGerar(d.v,true)},
   osbaixar(d){const v=osSubj(d.v);if(!v)return;ui.os=osBase(v);ui.os._v=d.v;osGerar(d.v,false)},
   ospdf(d){osGerar(d.v,false)},
+  osfiltro(d){ui.osF=d.f;ui.osSel={};osAtualizar()},
   osseltodas(){ui.osSel={};osClientes().forEach(x=>{ui.osSel[x.c.id]=1});$('#oslist').innerHTML=osLista()},
   osseltira(){ui.osSel={};$('#oslist').innerHTML=osLista()},
   osword(){osWord()}
