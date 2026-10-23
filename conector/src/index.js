@@ -186,7 +186,8 @@ async function main() {
           const tel = String(jid).split('@')[0].replace(/\D/g, '');
           if (!tel) continue;
           if (/^(sair|parar|remover)[.! ]*$/i.test(txt)) {
-            await api.sair(tel);
+            const rs = await api.sair(tel);
+            if (rs && rs.silencio) continue; // WhatsApp ligado só para teste do agente: não responde ninguém por conta própria
             log('Pediu para sair: ' + tel);
             guardar(await sock.sendMessage(m.key.remoteJid, { text: MODO === 'prospeccao' ? 'Tudo certo, não vou mais mandar mensagens por aqui. Obrigado!' : 'Tudo certo, você não vai mais receber avisos por aqui.' }));
             continue;

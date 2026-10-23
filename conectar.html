@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Conectar o WhatsApp · Connecta AI</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#10142E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--noite:#10142E;--linha:#E2E5F0;--papel:#F6F7FB;--branco:#fff;--tinta:#141833;--nevoa:#5B6387;--ambar:#FFB547;--menta:#13A97B;
+  --f-d:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;--f-t:"Figtree",ui-sans-serif,system-ui,sans-serif}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--papel);color:var(--tinta);font:400 16px/1.55 var(--f-t)}
+h1,h2{font-family:var(--f-d);letter-spacing:-.02em;line-height:1.1;margin:0}
+p{margin:0}
+.topo{background:var(--noite);color:#EEF0FF;padding:20px 16px 44px}
+.w{max-width:760px;margin:0 auto}
+.marca{display:flex;align-items:center;gap:8px;font:800 17px var(--f-d)}
+.marca i{width:22px;height:22px;border-radius:7px;background:conic-gradient(from 200deg,var(--ambar),#5EE6B5,#7C8CFF,var(--ambar))}
+.topo h1{font-size:clamp(28px,6.4vw,40px);font-weight:800;margin-top:22px}
+.topo p{color:#A4ACD3;margin-top:10px;max-width:36em}
+main{max-width:760px;margin:-26px auto 0;padding:0 16px 60px}
+.card{background:var(--branco);border:1px solid var(--linha);border-radius:18px;padding:22px;box-shadow:0 10px 30px -18px rgba(16,20,46,.25)}
+.card+.card{margin-top:14px}
+.card h2{font-size:21px;font-weight:800;margin-bottom:8px}
+.grade{display:grid;grid-template-columns:300px 1fr;gap:24px;align-items:start}
+@media (max-width:680px){.grade{grid-template-columns:1fr}}
+.qr{width:300px;max-width:100%;aspect-ratio:1;border-radius:14px;border:1px solid var(--linha);display:grid;place-items:center;background:#fff;overflow:hidden;margin:0 auto}
+.qr img{width:100%;height:100%;image-rendering:pixelated}
+.qr .esp{color:var(--nevoa);text-align:center;padding:20px;font-size:15px}
+ol{margin:0;padding-left:20px}
+ol li{margin-bottom:10px}
+ol li b{font-weight:700}
+.aviso{background:#FFF6E8;border-radius:12px;padding:12px 14px;font-size:15px;margin-top:14px}
+.ok{text-align:center;padding:32px 22px}
+.ok .ico{width:68px;height:68px;border-radius:50%;background:#E3F7EF;color:var(--menta);display:grid;place-items:center;margin:0 auto 16px;font-size:34px}
+.ok h2{font-size:26px;margin-bottom:10px}
+.ok p{color:var(--nevoa);max-width:32em;margin:0 auto}
+.ok p+p{margin-top:10px}
+.ok .num{display:inline-block;margin-top:14px;background:var(--papel);border-radius:999px;padding:8px 16px;font-weight:700;color:var(--tinta)}
+.mini{color:var(--nevoa);font-size:14px}
+.gira{width:28px;height:28px;border-radius:50%;border:3px solid var(--linha);border-top-color:var(--ambar);margin:0 auto 10px;animation:g 1s linear infinite}
+@keyframes g{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.gira{animation:none}}
+</style>
+</head>
+<body>
+<header class="topo"><div class="w">
+  <div class="marca"><i aria-hidden="true"></i>Connecta AI</div>
+  <h1 id="tit">Ligar o agente no WhatsApp da empresa</h1>
+  <p>Leia o QR Code com o WhatsApp da empresa. O agente vai responder <b>só o número de teste</b>; os outros clientes continuam com vocês, normalmente.</p>
+</div></header>
+<main id="app"><div class="card"><div class="gira" aria-hidden="true"></div><p class="mini" style="text-align:center">Carregando…</p></div></main>
+<script>
+(function(){
+'use strict';
+var SB='https://ovynkeifzhavhjdkjjui.supabase.co',KEY='sb_publishable_7RunIjZPQDCuWNSuPrD10w_Gy_lIUFl';
+var cod=new URLSearchParams(location.search).get('c')||'';
+var $=function(s){return document.querySelector(s)};
+var esc=function(t){return String(t==null?'':t).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
+function fone(d){d=String(d||'').replace(/\D/g,'').replace(/^55/,'');return d.length===11?'('+d.slice(0,2)+') '+d.slice(2,7)+'-'+d.slice(7):d.length===10?'('+d.slice(0,2)+') '+d.slice(2,6)+'-'+d.slice(6):d}
+function hora(iso){try{return new Date(iso).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',timeZone:'America/Recife'})}catch(e){return ''}}
+var ultimo='',timer=null;
+function passos(){return '<ol><li>No <b>celular da empresa</b>, abra o WhatsApp.</li><li>Toque em <b>⋮</b> (Android) ou em <b>Configurações</b> (iPhone) e depois em <b>Aparelhos conectados</b>.</li><li>Toque em <b>Conectar um aparelho</b> e aponte a câmera para o QR Code ao lado.</li></ol>'+
+  '<div class="aviso">Abra esta página no <b>computador ou em outro celular</b>: o celular da empresa precisa ler o QR Code nesta tela.</div>'}
+function tela(j){
+  if(!j||!j.ok){$('#app').innerHTML='<div class="card"><h2>Link inválido</h2><p class="mini">Peça um link novo para quem te enviou.</p></div>';return false}
+  if(j.empresa)$('#tit').textContent='Ligar o agente no WhatsApp da '+j.empresa;
+  if(!j.ligado){$('#app').innerHTML='<div class="card"><h2>Este teste não está ligado</h2><p class="mini">O tempo do teste terminou ou ele foi desligado. Se a empresa ainda estiver conectada, tire a conexão no celular: WhatsApp &gt; <b>Aparelhos conectados</b> &gt; toque no aparelho do teste &gt; <b>Desconectar</b>.</p></div>';return false}
+  var tt=fone(j.tel_teste),fim=j.expira_em?' O teste fica ligado até as <b>'+esc(hora(j.expira_em))+'</b>.':'';
+  if(j.estado==='conectado'){
+    $('#app').innerHTML='<div class="card ok"><div class="ico" aria-hidden="true">✓</div><h2>WhatsApp conectado!</h2><p>Agora, do número <b>'+esc(tt)+'</b>, mande uma mensagem para o WhatsApp da empresa'+(j.numero?', <b>'+esc(fone(j.numero))+'</b>,':'')+' como se fosse um cliente: pergunte preço, peça para marcar, mande um áudio.</p><p>O agente só responde esse número. Para começar a conversa do zero, mande <b>REINICIAR</b>.'+fim+'</p><span class="num">Número de teste: '+esc(tt)+'</span></div>'+
+      '<div class="card"><h2>Para desconectar quando quiser</h2><p class="mini">No celular da empresa: WhatsApp &gt; <b>Aparelhos conectados</b> &gt; toque no aparelho do teste &gt; <b>Desconectar</b>. Quando o tempo acabar, o agente para de responder sozinho.</p></div>';
+    return true}
+  var qr=j.estado==='qr'&&j.qr?'<img alt="QR Code para conectar o WhatsApp da empresa" src="'+esc(j.qr)+'">':'<div class="esp"><div class="gira" aria-hidden="true"></div>Preparando o QR Code… pode levar até 1 minuto.</div>';
+  if(qr===ultimo&&$('.qr'))return true;ultimo=qr;
+  $('#app').innerHTML='<div class="card"><div class="grade"><div class="qr">'+qr+'</div><div><h2>Conecte o WhatsApp da empresa</h2>'+passos()+'<p class="mini" style="margin-top:12px">Depois de conectar, mande mensagem do número <b>'+esc(tt)+'</b> para o WhatsApp da empresa.'+fim+'</p></div></div></div>';
+  return true}
+function ver(){
+  fetch(SB+'/rest/v1/rpc/agente_teste_qr',{method:'POST',headers:{'Content-Type':'application/json',apikey:KEY,Authorization:'Bearer '+KEY},body:JSON.stringify({p_cod:cod})})
+    .then(function(r){return r.json()}).then(function(j){var seguir=tela(j);clearTimeout(timer);if(seguir)timer=setTimeout(ver,j&&j.estado==='conectado'?15000:3000)})
+    .catch(function(){clearTimeout(timer);timer=setTimeout(ver,5000)});
+}
+ver();
+})();
+</script>
+</body>
+</html>

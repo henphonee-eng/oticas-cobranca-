@@ -625,6 +625,16 @@ async function midiaConector(b: any) {
   if (!/^wa_[0-9a-f]{48}$/.test(token) || tel.length < 10) return ok({ erro: "dados" }, 400);
   const otica = await rpc("wa_conector_otica", { p_token: token }).catch(() => null);
   if (!otica) return ok({ erro: "token_invalido" }, 401);
+  // WhatsApp ligado só para o teste do agente: só o número liberado no teste é ouvido (o resto nem é transcrito)
+  if (await rpc("teste_real_otica", { p_otica: otica }).catch(() => false)) {
+    const tid = await rpc("teste_real_permite", { p_otica: otica, p_tel: tel }).catch(() => null);
+    if (!tid) return ok({ ok: true, ignorado: true });
+    let tx = "";
+    try { tx = await midiaParaTexto(b); }
+    catch (_) { tx = b.tipo === "audio" ? "[O cliente mandou um áudio que não deu para entender]" : "[O cliente mandou uma foto que não deu para ver]"; }
+    const r = await rpc("wa_receber", { p_token: token, p_telefone: tel, p_texto: tx.slice(0, 1000), p_nome: s(b.nome, 60) || null });
+    return ok({ ok: true, r, teste: true });
+  }
   const [{ data: ag }, mod] = await Promise.all([
     db.from("agente_config").select("ativo,cfg").eq("otica_id", otica).maybeSingle(),
     rpc("ot_mod_on", { o: otica, k: "agente" }).catch(() => false),

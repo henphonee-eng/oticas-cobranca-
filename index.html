@@ -4691,7 +4691,7 @@ async function admLoad(force){
     }catch(e){ADM.mov=ADM.mov||[]}
     if(lr.error)throw lr.error;
     const extra={};((or&&or.data)||[]).forEach(o=>{extra[o.id]=o});
-    ADM.list=(lr.data||[]).map(o=>Object.assign({},extra[o.id]||{},o)).filter(o=>o.plano!=='empresa'); // empresas do agente ficam no CRM (Implantações/Financeiro)
+    ADM.list=(lr.data||[]).map(o=>Object.assign({},extra[o.id]||{},o)).filter(o=>o.plano!=='empresa'&&o.plano!=='teste'); // empresas do agente (e os WhatsApp ligados só para teste) ficam no CRM (Implantações/Financeiro)
     ADM.cobAll=(cr&&cr.data)||[];ADM.cob=ADM.cobAll.filter(admVisivel);ADM.cfg={};((gr&&gr.data)||[]).forEach(g=>{ADM.cfg[g.chave]=g.valor});
     ADM.err=(cr&&cr.error)?'Não foi possível carregar as cobranças: '+errTxt(cr.error):'';
     await admGerar();
