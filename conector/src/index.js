@@ -269,14 +269,15 @@ async function main() {
       // o id é criado aqui para o eco da própria mensagem não ser guardado como "enviada pelo celular"
       const id = baileys.generateMessageIDV2 ? baileys.generateMessageIDV2(sock.user && sock.user.id) : (baileys.generateMessageID ? baileys.generateMessageID() : undefined);
       marcarSaindo(id);
-      const conteudoMsg = midia ? { image: { url: midia }, caption: texto || undefined } : { text: texto };
+      const video = !!midia && /\.mp4(\?|#|$)/i.test(midia);
+      const conteudoMsg = !midia ? { text: texto } : video ? { video: { url: midia }, mimetype: 'video/mp4', caption: texto || undefined } : { image: { url: midia }, caption: texto || undefined };
       const r = await sock.sendMessage(jid, conteudoMsg, id ? { messageId: id } : undefined);
       guardar(r);
       const wid = (r && r.key && r.key.id) || id;
       marcarSaindo(wid);
       log('Entregue ao WhatsApp: ' + jid + ' (id ' + (wid || '?') + ')');
       if (!manual) { try { await sock.sendPresenceUpdate('paused', jid); } catch (e) { /* ignora */ } }
-      api.registrar({ telefone: tel, deMim: true, texto: midia ? '📷 Foto' + (texto ? ': ' + texto : '') : texto, tipo: midia ? 'foto' : 'texto', waId: wid, origem: manual ? 'sistema' : 'automatico' })
+      api.registrar({ telefone: tel, deMim: true, texto: midia ? (video ? '🎬 Vídeo' : '📷 Foto') + (texto ? ': ' + texto : '') : texto, tipo: midia ? (video ? 'video' : 'foto') : 'texto', waId: wid, origem: manual ? 'sistema' : 'automatico' })
         .catch((e) => log('Não consegui guardar a conversa: ' + e.message));
     },
   };
