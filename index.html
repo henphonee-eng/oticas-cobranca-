@@ -2953,7 +2953,7 @@ const slug=s=>String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^A
 async function saveFile(name,data,okMsg){
   try{
     const ext=(name.split('.').pop()||'').toLowerCase();
-    const type={pdf:'application/pdf',jpg:'image/jpeg',csv:'text/csv;charset=utf-8',json:'application/json'}[ext]||'application/octet-stream';
+    const type={pdf:'application/pdf',jpg:'image/jpeg',docx:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',csv:'text/csv;charset=utf-8',json:'application/json'}[ext]||'application/octet-stream';
     const blob=data instanceof Blob?data:new Blob([data],{type:type});
     const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
     setTimeout(()=>URL.revokeObjectURL(url),4000);toast(okMsg);
@@ -3043,6 +3043,55 @@ async function pdfParaJpg(blob,dpi){
   await pg.render({canvasContext:cx,viewport:vp}).promise;
   return await new Promise((ok,er)=>cv.toBlob(b=>b?ok(b):er(new Error('jpg')),'image/jpeg',0.95));
 }
+/* ---------- várias OS num arquivo do Word: duas por folha A4 (cada OS é meia folha) ---------- */
+const CRC_T=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
+const crc32=u=>{let c=0xFFFFFFFF;for(let i=0;i<u.length;i++)c=CRC_T[(c^u[i])&255]^(c>>>8);return (c^0xFFFFFFFF)>>>0};
+function zipStore(arqs){ // zip sem compressão (o Word abre normalmente)
+  const te=new TextEncoder(),partes=[],dir=[];let off=0;
+  for(const f of arqs){
+    const nm=te.encode(f.name),d=typeof f.data==='string'?te.encode(f.data):f.data,crc=crc32(d);
+    const h=new DataView(new ArrayBuffer(30));h.setUint32(0,0x04034b50,true);h.setUint16(4,20,true);h.setUint16(8,0,true);h.setUint32(14,crc,true);h.setUint32(18,d.length,true);h.setUint32(22,d.length,true);h.setUint16(26,nm.length,true);
+    partes.push(new Uint8Array(h.buffer),nm,d);
+    const c=new DataView(new ArrayBuffer(46));c.setUint32(0,0x02014b50,true);c.setUint16(4,20,true);c.setUint16(6,20,true);c.setUint32(16,crc,true);c.setUint32(20,d.length,true);c.setUint32(24,d.length,true);c.setUint16(28,nm.length,true);c.setUint32(42,off,true);
+    dir.push(new Uint8Array(c.buffer),nm);off+=30+nm.length+d.length;
+  }
+  const tam=dir.reduce((s,x)=>s+x.length,0),e=new DataView(new ArrayBuffer(22));e.setUint32(0,0x06054b50,true);e.setUint16(8,arqs.length,true);e.setUint16(10,arqs.length,true);e.setUint32(12,tam,true);e.setUint32(16,off,true);
+  return new Blob([...partes,...dir,new Uint8Array(e.buffer)],{type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
+}
+function docxImagens(imgs){ // imgs: [{data:Uint8Array,w,h,nome}] — duas por folha A4 em pé, margens de 8 mm
+  const LARG=194*36000; // 194 mm em EMU
+  const pars=imgs.map((im,i)=>{const cy=Math.round(LARG*im.h/im.w),n=i+1;
+    return '<w:p><w:pPr>'+(i&&i%2===0?'<w:pageBreakBefore/>':'')+'<w:spacing w:before="'+(i%2?'110':'0')+'" w:after="0" w:line="240" w:lineRule="auto"/><w:jc w:val="center"/></w:pPr><w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="'+LARG+'" cy="'+cy+'"/><wp:docPr id="'+n+'" name="OS '+n+'"/><wp:cNvGraphicFramePr><a:graphicFrameLocks noChangeAspect="1"/></wp:cNvGraphicFramePr><a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic><pic:nvPicPr><pic:cNvPr id="'+n+'" name="os'+n+'.jpg"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="rIdOs'+n+'"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="'+LARG+'" cy="'+cy+'"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>'}).join('');
+  const doc='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><w:body>'+pars+
+    '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="454" w:right="454" w:bottom="340" w:left="454" w:header="0" w:footer="0" w:gutter="0"/></w:sectPr></w:body></w:document>';
+  const rels='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+imgs.map((im,i)=>'<Relationship Id="rIdOs'+(i+1)+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/os'+(i+1)+'.jpg"/>').join('')+'</Relationships>';
+  return zipStore([
+    {name:'[Content_Types].xml',data:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="jpg" ContentType="image/jpeg"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>'},
+    {name:'_rels/.rels',data:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>'},
+    {name:'word/document.xml',data:doc},
+    {name:'word/_rels/document.xml.rels',data:rels},
+    ...imgs.map((im,i)=>({name:'word/media/os'+(i+1)+'.jpg',data:im.data}))
+  ]);
+}
+async function osWord(){
+  const ids=Object.keys(ui.osSel||{}).filter(k=>ui.osSel[k]&&S.clientes[k]);
+  if(!ids.length)return toast('Marque pelo menos uma OS');
+  if(!window.jspdf)return toast('O gerador da OS não carregou. Recarregue a página.');
+  const btn=document.querySelector('[data-act="osword"]');if(btn){btn.disabled=true;btn.textContent='Gerando…'}
+  try{
+    const lista=ids.map(id=>S.clientes[id]).sort((a,b)=>a.nome.localeCompare(b.nome)),imgs=[];
+    for(let i=0;i<lista.length;i++){
+      const c=lista[i],v=osSubj('c:'+c.id);if(!v)continue;
+      if(!v.os){const o=osBase(v);c.os=o;v.os=o;persist('clientes',c.id)} // cada OS nova ganha o próximo número
+      if(btn)btn.textContent='Gerando '+(i+1)+' de '+lista.length+'…';
+      const j=await pdfParaJpg(osBlob(v),300);const u=new Uint8Array(await j.arrayBuffer());
+      const bm=await createImageBitmap(j);imgs.push({data:u,w:bm.width,h:bm.height});bm.close&&bm.close();
+    }
+    if(!imgs.length)return toast('Nenhuma OS para gerar');
+    await saveFile('OS_para_imprimir_'+todayStr()+'.docx',docxImagens(imgs),plural(imgs.length,'OS','OS')+' no Word, '+plural(Math.ceil(imgs.length/2),'folha','folhas'));
+  }catch(e){toast('Não deu para gerar o arquivo agora. Confira a internet e tente de novo.')}
+  finally{if($('#oslist'))$('#oslist').innerHTML=osLista()}
+}
 function osGerar(id,imprimir){
   const v=osSubj(id);if(!v)return;
   if(!window.jspdf){toast('O gerador de PDF não carregou. Recarregue a página.');return}
@@ -3060,10 +3109,14 @@ function osClientes(){
   return Object.values(S.clientes).map(c=>{const r=(c.receitas||[]).filter(x=>!receitaVazia(x)).sort((a,b)=>(b.data||'').localeCompare(a.data||''))[0];return r?{c:c,r:r}:null}).filter(x=>x&&(!q||x.c.nome.toLowerCase().includes(q))).sort((a,b)=>a.c.nome.localeCompare(b.c.nome));
 }
 function osLista(){
-  const l=osClientes();
+  const l=osClientes();ui.osSel=ui.osSel||{};
+  const nSel=Object.keys(ui.osSel).filter(k=>ui.osSel[k]&&S.clientes[k]).length;
+  const barra=l.length?'<div class="card" style="margin-bottom:12px"><b>Imprimir várias OS</b><div class="meta">Marque as ordens de serviço e baixe um arquivo do Word com duas OS por folha.</div><div style="display:flex;flex-direction:row;gap:8px;flex-wrap:wrap;justify-content:flex-start;margin-top:10px">'+
+    '<button class="btn sm" data-act="osseltodas">Selecionar todas</button>'+(nSel?'<button class="btn sm" data-act="osseltira">Limpar seleção</button>':'')+
+    '<button class="btn sm primary" data-act="osword"'+(nSel?'':' disabled')+'>Baixar no Word'+(nSel?' ('+nSel+(nSel===1?' OS, 1 folha)':' OS, '+Math.ceil(nSel/2)+(Math.ceil(nSel/2)===1?' folha)':' folhas)')):'')+'</button></div></div>':'';
   if(!l.length)return '<div class="empty">'+GLASSES+'<h3>Nenhum cliente com grau cadastrado</h3><p>Cadastre o grau na ficha do cliente (receita) para poder imprimir a ordem de serviço aqui.</p></div>';
   const g=(o)=>{o=o||{};return [o.esf,o.cil,o.eixo].filter(Boolean).join(' / ')||'-'};
-  return '<div class="gridlist">'+l.map(x=>'<div class="card"><div class="sale-top"><button class="link" data-act="editcliente" data-c="'+x.c.id+'">'+esc(x.c.nome)+demoTag(x.c)+'</button>'+(x.c.os?'<span class="chip ok">OS '+esc(x.c.os.num||'')+'</span>':'')+'</div>'+
+  return barra+'<div class="gridlist">'+l.map(x=>'<div class="card"><div class="sale-top"><label style="display:flex;align-items:center;gap:8px;min-width:0"><input type="checkbox" data-ossel="'+x.c.id+'"'+(ui.osSel[x.c.id]?' checked':'')+' aria-label="Selecionar a OS de '+esc(x.c.nome)+'" style="width:20px;height:20px;flex:none"><button class="link" data-act="editcliente" data-c="'+x.c.id+'">'+esc(x.c.nome)+demoTag(x.c)+'</button></label>'+(x.c.os?'<span class="chip ok">OS '+esc(x.c.os.num||'')+'</span>':'')+'</div>'+
     '<div class="meta">Receita de '+fmtDate(x.r.data)+(x.r.medico?' · '+esc(x.r.medico):'')+'</div>'+
     '<div class="meta num">OD '+esc(g(x.r.od))+' · OE '+esc(g(x.r.oe))+(x.r.adicao?' · Adição '+esc(x.r.adicao):'')+'</div>'+
     '<div class="acts" style="justify-content:flex-start"><button class="btn sm primary" data-act="osabrir" data-v="c:'+x.c.id+'">Imprimir OS</button><button class="btn sm" data-act="osbaixar" data-v="c:'+x.c.id+'">Baixar imagem (JPG)</button></div></div>').join('')+'</div>';
@@ -5291,7 +5344,10 @@ Object.assign(A,{
   osabrir(d){ui.os=null;ui.sheet={kind:'os',id:d.v};renderSheet()},
   osimprimir(d){osGerar(d.v,true)},
   osbaixar(d){const v=osSubj(d.v);if(!v)return;ui.os=osBase(v);ui.os._v=d.v;osGerar(d.v,false)},
-  ospdf(d){osGerar(d.v,false)}
+  ospdf(d){osGerar(d.v,false)},
+  osseltodas(){ui.osSel={};osClientes().forEach(x=>{ui.osSel[x.c.id]=1});$('#oslist').innerHTML=osLista()},
+  osseltira(){ui.osSel={};$('#oslist').innerHTML=osLista()},
+  osword(){osWord()}
 });
 Object.assign(A,{
   fusec(d){ui.fus=d.f;render()},
@@ -5331,6 +5387,7 @@ function onField(e){
   if(ch&&t.dataset.lente!==undefined&&ui.draft){const it=ui.draft.itens[+t.dataset.lente];const l=S.lentes[t.value];it.lenteId=l?l.id:'';it.nome=l?l.nome:'';it.valor=l?centsToStr(l.valor):'';renderItems();updateVenda()}
   if(t.id==='q-v'){ui.vQuery=t.value;$('#vlist').innerHTML=vendasList()}
   if(t.id==='q-os'){if(ch)return;ui.osQ=t.value;$('#oslist').innerHTML=osLista();return}
+  if(t.dataset.ossel!==undefined){if(!ch)return;ui.osSel=ui.osSel||{};if(t.checked)ui.osSel[t.dataset.ossel]=1;else delete ui.osSel[t.dataset.ossel];$('#oslist').innerHTML=osLista();return}
   if(t.id==='q-c'){ui.cQuery=t.value;$('#clist').innerHTML=clientesList()}
   if(t.id==='q-l'){ui.lQuery=t.value;$('#llist').innerHTML=lentesList()}
   if(ch&&t.dataset.rel){ui.rmes=t.value;renderSheet()}
