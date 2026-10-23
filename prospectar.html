@@ -478,7 +478,7 @@ async function loadSaude(){if(saudeVai)return;saudeVai=true;const j=await pos('s
   clearTimeout(saudeT);const espera=Object.values(st.saude||{}).some(w=>w&&!w.online);saudeT=setTimeout(()=>{if(!document.hidden&&['impl','fin'].includes(st.tab))loadSaude();else saudeT=setTimeout(loadSaude,60000)},espera?6000:45000)}
 async function loadFin(){
   try{const [or,cr]=await Promise.all([sb.from('oticas').select('id,nome,mensalidade,ativa,plano'),sb.from('adm_cobrancas').select('*')]);
-    st.finOt=(or&&!or.error&&or.data)||[];st.finOtCob=(cr&&!cr.error&&cr.data)||[]}catch(e){st.finOt=st.finOt||[];st.finOtCob=st.finOtCob||[]}
+    st.finOt=((or&&!or.error&&or.data)||[]).filter(o=>o.plano!=='teste');st.finOtCob=(cr&&!cr.error&&cr.data)||[]}catch(e){st.finOt=st.finOt||[];st.finOtCob=st.finOtCob||[]}
   st.finOk=true;if(st.tab==='fin'&&!digitando())render()}
 /* ---------- envio automático (chip do CRM + segundo conector) ---------- */
 let wQrT=null;
@@ -1031,16 +1031,22 @@ const atLigado=x=>x.ativo&&(!x.expira_em||Date.parse(x.expira_em)>Date.now());
 const atPedido=x=>x.pedido_em&&!atLigado(x)&&(!x.ativado_em||Date.parse(x.pedido_em)>Date.parse(x.ativado_em));
 const atLink=()=>{let b=String(cfg('link_base_emp')||location.origin).trim().replace(/\/+$/,'');if(!/^https?:\/\//.test(b))b='https://'+b;return b+'/experimente'};
 const atMsg=(x,min)=>'Oi'+(x.cliente?', '+String(x.cliente).split(' ')[0]:'')+'! 👋 Liguei aqui o teste do *Agente de IA* da *'+x.empresa+'* para você ver ele funcionando no seu WhatsApp.\n\nA partir de agora, quem responde este número é o agente. Converse como se fosse um cliente: pergunte preços e horários, peça para marcar ou fazer um pedido, mande áudio ou foto.\n\nPara começar uma conversa nova do zero, é só mandar *REINICIAR*.'+(min?'\n\nO teste fica ligado por *'+atMinTxt(min)+'*.':'');
-async function loadAt(){try{const r=await sb.from('agente_testes').select('id,telefone,cliente,ramo,nome_agente,empresa,info,tom,ativo,ativado_em,expira_em,pedido_em,msgs,atualizado_em').order('atualizado_em',{ascending:false});if(!r.error)st.at=r.data||[]}catch(e){}st.at=st.at||[]}
+async function loadAt(){try{const r=await sb.from('agente_testes').select('id,telefone,cliente,ramo,nome_agente,empresa,info,tom,ativo,ativado_em,expira_em,pedido_em,msgs,atualizado_em,modo,tel_teste,cod,pedido_modo,pedido_tel_teste').order('atualizado_em',{ascending:false});if(!r.error)st.at=r.data||[]}catch(e){}st.at=st.at||[];
+  st.atCon=st.atCon||{};await Promise.all(st.at.filter(x=>x.modo==='real'&&x.cod&&atLigado(x)).map(async x=>{try{const q=await sb.rpc('agente_teste_qr',{p_cod:x.cod});if(!q.error&&q.data)st.atCon[x.id]=q.data}catch(e){}}))}
+const atModo=x=>(x&&(x.pedido_modo||x.modo))==='real'?'real':'simulado';
+const atQrLink=x=>{let b=String(cfg('link_base_emp')||location.origin).trim().replace(/\/+$/,'');if(!/^https?:\/\//.test(b))b='https://'+b;return b+'/conectar?c='+x.cod};
+function atConTxt(x){const c=(st.atCon||{})[x.id]||{};return c.estado==='conectado'?'<span class="tag ok">WhatsApp da empresa conectado</span>':c.estado==='qr'?'<span class="tag">Esperando ler o QR Code</span>':'<span class="tag">Preparando o QR Code</span>'}
 function vAt(){
   const L=st.at||[],ed=st.atEd||null,on=L.filter(atLigado),ped=L.filter(atPedido);
   let h='<div class="card sec"><div class="row" style="gap:10px;flex-wrap:wrap"><div class="grow" style="min-width:220px"><b>Link para o cliente pedir o teste</b><div class="small muted">Ele preenche o nome, o WhatsApp e o básico da empresa, e o pedido aparece aqui (com aviso no seu celular).</div><div class="small" style="margin-top:4px;word-break:break-all"><a href="'+esc(atLink())+'" target="_blank" rel="noopener">'+esc(atLink())+'</a></div></div><button class="btn sm pri" data-a="atcopiar">Copiar link</button><button class="btn sm" data-a="atzap">Mandar pelo WhatsApp</button></div></div>';
   if(ped.length)h+='<div class="card sec" style="border-color:var(--gold)"><h2 style="margin:0 0 8px">Pedidos de teste ('+ped.length+')</h2>'+ped.map(atLinha).join('')+'</div>';
-  h+='<div class="note sec"><b>Como funciona:</b> cadastre o WhatsApp do cliente e a empresa dele e toque em <b>Ligar teste</b>. A partir daí, quando ele mandar mensagem para o número do CRM, quem responde é o agente do ramo escolhido, como se ele fosse um cliente da empresa dele. Entende áudio e foto. Para começar do zero, ele manda <b>REINICIAR</b>. Nada fica salvo no CRM; ao desligar, a conversa volta para você e o agente de vendas.</div>';
+  h+='<div class="note sec"><b>Duas formas de testar.</b> <b>No WhatsApp da empresa:</b> o cliente lê um QR Code com o WhatsApp da empresa dele e o agente passa a responder lá, mas <b>só o número que ele escolher para testar</b>; os clientes de verdade não são atendidos e nada das conversas da empresa fica guardado. Quando o tempo acaba, o agente para sozinho. <b>No meu WhatsApp:</b> o cliente manda mensagem para o número do CRM e o agente responde como se ele fosse um cliente da empresa dele. Nos dois, o agente entende áudio e foto, e <b>REINICIAR</b> começa a conversa do zero.</div>';
   if(on.length)h+='<div class="card sec"><h2 style="margin:0 0 8px">Ligados agora ('+on.length+')</h2>'+on.map(atLinha).join('')+'</div>';
-  const f=ed||{ramo:'',tom:'proximo'};const r=f.ramo?atRamo(f.ramo):null;
+  const f=ed||{ramo:'',tom:'proximo',pedido_modo:'real'};const r=f.ramo?atRamo(f.ramo):null;
   h+='<div class="card sec" id="at-form"><h2 style="margin:0 0 4px">'+(ed&&ed.id?'Editar teste':'Novo teste')+'</h2><p class="small muted" style="margin:0 0 12px">Só para testar: depois de fechar, a configuração de verdade é feita na implantação.</p>'+
     '<div class="list two"><div class="fld"><label for="at-tel">WhatsApp do cliente</label><input id="at-tel" type="tel" inputmode="numeric" placeholder="(81) 99999-9999" value="'+esc(f.telefone?fmtFone(f.telefone):'')+'"></div><div class="fld"><label for="at-cli">Nome do cliente (opcional)</label><input id="at-cli" type="text" placeholder="Ex.: Carla" value="'+esc(f.cliente||'')+'"></div></div>'+
+    '<div class="list two"><div class="fld"><label for="at-modo">Onde o agente vai funcionar</label><select id="at-modo"><option value="real"'+(atModo(f)==='real'?' selected':'')+'>No WhatsApp da empresa (lê um QR Code)</option><option value="simulado"'+(atModo(f)==='simulado'?' selected':'')+'>No meu WhatsApp (o cliente fala com o meu número)</option></select></div>'+
+    '<div class="fld" id="at-tt-box"'+(atModo(f)==='real'?'':' hidden')+'><label for="at-tt">Número que vai testar a conversa</label><input id="at-tt" type="tel" inputmode="numeric" placeholder="(81) 98888-7777" value="'+esc((f.pedido_tel_teste||f.tel_teste)?fmtFone(f.pedido_tel_teste||f.tel_teste):'')+'"><span class="small muted">O agente só responde este número. Precisa ser diferente do WhatsApp da empresa.</span></div></div>'+
     '<div class="fld"><label>Ramo da empresa</label><div class="atr">'+AT_RAMOS.map(x=>'<button type="button" class="chip'+(f.ramo===x[0]?' on':'')+'" data-atramo="'+x[0]+'">'+x[1]+' '+esc(x[2])+'</button>').join('')+'</div></div>'+
     '<div class="list two"><div class="fld"><label for="at-emp">Nome da empresa</label><input id="at-emp" type="text" placeholder="Ex.: Sorriso Perfeito" value="'+esc(f.empresa||'')+'"></div><div class="fld"><label for="at-ag">Nome do agente (opcional)</label><input id="at-ag" type="text" placeholder="Ex.: Bia" value="'+esc(f.nome_agente||'')+'"></div></div>'+
     '<div class="fld"><label for="at-tom">Jeito de falar</label><select id="at-tom">'+[['proximo','Próximo e simpático'],['formal','Formal (senhor/senhora)'],['descontraido','Bem descontraído']].map(o=>'<option value="'+o[0]+'"'+(f.tom===o[0]?' selected':'')+'>'+o[1]+'</option>').join('')+'</select></div>'+
@@ -1054,12 +1060,18 @@ function vAt(){
 }
 function atLinha(x){const r=atRamo(x.ramo);
   const lig=atLigado(x),ped=atPedido(x);
-  return '<div class="atl"><div class="grow" style="min-width:0"><b>'+r[1]+' '+esc(x.empresa)+'</b><div class="small muted">'+esc([x.cliente,fmtFone(x.telefone),r[2]].filter(Boolean).join(' · '))+(lig&&x.ativado_em?' · ligado '+fmtDH(x.ativado_em):'')+(lig&&x.expira_em?' · termina '+fmtDH(x.expira_em):'')+(ped?' · pediu '+fmtDH(x.pedido_em):'')+(x.msgs?' · '+x.msgs+' mensagens':'')+'</div></div>'+
+  const real=lig?x.modo==='real':atModo(x)==='real',tt=x.tel_teste||x.pedido_tel_teste;
+  return '<div class="atl"><div class="grow" style="min-width:0"><b>'+r[1]+' '+esc(x.empresa)+'</b><div class="small muted">'+esc([x.cliente,fmtFone(x.telefone),r[2],real?'no WhatsApp da empresa'+(tt?', testa pelo '+fmtFone(tt):''):'no meu WhatsApp'].filter(Boolean).join(' · '))+(lig&&x.ativado_em?' · ligado '+fmtDH(x.ativado_em):'')+(lig&&x.expira_em?' · termina '+fmtDH(x.expira_em):'')+(ped?' · pediu '+fmtDH(x.pedido_em):'')+(x.msgs?' · '+x.msgs+' mensagens':'')+'</div>'+
+    (lig&&x.modo==='real'?'<div class="row small" style="gap:8px;flex-wrap:wrap;margin-top:6px">'+atConTxt(x)+'<a href="'+esc(atQrLink(x))+'" target="_blank" rel="noopener">Página do QR Code</a><button class="btn sm" data-atqr="'+x.id+'">Copiar link do QR</button></div>':'')+'</div>'+
     '<div class="row" style="gap:6px;flex-wrap:wrap">'+(lig?'<span class="tag ok">Ligado</span><button class="btn sm" data-atoff="'+x.id+'">Desligar</button>':ped?'<button class="btn sm pri" data-ated="'+x.id+'">Ver e ligar</button>':'<button class="btn sm pri" data-aton="'+x.id+'">Ligar teste</button>')+(ped?'':'<button class="btn sm" data-ated="'+x.id+'">Editar</button>')+(lig?'':'<button class="btn sm" data-atdel="'+x.id+'">Remover</button>')+'</div></div>'}
 function atLer(){const v=id=>{const e=document.getElementById(id);return e?e.value.trim():''};
-  return {telefone:atFone(v('at-tel')),cliente:v('at-cli')||null,ramo:(st.atEd&&st.atEd.ramo)||'',empresa:v('at-emp'),nome_agente:v('at-ag')||null,tom:v('at-tom')||'proximo',info:v('at-info')}}
+  const md=v('at-modo')||'simulado';return {telefone:atFone(v('at-tel')),cliente:v('at-cli')||null,ramo:(st.atEd&&st.atEd.ramo)||'',empresa:v('at-emp'),nome_agente:v('at-ag')||null,tom:v('at-tom')||'proximo',info:v('at-info'),pedido_modo:md,pedido_tel_teste:md==='real'?(atFone(v('at-tt'))||null):null}}
 function atMinutos(){const s=document.getElementById('at-min');const v=s?s.value:(st.atMinSel==null?'60':st.atMinSel);if(v==='outro'){const n=+(document.getElementById('at-min-n')||{}).value||+st.atMinN||0;return n>0?Math.round(n):null}return v?+v:null}
 async function atLigar(x,on){const av=on&&document.getElementById('at-avisar')?document.getElementById('at-avisar').checked:on;const min=on?atMinutos():null;
+  if(on&&atModo(x)==='real'){const tt=x.pedido_tel_teste||x.tel_teste;if(!tt)return toast('Escreva o número que vai testar a conversa (toque em Editar)');
+    const q=await sb.rpc('agente_teste_real_ligar',{p_id:x.id,p_tel_teste:tt,p_min:min,p_avisar:av});
+    if(q.error||!(q.data&&q.data.ok))return toast('Não deu certo: '+((q.error&&q.error.message)||(q.data&&q.data.erro)||''));
+    await loadAt();toast('Teste ligado por '+atMinTxt(q.data.minutos)+(av?'. O cliente recebeu o link do QR Code':'. Mande o link do QR Code para o cliente'));return render()}
   const r=await sb.rpc('agente_teste_ligar_tempo',{p_id:x.id,p_on:on,p_msg:on&&av?atMsg(x,min):null,p_min:min});
   if(r.error||!(r.data&&r.data.ok))return toast('Não deu certo: '+((r.error&&r.error.message)||(r.data&&r.data.erro)||''));
   await loadAt();toast(on?(av?'Teste ligado'+(min?' por '+atMinTxt(min):'')+'. O cliente já recebeu a mensagem':'Teste ligado'+(min?' por '+atMinTxt(min):'')):'Teste desligado. A conversa voltou para o CRM');render()}
@@ -1070,17 +1082,19 @@ async function atClick(d,b){
   if(d.a==='atcopiar'){const l=atLink();try{await navigator.clipboard.writeText(l);toast('Link copiado')}catch(e){prompt('Copie o link:',l)}return}
   if(d.a==='atzap'){const t='Oi! Quer ver o atendente virtual funcionando na sua empresa, direto no seu WhatsApp? Preencha aqui rapidinho (2 minutos) que eu já ligo o teste para você:\n'+atLink();window.open('https://wa.me/?text='+encodeURIComponent(t),'_blank','noopener');return}
   if(d.ated){const x=(st.at||[]).find(y=>y.id===d.ated);st.atEd=Object.assign({},x);if(!st.atEd.info)st.atEd.info=atRamo(x.ramo)[3];render();const f=document.getElementById('at-form');if(f)f.scrollIntoView({behavior:'smooth'});return}
+  if(d.atqr){const x=(st.at||[]).find(y=>y.id===d.atqr);if(!x)return;const l=atQrLink(x);try{await navigator.clipboard.writeText(l);toast('Link do QR Code copiado')}catch(e){prompt('Copie o link:',l)}return}
   if(d.aton||d.atoff){const x=(st.at||[]).find(y=>y.id===(d.aton||d.atoff));if(x)await atLigar(x,!!d.aton);return}
   if(d.atdel){const x=(st.at||[]).find(y=>y.id===d.atdel);if(!x||!confirm('Remover o teste de '+x.empresa+'?'))return;const r=await sb.from('agente_testes').delete().eq('id',x.id);if(r.error)return toast(r.error.message);await loadAt();return render()}
   if(d.a==='atsalvar'){const x=atLer();st.atAvisar=!!(document.getElementById('at-avisar')||{}).checked;
     if(x.telefone.length<12)return toast('Escreva o WhatsApp do cliente com DDD');
     if(!x.ramo)return toast('Escolha o ramo da empresa');
     if(!x.empresa)return toast('Escreva o nome da empresa');
+    if(x.pedido_modo==='real'){if(!x.pedido_tel_teste||x.pedido_tel_teste.length<12)return toast('Escreva o número que vai testar a conversa, com DDD');if(x.pedido_tel_teste.slice(-8)===x.telefone.slice(-8)&&!confirm('O número de teste é igual ao WhatsApp do cliente. Se esse for o WhatsApp da empresa, o teste não funciona (o WhatsApp não deixa mandar mensagem para o próprio número). Continuar assim?'))return}
     b.disabled=true;const id=st.atEd&&st.atEd.id;
     const r=id?await sb.from('agente_testes').update(Object.assign({},x,{atualizado_em:new Date().toISOString()})).eq('id',id).select().single():await sb.from('agente_testes').upsert(x,{onConflict:'telefone'}).select().single();
     b.disabled=false;if(r.error)return toast('Não salvou: '+r.error.message);
     st.atEd=null;await loadAt();
-    if(d.ligar){const n=(st.at||[]).find(y=>y.id===r.data.id);if(n){if(atLigado(n)){const mn=atMinutos();await sb.rpc('agente_teste_ligar_tempo',{p_id:n.id,p_on:true,p_msg:null,p_min:mn});await loadAt();toast('Teste atualizado. Ele já vale na próxima mensagem');return render()}return atLigar(n,true)}}
+    if(d.ligar){const n=(st.at||[]).find(y=>y.id===r.data.id);if(n){if(atLigado(n)&&atModo(n)==='real'){st.atAvisar=false;const q=await sb.rpc('agente_teste_real_ligar',{p_id:n.id,p_tel_teste:n.pedido_tel_teste||n.tel_teste,p_min:atMinutos(),p_avisar:false});await loadAt();toast(q.error||!(q.data&&q.data.ok)?'Não deu certo: '+((q.error&&q.error.message)||(q.data&&q.data.erro)||''):'Teste atualizado');return render()}if(atLigado(n)){const mn=atMinutos();await sb.rpc('agente_teste_ligar_tempo',{p_id:n.id,p_on:true,p_msg:null,p_min:mn});await loadAt();toast('Teste atualizado. Ele já vale na próxima mensagem');return render()}return atLigar(n,true)}}
     toast('Teste salvo');return render()}
   return 'nada';
 }
@@ -1282,7 +1296,7 @@ function vMsg(){
 }
 
 /* ---------- eventos ---------- */
-document.addEventListener('change',e=>{const t0=e.target;if(t0&&t0.id==='at-min'){st.atMinSel=t0.value;const o=document.getElementById('at-min-o');if(o)o.hidden=t0.value!=='outro';return}if(t0&&t0.id==='at-min-n'){st.atMinN=t0.value;return}});
+document.addEventListener('change',e=>{const t0=e.target;if(t0&&t0.id==='at-modo'){const bx=document.getElementById('at-tt-box');if(bx)bx.hidden=t0.value!=='real';return}if(t0&&t0.id==='at-min'){st.atMinSel=t0.value;const o=document.getElementById('at-min-o');if(o)o.hidden=t0.value!=='outro';return}if(t0&&t0.id==='at-min-n'){st.atMinN=t0.value;return}});
 document.addEventListener('change',e=>{const t=e.target;if(t&&t.dataset&&t.dataset.agtseg){st.agt=agtNovo(+t.value||0);return render()}if(t&&t.dataset&&t.dataset.agdia){const c=t.closest('.chip');if(c)c.classList.toggle('on',t.checked);return}if(t&&t.dataset&&t.dataset.prevseg){document.querySelectorAll('[data-cfg]').forEach(i=>{if(i.value!==String(cfg(i.dataset.cfg)??''))st.cfg[i.dataset.cfg]=i.value});st.prevSeg=+t.value||0;const y=scrollY;render();scrollTo(0,y)}});
 document.addEventListener('submit',async e=>{
   const f=e.target;
@@ -1297,7 +1311,7 @@ document.addEventListener('submit',async e=>{
 document.addEventListener('click',async e=>{
   const b=e.target.closest('button,[data-tab]');if(!b)return;const d=b.dataset;
   if(d.tab){e.preventDefault();return go(d.tab)}
-  if(d.atramo||d.ated||d.aton||d.atoff||d.atdel||['atsalvar','atexemplo','atnovo'].includes(d.a))return atClick(d,b);
+  if(d.atramo||d.ated||d.aton||d.atoff||d.atdel||d.atqr||['atsalvar','atexemplo','atnovo'].includes(d.a))return atClick(d,b);
   if(d.igf||d.igseg||d.igdm||d.igvolta||d.iget||d.igdel||d.a==='igadd'||d.a==='igpadrao')return igClick(d);
   if(d.f){st.f=d.f;return render()}
   if(d.open){st.open=st.open===d.open?null:d.open;return render()}

@@ -60,6 +60,14 @@ input:focus,textarea:focus{border-color:var(--ambar);outline:none;background:#ff
 .feito h2{margin-bottom:10px;font-size:26px}
 .feito p{color:var(--nevoa);max-width:30em;margin:0 auto}
 .feito p+p{margin-top:10px}
+.modos{display:grid;gap:8px;margin-bottom:16px}
+.modos label{position:relative}
+.modos input{position:absolute;opacity:0;pointer-events:none;width:1px;height:1px}
+.modos span{display:block;padding:12px 14px;border:1.5px solid var(--linha);border-radius:12px;background:#fff;cursor:pointer}
+.modos span b{display:block}
+.modos span small{display:block;color:var(--nevoa);font-size:14px;margin-top:2px}
+.modos input:checked+span{border-color:var(--ambar);background:#FFF6E8}
+.modos input:focus-visible+span{outline:3px solid var(--ambar);outline-offset:2px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -74,13 +82,19 @@ input:focus,textarea:focus{border-color:var(--ambar);outline:none;background:#ff
 <form id="f" novalidate>
   <div class="card">
     <h2>Seus dados</h2>
-    <p class="sub">É neste WhatsApp que você vai conversar com o agente.</p>
+    <p class="sub">É do seu WhatsApp que você vai conversar com o agente.</p>
     <div id="err"></div>
     <div class="g2">
       <div class="campo"><label for="nome">Seu nome</label><input id="nome" autocomplete="name" placeholder="Como você se chama"></div>
       <div class="campo"><label for="tel">Seu WhatsApp</label><input id="tel" type="tel" inputmode="numeric" autocomplete="tel" placeholder="(81) 99999-9999"></div>
     </div>
     <div class="campo"><label for="emp">Nome da empresa</label><input id="emp" placeholder="Como os clientes conhecem"></div>
+    <div class="campo"><span class="rot" id="modo-rot">Onde você quer testar</span>
+      <div class="modos" role="radiogroup" aria-labelledby="modo-rot">
+        <label><input type="radio" name="modo" value="real" checked><span><b>No WhatsApp da minha empresa</b><small>Você conecta o WhatsApp da empresa lendo um QR Code e o agente responde lá, só para o seu número. Os clientes de verdade não são atendidos.</small></span></label>
+        <label><input type="radio" name="modo" value="simulado"><span><b>Sem conectar nada</b><small>Você conversa com o agente pelo nosso número, como se fosse um cliente da sua empresa.</small></span></label>
+      </div></div>
+    <div class="campo" id="emp-wa"><label for="telemp">WhatsApp da empresa</label><input id="telemp" type="tel" inputmode="numeric" placeholder="(81) 3333-4444 ou (81) 99999-0000"><small>É o número que vai ler o QR Code. Ele precisa ser diferente do seu WhatsApp acima, porque é do seu que você vai mandar as mensagens de teste.</small></div>
   </div>
   <div class="card">
     <h2>O que a empresa faz</h2>
@@ -114,6 +128,8 @@ $('#ramos').innerHTML=RAMOS.map(function(r){return '<label><input type="radio" n
 $('#ramos').addEventListener('change',function(e){var r=RAMOS.find(function(x){return x[0]===e.target.value});if(r)$('#serv').placeholder=r[3]});
 var empUrl=new URLSearchParams(location.search).get('e');if(empUrl&&document.getElementById('emp'))document.getElementById('emp').value=empUrl.slice(0,80);
 var ramoUrl=new URLSearchParams(location.search).get('ramo');if(ramoUrl){var i=document.querySelector('input[name=ramo][value="'+ramoUrl+'"]');if(i){i.checked=true;i.dispatchEvent(new Event('change',{bubbles:true}))}}
+document.querySelectorAll('input[name=modo]').forEach(function(i){i.addEventListener('change',function(){$('#emp-wa').hidden=(document.querySelector('input[name=modo]:checked')||{}).value!=='real'})});
+$('#telemp').addEventListener('input',function(){var d=this.value.replace(/\D/g,'').replace(/^55(?=\d{10,11}$)/,'').slice(0,11);this.value=d.length>10?d.replace(/(\d{2})(\d{5})(\d{0,4})/,'($1) $2-$3'):d.replace(/(\d{2})(\d{4})(\d{0,4})/,'($1) $2-$3').replace(/[-\s()]+$/,'')});
 $('#tel').addEventListener('input',function(){var d=this.value.replace(/\D/g,'').replace(/^55(?=\d{10,11}$)/,'').slice(0,11);this.value=d.length>10?d.replace(/(\d{2})(\d{5})(\d{0,4})/,'($1) $2-$3'):d.replace(/(\d{2})(\d{4})(\d{0,4})/,'($1) $2-$3').replace(/[-\s()]+$/,'')});
 function erro(t,foco){$('#err').innerHTML='<div class="erro" role="alert">'+esc(t)+'</div>';$('#err').scrollIntoView({behavior:'smooth',block:'center'});if(foco)setTimeout(function(){foco.focus({preventScroll:true})},300)}
 $('#f').addEventListener('submit',function(e){e.preventDefault();
@@ -122,14 +138,20 @@ $('#f').addEventListener('submit',function(e){e.preventDefault();
   if(v('nome').length<2)return erro('Escreva o seu nome.',$('#nome'));
   if(tel.length<10)return erro('Escreva o seu WhatsApp com DDD.',$('#tel'));
   if(!v('emp'))return erro('Escreva o nome da empresa.',$('#emp'));
+  var modo=(document.querySelector('input[name=modo]:checked')||{}).value||'simulado',telemp=v('telemp').replace(/\D/g,'');
+  if(modo==='real'&&telemp.length<10)return erro('Escreva o WhatsApp da empresa com DDD.',$('#telemp'));
+  if(modo==='real'&&telemp.slice(-8)===tel.slice(-8))return erro('O seu WhatsApp precisa ser diferente do WhatsApp da empresa: é dele que você vai mandar as mensagens de teste.',$('#tel'));
   if(!r)return erro('Escolha o ramo da empresa.');
   if(v('serv').length<5)return erro('Conte pelo menos os principais produtos ou serviços, com os preços.',$('#serv'));
   var info=['Produtos e serviços: '+v('serv'),v('hor')&&'Horário de funcionamento: '+v('hor'),v('pag')&&'Formas de pagamento: '+v('pag'),v('end')&&'Endereço: '+v('end'),v('mais')&&'Perguntas frequentes: '+v('mais')].filter(Boolean).join('\n');
   var b=$('#enviar');b.disabled=true;b.textContent='Enviando…';
-  fetch(SB+'/rest/v1/rpc/agente_teste_pedir',{method:'POST',headers:{'Content-Type':'application/json',apikey:KEY,Authorization:'Bearer '+KEY},body:JSON.stringify({p_nome:v('nome'),p_tel:tel,p_empresa:v('emp'),p_ramo:r,p_info:info,p_agente:v('ag')})})
+  fetch(SB+'/rest/v1/rpc/agente_teste_pedir3',{method:'POST',headers:{'Content-Type':'application/json',apikey:KEY,Authorization:'Bearer '+KEY},body:JSON.stringify({p_nome:v('nome'),p_tel:tel,p_empresa:v('emp'),p_ramo:r,p_info:info,p_agente:v('ag'),p_modo:modo,p_tel_empresa:modo==='real'?telemp:null})})
     .then(function(x){return x.json()}).then(function(j){b.disabled=false;b.textContent='Quero testar no meu WhatsApp';
       if(!j||!j.ok)return erro((j&&(j.erro||j.message))||'Não deu certo agora. Tente de novo.');
-      $('#app').innerHTML='<div class="card feito"><div class="ico" aria-hidden="true">✓</div><h2>Pedido recebido!</h2><p>Assim que o teste for ligado, você recebe uma mensagem no WhatsApp <b>'+esc($('#tel')?$('#tel').value:tel)+'</b>.</p><p>Aí é só conversar como se fosse um cliente da <b>'+esc(v('emp'))+'</b>. Para recomeçar a conversa do zero, mande <b>REINICIAR</b>.</p></div>';window.scrollTo(0,0)})
+      var seu=esc($('#tel')?$('#tel').value:tel);
+      $('#app').innerHTML=modo==='real'
+        ?'<div class="card feito"><div class="ico" aria-hidden="true">✓</div><h2>Pedido recebido!</h2><p>Assim que o teste for ligado, você recebe no WhatsApp <b>'+seu+'</b> um link com o QR Code. Abra o link no computador ou em outro celular e leia o QR Code com o WhatsApp da empresa.</p><p>Depois, é só mandar mensagem do seu WhatsApp para o da empresa, como se fosse um cliente. O agente responde só você.</p></div>'
+        :'<div class="card feito"><div class="ico" aria-hidden="true">✓</div><h2>Pedido recebido!</h2><p>Assim que o teste for ligado, você recebe uma mensagem no WhatsApp <b>'+seu+'</b>.</p><p>Aí é só conversar como se fosse um cliente da <b>'+esc(v('emp'))+'</b>. Para recomeçar a conversa do zero, mande <b>REINICIAR</b>.</p></div>';window.scrollTo(0,0)})
     .catch(function(){b.disabled=false;b.textContent='Quero testar no meu WhatsApp';erro('Sem conexão. Confira a internet e tente de novo.')});
 });
 })();

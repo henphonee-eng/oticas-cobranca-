@@ -24,6 +24,10 @@
   ],
   "rewrites": [
     {
+      "source": "/conectar",
+      "destination": "/conectar.html"
+    },
+    {
       "source": "/experimente",
       "destination": "/experimente.html"
     },

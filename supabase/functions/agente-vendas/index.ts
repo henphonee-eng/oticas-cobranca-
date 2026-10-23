@@ -610,8 +610,16 @@ async function demoWa(b: any) {
   const { data: tt } = await db.from("agente_testes").select("*").eq("id", id).maybeSingle();
   if (!tt?.ativo) return { ignorado: "desligado" };
   const texto = s(b.texto, 1500);
+  // teste real: a resposta sai pelo WhatsApp da empresa do cliente (só para o número liberado no teste)
+  const otica = /^[0-9a-f-]{36}$/.test(String(b.otica || "")) ? String(b.otica) : "";
+  if (otica && (tt.modo !== "real" || tt.otica_id !== otica)) return { ignorado: "outro_teste" };
   const enviar = async (partesTxt: string[]) => {
     let t = Date.now();
+    if (otica) {
+      const rows = partesTxt.filter(Boolean).map((p, i) => { t += (i === 0 ? 1500 : 2500) + Math.min(9000, p.length * 30); return { otica_id: otica, cliente_nome: "Teste", tipo: "agente", telefone: tel, texto: p, status: "aguardando", enviar_apos: new Date(t).toISOString(), expira_em: new Date(Date.now() + 3600e3).toISOString(), criado_em: new Date(Date.now() + i).toISOString() }; });
+      if (rows.length) await db.from("wa_fila").insert(rows);
+      return;
+    }
     const rows = partesTxt.filter(Boolean).map((p, i) => { t += (i === 0 ? 1500 : 2500) + Math.min(9000, p.length * 30); return { lead_id: null, tipo: "manual", telefone: tel, texto: p, status: "aguardando", enviar_apos: new Date(t).toISOString(), criado_em: new Date(Date.now() + i).toISOString(), origem: "teste" }; });
     if (rows.length) await db.from("prosp_wa_fila").insert(rows);
   };
