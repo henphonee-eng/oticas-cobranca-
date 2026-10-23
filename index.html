@@ -4117,12 +4117,61 @@ function exAgenda(){
   const tiles='<div class="kpis" style="margin-bottom:12px">'+tile('Hoje',hoje)+tile('Próximos',prox)+tile('Compareceram (30 dias)',comp)+tile('Vindos de anúncio (30 dias)',anun)+'</div>';
   const fl={prox:x=>x.data>=t&&['agendado','confirmado'].includes(x.status),hoje:x=>x.data===t&&x.status!=='cancelado',pass:x=>x.data<t&&x.status!=='cancelado',canc:x=>x.status==='cancelado'};
   const lista=ag.filter(fl[EX.fil]||fl.prox).sort((p,q)=>(p.data+exHora(p.hora)).localeCompare(q.data+exHora(q.hora)));if(EX.fil==='pass'||EX.fil==='canc')lista.reverse();
+  if(EX.fil==='feitos')return tiles+'<div class="acts" style="margin-bottom:10px">'+[['prox','Próximos'],['hoje','Hoje'],['pass','Já passaram'],['canc','Cancelados'],['feitos','Já fizeram o exame']].map(f=>'<button class="btn sm'+(EX.fil===f[0]?' primary':'')+'" data-act="exfil" data-f="'+f[0]+'">'+f[1]+'</button>').join('')+'</div>'+exFeitos();
   const novos=ag.filter(x=>x.status==='agendado'&&x.data>=t).length;
-  const fbtn=[['prox','Próximos'],['hoje','Hoje'],['pass','Já passaram'],['canc','Cancelados']].map(f=>'<button class="btn sm'+(EX.fil===f[0]?' primary':'')+'" data-act="exfil" data-f="'+f[0]+'">'+f[1]+'</button>').join('');
+  const fbtn=[['prox','Próximos'],['hoje','Hoje'],['pass','Já passaram'],['canc','Cancelados'],['feitos','Já fizeram o exame']].map(f=>'<button class="btn sm'+(EX.fil===f[0]?' primary':'')+'" data-act="exfil" data-f="'+f[0]+'">'+f[1]+'</button>').join('');
   let g='',h='';lista.forEach(x=>{if(x.data!==g){g=x.data;h+='<div class="sh" style="margin:14px 0 6px"><h2 style="font-size:16px">'+(x.data===t?'Hoje':x.data===addDays(t,1)?'Amanhã':fmtDate(x.data))+'</h2>'+(exLocNome(x.data)?'<span class="chip">📍 '+esc(exLocNome(x.data))+'</span>':'')+'</div>'}h+=exLinhaAg(x)});
   const wa=waOn()?'':'<p class="sub" style="margin:0 0 10px">Para enviar a confirmação e o lembrete sozinhos, ligue o WhatsApp Automático no menu. Sem ele, use o botão WhatsApp de cada exame.</p>';
   return tiles+wa+'<div class="acts" style="margin-bottom:10px">'+fbtn+'<button class="btn primary sm" data-act="exnovo">Agendar um exame</button></div>'+exForm()+(novos?'<p class="sub" style="margin:0 0 4px">'+plural(novos,'exame ainda sem confirmação','exames ainda sem confirmação')+'.</p>':'')+'<div class="stack">'+(h||none('Nenhum exame nesta lista.'))+'</div>';
 }
+/* ---- relatório: quem já fez o exame (marcado como Compareceu) ---- */
+function exPeriodo(){const t=todayStr(),p=EX.fp||'mes',m=t.slice(0,7);
+  if(p==='mes')return [m+'-01',t,'Este mês'];
+  if(p==='mesant'){const d=new Date(+m.slice(0,4),+m.slice(5,7)-2,1),a=ymd(d),f=ymd(new Date(d.getFullYear(),d.getMonth()+1,0));return [a,f,'Mês passado']}
+  if(p==='90')return [addDays(t,-89),t,'Últimos 90 dias'];
+  if(p==='per'){const a=EX.fde||m+'-01',f=EX.fate||t;return a<=f?[a,f,fmtDate(a)+' a '+fmtDate(f)]:[f,a,fmtDate(f)+' a '+fmtDate(a)]}
+  return ['2000-01-01',t,'Desde o início']}
+async function exFeitosLoad(){const [a,f]=exPeriodo(),k=a+'|'+f;if(EX.fkey===k||EX.fbusy)return;EX.fbusy=true;
+  try{const r=await sb.from('ex_agend').select('id,nome,whatsapp,data,hora,origem,anuncio,cliente_id,local').eq('otica_id',OTICA.id).eq('status','compareceu').gte('data',a).lte('data',f).order('data',{ascending:false}).order('hora',{ascending:false});
+    if(r.error)throw r.error;EX.feitos=r.data||[];EX.fkey=k;EX.ferr=''}catch(e){EX.ferr='Não foi possível carregar o relatório agora. Tente de novo em instantes.';EX.feitos=EX.feitos||[]}
+  EX.fbusy=false;if(ui.tab==='exames'&&EX.fil==='feitos'&&!ui.sheet)render()}
+function exFeitoInfo(x){const tel=exSoDig(x.whatsapp).replace(/^55/,'');
+  const cli=(x.cliente_id&&S.clientes[x.cliente_id])||Object.values(S.clientes).find(c=>tel&&exSoDig(c.whatsapp).replace(/^55/,'')===tel)||null;
+  const vs=cli?Object.values(S.vendas).filter(v=>v.clienteId===cli.id&&!v.aguardando&&(v.data||'')>=x.data):[];
+  return {cli:cli,tel:tel,vs:vs,total:vs.reduce((s,v)=>s+(v.total||0),0)}}
+function exFeitos(){
+  const [a,f,lab]=exPeriodo(),k=a+'|'+f;if(EX.fkey!==k){exFeitosLoad();return exFeitosFiltro()+none('Carregando...')}
+  const L=(EX.feitos||[]).map(x=>Object.assign({x:x},exFeitoInfo(x))),comp=L.filter(o=>o.vs.length).length,tot=L.reduce((s,o)=>s+o.total,0);
+  const resumo='<div class="kpis" style="margin-bottom:12px">'+tile('Fizeram o exame',L.length)+tile('Compraram depois',comp)+tile('Ainda não compraram',L.length-comp)+tile('Vendido para eles',brl(tot))+'</div>';
+  const lin=o=>'<article class="row"><div class="row-main"><b>'+esc(o.x.nome)+'</b><div class="meta">Fez o exame em '+fmtDate(o.x.data)+' às '+exHora(o.x.hora)+(o.tel?' · '+esc(maskTel(o.tel)):'')+'</div><div class="chips">'+
+    (o.vs.length?'<span class="chip ok">Comprou '+brl(o.total)+'</span>':'<span class="chip warn">Ainda não comprou</span>')+(o.cli?'':'<span class="chip">Não cadastrado</span>')+(o.x.anuncio||o.x.origem==='meta'?'<span class="chip acc">Anúncio</span>':'')+'</div></div>'+
+    '<div class="row-side"><div class="acts">'+(o.cli?'<button class="btn sm primary" data-act="novavenda" data-c="'+o.cli.id+'">Nova venda</button>':'<button class="btn sm" data-act="excli" data-id="'+o.x.id+'">Cadastrar como cliente</button>')+
+    (o.tel?'<a class="btn sm wa"'+WAT+' href="'+esc(waLink(o.tel,'Olá, '+o.x.nome.split(' ')[0]+'! Aqui é da '+cfg().nome+'.'))+'">WhatsApp</a>':'')+'</div></div></article>';
+  return exFeitosFiltro()+(EX.ferr?'<p class="sub" style="color:var(--bad)">'+esc(EX.ferr)+'</p>':'')+resumo+
+    (L.length?'<div class="acts" style="margin-bottom:10px;justify-content:flex-start"><button class="btn sm" data-act="exfeitospdf">Baixar relatório (PDF)</button><button class="btn sm" data-act="exfeitoscsv">Baixar planilha (Excel)</button></div><div class="stack">'+L.map(lin).join('')+'</div>'
+      :none('Ninguém foi marcado como Compareceu neste período. Quando a pessoa vier fazer o exame, toque em Compareceu na agenda.'));
+}
+function exFeitosFiltro(){const p=EX.fp||'mes';
+  return '<div class="card" style="gap:10px;margin-bottom:12px"><b>Quem já fez o exame</b><p class="sub" style="margin:0">Aparece aqui todo exame marcado como <b>Compareceu</b>, com a informação se a pessoa já comprou depois do exame.</p>'+
+   '<div class="filters" style="margin:0">'+[['mes','Este mês'],['mesant','Mês passado'],['90','Últimos 90 dias'],['tudo','Desde o início'],['per','Escolher datas']].map(o=>'<button class="fchip" data-act="exfp" data-f="'+o[0]+'" aria-pressed="'+(p===o[0])+'">'+o[1]+'</button>').join('')+'</div>'+
+   (p==='per'?'<div class="grid2"><div class="field"><span>De</span><input type="date" id="exf-de" value="'+esc(EX.fde||todayStr().slice(0,8)+'01')+'"></div><div class="field"><span>Até</span><input type="date" id="exf-ate" value="'+esc(EX.fate||todayStr())+'"></div></div>':'')+'</div>'}
+function exFeitosLinhas(){return (EX.feitos||[]).map(x=>{const o=exFeitoInfo(x);return {x:x,o:o}})}
+function exFeitosCsv(){const [a,f]=exPeriodo();const rows=[['Data do exame','Horário','Nome','WhatsApp','Cadastrado como cliente','Comprou depois','Valor comprado','Veio de anúncio']];
+  exFeitosLinhas().forEach(({x,o})=>rows.push([fmtDate(x.data),exHora(x.hora),x.nome,o.tel?maskTel(o.tel):'',o.cli?'Sim':'Não',o.vs.length?'Sim':'Não',centsToStr(o.total),x.anuncio||x.origem==='meta'?'Sim':'Não']));
+  saveFile('exames-feitos-'+a+'-a-'+f+'.csv',csvText(rows),'Planilha pronta')}
+function exFeitosPdf(){if(!window.jspdf)return toast('O gerador de PDF não carregou. Recarregue a página.');
+  const [a,f,lab]=exPeriodo(),L=exFeitosLinhas(),jsPDF=window.jspdf.jsPDF,doc=new jsPDF({unit:'mm',format:'a4'}),M=14,W=210;let y=18;
+  const T=(x,a1,b,o)=>doc.text(String(x==null?'':x),a1,b,o);
+  doc.setFont('helvetica','bold');doc.setFontSize(16);T(cfg().nome||'',M,y);y+=8;doc.setFontSize(13);T('Quem já fez o exame de vista',M,y);y+=6;
+  doc.setFont('helvetica','normal');doc.setFontSize(10);T('Período: '+fmtDate(a)+' a '+fmtDate(f)+' ('+lab+')',M,y);y+=5;
+  const comp=L.filter(r=>r.o.vs.length).length;T(plural(L.length,'pessoa fez','pessoas fizeram')+' o exame · '+comp+' '+(comp===1?'comprou':'compraram')+' depois · '+brl(L.reduce((s,r)=>s+r.o.total,0))+' vendido',M,y);y+=8;
+  const cols=[[M,'Data'],[M+24,'Nome'],[M+98,'WhatsApp'],[M+136,'Comprou depois']];
+  const head=()=>{doc.setFont('helvetica','bold');doc.setFontSize(9.5);cols.forEach(c=>T(c[1],c[0],y));y+=2;doc.setLineWidth(.3);doc.line(M,y,W-M,y);y+=5;doc.setFont('helvetica','normal')};head();
+  L.forEach(({x,o})=>{if(y>284){doc.addPage();y=18;head()}
+    T(fmtDate(x.data)+' '+exHora(x.hora),M,y);T(doc.splitTextToSize(x.nome,70)[0],M+24,y);T(o.tel?maskTel(o.tel):'',M+98,y);T(o.vs.length?'Sim, '+brl(o.total):'Não',M+136,y);
+    y+=2.2;doc.setDrawColor(220,220,220);doc.line(M,y,W-M,y);doc.setDrawColor(20,20,20);y+=4.6});
+  saveFile('exames-feitos-'+a+'-a-'+f+'.pdf',doc.output('blob'),'Relatório pronto')}
+document.addEventListener('change',e=>{const t=e.target;if(!t||(t.id!=='exf-de'&&t.id!=='exf-ate'))return;if(t.id==='exf-de')EX.fde=t.value;else EX.fate=t.value;render()});
 /* ---- página pública ---- */
 function exPagina(){
   const D=exDraft(),url=exLink(),link=waLink('','');const msg='Agende seu exame de vista na '+cfg().nome+': '+url;
@@ -4176,6 +4225,9 @@ function exConversas(){
 Object.assign(A,{
   exsub(d){EX.sub=d.s;if(d.s==='pagina')EX.dr=null;if(d.s==='conversas')exConvLoad(true);render()},
   exfil(d){EX.fil=d.f;render()},
+  exfp(d){EX.fp=d.f;render()},
+  exfeitoscsv(){exFeitosCsv()},
+  exfeitospdf(){exFeitosPdf()},
   exconvrec(){exConvLoad(true)},
   exnovo(){EX.form={id:'',nome:'',whatsapp:'',data:addDays(todayStr(),1),hora:'09:00'};render()},
   exedit(d){const x=(EX.ag||[]).find(a=>a.id===d.id);if(!x)return;EX.form={id:x.id,nome:x.nome,whatsapp:maskTel(String(x.whatsapp||'').replace(/^55/,'')),data:x.data,hora:exHora(x.hora),loc:(g=>g>=0?g:null)(x.local?exGrupoLocal(x.local):exGrupoDe(x.data)),orig:{data:x.data,hora:exHora(x.hora),local:JSON.stringify(x.local||null)}};render();setTimeout(()=>{const f=document.querySelector('[data-exfm="nome"]');if(f)f.closest('.card').scrollIntoView({behavior:'smooth',block:'start'})},50)},
@@ -4191,7 +4243,7 @@ Object.assign(A,{
       const r=await sb.from('ex_agend').insert({otica_id:OTICA.id,nome:F.nome.trim(),whatsapp:t.length<=11?'55'+t:t,data:F.data,hora:F.hora,local,origem:'equipe',cliente_id:F.cliente_id||null});if(r.error)return toast('Não foi possível agendar');toast('Exame agendado')}
     EX.form=null;EX.busy=false;await exLoad();render();
   },
-  async exst(d){const x=(EX.ag||[]).find(a=>a.id===d.id);if(!x)return;const r=await sb.from('ex_agend').update({status:d.s}).eq('id',d.id);if(r.error)return toast('Não foi possível atualizar');x.status=d.s;
+  async exst(d){const x=(EX.ag||[]).find(a=>a.id===d.id);if(!x)return;const r=await sb.from('ex_agend').update({status:d.s}).eq('id',d.id);if(r.error)return toast('Não foi possível atualizar');x.status=d.s;EX.fkey=null;
     if(d.s==='compareceu'&&!Object.values(S.clientes).some(c=>exSoDig(c.whatsapp).replace(/^55/,'')===exSoDig(x.whatsapp).replace(/^55/,'')))toast('Compareceu. Use "Cadastrar como cliente" para registrar a venda.');else toast('Atualizado');render()},
   excli(d){const x=(EX.ag||[]).find(a=>a.id===d.id);if(!x)return;const c=makeCliente({nome:cap(x.nome.toLowerCase()),cpf:'',whatsapp:maskTel(exSoDig(x.whatsapp).replace(/^55/,'')),endereco:'',nascimento:'',obs:'Veio pelo agendamento de exame de vista.',receitas:[]});S.clientes[c.id]=c;persist('clientes',c.id);premLog('Cliente cadastrado',c.nome);premWaHook('bv',null,null,c);toast('Cliente cadastrado');render()},
   excopiar(){const u=exLink();(navigator.clipboard?navigator.clipboard.writeText(u):Promise.reject()).then(()=>toast('Link copiado')).catch(()=>{const i=document.querySelector('.card input[readonly]');if(i){i.select();document.execCommand('copy');toast('Link copiado')}})},
