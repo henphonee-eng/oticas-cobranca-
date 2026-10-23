@@ -3109,6 +3109,8 @@ function osUltRec(c){const r=(c&&c.receitas||[]).filter(x=>!receitaVazia(x)).sor
 function osMarcar(v){if(!v)return;const em=new Date().toISOString();
   if(v._c){v._c.osBaixa={em:em,rec:osUltRec(v._c)};persist('clientes',v._c.id)}
   else if(S.vendas[v.id]){v.osBaixa={em:em};persist('vendas',v.id)}}
+function osMarcarMan(ids,sim){let n=0;ids.forEach(id=>{const c=S.clientes[id];if(!c)return;if(sim)c.osBaixa={em:new Date().toISOString(),rec:osUltRec(c),manual:true};else delete c.osBaixa;persist('clientes',id);n++});
+  osAtualizar();if(n)toast(sim?(n===1?'OS marcada como baixada. Ela está em Já baixadas':plural(n,'OS marcada','OS marcadas')+' como baixadas. Estão em Já baixadas'):(n===1?'OS voltou para Novas para baixar':plural(n,'OS voltou','OS voltaram')+' para Novas para baixar'))}
 const osFoiBaixada=c=>!!(c.osBaixa&&c.osBaixa.em&&(c.osBaixa.rec||'')>=osUltRec(c));
 function osQuando(iso){try{const d=new Date(iso);return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',timeZone:'America/Recife'})+' às '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',timeZone:'America/Recife'})}catch(e){return ''}}
 function osGerar(id,imprimir){
@@ -3136,16 +3138,18 @@ function osLista(){
   const nSel=Object.keys(ui.osSel).filter(k=>ui.osSel[k]&&S.clientes[k]).length;
   const barra=!l.length?'':'<div class="card" style="margin-bottom:12px"><b>Imprimir várias OS</b><div class="meta">Marque as ordens de serviço e baixe um arquivo do Word com duas OS por folha.</div><div style="display:flex;flex-direction:row;gap:8px;flex-wrap:wrap;justify-content:flex-start;margin-top:10px">'+
     '<button class="btn sm" data-act="osseltodas">Selecionar todas</button>'+(nSel?'<button class="btn sm" data-act="osseltira">Limpar seleção</button>':'')+
-    '<button class="btn sm primary" data-act="osword"'+(nSel?'':' disabled')+'>Baixar no Word'+(nSel?' ('+nSel+(nSel===1?' OS, 1 folha)':' OS, '+Math.ceil(nSel/2)+(Math.ceil(nSel/2)===1?' folha)':' folhas)')):'')+'</button></div></div>';
+    '<button class="btn sm primary" data-act="osword"'+(nSel?'':' disabled')+'>Baixar no Word'+(nSel?' ('+nSel+(nSel===1?' OS, 1 folha)':' OS, '+Math.ceil(nSel/2)+(Math.ceil(nSel/2)===1?' folha)':' folhas)')):'')+'</button>'+
+    (nSel?(f==='baixadas'?'<button class="btn sm" data-act="osmarcsel" data-m="0">Voltar selecionadas para novas</button>':'<button class="btn sm" data-act="osmarcsel" data-m="1">Marcar selecionadas como baixadas</button>'):'')+'</div></div>';
   if(!tudo.length&&!(ui.osQ||'').trim())return '<div class="empty">'+GLASSES+'<h3>Nenhum cliente com grau cadastrado</h3><p>Cadastre o grau na ficha do cliente (receita) para poder imprimir a ordem de serviço aqui.</p></div>';
   if(!l.length)return filtros+'<div class="empty">'+GLASSES+(ui.osQ&&ui.osQ.trim()&&!tudo.length?'<h3>Nenhum cliente encontrado</h3><p>Confira o nome digitado na busca.</p>':f==='novas'?'<h3>Nenhuma OS nova</h3><p>Todas as ordens de serviço já foram baixadas. Quando você cadastrar o grau de um cliente, ou uma receita nova, a OS aparece aqui.</p>':'<h3>Nenhuma OS baixada ainda</h3><p>As ordens de serviço que você baixar ou imprimir passam a aparecer aqui.</p>')+'</div>';
   const g=(o)=>{o=o||{};return [o.esf,o.cil,o.eixo].filter(Boolean).join(' / ')||'-'};
   return filtros+barra+'<div class="gridlist">'+l.map(x=>'<div class="card"><div class="sale-top"><label style="display:flex;align-items:center;gap:8px;min-width:0"><input type="checkbox" data-ossel="'+x.c.id+'"'+(ui.osSel[x.c.id]?' checked':'')+' aria-label="Selecionar a OS de '+esc(nomeUsa(x.c))+'" style="width:20px;height:20px;flex:none"><button class="link" data-act="editcliente" data-c="'+x.c.id+'">'+esc(nomeUsa(x.c))+demoTag(x.c)+'</button></label>'+(x.c.os?'<span class="chip ok">OS '+esc(x.c.os.num||'')+'</span>':'')+'</div>'+
     (ehCrianca(x.c)?'<div class="meta">Responsável: '+esc(x.c.nome)+'</div>':'')+
-    (osFoiBaixada(x.c)?'<div class="meta"><b>Baixada em '+esc(osQuando(x.c.osBaixa.em))+'</b> · pode baixar de novo quando quiser</div>':'<div class="meta"><b style="color:var(--accent)">Nova, ainda não baixada</b></div>')+
+    (osFoiBaixada(x.c)?'<div class="meta"><b>'+(x.c.osBaixa.manual?'Marcada como baixada em ':'Baixada em ')+esc(osQuando(x.c.osBaixa.em))+'</b> · pode baixar de novo quando quiser</div>':'<div class="meta"><b style="color:var(--accent)">Nova, ainda não baixada</b></div>')+
     '<div class="meta">Receita de '+fmtDate(x.r.data)+(x.r.medico?' · '+esc(x.r.medico):'')+'</div>'+
     '<div class="meta num">OD '+esc(g(x.r.od))+' · OE '+esc(g(x.r.oe))+(x.r.adicao?' · Adição '+esc(x.r.adicao):'')+'</div>'+
-    '<div class="acts" style="justify-content:flex-start"><button class="btn sm primary" data-act="osabrir" data-v="c:'+x.c.id+'">Imprimir OS</button><button class="btn sm" data-act="osbaixar" data-v="c:'+x.c.id+'">Baixar imagem (JPG)</button></div></div>').join('')+'</div>';
+    '<div class="acts" style="justify-content:flex-start"><button class="btn sm primary" data-act="osabrir" data-v="c:'+x.c.id+'">Imprimir OS</button><button class="btn sm" data-act="osbaixar" data-v="c:'+x.c.id+'">Baixar imagem (JPG)</button>'+
+    (osFoiBaixada(x.c)?'<button class="btn sm ghost" data-act="osmarc" data-c="'+x.c.id+'" data-m="0">Voltar para novas</button>':'<button class="btn sm ghost" data-act="osmarc" data-c="'+x.c.id+'" data-m="1">Marcar como baixada</button>')+'</div></div>').join('')+'</div>';
 }
 function viewOS(){
   const n=Object.values(S.clientes).filter(c=>(c.receitas||[]).some(r=>!receitaVazia(r))).length;
@@ -5425,6 +5429,8 @@ Object.assign(A,{
   osbaixar(d){const v=osSubj(d.v);if(!v)return;ui.os=osBase(v);ui.os._v=d.v;osGerar(d.v,false)},
   ospdf(d){osGerar(d.v,false)},
   osfiltro(d){ui.osF=d.f;ui.osSel={};osAtualizar()},
+  osmarc(d){osMarcarMan([d.c],d.m==='1')},
+  osmarcsel(d){osMarcarMan(Object.keys(ui.osSel||{}).filter(k=>ui.osSel[k]&&S.clientes[k]),d.m==='1');ui.osSel={};osAtualizar()},
   osseltodas(){ui.osSel={};osClientes().forEach(x=>{ui.osSel[x.c.id]=1});$('#oslist').innerHTML=osLista()},
   osseltira(){ui.osSel={};$('#oslist').innerHTML=osLista()},
   osword(){osWord()}
