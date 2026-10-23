@@ -142,7 +142,8 @@ autor = "automatico" quando for mensagem automática ou de robô: saudação ou 
 Atenção: muitos robôs e agentes de IA se apresentam com nome de pessoa ("Eu sou a Eloisa e vou te acompanhar no atendimento", "Aqui é a Ana, assistente virtual") e perguntam "como posso ajudar?". Isso é AUTOMÁTICO, mesmo com emoji e tom pessoal, quando a mensagem não comenta nada específico do que dissemos (agente de IA, Connecta, o teste, o preço). Também é automático: "seu atendimento está sendo direcionado", "um de nossos atendentes vai continuar", "aguarde", protocolo de atendimento, pesquisa de satisfação. Se a [EMPRESA] já mandou mensagens automáticas antes nesta conversa, só marque "humano" quando a mensagem responder claramente ao que nós dissemos.
 Mensagem que começa com "Olá, Éder!" e fala da página do Agente de IA ou de um plano (às vezes termina com "(ref. ...)") foi enviada por uma pessoa que clicou na nossa página: autor = "humano".
 autor = "humano" quando a mensagem reage de forma específica ao que dissemos (pergunta preço, pede detalhes, diz que tem interesse ou que não tem, faz uma pergunta sobre o agente, responde com informalidade natural, cumprimenta de forma pessoal como "boa noite, quem fala?").
-intencao: "fechar" (decidiu contratar: escolheu o plano, disse que quer começar, pediu contrato, Pix, forma de pagamento ou proposta com valores), "interesse" (quer saber mais, topou ver uma demonstração ou testar), "pergunta" (pergunta algo sobre a oferta, preço, como funciona, quem é), "objecao" (acha caro, já tem atendente, não confia em IA, sem tempo), "saudacao" (só cumprimentou), "sem_interesse" (disse que não quer, pediu para não mandar mais), "outro".
+intencao: "fechar" (decidiu contratar: escolheu o plano, disse que quer começar, pediu contrato, Pix, forma de pagamento ou proposta com valores), "interesse" (quer saber mais, topou ver uma demonstração ou testar), "pergunta" (pergunta algo sobre a oferta, preço, como funciona, quem é), "objecao" (acha caro, já tem atendente, não confia em IA, sem tempo), "saudacao" (só cumprimentou), "despedida" (só agradece, se despede, deseja bom dia/fim de semana, diz "qualquer coisa avisamos", "entraremos em contato", "vou encaminhar para a equipe" ou repete cortesias, sem pergunta nem pedido novo), "sem_interesse" (disse que não quer, pediu para não mandar mais), "outro".
+Atenção: se a [EMPRESA] responde sempre poucos segundos depois de nós com cortesias parecidas (obrigado, igualmente, ótimo fim de semana, à disposição), é um agente de IA ou robô educado: autor = "automatico".
 Atenção: "pode sim", "ok", "pode mandar" depois de oferecermos mostrar ou testar é "interesse", não "fechar". Querer o teste (simulado ou o teste real no WhatsApp da empresa) também é "interesse", não "fechar".
 Também faça a LEITURA da conversa, para quem vai responder entender a pessoa de verdade:
 - ja_disse: tudo o que a [EMPRESA] já contou, inclusive o que ficou implícito (ex.: "a franquia já tem uma própria" = já tem um atendimento/agente da rede e a decisão provavelmente é da franquia).
@@ -509,6 +510,19 @@ async function atenderMsg(b: any) {
     return { ok: true, automatico: true, cl };
   }
   if (l.ag_estado === "implantacao") return await suporteCadastro(l, c, msgs, tel);
+  // despedida/cortesia: não responde (evita ficar trocando "obrigado" e "bom fim de semana" sem fim)
+  if (cl.intencao === "despedida") {
+    await historico(lead, `👋 A empresa se despediu (${s(cl.motivo, 120)}). O agente não respondeu para não ficar trocando cortesias.`);
+    return { ok: true, despedida: true, cl };
+  }
+  // trava de segurança: muitas respostas seguidas em pouco tempo = provável conversa com outro robô
+  const r20 = await db.from("prosp_wa_fila").select("id", { count: "exact", head: true }).eq("lead_id", lead).eq("origem", "agente").gte("criado_em", new Date(Date.now() - 20 * 60e3).toISOString());
+  const rapidas = (() => { let n = 0, ultNos = 0; for (const m of msgs.slice(-12)) { const t = Date.parse(m.em); if (m.de_mim) ultNos = t; else if (ultNos && t - ultNos < 90e3 && t > Date.now() - 30 * 60e3) n++; } return n; })();
+  if ((r20.count || 0) >= 12 || (rapidas >= 5 && (r20.count || 0) >= 6)) {
+    await historico(lead, "⏸️ Agente pausado sozinho: muitas respostas seguidas em poucos minutos (parece o atendimento automático da empresa). Veja a conversa e, se for uma pessoa, reative o agente.", { ag_estado: "pausado", ag_em: new Date().toISOString() });
+    await avisar(`⏸️ ${nomeCurto(l.nome)}: agente pausado`, "Parecia uma conversa com outro robô (respostas em segundos, sem parar). Confira a conversa.", "ag-" + lead, { urgente: true });
+    return { ok: true, pausado: "loop" };
+  }
   if (l.ag_estado !== "humano") await db.from("prosp_leads").update({ ag_estado: "humano", ag_em: new Date().toISOString(), status: l.status === "enviado" ? "respondeu" : l.status }).eq("id", lead);
 
   l._acessos = await acessosTexto(lead);
@@ -810,6 +824,7 @@ async function teste(req: Request, b: any, interno = false) {
   if (!msgs.length || msgs[msgs.length - 1].de_mim) return ok({ error: "Escreva a mensagem da empresa." }, 400);
   const cl = await classificar(msgs);
   if (cl.autor !== "humano" || cl.confianca < 0.6) return ok({ ok: true, cl, resposta: "", acoes: [{ txt: `Não respondeu: parece resposta automática (${cl.motivo})` }] });
+  if (cl.intencao === "despedida") return ok({ ok: true, cl, resposta: "", acoes: [{ txt: `Não respondeu: a empresa só se despediu (${cl.motivo})` }] });
   const acoes: any[] = [];
   const exec = async (n: string, a: any): Promise<unknown> => {
     if (n === "horarios_conversa") { acoes.push({ txt: "Consultou sua agenda" }); return await horarios(c, a.a_partir_de); }
