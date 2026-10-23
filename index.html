@@ -2953,7 +2953,7 @@ const slug=s=>String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^A
 async function saveFile(name,data,okMsg){
   try{
     const ext=(name.split('.').pop()||'').toLowerCase();
-    const type={pdf:'application/pdf',csv:'text/csv;charset=utf-8',json:'application/json'}[ext]||'application/octet-stream';
+    const type={pdf:'application/pdf',jpg:'image/jpeg',csv:'text/csv;charset=utf-8',json:'application/json'}[ext]||'application/octet-stream';
     const blob=data instanceof Blob?data:new Blob([data],{type:type});
     const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
     setTimeout(()=>URL.revokeObjectURL(url),4000);toast(okMsg);
@@ -2999,7 +2999,7 @@ function sheetOS(id){
    '<div class="sec"><h3>Longe</h3>'+tab('longe','Longe')+'<div class="grid2"><div class="field"><span>DP</span>'+f('dpL','DP longe')+'</div><div class="field"><span>Alt</span>'+f('altL','Altura longe')+'</div></div></div>'+
    '<div class="sec"><h3>Perto</h3>'+tab('perto','Perto')+'<div class="grid2" style="grid-template-columns:repeat(3,minmax(0,1fr))"><div class="field"><span>Adição</span>'+f('adicao','Adição','+2,00')+'</div><div class="field"><span>DP</span>'+f('dpP','DP perto')+'</div><div class="field"><span>Alt</span>'+f('altP','Altura perto')+'</div></div></div>'+
    '<div class="grid2"><div class="field"><span>Tipo de lente</span>'+f('tipo','Tipo de lente')+'</div><div class="field"><span>Cor</span>'+f('cor','Cor')+'</div></div></div>';
-  return sheetShell('Ordem de serviço',body,'<button class="btn primary" data-act="osimprimir" data-v="'+id+'">Imprimir OS</button><button class="btn" data-act="ospdf" data-v="'+id+'">Baixar PDF</button>');
+  return sheetShell('Ordem de serviço',body,'<button class="btn primary" data-act="osimprimir" data-v="'+id+'">Imprimir OS</button><button class="btn" data-act="ospdf" data-v="'+id+'">Baixar imagem (JPG)</button>');
 }
 function osBlob(v){
   const D=ui.os&&ui.os._v===v.id?ui.os:osBase(v);const c=cfg(),cli=S.clientes[v.clienteId]||{nome:''};
@@ -3027,13 +3027,32 @@ function osBlob(v){
   ln('Tipo de Lente:',D.tipo,M,124,125);ln('Cor:',D.cor,M+135,124,51);
   return doc.output('blob');
 }
+/* PDF -> JPG em alta qualidade (300 dpi): o pdf.js só é carregado quando a pessoa baixa a imagem */
+let _pdfjs=null;
+function pdfjsCarregar(){
+  if(window.pdfjsLib)return Promise.resolve(window.pdfjsLib);if(_pdfjs)return _pdfjs;
+  _pdfjs=new Promise((ok,er)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+    s.onload=()=>{if(!window.pdfjsLib){_pdfjs=null;return er(new Error('pdf.js'))}window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';ok(window.pdfjsLib)};
+    s.onerror=()=>{_pdfjs=null;er(new Error('pdf.js'))};document.head.appendChild(s)});
+  return _pdfjs;
+}
+async function pdfParaJpg(blob,dpi){
+  const lib=await pdfjsCarregar();const pdf=await lib.getDocument({data:await blob.arrayBuffer()}).promise;const pg=await pdf.getPage(1);
+  const vp=pg.getViewport({scale:(dpi||300)/72});const cv=document.createElement('canvas');cv.width=Math.round(vp.width);cv.height=Math.round(vp.height);
+  const cx=cv.getContext('2d');cx.fillStyle='#fff';cx.fillRect(0,0,cv.width,cv.height);
+  await pg.render({canvasContext:cx,viewport:vp}).promise;
+  return await new Promise((ok,er)=>cv.toBlob(b=>b?ok(b):er(new Error('jpg')),'image/jpeg',0.95));
+}
 function osGerar(id,imprimir){
   const v=osSubj(id);if(!v)return;
   if(!window.jspdf){toast('O gerador de PDF não carregou. Recarregue a página.');return}
   if(ui.os&&ui.os._v===id){const o=JSON.parse(JSON.stringify(ui.os));delete o._v;v.os=o;if(v._c){v._c.os=o;persist('clientes',v._c.id)}else persist('vendas',v.id)}
   const blob=osBlob(v);const cli=S.clientes[v.clienteId]||{};
   if(imprimir){const url=URL.createObjectURL(blob);const w=window.open(url,'_blank');setTimeout(()=>URL.revokeObjectURL(url),60000);if(w){toast('OS aberta para imprimir');return}}
-  saveFile('OS_'+slug(cli.nome||'cliente')+'_'+(v.os&&v.os.num||'')+'.pdf',blob,'PDF da OS pronto');
+  const nome='OS_'+slug(cli.nome||'cliente')+'_'+(v.os&&v.os.num||'');
+  toast('Gerando a imagem da OS…');
+  pdfParaJpg(blob,300).then(j=>saveFile(nome+'.jpg',j,'Imagem da OS pronta (JPG)'))
+    .catch(()=>saveFile(nome+'.pdf',blob,'Não deu para gerar a imagem agora: baixei a OS em PDF'));
 }
 /* ---------- aba Ordens de serviço ---------- */
 function osClientes(){
@@ -3047,7 +3066,7 @@ function osLista(){
   return '<div class="gridlist">'+l.map(x=>'<div class="card"><div class="sale-top"><button class="link" data-act="editcliente" data-c="'+x.c.id+'">'+esc(x.c.nome)+demoTag(x.c)+'</button>'+(x.c.os?'<span class="chip ok">OS '+esc(x.c.os.num||'')+'</span>':'')+'</div>'+
     '<div class="meta">Receita de '+fmtDate(x.r.data)+(x.r.medico?' · '+esc(x.r.medico):'')+'</div>'+
     '<div class="meta num">OD '+esc(g(x.r.od))+' · OE '+esc(g(x.r.oe))+(x.r.adicao?' · Adição '+esc(x.r.adicao):'')+'</div>'+
-    '<div class="acts" style="justify-content:flex-start"><button class="btn sm primary" data-act="osabrir" data-v="c:'+x.c.id+'">Imprimir OS</button><button class="btn sm" data-act="osbaixar" data-v="c:'+x.c.id+'">Baixar PDF</button></div></div>').join('')+'</div>';
+    '<div class="acts" style="justify-content:flex-start"><button class="btn sm primary" data-act="osabrir" data-v="c:'+x.c.id+'">Imprimir OS</button><button class="btn sm" data-act="osbaixar" data-v="c:'+x.c.id+'">Baixar imagem (JPG)</button></div></div>').join('')+'</div>';
 }
 function viewOS(){
   const n=Object.values(S.clientes).filter(c=>(c.receitas||[]).some(r=>!receitaVazia(r))).length;
