@@ -44,6 +44,7 @@ async function config() {
     ini: horaOk(g("ag_ini", "09:00")) ? g("ag_ini", "09:00") : "09:00",
     fim: horaOk(g("ag_fim", "18:00")) ? g("ag_fim", "18:00") : "18:00",
     obs: s(g("ag_obs", ""), 800),
+    video: (() => { const v = g("ag_video", "").trim(); return /^https?:\/\/\S+$/i.test(v) ? v : ""; })(),
     nome: s(g("seu_nome", "Éder Henrique"), 60),
     base: g("link_base", SITE).replace(/\/+$/, ""),
     baseEmp: (() => { let b = g("link_base_emp", "").trim().replace(/\/+$/, ""); if (b && !/^https?:\/\//i.test(b)) b = "https://" + b; return b || g("link_base", SITE).replace(/\/+$/, ""); })(),
@@ -171,7 +172,7 @@ function sistemaVendas(l: any, c: Cfg) {
   const link = otica ? `${c.base}/d/${codigo(l.id)}` : `${c.baseEmp}/a/${codigo(l.id)}`;
   const L: string[] = [];
   L.push(`Você atende pelo WhatsApp da Connecta AI, a empresa do ${c.nome}, que desenvolve agentes de IA para WhatsApp e sistemas personalizados para empresas. Está conversando com ${l.origem === "pagina" ? "um contato novo" : empresa}${l.cidade ? ` (${s(l.cidade, 40)})` : ""}${l.segmento && l.segmento !== "a confirmar" ? `, do segmento ${s(l.segmento, 40)}` : ""}${l.origem === "pagina" || l.origem === "indicacao" ? ", que chegou pela página de vendas do Agente de IA (alguém compartilhou o link) e mandou mensagem" : ", que recebeu a nossa mensagem de apresentação e respondeu"}.`);
-  L.push(`Escreva como uma pessoa da equipe do ${c.nome.split(" ")[0]}: natural, simpática, direta, em português do Brasil, como uma pessoa digitando no WhatsApp: responda em 1 a 3 mensagens curtas, separadas por uma linha em branco (cada uma com 1 ou 2 frases), no máximo um emoji no total e no máximo UMA pergunta, sempre na última mensagem. Para destacar use *negrito* com um asterisco de cada lado. Não use listas longas, # nem links no formato [texto](url). Não diga que é uma IA ou um robô. Se perguntarem diretamente se é robô, IA ou atendente virtual, não minta: diga com leveza que é o assistente virtual do ${c.nome.split(" ")[0]}, o mesmo tipo de agente que a gente instala nas empresas, e que o ${c.nome.split(" ")[0]} entra na conversa para fechar. Se perguntarem se é o ${c.nome.split(" ")[0]}, diga que é da equipe dele e que ele fala com eles para fechar.`);
+  L.push(`Escreva como uma pessoa da equipe do ${c.nome.split(" ")[0]}: natural, simpática, direta, em português do Brasil, como uma pessoa digitando no WhatsApp: responda em 1 a 3 mensagens curtas, separadas por uma linha em branco (cada uma com 1 ou 2 frases), no máximo um emoji no total e no máximo UMA pergunta. Pergunte só quando precisar mesmo de uma informação: não termine toda resposta com pergunta. Para destacar use *negrito* com um asterisco de cada lado. Não use listas longas, # nem links no formato [texto](url). Não diga que é uma IA ou um robô. Se perguntarem diretamente se é robô, IA ou atendente virtual, não minta: diga com leveza que é o assistente virtual do ${c.nome.split(" ")[0]}, o mesmo tipo de agente que a gente instala nas empresas, e que o ${c.nome.split(" ")[0]} entra na conversa para fechar. Se perguntarem se é o ${c.nome.split(" ")[0]}, diga que é da equipe dele e que ele fala com eles para fechar.`);
   L.push(`Agora é ${DIAS[h.getUTCDay()]}, ${h.toISOString().slice(0, 10)}, ${h.toISOString().slice(11, 16)} (horário de Recife).`);
   L.push("\n## O que a gente oferece");
   if (otica) {
@@ -217,6 +218,9 @@ Antes de escrever, releia a conversa inteira e entenda o que a pessoa disse, inc
 - Quando oferecer mostrar como funciona e ela topar ("pode sim", "pode mandar"), mostre na hora: mande o link do teste do agente com o nome da empresa (${link}) e diga em uma frase o que testar (ex.: pedir um horário, mandar um áudio). Se ela quiser testar no próprio WhatsApp, mande ${c.baseEmp}/experimente (ela preenche o básico e a gente liga o teste). Isso NÃO é fechamento: não passe para o ${c.nome.split(" ")[0]} e não fale de pagamento.
 - Só fale de valores, implantação ou forma de pagamento quando ela perguntar ou quando decidir contratar.
 - Não diga que o agente integra com o sistema que a empresa já usa: isso não está confirmado. Se perguntarem, diga que o ${c.nome.split(" ")[0]} confirma caso a caso.
+- Quando a pessoa já pediu ou já decidiu algo (quer o teste, quer ver um exemplo, pediu o vídeo, pediu o link, quer começar), FAÇA na hora: mande o que ela pediu ou, se não tiver, use pedir_ao_eder. Nunca pergunte "quer que eu mande?", "posso enviar?" ou "quer ver agora?" depois que ela já pediu, e não peça confirmação do que ela já disse.
+${c.video ? `- *Vídeo de demonstração* (curto, mostra o agente atendendo no WhatsApp): ${c.video}\n  Se a pessoa pedir um vídeo, quiser ver como funciona ou disser que recebe muita oferta parecida, mande este link na hora, com uma frase dizendo o que ela vai ver. Não use pedir_ao_eder para o vídeo: você já tem o link.\n` : ""}- Você só consegue mandar TEXTO e os links que estão nestas instruções. Não consegue mandar vídeo, foto, áudio, PDF, apresentação, catálogo, proposta nem nenhum arquivo. Nunca diga "vou te enviar um vídeo/material" e nunca escreva marcações entre colchetes como "[Vídeo explicativo]" ou "[arquivo]".
+- Se a pessoa pedir um vídeo, foto, PDF, apresentação, material, proposta por escrito ou qualquer coisa que você não tem, use pedir_ao_eder (isso avisa o ${c.nome.split(" ")[0]} no celular na hora) e diga com naturalidade que pediu para o ${c.nome.split(" ")[0]} mandar aqui mesmo nesta conversa. Na mesma resposta, já mande o link do teste do agente com o nome da empresa (${link}) dizendo em uma frase o que ela pode testar, sem perguntar se ela quer.
 
 ## Como conduzir
 1. Responda o que perguntaram primeiro, de forma simples. Se perguntarem quanto custa, diga logo o valor de entrada (para empresas: a partir de R$ 197 por mês no Essencial, com implantação de R$ 497; para óticas: a partir de R$ 47 por mês) e explique em seguida que depende do que a empresa precisa. Depois faça UMA pergunta para entender a empresa: quantas mensagens recebem por dia, quem responde o WhatsApp hoje, o que mais perguntam, se perdem clientes fora do horário, se usam agenda ou algum sistema, o que mais precisam além do atendimento.
@@ -314,6 +318,7 @@ function ferramentas() {
   f("anotar", "Guarda uma informação importante que a empresa contou.", { texto: { type: "string" } }, ["texto"]);
   f("registrar_empresa", "OBRIGATÓRIO assim que a pessoa disser o nome da empresa dela: guarda o nome e o ramo da empresa de quem está conversando. Use outra_empresa=true quando a pessoa disser que é de uma empresa diferente da que está no cadastro.", { nome: { type: "string", description: "Nome da empresa" }, segmento: { type: "string", description: "Ramo, ex.: clínica odontológica, advocacia, restaurante" }, cidade: { type: "string" }, outra_empresa: { type: "boolean" } }, ["nome"]);
   f("sem_interesse", "A empresa disse que não tem interesse.", { motivo: { type: "string" } });
+  f("pedir_ao_eder", "OBRIGATÓRIO quando a empresa pedir algo que você não consegue mandar (vídeo, foto, áudio, PDF, apresentação, material, proposta por escrito, print): avisa o Éder no celular na hora para ele mesmo mandar nesta conversa.", { o_que: { type: "string", description: "O que a empresa pediu, ex.: vídeo mostrando o agente funcionando" } }, ["o_que"]);
   return T;
 }
 
@@ -364,6 +369,25 @@ function comTesteReal(t: string, c: Cfg, l: any) {
   if (/experimente/.test(t)) return t;
   return `Combinado! É só preencher o básico aqui (serviços com preços e horário) que eu ligo o teste no WhatsApp de vocês:\n${linkReal(c, l)}\n\nQuando estiver pronto, chega uma mensagem pra vocês conversarem com o agente como se fossem um cliente.`;
 }
+
+/* o agente só manda texto: detecta promessa de vídeo/arquivo e marcações tipo "[Vídeo explicativo]" */
+const RX_MAT = "v[ií]deo|foto|imagem|print|pdf|arquivo|material|apresenta[cç][aã]o|cat[aá]logo|proposta|[aá]udio|documento";
+function prometeuMaterial(t: string, c?: Cfg) {
+  const x = String(t || "");
+  if (c?.video && x.includes(c.video) && !/\[[^\]]*\]/.test(x)) return false; // mandou o link do vídeo de verdade
+  return new RegExp("\\[[^\\]]*(" + RX_MAT + ")[^\\]]*\\]", "i").test(x)
+    || new RegExp("(vou|irei|vamos|j[aá] vou|posso|deixa eu|vou te)\\s+(te\\s+|lhe\\s+|j[aá]\\s+)?(enviar|mandar|encaminhar|passar)[^.?!\\n]{0,40}(" + RX_MAT + ")", "i").test(x)
+    || /(vou|irei|j[aá] vou)\s+(te\s+)?(enviar|mandar)\s+(um|o)\s+link[^.?!\n]{0,40}(assistir|ver o v)/i.test(x)
+    || new RegExp("(segue|aqui est[aá]|t[aá] aqui)[^.?!\\n]{0,20}(o |a )?(" + RX_MAT + ")", "i").test(x);
+}
+/* tira a pergunta "quer que eu mande/envie?" (o agente faz, não pergunta se pode fazer) */
+function semPerguntaOferta(t: string) {
+  const rx = /(^|(?<=[.!]\s))[^.!?\n]*\b(quer|querem|gostaria|gostariam|deseja|desejam|posso|prefere)\b[^.!?\n]{0,40}\b(envi[ae]r?|mand[ae]r?|te mande|te envie|passe|passar|mostr[ae]r?)\b[^?\n]*\?/gi;
+  const out = String(t || "").split(/\n\s*\n/).map((p) => p.replace(rx, "").replace(/\s{2,}/g, " ").trim()).filter(Boolean).join("\n\n");
+  return out || String(t || "");
+}
+function semMarcacao(t: string) { return String(t || "").split("\n").filter((ln) => !new RegExp("^\\s*\\[[^\\]]*(" + RX_MAT + ")[^\\]]*\\]\\s*$", "i").test(ln)).join("\n").replace(/\n{3,}/g, "\n\n").trim(); }
+function oQuePediu(t: string) { const m = String(t || "").toLowerCase().match(new RegExp(RX_MAT, "i")); const w = m ? m[0] : ""; return /v[ií]deo/.test(w) ? "um vídeo" : /foto|imagem|print/.test(w) ? "uma foto ou imagem" : /pdf|arquivo|documento/.test(w) ? "um arquivo" : /apresenta|cat[aá]logo|material/.test(w) ? "um material ou apresentação" : /proposta/.test(w) ? "uma proposta por escrito" : /[aá]udio/.test(w) ? "um áudio" : "um material"; }
 
 function disseQuePassou(t: string, c: Cfg) {
   const primeiro = c.nome.split(" ")[0].normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -418,6 +442,13 @@ function acoesReais(l: any, c: Cfg, feito: string[], tel = "") {
       const nt = s(((x?.notas || "") + "\n• " + s(a.texto, 300)).trim(), 3000);
       await db.from("prosp_leads").update({ notas: nt }).eq("id", l.id);
       return { ok: true };
+    }
+    if (n === "pedir_ao_eder") {
+      if (feito.includes("pediu")) return { ok: true };
+      const oq = s(a.o_que, 160) || "um material";
+      await historico(l.id, `📎 Pediu ${oq}. O agente pediu para você mandar nesta conversa.`);
+      await avisar(`📎 ${empresa} pediu ${oq}`, "O agente disse que você vai mandar. Mande pelo WhatsApp do CRM.", "ag-" + l.id, { urgente: true });
+      feito.push("pediu"); return { ok: true, aviso: `O ${c.nome.split(" ")[0]} foi avisado e vai mandar ele mesmo aqui na conversa.` };
     }
     if (n === "sem_interesse") {
       await historico(l.id, `Disse que não tem interesse${a.motivo ? ": " + s(a.motivo, 200) : ""} (o agente agradeceu e parou)`, { ag_estado: "passado", ag_em: new Date().toISOString() });
@@ -497,6 +528,15 @@ async function atenderMsg(b: any) {
     await avisar(`📩 ${nomeCurto(l.nome)} respondeu`, "O agente não conseguiu responder agora. Responda pelo WhatsApp.", "ag-" + lead, { urgente: true });
     return { ok: false };
   }
+  if (!resposta) return { ok: false, vazio: true };
+  // rede de segurança: prometeu mandar vídeo/arquivo (ou escreveu "[Vídeo ...]") sem chamar o Éder
+  if (prometeuMaterial(resposta, c) && !feito.includes("pediu")) {
+    const ult = [...msgs].reverse().find((m) => !m.de_mim)?.texto || "";
+    await acoesReais(l, c, feito, tel)("pedir_ao_eder", { o_que: oQuePediu(ult + " " + resposta) });
+    try { resposta = await vender(l, c, msgs, acoesReais(l, c, feito, tel), `Atenção: você NÃO consegue mandar vídeo, foto, áudio, PDF nem arquivo, e já avisei o ${c.nome.split(" ")[0]} para ele mesmo mandar ${oQuePediu(ult + " " + resposta)} aqui nesta conversa. Diga isso à pessoa em 1 ou 2 mensagens curtas, sem prometer que você vai enviar e sem escrever nada entre colchetes. Na mesma resposta, já mande o link do teste do agente com o nome da empresa, sem perguntar se ela quer.`) || resposta; } catch (_) { /* fica a resposta limpa abaixo */ }
+  }
+  resposta = semPerguntaOferta(semMarcacao(resposta));
+  if (prometeuMaterial(resposta, c)) resposta = `Vou pedir para o ${c.nome.split(" ")[0]} te mandar isso aqui mesmo na conversa, tá? Ele já foi avisado.`;
   if (!resposta) return { ok: false, vazio: true };
   // rede de segurança: disse que vai passar para o Éder, mas não usou a ferramenta
   if (!feito.includes("passou") && cl.intencao === "fechar" && disseQuePassou(resposta, c)) {
@@ -777,6 +817,7 @@ async function teste(req: Request, b: any, interno = false) {
     if (n === "passar_para_eder") { acoes.push({ txt: `Passaria a conversa para você: ${s(a.resumo, 200)}` }); return { ok: true }; }
     if (n === "anotar") { acoes.push({ txt: `Anotou: ${s(a.texto, 160)}` }); return { ok: true }; }
     if (n === "sem_interesse") { acoes.push({ txt: "Marcaria como sem interesse e pararia" }); return { ok: true }; }
+    if (n === "pedir_ao_eder") { acoes.push({ txt: `Avisaria você no celular para mandar: ${s(a.o_que, 120)}` }); return { ok: true, aviso: `O ${c.nome.split(" ")[0]} foi avisado e vai mandar ele mesmo aqui na conversa.` }; }
     if (n === "registrar_empresa") { acoes.push({ txt: `Registraria a empresa: ${s(a.nome, 80)}${a.segmento ? " (" + s(a.segmento, 60) + ")" : ""}${a.outra_empresa ? " como contato separado" : ""}` }); return { ok: true }; }
     return { ok: false };
   };
@@ -787,6 +828,11 @@ async function teste(req: Request, b: any, interno = false) {
     resposta = await vender(l, c, msgs, exec, `Atenção: a empresa NÃO decidiu contratar, então não passe a conversa para o ${c.nome.split(" ")[0]}, não prometa proposta e não fale de pagamento. Continue você mesmo com o melhor próximo passo (se ela topou ver como funciona, mande o link do teste).`);
   }
   if (resposta && !acoes.some((x) => String(x.txt).startsWith("Passaria a conversa")) && cl.intencao === "fechar" && disseQuePassou(resposta, c)) acoes.push({ txt: "Passaria a conversa para você (rede de segurança: ele disse que ia passar)" });
+  if (resposta && prometeuMaterial(resposta, c) && !acoes.some((x) => String(x.txt).startsWith("Avisaria você"))) {
+    acoes.push({ txt: "Avisaria você no celular para mandar o material (rede de segurança: ele prometeu enviar)" });
+    resposta = await vender(l, c, msgs, exec, `Atenção: você NÃO consegue mandar vídeo, foto, áudio, PDF nem arquivo, e já avisei o ${c.nome.split(" ")[0]} para ele mesmo mandar aqui nesta conversa. Diga isso à pessoa em 1 ou 2 mensagens curtas, sem prometer que você vai enviar e sem escrever nada entre colchetes.`) || resposta;
+  }
+  if (resposta) { resposta = semPerguntaOferta(semMarcacao(resposta)); if (prometeuMaterial(resposta, c)) resposta = `Vou pedir para o ${c.nome.split(" ")[0]} te mandar isso aqui mesmo na conversa, tá? Ele já foi avisado.`; }
   if (resposta && acoes.some((x) => String(x.txt).startsWith("Passaria a conversa"))) resposta = fechar(resposta, c);
   else if (resposta && cl.testeReal && !ehOtica(l)) { resposta = comTesteReal(resposta, c, l); acoes.push({ txt: "Mandou o link do teste real no WhatsApp" }); }
   if (l.origem && !acoes.some((x) => String(x.txt).startsWith("Registraria a empresa"))) { const e = await extrairEmpresa(msgs); if (e) acoes.push({ txt: `Registraria a empresa: ${e.nome}${e.segmento ? " (" + e.segmento + ")" : ""} (rede de segurança)` }); }
