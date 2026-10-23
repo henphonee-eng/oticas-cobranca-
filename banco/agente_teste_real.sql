@@ -262,3 +262,9 @@ alter table wa_fila alter column ref set default ('auto:' || gen_random_uuid());
 --   update prosp_wa_fila set status = 'cancelada', erro = 'já fez o cadastro do teste'
 --     where origem = 'fu_teste' and status = 'aguardando'
 --       and right(regexp_replace(coalesce(telefone,''),'\D','','g'), 8) in (right(d, 8), case when length(e) >= 8 then right(e, 8) else '--------' end);
+
+-- SAIR durante o teste (2026-10-23): agente_teste_sair(p_id) desliga o teste (e a nuvem no teste real), manda pelo número do CRM
+-- a mensagem "voltou a falar comigo", pausa o agente de vendas na conversa (ag_estado='passado') e avisa o Éder (aviso-push).
+-- prosp_wa_sair: se o número tem teste simulado ligado, chama agente_teste_sair e responde silencio (não marca sem_interesse).
+-- wa_sair: na ótica de teste, SAIR do tel_teste chama agente_teste_sair; sempre silencio.
+-- agente_teste_real_ligar: a mensagem de "teste pronto" agora explica REINICIAR e SAIR.
