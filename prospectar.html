@@ -83,7 +83,8 @@ button.stat{cursor:pointer}button.stat:hover{background:var(--surface-2)}
 .err{color:var(--bad);font-size:14px;min-height:1em}
 .toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--nav);color:#fff;padding:10px 16px;border-radius:4px;font-size:14px;z-index:30;opacity:0;transition:opacity .2s;pointer-events:none;max-width:calc(100% - 32px);border-left:3px solid var(--gold)}
 .toast.on{opacity:1}
-.res{display:flex;gap:10px;align-items:flex-start}
+.res{display:flex;gap:10px;align-items:flex-start;cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none}
+.res.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
 .res input[type=checkbox]{width:18px;height:18px;margin-top:3px;accent-color:var(--accent);flex:none}
 .acs{display:grid;gap:4px;font-size:13px;max-height:180px;overflow:auto;background:var(--surface-2);border-radius:4px;padding:8px 10px}
 .prev{white-space:pre-wrap;background:var(--surface-2);border:1px solid var(--line);border-radius:4px;padding:12px;font-size:14px}
@@ -747,11 +748,11 @@ function vBuscar(){
     if(!novos.length)h+='<div class="empty">Todas as empresas desta busca já estão no seu CRM.'+' Toque em Buscar mais, lá embaixo, ou busque outro bairro.'+'</div>';
     novos.forEach(p=>{
       const tf=tipoFone(p.telefone);
-      h+='<div class="card res"><input type="checkbox" data-sel="'+esc(p.place_id)+'" '+(st.sel[p.place_id]?'checked':'')+'><div class="grow"><b>'+esc(p.nome)+'</b><div class="meta" style="display:flex;gap:6px;flex-wrap:wrap;margin:4px 0">'+
+      h+='<label class="card res'+(st.sel[p.place_id]?' on':'')+'"><input type="checkbox" data-sel="'+esc(p.place_id)+'" '+(st.sel[p.place_id]?'checked':'')+' aria-label="Selecionar '+esc(p.nome)+'"><div class="grow"><b>'+esc(p.nome)+'</b><div class="meta" style="display:flex;gap:6px;flex-wrap:wrap;margin:4px 0">'+
         (tf==='cel'?'<span class="tag ok">Celular</span>':tf==='fixo'?'<span class="tag warn">Fixo</span>':'<span class="tag bad">Sem telefone</span>')+
         (p.site?'<span class="tag">Tem site</span>':'<span class="tag hot">Sem site</span>')+
         (p.nota?'<span class="tag">★ '+p.nota+' · '+p.avaliacoes+'</span>':'')+
-        '</div><div class="small muted">'+esc(fmtFone(p.telefone))+(p.telefone?' · ':'')+esc(p.endereco)+'</div></div></div>';
+        '</div><div class="small muted">'+esc(fmtFone(p.telefone))+(p.telefone?' · ':'')+esc(p.endereco)+'</div></div></label>';
     });
     h+='</div>';
     const segQ=segDaBusca(st.q0||st.q),fimVars=!st.next&&(st.vi||0)>=(segQ?4:VARS.length);
