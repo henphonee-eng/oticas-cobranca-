@@ -516,11 +516,30 @@ async function atenderMsg(b: any) {
   });
   const ins = await db.from("prosp_wa_fila").insert(rows);
   if (ins.error) throw new Error(ins.error.message);
+  if (/\/experimente/.test(resposta) && !feito.includes("passou")) await agendarFuTeste(l, c, tel);
   if (["interesse", "fechar"].includes(cl.intencao) && !feito.length && l.status !== "interessada") {
     await db.from("prosp_leads").update({ status: "interessada" }).eq("id", l.id);
     await avisar(`💬 ${nomeCurto(l.nome)} se interessou`, "O agente está conversando. Toque para acompanhar.", "ag-" + l.id, { tipo: "interesse", lead: l.id });
   }
   return { ok: true, cl, feito };
+}
+
+/* ---------------- lembrete do cadastro do teste real: 20 min depois de mandar o link, se a empresa não respondeu nem preencheu ---------------- */
+async function agendarFuTeste(l: any, c: Cfg, tel: string) {
+  try {
+    const dig = String(tel || "").replace(/\D/g, ""), t8 = dig.slice(-8);
+    if (t8.length < 8) return;
+    const ja = await db.from("prosp_wa_fila").select("id", { count: "exact", head: true }).eq("lead_id", l.id).eq("origem", "fu_teste").in("status", ["aguardando", "enviando", "enviada"]);
+    if ((ja.count || 0) > 0) return;
+    const pd = await db.from("agente_testes").select("id", { count: "exact", head: true }).or(`telefone.like.%${t8},pedido_tel_teste.like.%${t8}`);
+    if ((pd.count || 0) > 0) return; // já preencheu o cadastro do teste
+    let q = new Date(Date.now() + 20 * 60e3);
+    const loc = new Date(q.getTime() - 3 * 3600e3), h = loc.getUTCHours(); // Recife (UTC-3)
+    if (h >= 21 || h < 8) q = new Date(Date.UTC(loc.getUTCFullYear(), loc.getUTCMonth(), loc.getUTCDate() + (h >= 21 ? 1 : 0), 11, 30)); // 8h30 em Recife
+    const texto = `Oi! Conseguiu fazer o cadastro para o teste? 😊\nEstá só aguardando vocês finalizarem o cadastro para eu liberar o teste do agente no WhatsApp de vocês:\n${linkReal(c, l)}\n\nSe travou em alguma parte, me fala que eu te ajudo.`;
+    const r = await db.from("prosp_wa_fila").insert({ lead_id: l.id, tipo: "manual", telefone: dig, texto, status: "aguardando", enviar_apos: q.toISOString(), origem: "fu_teste" });
+    if (!r.error) await historico(l.id, `⏰ Lembrete do cadastro do teste agendado para ${q.toLocaleString("pt-BR", { timeZone: "America/Recife", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })} (sai só se a empresa não responder nem preencher antes)`);
+  } catch (e: any) { console.error("fu_teste", e.message); }
 }
 
 /* ---------------- depois do fechamento: o agente só ajuda no cadastro e no contrato ---------------- */

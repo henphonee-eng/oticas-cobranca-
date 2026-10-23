@@ -255,3 +255,10 @@ grant execute on function agente_teste_pedir3(text, text, text, text, text, text
 
 -- respostas do teste real entram na wa_fila sem "ref" (cada uma ganha um código próprio)
 alter table wa_fila alter column ref set default ('auto:' || gen_random_uuid());
+
+-- Lembrete do cadastro do teste (origem 'fu_teste' na prosp_wa_fila, agendado pelo agente-vendas 20 min depois de mandar o link /experimente).
+-- Ao preencher o cadastro, agente_teste_pedir3 cancela o lembrete pendente (mesmo número da pessoa ou da empresa).
+-- (a versão aplicada no banco de agente_teste_pedir3 inclui:)
+--   update prosp_wa_fila set status = 'cancelada', erro = 'já fez o cadastro do teste'
+--     where origem = 'fu_teste' and status = 'aguardando'
+--       and right(regexp_replace(coalesce(telefone,''),'\D','','g'), 8) in (right(d, 8), case when length(e) >= 8 then right(e, 8) else '--------' end);
