@@ -24,6 +24,10 @@
   ],
   "rewrites": [
     {
+      "source": "/video",
+      "destination": "/video.html"
+    },
+    {
       "source": "/conectar",
       "destination": "/conectar.html"
     },
