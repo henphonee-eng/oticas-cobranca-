@@ -816,6 +816,66 @@ html:not(.adm) :is(.btn,.tab,.fchip,button.card,button.kpi,button.tile,.dlc):foc
 @media (min-width:900px){.rep-grid.g2{grid-template-columns:repeat(2,minmax(0,1fr))}.rep-grid.g3{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (min-width:1180px){.rep-grid.g3{grid-template-columns:repeat(3,minmax(0,1fr))}}
 .rep-grid>.bi-card{grid-column:auto!important}
+/* Relatórios no estilo Power BI */
+.rep-slicer{display:flex;align-items:center;gap:10px;margin:0 0 12px;padding:6px;border:1px solid var(--line);border-radius:14px;background:var(--surface);overflow-x:auto;scrollbar-width:none}
+.rep-slicer::-webkit-scrollbar{display:none}
+.rep-sl-l{flex:none;padding:0 6px 0 8px;font-size:12px;font-weight:600;color:var(--muted)}
+.rep-pills{display:flex;gap:4px;flex:none}
+.rep-pill{flex:none;min-height:36px;padding:0 14px;border:0;border-radius:10px;background:transparent;color:var(--fg);font:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:background .2s,color .2s,box-shadow .2s}
+.rep-pill:hover{background:var(--surface-2)}
+.rep-pill.on{background:var(--accent);color:#fff;box-shadow:0 6px 14px -6px color-mix(in srgb,var(--accent) 70%,transparent)}
+.rep-pill:focus-visible,.bi-fx:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.rep-live{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:600;opacity:.92}
+.rep-live i{width:8px;height:8px;border-radius:50%;background:#4ade80;box-shadow:0 0 0 0 rgba(74,222,128,.6);animation:repPulse 2.4s ease-out infinite}
+.bi.rep .bi-card{position:relative;transition:border-color .2s,box-shadow .2s}
+.bi.rep .bi-card:hover{border-color:color-mix(in srgb,var(--accent) 35%,var(--line))}
+.bi-fx{order:9;flex:none;width:30px;height:30px;display:inline-grid;place-items:center;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--muted);cursor:pointer;opacity:0;transition:opacity .2s,color .2s,border-color .2s}
+.bi-fx svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.bi-card:hover .bi-fx,.bi-card:focus-within .bi-fx,.bi-card.foco .bi-fx{opacity:1}
+.bi-fx:hover{color:var(--accent);border-color:var(--accent)}
+@media (hover:none){.bi-fx{opacity:1}}
+.bi-col[data-act]{cursor:pointer}
+.bi-cols .bi-col{transition:opacity .25s}
+.bi-cols.sel .bi-col:not(.on){opacity:.32}
+.bi-cols.sel .bi-col.on{background:color-mix(in srgb,var(--accent) 12%,transparent)}
+.rep-hint{margin:10px 0 0;font-size:12.5px;color:var(--muted)}
+.rep-drill{margin-top:14px;padding:14px;border-radius:14px;background:var(--surface-2);border:1px solid var(--line);animation:repIn .35s cubic-bezier(.2,.75,.25,1) both}
+.rep-dh{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.rep-dg{display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
+@media (min-width:760px){.rep-dg{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.rep-dg h4{display:flex;align-items:center;gap:7px;margin:0 0 8px;font-size:13px}
+.rep-dg h4 i{width:10px;height:10px;border-radius:3px}
+.rep-dg ul{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.rep-dg li{display:flex;justify-content:space-between;gap:10px;padding:8px 10px;border-radius:10px;background:var(--surface);font-size:13px}
+.rep-dg li span{min-width:0;display:flex;flex-direction:column}
+.rep-dg li small{color:var(--muted);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rep-dg li b{flex:none;font-variant-numeric:tabular-nums}
+.bi-card.foco{position:fixed!important;z-index:130;inset:max(16px,4vh) max(16px,4vw);margin:0;overflow:auto;box-shadow:0 30px 80px rgba(3,10,25,.45);animation:repZoom .3s cubic-bezier(.2,.8,.2,1) both}
+.bi-card.foco .bi-plot{height:min(58vh,560px)}
+.bi-card.foco .bi-donut svg{width:min(60vw,300px);height:min(60vw,300px)}
+.bi-card.foco .bi-ch h3{font-size:18px}
+.rep-bg{position:fixed;inset:0;z-index:129;background:rgba(6,12,24,.55);backdrop-filter:blur(3px);animation:repFade .25s both}
+@media (max-width:560px){.bi-card.foco{inset:10px}}
+.bi-sp polyline{stroke-dasharray:1}
+/* animações: só na abertura da aba ou ao trocar de mês */
+.rep.anim .rep-slicer,.rep.anim .rep-hero,.rep.anim .bi-k,.rep.anim .bi-card{animation:repIn .6s cubic-bezier(.2,.75,.25,1) both;animation-delay:calc(var(--t0,0ms) + var(--i,0) * 55ms)}
+.rep.anim .bi-col i{transform-origin:50% 100%;animation:repGrowY .75s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--t0,0ms) + 420ms + var(--j,0) * 14ms)}
+.rep.anim .bi-hb .tr i{transform-origin:0 50%;animation:repGrowX .85s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--t0,0ms) + 520ms + var(--j,0) * 80ms)}
+.rep.anim .dn-mk{animation:repSweep 1.1s cubic-bezier(.45,0,.2,1) both;animation-delay:calc(var(--t0,0ms) + 450ms)}
+.rep.anim .bi-sp polyline{animation:repDraw 1.1s ease-out both;animation-delay:calc(var(--t0,0ms) + 350ms)}
+.rep.anim .rep-tb tbody tr{animation:repIn .4s ease-out both;animation-delay:calc(var(--t0,0ms) + 500ms + var(--j,0) * 35ms)}
+.rep.anim .rep-ins li{animation:repIn .45s ease-out both;animation-delay:calc(var(--t0,0ms) + 450ms)}
+.rep.anim .bi-card.foco{animation:repZoom .3s cubic-bezier(.2,.8,.2,1) both}
+@keyframes repIn{from{opacity:0;transform:translateY(14px) scale(.985)}to{opacity:1;transform:none}}
+@keyframes repGrowY{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+@keyframes repGrowX{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes repSweep{from{stroke-dashoffset:264}to{stroke-dashoffset:0}}
+@keyframes repDraw{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+@keyframes repZoom{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:none}}
+@keyframes repFade{from{opacity:0}to{opacity:1}}
+@keyframes repPulse{0%{box-shadow:0 0 0 0 rgba(74,222,128,.55)}70%{box-shadow:0 0 0 8px rgba(74,222,128,0)}100%{box-shadow:0 0 0 0 rgba(74,222,128,0)}}
+@media (prefers-reduced-motion:reduce){.rep.anim *,.rep-drill,.bi-card.foco,.rep-bg,.rep-live i{animation:none!important}.bi-cols .bi-col,.rep-pill{transition:none}}
+@media print{.rep-slicer,.rep-hint,.bi-fx,.rep-live{display:none!important}.rep.anim *{animation:none!important}}
 .rep-ins{margin:0;padding:0 0 0 18px;display:grid;gap:9px;font-size:14px;line-height:1.45}
 .rep-ins li::marker{color:var(--c1)}
 .rep-tb td:nth-child(n+2),.rep-tb th:nth-child(n+2){text-align:right;white-space:nowrap}
@@ -1855,6 +1915,7 @@ function render(){
   $('#who').textContent=SESSION&&SESSION.user?SESSION.user.email:'';
   const v=$('#view');
   v.innerHTML=sitBanner()+viewTab();sitLock();
+  if(ui.tab==='relatorios')repMotion();else if(ui.repFoco!=null){ui.repFoco=null;document.body.style.overflow='';document.querySelectorAll('.rep-bg').forEach(e=>e.remove())}
   if(ui.tab==='ajustes'&&ROLE==='dono')eqLoad();
   if(ui.tab==='admin'||ui.tab==='mensal')admLoad();
   if(ui.tab==='iauso')iauLoad();
@@ -1936,18 +1997,21 @@ function biDelta(cur,prev,inv){
 function biSpark(vals,cls){
   if(vals.length<2||!vals.some(v=>v>0))return '';
   const W=100,H=28,mx=Math.max.apply(null,vals)||1,pts=vals.map((v,i)=>(i/(vals.length-1)*W).toFixed(1)+','+(H-2-(v/mx)*(H-6)).toFixed(1)).join(' ');
-  return '<svg class="bi-sp '+cls+'" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" aria-hidden="true"><polyline points="'+pts+'" fill="none" stroke="currentColor" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/></svg>';
+  return '<svg class="bi-sp '+cls+'" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" aria-hidden="true"><polyline pathLength="1" points="'+pts+'" fill="none" stroke="currentColor" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/></svg>';
 }
-function biBarsChart(bk,sv,sr,k){
+function biBarsChart(bk,sv,sr,k,opt){
+  opt=opt||{};
   const mx0=Math.max.apply(null,sv.concat(sr).concat([1])),mag=Math.pow(10,Math.floor(Math.log10(mx0))),mx=Math.ceil(mx0/mag*2)/2*mag||1;
   const step=k==='30d'?5:k==='90d'?2:1;
   const grid=[1,.75,.5,.25,0].map(f=>'<div class="bi-gl" style="bottom:'+(f*100)+'%"><span>'+(f?biMil(mx*f):'0')+'</span></div>').join('');
   const cols=bk.map((b,i)=>{const hv=sv[i]/mx*100,hr=sr[i]/mx*100;
     const tip=esc(b.tip+' · Vendido '+brl(sv[i])+' · Recebido '+brl(sr[i]));
-    return '<div class="bi-col" tabindex="0" data-tip="'+tip+'" role="img" aria-label="'+tip+'"><i class="bv" style="height:'+hv+'%"></i><i class="br" style="height:'+hr+'%"></i></div>'}).join('');
+    const ac=opt.act?' data-act="'+opt.act+'" data-k="'+b.a+'" role="button" aria-pressed="'+(opt.sel===b.a)+'"':' role="img"';
+    return '<div class="bi-col'+(opt.sel===b.a?' on':'')+'" tabindex="0" style="--j:'+i+'" data-tip="'+tip+'"'+ac+' aria-label="'+tip+'"><i class="bv" style="height:'+hv+'%"></i><i class="br" style="height:'+hr+'%"></i></div>'}).join('');
   const lbls=bk.map((b,i)=>'<span>'+((i%step===0||i===bk.length-1&&step===1)?b.lbl:'')+'</span>').join('');
-  return '<div class="bi-plot"><div class="bi-grid" aria-hidden="true">'+grid+'</div><div class="bi-cols" style="--n:'+bk.length+'">'+cols+'</div></div><div class="bi-x" style="--n:'+bk.length+'" aria-hidden="true">'+lbls+'</div>';
+  return '<div class="bi-plot"><div class="bi-grid" aria-hidden="true">'+grid+'</div><div class="bi-cols'+(opt.sel?' sel':'')+'" style="--n:'+bk.length+'">'+cols+'</div></div><div class="bi-x" style="--n:'+bk.length+'" aria-hidden="true">'+lbls+'</div>';
 }
+let DNM=0;
 function biDonut(rec){
   const G=[['Pix',['Pix'],'--c1'],['Dinheiro',['Dinheiro'],'--c2'],['Cartão',['Cartão de débito','Cartão de crédito'],'--c3'],['Boleto e outros',null,'--c4']];
   const tot=G.map(()=>0);
@@ -1957,12 +2021,13 @@ function biDonut(rec){
   const R=42,C=2*Math.PI*R;let off=0;const gap=2;
   const arcs=G.map((g,i)=>{if(!tot[i])return '';const len=tot[i]/sum*C,seg=Math.max(0,len-(G.filter((_,j)=>tot[j]).length>1?gap:0));const el='<circle cx="60" cy="60" r="'+R+'" fill="none" stroke="var('+g[2]+')" stroke-width="16" stroke-dasharray="'+seg.toFixed(2)+' '+(C-seg).toFixed(2)+'" stroke-dashoffset="'+(-off).toFixed(2)+'" transform="rotate(-90 60 60)" data-tip="'+esc(g[0]+' · '+brl(tot[i])+' ('+Math.round(tot[i]/sum*100)+'%)')+'" tabindex="0"/>';off+=len;return el}).join('');
   const leg=G.map((g,i)=>tot[i]?'<li><i style="background:var('+g[2]+')"></i><span>'+g[0]+'</span><b>'+brl(tot[i])+'</b><small>'+Math.round(tot[i]/sum*100)+'%</small></li>':'').join('');
-  return '<div class="bi-donut"><svg viewBox="0 0 120 120" role="img" aria-label="Recebimentos por forma de pagamento">'+arcs+'<text x="60" y="57" text-anchor="middle" class="dn1">'+biMil(sum)+'</text><text x="60" y="72" text-anchor="middle" class="dn2">recebido</text></svg><ul class="bi-leg">'+leg+'</ul></div>';
+  const mk='dnm'+(++DNM);
+  return '<div class="bi-donut"><svg viewBox="0 0 120 120" role="img" aria-label="Recebimentos por forma de pagamento"><mask id="'+mk+'" maskUnits="userSpaceOnUse" x="0" y="0" width="120" height="120"><circle class="dn-mk" cx="60" cy="60" r="'+R+'" fill="none" stroke="#fff" stroke-width="20" stroke-dasharray="264 264" transform="rotate(-90 60 60)"/></mask><g mask="url(#'+mk+')">'+arcs+'</g><text x="60" y="57" text-anchor="middle" class="dn1">'+biMil(sum)+'</text><text x="60" y="72" text-anchor="middle" class="dn2">recebido</text></svg><ul class="bi-leg">'+leg+'</ul></div>';
 }
 function biHBars(rows,cls,emptyTxt){
   if(!rows.length)return '<div class="bi-empty">'+emptyTxt+'</div>';
   const mx=Math.max.apply(null,rows.map(r=>r.v))||1;
-  return '<ul class="bi-hb '+cls+'">'+rows.map(r=>'<li data-tip="'+esc(r.t)+'" tabindex="0"><span class="n">'+esc(r.n)+'</span><span class="tr"><i style="width:'+Math.max(r.v/mx*100,r.v?2:0)+'%"></i></span><b>'+esc(r.l)+'</b></li>').join('')+'</ul>';
+  return '<ul class="bi-hb '+cls+'">'+rows.map((r,j)=>'<li style="--j:'+j+'" data-tip="'+esc(r.t)+'" tabindex="0"><span class="n">'+esc(r.n)+'</span><span class="tr"><i style="width:'+Math.max(r.v/mx*100,r.v?2:0)+'%"></i></span><b>'+esc(r.l)+'</b></li>').join('')+'</ul>';
 }
 function biSection(){
   const k=biKey(),r=biRange(k),cur=biCalc(r.a,r.b),prev=biCalc(r.pa,r.pb),t=r.t;
@@ -2111,36 +2176,84 @@ function viewRelatorios(){
   if(modOn('wa')&&REP.wa)linhas.push(['Mensagens automáticas enviadas',waC,waP,0,0]);
   const tabela='<div class="bi-tbw rep-tb" style="max-height:none"><table><thead><tr><th>Indicador</th><th>'+repMesC(r.pm)+'</th><th>'+repMesC(m)+'</th><th>Var.</th></tr></thead><tbody>'+linhas.map(l=>'<tr><td>'+l[0]+'</td>'+repVar(l[1],l[2],l[3],l[4],l[5])+'</tr>').join('')+'</tbody></table></div>';
   const kpi=(cls,lab,val,sub,extra)=>'<div class="bi-k '+cls+'"><small>'+lab+'</small><b>'+val+'</b>'+(sub||'')+(extra||'')+'</div>';
+  const cu=(n,f)=>'<span data-cu="'+n+'" data-f="'+f+'">'+(f==='brl'?brl(n):f==='pct'?n+'%':String(n))+'</span>';
   const kpis=
-    kpi('','Vendido',brl(cur.vend),repDelta(cur.vend,prev.vend),biSpark(sv,'c1'))+
-    kpi('','Recebido',brl(cur.recb),repDelta(cur.recb,prev.recb),biSpark(sr,'c3'))+
-    kpi('','Ticket médio',brl(cur.ticket),repDelta(cur.ticket,prev.ticket),'<span class="bi-n">'+plural(cur.n,'venda','vendas')+'</span>')+
-    kpi('','Clientes novos',String(cur.novos),repDelta(cur.novos,prev.novos),'<span class="bi-n">'+plural(cur.clientes,'cliente comprou','clientes compraram')+'</span>')+
-    kpi(cur.lucro<0?'neg':'','Lucro do mês',brl(cur.lucro),repDelta(cur.lucro,prev.lucro),'<span class="bi-n">'+brl(cur.desp)+' em contas pagas</span>')+
-    kpi(cur.adimp!=null&&cur.adimp<80?'neg':'','Parcelas pagas em dia',cur.adimp==null?'-':cur.adimp+'%',repDelta(cur.adimp,prev.adimp,false,true),'<span class="bi-n">'+cur.vencOk+' de '+plural(cur.vencN,'parcela','parcelas')+' que venceram</span>');
-  const hero='<div class="rep-hero"><div class="rep-hl"><small>'+esc(cfg().nome||'Sua ótica')+'</small><h2>Balanço de '+esc(fmtMes(m).toLowerCase())+'</h2><p>'+fmtDate(r.a)+' a '+fmtDate(r.b)+(r.atual?' · mês em andamento, comparado com o mesmo período de '+esc(pmN.toLowerCase()):' · comparado com '+esc(pmN.toLowerCase()))+'</p></div>'+
-    '<div class="rep-hn"><div><small>Vendido</small><b>'+brl(cur.vend)+'</b></div><div><small>Recebido</small><b>'+brl(cur.recb)+'</b></div><div><small>Lucro</small><b>'+brl(cur.lucro)+'</b></div></div></div>';
-  return pageHead('Relatórios','Balanço do mês, comparado com o mês anterior','<div class="acts rep-noprint">'+mesNav(m,'rm')+'</div>')+
+    kpi('','Vendido',cu(cur.vend,'brl'),repDelta(cur.vend,prev.vend),biSpark(sv,'c1'))+
+    kpi('','Recebido',cu(cur.recb,'brl'),repDelta(cur.recb,prev.recb),biSpark(sr,'c3'))+
+    kpi('','Ticket médio',cu(cur.ticket,'brl'),repDelta(cur.ticket,prev.ticket),'<span class="bi-n">'+plural(cur.n,'venda','vendas')+'</span>')+
+    kpi('','Clientes novos',cu(cur.novos,'n'),repDelta(cur.novos,prev.novos),'<span class="bi-n">'+plural(cur.clientes,'cliente comprou','clientes compraram')+'</span>')+
+    kpi(cur.lucro<0?'neg':'','Lucro do mês',cu(cur.lucro,'brl'),repDelta(cur.lucro,prev.lucro),'<span class="bi-n">'+brl(cur.desp)+' em contas pagas</span>')+
+    kpi(cur.adimp!=null&&cur.adimp<80?'neg':'','Parcelas pagas em dia',cur.adimp==null?'-':cu(cur.adimp,'pct'),repDelta(cur.adimp,prev.adimp,false,true),'<span class="bi-n">'+cur.vencOk+' de '+plural(cur.vencN,'parcela','parcelas')+' que venceram</span>');
+  const hero='<div class="rep-hero"><div class="rep-hl"><small>'+esc(cfg().nome||'Sua ótica')+'</small><h2>Balanço de '+esc(fmtMes(m).toLowerCase())+'</h2><span class="rep-live rep-noprint"><i aria-hidden="true"></i>Dados ao vivo do sistema · '+repHora()+'</span><p>'+fmtDate(r.a)+' a '+fmtDate(r.b)+(r.atual?' · mês em andamento, comparado com o mesmo período de '+esc(pmN.toLowerCase()):' · comparado com '+esc(pmN.toLowerCase()))+'</p></div>'+
+    '<div class="rep-hn"><div><small>Vendido</small><b>'+cu(cur.vend,'brl')+'</b></div><div><small>Recebido</small><b>'+cu(cur.recb,'brl')+'</b></div><div><small>Lucro</small><b>'+cu(cur.lucro,'brl')+'</b></div></div></div>';
+  return repChrome(pageHead('Relatórios','Balanço do mês, comparado com o mês anterior','<div class="acts rep-noprint">'+mesNav(m,'rm')+'</div>')+
   '<div class="acts rep-noprint" style="margin:-4px 0 14px;flex-wrap:wrap"><button class="btn" data-act="repprint">Imprimir ou salvar em PDF</button><button class="btn" data-act="repdet">Relatório detalhado (PDF e planilha)</button></div>'+
-  '<section class="bi rep" aria-label="Relatório do mês">'+hero+
+  '<section class="bi rep" aria-label="Relatório do mês">'+repSlicer(m)+hero+
   '<div class="bi-kpis">'+kpis+'</div>'+
   '<div class="rep-grid g2">'+
     '<div class="bi-card"><div class="bi-ch"><h3>Resumo do mês</h3></div><ul class="rep-ins">'+ins.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul></div>'+
     '<div class="bi-card"><div class="bi-ch"><h3>Comparativo com '+esc(pmN.toLowerCase())+'</h3></div>'+tabela+'</div>'+
   '</div>'+
   '<div class="rep-grid">'+
-    '<div class="bi-card"><div class="bi-ch"><h3>Vendido e recebido, dia a dia</h3><div class="bi-lg"><span><i style="background:var(--c1)"></i>Vendido</span><span><i style="background:var(--c3)"></i>Recebido</span></div></div>'+biBarsChart(dias,sv,sr,'30d')+'</div>'+
+    '<div class="bi-card"><div class="bi-ch"><h3>Vendido e recebido, dia a dia</h3><div class="bi-lg"><span><i style="background:var(--c1)"></i>Vendido</span><span><i style="background:var(--c3)"></i>Recebido</span></div></div>'+biBarsChart(dias,sv,sr,'30d',{act:'repdia',sel:ui.repDia&&ui.repDia.slice(0,7)===m?ui.repDia:''})+repDrill(cur,m)+'</div>'+
   '</div>'+
   '<div class="rep-grid g2">'+
-    '<div class="bi-card"><div class="bi-ch"><h3>Evolução dos últimos 6 meses</h3><div class="bi-lg"><span><i style="background:var(--c1)"></i>Vendido</span><span><i style="background:var(--c3)"></i>Recebido</span></div></div>'+biBarsChart(ms,ev1,ev2,'12m')+evTab+'</div>'+
+    '<div class="bi-card"><div class="bi-ch"><h3>Evolução dos últimos 6 meses</h3><div class="bi-lg"><span><i style="background:var(--c1)"></i>Vendido</span><span><i style="background:var(--c3)"></i>Recebido</span></div></div>'+biBarsChart(ms,ev1,ev2,'12m',{act:'repmesbar',sel:r.a})+evTab+'</div>'+
     '<div class="bi-card"><div class="bi-ch"><h3>Como os clientes pagaram</h3></div>'+biDonut(cur.rec)+'</div>'+
   '</div>'+
   '<div class="rep-grid g3">'+
     '<div class="bi-card"><div class="bi-ch"><h3>Mais vendidos</h3></div>'+biHBars(top,'c1','Nenhuma venda neste mês.')+'</div>'+
     '<div class="bi-card"><div class="bi-ch"><h3>Contas pagas por tipo</h3></div>'+biHBars(desp,'c2',modOn('financeiro')?'Nenhuma conta paga neste mês.':'Lance as contas no Financeiro para ver as despesas e o lucro.')+'</div>'+
     vendHtml+extra+
-  '</div></section>';
+  '</div></section>');
 }
+/* ----- Relatórios no estilo Power BI: fatia de meses, filtro por dia, gráfico ampliado e animações ----- */
+const FOCO_SVG='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>';
+function repChrome(h){return h.split('<div class="bi-card"><div class="bi-ch">').join('<div class="bi-card"><div class="bi-ch"><button type="button" class="bi-fx rep-noprint" data-act="repfoco" aria-label="Ampliar este gráfico" title="Ampliar">'+FOCO_SVG+'</button>')}
+function repHora(){const d=new Date();return 'atualizado às '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')}
+function repSlicer(m){
+  const hoje=todayStr().slice(0,7);let fim=m>hoje?m:hoje;const L=[];
+  for(let i=5;i>=0;i--)L.push(addMonths(fim+'-01',-i).slice(0,7));
+  if(L.indexOf(m)<0){L.shift();L.unshift(m)}
+  return '<div class="rep-slicer rep-noprint" role="group" aria-label="Escolher o mês do relatório"><span class="rep-sl-l">Período</span><div class="rep-pills">'+L.map(x=>'<button type="button" class="rep-pill'+(x===m?' on':'')+'" data-act="repmes" data-m="'+x+'" aria-pressed="'+(x===m)+'">'+repMesC(x)+'</button>').join('')+'</div></div>';
+}
+function repDrill(cur,m){
+  const d=ui.repDia;if(!d||d.slice(0,7)!==m)return '<p class="rep-hint rep-noprint">Toque em um dia do gráfico para ver o que foi vendido e recebido nele.</p>';
+  const vs=cur.vs.filter(v=>v.data===d),rc=cur.rec.filter(x=>x.p.pagoEm===d);
+  const nm=id=>esc((S.clientes[id]||{}).nome||'Cliente');
+  const linhaV=v=>'<li><span>'+nm(v.clienteId)+'<small>'+esc(itensTxt(v))+'</small></span><b>'+brl(v.total)+'</b></li>';
+  const linhaR=x=>'<li><span>'+nm(x.v.clienteId)+'<small>'+esc(pLabel(x.v,x.p))+(pForma(x.p,x.v)?' · '+esc(pForma(x.p,x.v)):'')+'</small></span><b>'+brl(recv(x.p))+'</b></li>';
+  return '<div class="rep-drill" aria-live="polite"><div class="rep-dh"><b>'+cap(parseYmd(d).toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'}))+'</b><button type="button" class="btn sm ghost" data-act="repdia" data-k="'+d+'">Limpar seleção</button></div>'+
+    '<div class="rep-dg"><div><h4><i style="background:var(--c1)"></i>Vendido · '+brl(sumT(vs))+'</h4>'+(vs.length?'<ul>'+vs.map(linhaV).join('')+'</ul>':'<p class="sub">Nenhuma venda neste dia.</p>')+'</div>'+
+    '<div><h4><i style="background:var(--c3)"></i>Recebido · '+brl(sumV(rc))+'</h4>'+(rc.length?'<ul>'+rc.map(linhaR).join('')+'</ul>':'<p class="sub">Nada recebido neste dia.</p>')+'</div></div></div>';
+}
+const repReduz=()=>{try{return matchMedia('(prefers-reduced-motion: reduce)').matches}catch(e){return false}};
+let REPCU=0;
+function repMotion(){
+  const sec=document.querySelector('.bi.rep');if(!sec)return;
+  const key='rep:'+(ui.rm||'');
+  if(ui.repAnimK!==key){ui.repAnimK=key;ui.repAnimAt=performance.now()}
+  // gráfico ampliado continua aberto depois de atualizar a tela
+  const cards=sec.querySelectorAll('.bi-card');
+  document.querySelectorAll('.rep-bg').forEach(e=>e.remove());
+  if(ui.repFoco!=null&&cards[ui.repFoco]){cards[ui.repFoco].classList.add('foco');const bg=document.createElement('div');bg.className='rep-bg';bg.addEventListener('click',()=>A.repfoco({}));document.body.appendChild(bg)}
+  const sl=sec.querySelector('.rep-slicer'),on=sl&&sl.querySelector('.rep-pill.on');if(on)sl.scrollLeft=Math.max(0,on.offsetLeft+on.offsetWidth-sl.clientWidth+8);
+  const el=performance.now()-ui.repAnimAt;
+  if(repReduz()||el>1900)return;
+  sec.classList.add('anim');sec.style.setProperty('--t0',(-el).toFixed(0)+'ms');
+  let i=0;sec.querySelectorAll('.rep-slicer,.rep-hero,.bi-k,.bi-card').forEach(e=>e.style.setProperty('--i',i++));
+  sec.querySelectorAll('.rep-tb tbody tr').forEach((e,j)=>e.style.setProperty('--j',j));
+  // números contando do zero até o valor
+  const run=++REPCU;
+  const tick=()=>{if(run!==REPCU)return;const t=performance.now()-ui.repAnimAt,p=Math.min(1,Math.max(0,(t-200)/1000)),k=1-Math.pow(1-p,3);
+    document.querySelectorAll('.bi.rep [data-cu]').forEach(e=>{const n=+e.dataset.cu,f=e.dataset.f,x=n*k;e.textContent=f==='brl'?brl(Math.round(x)):f==='pct'?Math.round(x)+'%':String(Math.round(x))});
+    if(p<1)requestAnimationFrame(tick)};
+  requestAnimationFrame(tick);
+}
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&ui.repFoco!=null){A.repfoco({});return}
+  if((e.key==='Enter'||e.key===' ')&&e.target&&e.target.classList&&e.target.classList.contains('bi-col')&&e.target.dataset.act){e.preventDefault();e.target.click()}
+});
 let BITIP=null;
 function biHide(){if(BITIP)BITIP.style.display='none'}
 function biShow(el,e){
@@ -3573,8 +3686,16 @@ function vdRemove(id){
   persist('config','metas');premLog('Vendedor excluído',nome);ui.vd=null;ui.confirm='';ui.sheet=null;renderSheet();render();toast('Vendedor excluído. As vendas dele ficam em "Venda da ótica".');
 }
 Object.assign(A,{
-  rmprev(){ui.rm=addMonths((ui.rm||todayStr().slice(0,7))+'-01',-1).slice(0,7);render()},
-  rmnext(){const n=addMonths((ui.rm||todayStr().slice(0,7))+'-01',1).slice(0,7);if(n>todayStr().slice(0,7))return toast('Este mês ainda não começou');ui.rm=n;render()},
+  repmes(d){if(!d.m||d.m>todayStr().slice(0,7))return;ui.rm=d.m;ui.repDia='';ui.repFoco=null;render()},
+  repmesbar(d){A.repmes({m:String(d.k||'').slice(0,7)})},
+  repdia(d){ui.repDia=ui.repDia===d.k?'':d.k;render()},
+  repfoco(d,b){
+    if(ui.repFoco!=null||!b){ui.repFoco=null;document.querySelectorAll('.bi-card.foco').forEach(c=>c.classList.remove('foco'));document.querySelectorAll('.rep-bg').forEach(e=>e.remove());document.body.style.overflow='';return}
+    const card=b.closest('.bi-card'),all=[...document.querySelectorAll('.bi.rep .bi-card')];ui.repFoco=all.indexOf(card);document.body.style.overflow='hidden';repMotion();
+    const fx=card.querySelector('.bi-fx');if(fx){fx.setAttribute('aria-label','Fechar gráfico ampliado');fx.title='Fechar';fx.focus()}
+  },
+  rmprev(){ui.repDia='';ui.repFoco=null;ui.rm=addMonths((ui.rm||todayStr().slice(0,7))+'-01',-1).slice(0,7);render()},
+  rmnext(){ui.repDia='';ui.repFoco=null;const n=addMonths((ui.rm||todayStr().slice(0,7))+'-01',1).slice(0,7);if(n>todayStr().slice(0,7))return toast('Este mês ainda não começou');ui.rm=n;render()},
   repprint(){window.print()},
   repdet(){ui.rmes=ui.rm||todayStr().slice(0,7);ui.sheet={kind:'relatorio'};renderSheet()}
 });
