@@ -151,7 +151,7 @@ Também faça a LEITURA da conversa, para quem vai responder entender a pessoa d
 - clima: como a pessoa está (fria, curiosa, com pressa, educada mas sem interesse, animada).
 - quer_agora: o que ela espera da próxima mensagem, em uma frase.
 - proximo_passo: a melhor próxima ação, em uma frase, sem forçar venda.
-- teste_real: true só quando a ÚLTIMA mensagem da [EMPRESA] aceita ou pede o teste real no WhatsApp dela (ex.: "quero o teste real", "pode preparar", "quero testar no meu WhatsApp"); senão false.
+- teste_real: true quando a ÚLTIMA mensagem da [EMPRESA] aceita ou pede o teste real no WhatsApp dela (ex.: "quero o teste real", "pode preparar", "quero testar no meu WhatsApp"), e também quando [NÓS] tínhamos acabado de oferecer mostrar como ficaria ou como funciona no WhatsApp dela e ela respondeu que sim ("sim", "pode", "quero", "pode mandar"); senão false.
 Responda só JSON: {"autor":"humano|automatico","confianca":0.0-1.0,"intencao":"...","motivo":"frase curta","teste_real":false,"ja_disse":["..."],"nao_perguntar":["..."],"clima":"...","quer_agora":"...","proximo_passo":"..."}` },
       { role: "user", content: transcricao(msgs) },
     ],
@@ -187,7 +187,7 @@ Funciona no *mesmo número de WhatsApp* que a empresa já usa (não precisa troc
 Teste do agente com o nome da empresa, como se fosse no WhatsApp: ${link}
 Página com tudo explicado (como funciona, calculadora de mensagens fora do horário, planos, CRM e dúvidas), com o nome da empresa: ${c.baseEmp}/ia?c=${codigo(l.id)}
 A primeira mensagem que a empresa recebeu já tinha os dois links (o teste simulado e a página) e terminava oferecendo um *teste real no WhatsApp da própria empresa*. Só mande esses dois links de novo se a pessoa pedir ou disser que não achou.
-*Teste real no WhatsApp da empresa*: se a pessoa topar ("quero", "pode ser", "quero testar no meu WhatsApp"), mande na hora este link: ${c.baseEmp}/experimente?e=${encodeURIComponent(empresa)} e explique em uma frase que é só preencher o básico (serviços com preços, horário) que a gente liga o teste e ela conversa com o agente no próprio WhatsApp, como se fosse um cliente. Isso NÃO é fechamento: não pergunte de plano nem fale de pagamento nesse momento. Se ela já preencheu, diga que o teste vai ser ligado em breve e que ela recebe uma mensagem quando estiver pronto.
+*Teste real no WhatsApp da empresa*: se a pessoa topar ("quero", "pode ser", "quero testar no meu WhatsApp"), mande na hora este link: ${c.baseEmp}/experimente?e=${encodeURIComponent(empresa)} e explique em uma frase que é só preencher o básico (serviços com preços, horário) que a gente liga o teste e ela conversa com o agente no próprio WhatsApp, como se fosse um cliente. Se a nossa última mensagem ofereceu mostrar como ficaria no WhatsApp dela e ela respondeu que sim, é exatamente isso: mande o link e explique como preencher. Não ofereça conversa, ligação nem horários. Isso NÃO é fechamento: não pergunte de plano nem fale de pagamento nesse momento. Se ela já preencheu, diga que o teste vai ser ligado em breve e que ela recebe uma mensagem quando estiver pronto.
 
 ## Planos
 - *Essencial*: implantação R$ 497 + R$ 197 por mês. Atende 24h, tira dúvidas, passa preços e horários, entende áudio e foto, faz follow-up automático de quem perguntou e não fechou (uma mensagem cerca de 1 dia depois) e chama a equipe. Vem com um CRM com a marca da empresa: clientes e histórico das conversas do agente.
@@ -366,10 +366,23 @@ function fechar(t: string, c: Cfg) {
 
 /* a empresa topou o teste real: manda sempre o link para ela preencher (não depende da IA lembrar) */
 function linkReal(c: Cfg, l: any) { return `${c.baseEmp}/experimente?e=${encodeURIComponent(nomeCurto(l.nome))}`; }
-function comTesteReal(t: string, c: Cfg, l: any) {
-  if (/experimente/.test(t)) return t;
-  return `Combinado! É só preencher o básico aqui (serviços com preços e horário) que eu ligo o teste no WhatsApp de vocês:\n${linkReal(c, l)}\n\nQuando estiver pronto, chega uma mensagem pra vocês conversarem com o agente como se fossem um cliente.`;
+function comTesteReal(t: string, c: Cfg, l: any, jaPreencheu = false) {
+  if (jaPreencheu) return t; // já mandou o cadastro do teste: segue a resposta do agente (o teste vai ser ligado)
+  return `Combinado! É rapidinho, leva uns 3 minutos pelo celular:\n${linkReal(c, l)}\n\n1. Abra o link e coloque seu nome, seu WhatsApp e o nome da empresa\n2. Escolha onde testar: *sem conectar nada* (vocês falam com o agente pelo nosso número) ou *no WhatsApp da empresa* (lendo um QR Code)\n3. Escreva os serviços com os preços, o horário e as formas de pagamento e toque em *Quero testar no meu WhatsApp*\n\nAssim que enviar, eu ligo o teste e chega uma mensagem pra vocês conversarem com o agente como se fossem um cliente.`;
 }
+/* a nossa última mensagem ofereceu mostrar no WhatsApp da empresa (teste real) e a pessoa respondeu que sim */
+function aceitouTesteReal(msgs: Msg[]) {
+  const i = msgs.length - 1;
+  if (i < 1 || msgs[i].de_mim) return false;
+  let j = i; while (j >= 0 && !msgs[j].de_mim) j--;
+  if (j < 0) return false;
+  const nossa = msgs[j].texto, resp = msgs.slice(j + 1).map((m) => m.texto).join(" ").trim();
+  const ofereceu = /(como ficaria|como funciona|mostrar|testar|ver|teste real)[^?]{0,60}(whats ?app (de voc[eê]s|da empresa|de voc[eê])|seu whats ?app|no whats ?app|teste real)|teste real/i.test(nossa) && /\?/.test(nossa);
+  const sim = resp.length <= 60 && /^(sim|s|pode|pode sim|pode ser|claro|quero|queremos|ok|okay|bora|vamos|manda|mande|pode mandar|tenho interesse|aceito|show|beleza|top|com certeza|gostaria)\b/i.test(resp.normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
+  return ofereceu && sim;
+}
+const ofereceuConversa = (t: string) => /(conversa r[aá]pida|reuni[aã]o|liga[cç][aã]o|qual (dia|hor[aá]rio)|hor[aá]rios? (hoje|dispon|livres?)|tenho hor[aá]rios)/i.test(String(t || ""));
+const pediuPessoa = (t: string) => /(falar|conversar|ligar|liga[cç][aã]o|reuni[aã]o)[^.?!]{0,30}(com (voc[eê]|o [ée]der|algu[eé]m|uma pessoa|atendente|humano)|pessoalmente)|me liga|pode ligar|quero uma reuni/i.test(String(t || ""));
 
 /* o agente só manda texto: detecta promessa de vídeo/arquivo e marcações tipo "[Vídeo explicativo]" */
 const RX_MAT = "v[ií]deo|foto|imagem|print|pdf|arquivo|material|apresenta[cç][aã]o|cat[aá]logo|proposta|[aá]udio|documento";
@@ -543,6 +556,7 @@ async function atenderMsg(b: any) {
   }
   if (l.ag_estado !== "humano") await db.from("prosp_leads").update({ ag_estado: "humano", ag_em: new Date().toISOString(), status: l.status === "enviado" ? "respondeu" : l.status }).eq("id", lead);
 
+  if (!cl.testeReal && aceitouTesteReal(msgs)) cl.testeReal = true;
   l._acessos = await acessosTexto(lead);
   l._quem = quemE(l, tel);
   l._leitura = cl.leitura || "";
@@ -579,7 +593,14 @@ async function atenderMsg(b: any) {
     await acoesReais(l, c, feito, tel)("passar_para_eder", { resumo: `Quer fechar (${cl.motivo || "pediu para fechar"})` });
   }
   if (feito.includes("passou")) resposta = fechar(resposta, c);
-  else if (cl.testeReal && !ehOtica(l)) resposta = comTesteReal(resposta, c, l);
+  else if (cl.testeReal && !ehOtica(l)) {
+    const t8 = tel.slice(-8);
+    const pd = await db.from("agente_testes").select("id", { count: "exact", head: true }).or(`telefone.like.%${t8},pedido_tel_teste.like.%${t8}`);
+    resposta = comTesteReal(resposta, c, l, (pd.count || 0) > 0);
+  } else if (!feito.includes("marcou") && ofereceuConversa(resposta) && !pediuPessoa(ultCli)) {
+    // ofereceu conversa/horários sem a pessoa ter pedido para falar com o Éder: reescreve
+    try { resposta = semPerguntaOferta(semMarcacao(await vender(l, c, msgs, acoesReais(l, c, feito, tel), `Atenção: a pessoa NÃO pediu para falar com o ${c.nome.split(" ")[0]}. Não ofereça conversa, ligação, reunião nem horários. Responda você mesmo e siga com o melhor próximo passo (se ela topou ver como funciona, mande o link do teste e diga o que testar).`))) || resposta; } catch (_) { /* fica a resposta */ }
+  }
   if (l.segmento === "a confirmar" && ["pagina", "indicacao"].includes(l.origem || "")) {
     const e = await extrairEmpresa(msgs);
     if (e) await acoesReais(l, c, feito, tel)("registrar_empresa", e);
@@ -863,6 +884,7 @@ async function teste(req: Request, b: any, interno = false) {
     if (n === "registrar_empresa") { acoes.push({ txt: `Registraria a empresa: ${s(a.nome, 80)}${a.segmento ? " (" + s(a.segmento, 60) + ")" : ""}${a.outra_empresa ? " como contato separado" : ""}` }); return { ok: true }; }
     return { ok: false };
   };
+  if (!cl.testeReal && aceitouTesteReal(msgs)) { cl.testeReal = true; acoes.push({ txt: "Entendeu o sim como: quer o teste real no WhatsApp" }); }
   l._leitura = cl.leitura || "";
   let resposta = await vender(l, c, msgs, exec);
   if (resposta && !acoes.some((x) => String(x.txt).startsWith("Passaria a conversa")) && cl.intencao !== "fechar" && disseQuePassou(resposta, c)) {
@@ -877,7 +899,11 @@ async function teste(req: Request, b: any, interno = false) {
   }
   if (resposta) { resposta = semPerguntaOferta(semMarcacao(resposta)); if (prometeuMaterial(resposta, c)) resposta = `Vou pedir para o ${c.nome.split(" ")[0]} te mandar isso aqui mesmo na conversa, tá? Ele já foi avisado.`; }
   if (resposta && acoes.some((x) => String(x.txt).startsWith("Passaria a conversa"))) resposta = fechar(resposta, c);
-  else if (resposta && cl.testeReal && !ehOtica(l)) { resposta = comTesteReal(resposta, c, l); acoes.push({ txt: "Mandou o link do teste real no WhatsApp" }); }
+  else if (resposta && cl.testeReal && !ehOtica(l)) { resposta = comTesteReal(resposta, c, l); acoes.push({ txt: "Mandou o link do teste real com o passo a passo" }); }
+  else if (resposta && !acoes.some((x) => String(x.txt).startsWith("Marcaria")) && ofereceuConversa(resposta) && !pediuPessoa([...msgs].reverse().find((m) => !m.de_mim)?.texto || "")) {
+    acoes.push({ txt: "Reescreveu: ia oferecer conversa/horários sem a pessoa ter pedido" });
+    resposta = semPerguntaOferta(semMarcacao(await vender(l, c, msgs, exec, `Atenção: a pessoa NÃO pediu para falar com o ${c.nome.split(" ")[0]}. Não ofereça conversa, ligação, reunião nem horários. Responda você mesmo e siga com o melhor próximo passo (se ela topou ver como funciona, mande o link do teste e diga o que testar).`))) || resposta;
+  }
   if (resposta && c.video && resposta.includes(c.video) && arquivoVideo(c)) acoes.push({ txt: "Mandaria o vídeo como arquivo no WhatsApp, com o link na legenda" });
   if (l.origem && !acoes.some((x) => String(x.txt).startsWith("Registraria a empresa"))) { const e = await extrairEmpresa(msgs); if (e) acoes.push({ txt: `Registraria a empresa: ${e.nome}${e.segmento ? " (" + e.segmento + ")" : ""} (rede de segurança)` }); }
   return ok({ ok: true, cl, resposta, partes: resposta ? partes(resposta) : [], acoes });
