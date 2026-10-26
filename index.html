@@ -231,6 +231,7 @@ textarea{padding:10px 12px;min-height:96px;line-height:1.4;resize:vertical}
 .grid3{display:grid;grid-template-columns:70px minmax(0,1fr) 92px;gap:8px}
 .aguard-box{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;margin-bottom:12px;border:1px dashed var(--line);border-radius:12px;background:var(--surface-2);cursor:pointer}
 .aguard-box input{width:20px;height:20px;margin-top:2px;flex:none;accent-color:var(--accent,#3D8BFD)}
+.pgdata{margin:-2px 0 14px}.pgchips{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}.pgchips .chip{cursor:pointer;font:inherit;font-size:13px;min-height:34px;padding:0 12px;border:1px solid var(--line);background:var(--surface-2);color:inherit}.pgchips .chip.on{background:var(--accent,#3D8BFD);border-color:var(--accent,#3D8BFD);color:#fff}.pgdata small{display:block;margin-top:6px;line-height:1.4}
 .aguard-box b{display:block}.aguard-box small{display:block;color:var(--muted);font-size:12.5px;line-height:1.4;margin-top:2px}
 .lk{display:inline-flex;align-items:center;margin-left:6px;opacity:.75;vertical-align:middle}
 .pl{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
@@ -1411,9 +1412,11 @@ const DEFAULT_TPL={
   orcamento:'Olá, {cliente}! 👋 Aqui é da {otica}. Segue o orçamento que combinamos: 📝\n\n{itens}\n\n💰 Total: {total}\n💵 Entrada: {entrada}\n\n📅 Parcelas:\n{resumo}\n\n{pagamento}\nAssim que o pagamento for confirmado, fechamos a sua venda. ✅ Qualquer dúvida, é só chamar! 😊',
   chegou:'Olá, {cliente}! 🎉 Aqui é da {otica}.\n\nBoa notícia: o seu óculos chegou! 🕶️✨ Já pode passar aqui na loja para retirar. 🏬\n\nQualquer dúvida, é só chamar por aqui. 😊',
   entrega:'Olá, {cliente}! 😊 Aqui é da {otica}.\n\nPassando para agradecer pela sua compra e avisar que o seu pedido já foi entregue! 📦✅ Esperamos que você goste! 🕶️\n\nSe precisar de qualquer ajuste ou tiver alguma dúvida, é só chamar por aqui. Foi um prazer atender você! 💙',
-  atraso:'Olá, {cliente}! Tudo bem? 😊 Aqui é da {otica}.\n\nA parcela {parcela}, de {valor}, venceu em {vencimento} e está em atraso há {dias}. ⚠️{encargos}\n\n{pagamento}\n\nSe já pagou, pode nos enviar o comprovante. 🧾 Obrigado! 🙏'
+  atraso:'Olá, {cliente}! Tudo bem? 😊 Aqui é da {otica}.\n\nA parcela {parcela}, de {valor}, venceu em {vencimento} e está em atraso há {dias}. ⚠️{encargos}\n\n{pagamento}\n\nSe já pagou, pode nos enviar o comprovante. 🧾 Obrigado! 🙏',
+  orc_valor:'Olá, {cliente}! 👋 Aqui é da {otica}.\n\nPassando para lembrar do seu orçamento: 📝\n\n{itens}\n\n{valores}\n\n📅 Combinamos o pagamento para {data_pagamento}. Assim que você vier, já damos andamento ao seu óculos. Qualquer dúvida, é só responder por aqui! 😊',
+  orc_lembrete:'Olá, {cliente}! 😊 Aqui é da {otica}.\n\nSó passando para lembrar que amanhã ({data_pagamento}) estamos aguardando a sua vinda para darmos prosseguimento ao seu óculos e enviarmos para o laboratório. 👓\n\nAté amanhã! 🙏'
 };
-const TPL_LABEL={chegou:'Aviso: seu óculos chegou',cadastro:'Boas-vindas ao cadastrar',venda:'Resumo da venda',orcamento:'Orçamento (aguardando pagamento)',lembrete:'Lembrete de vencimento',atraso:'Parcela em atraso',recibo:'Recibo de pagamento',aniversario:'Feliz aniversário',revisao:'Revisão do grau (1 ano depois)',entrega:'Agradecimento pela compra (ao entregar)'};
+const TPL_LABEL={chegou:'Aviso: seu óculos chegou',cadastro:'Boas-vindas ao cadastrar',venda:'Resumo da venda',orcamento:'Orçamento (aguardando pagamento)',lembrete:'Lembrete de vencimento',atraso:'Parcela em atraso',recibo:'Recibo de pagamento',aniversario:'Feliz aniversário',revisao:'Revisão do grau (1 ano depois)',entrega:'Agradecimento pela compra (ao entregar)',orc_valor:'Orçamento: valor, 3 dias antes da data do pagamento',orc_lembrete:'Orçamento: lembrete, 1 dia antes da data do pagamento'};
 const S={clientes:{},vendas:{},lentes:{},config:{}};
 const ui={tab:'painel',month:todayStr().slice(0,7),sel:todayStr(),vFilter:'todas',vPer:'todas',vQuery:'',cQuery:'',cFilter:'todos',lQuery:'',lTipo:'',cx:'hoje',cxFrom:'',cxTo:'',sheet:null,draft:null,cdraft:null,confirm:''};
 let ready=false,loadFail=false,syncState='load';
@@ -1679,7 +1682,7 @@ function pagamentoTxt(v){const c=cfg();if(v&&v.forma==='Boleto')return 'Pagament
 function parcelasTxt(v){if(ehCartao(v))return cartaoTxt(v)+(v.aguardando?'':' (pago)');return v.parcelas.map(p=>pLabel(v,p)+': '+brl(p.valor)+' - '+fmtDate(p.venc)+(p.pago?' (pago)':'')).join('\n')}
 function ctx(v,p,cli){
   const c=cli||(v&&S.clientes[v.clienteId])||{};const o={cliente:firstName(c.nome),otica:cfg().nome,pix:cfg().pix};
-  if(v){o.itens=v.itens.map(i=>'• '+(i.qtd>1?i.qtd+'x ':'')+i.nome).join('\n');o.total=brl(v.total);o.entrada=brl(v.entrada);o.resumo=parcelasTxt(v);o.pagamento=pagamentoTxt(v);o.forma=v.forma;if(ehCartao(v))o.entrada='\u0000'}
+  if(v){o.itens=v.itens.map(i=>'• '+(i.qtd>1?i.qtd+'x ':'')+i.nome).join('\n');o.total=brl(v.total);o.entrada=brl(v.entrada);o.resumo=parcelasTxt(v);o.pagamento=pagamentoTxt(v);o.forma=v.forma;o.valores='💰 Valor total: '+brl(v.total)+(v.entrada>0&&v.entrada<v.total&&!ehCartao(v)?'\n💵 Entrada: '+brl(v.entrada):'');o.data_pagamento=v.pagarEm?fmtDate(v.pagarEm).slice(0,5):'';if(ehCartao(v))o.entrada='\u0000'}
   if(p){const e=encargos(p);o.multa=brl(e.multa);o.juros=brl(e.juros);o.atualizado=brl(e.total);o.encargos=e.total>p.valor?' Com multa e juros, o valor atualizado é de '+brl(e.total)+'.':'';o.recebido=brl(recv(p));o.datapago=fmtDate(p.pagoEm);o.valor=brl(p.valor);o.parcela=p.tipo==='entrada'?'de entrada':p.n+'/'+v.n;o.vencimento=fmtDate(p.venc);o.dias=plural(Math.max(0,diffDays(todayStr(),p.venc)),'dia','dias')}
   if(c.id){const r=refRevisao(c);if(r)o.tempo=tempoTxt(r)}
   premCtx(o,v,p);
@@ -2245,6 +2248,11 @@ function viewVendas(){
   '<div class="field" style="margin-bottom:14px;max-width:420px"><input id="q-v" type="search" placeholder="Buscar por cliente" value="'+esc(ui.vQuery)+'" aria-label="Buscar venda por cliente"></div>'+
   '<div id="vlist">'+vendasList()+'</div>';
 }
+function pgDataChip(v){
+  if(!v.aguardando)return '';if(!v.pagarEm)return '<div class="meta">Sem data de pagamento: edite o orçamento para combinar a data</div>';
+  const d=diffDays(v.pagarEm,todayStr());const q=d<0?['bad','A data combinada passou ('+fmtDate(v.pagarEm).slice(0,5)+')']:d===0?['warn','Paga hoje']:d===1?['warn','Paga amanhã ('+fmtDate(v.pagarEm).slice(0,5)+')']:['','Paga em '+fmtDate(v.pagarEm).slice(0,5)+' · faltam '+d+' dias'];
+  return '<div style="margin-top:4px"><span class="chip '+q[0]+'">'+q[1]+'</span></div>';
+}
 function aguardList(){
   const list=orcamentos();
   if(!list.length)return '<div class="empty">'+GLASSES+'<h3>Nenhum orçamento aguardando</h3><p>Na Nova venda, marque "Aguardando pagamento" para guardar um orçamento sem contar como venda.</p></div>';
@@ -2253,11 +2261,11 @@ function aguardList(){
     const href=c.whatsapp?esc(waLink(c.whatsapp,fillTpl(tpl('orcamento'),ctx(v,null,c)))):'';
     const ent=v.parcelas.find(p=>p.tipo==='entrada');const par=v.parcelas.filter(p=>p.tipo==='parcela');
     const plano=(ent?'entrada '+brl(ent.valor):'sem entrada')+(par.length?' + '+par.length+'x de '+brl(par[0].valor):'');
-    return '<article class="row"><div class="row-main"><button class="link" data-act="openvenda" data-v="'+v.id+'">'+esc(c.nome)+demoTag(v)+'</button><div class="meta">'+esc(itensTxt(v))+' · '+fmtDate(v.data)+' · '+plano+'</div></div><div class="row-side"><div class="amt">'+brl(v.total)+'</div><div class="acts">'+(href?'<a class="btn sm wa" target="_blank" rel="noopener" href="'+href+'">Orçamento</a>':'')+'<button class="btn sm" data-act="editvenda" data-v="'+v.id+'">Editar</button><button class="btn sm primary" data-act="pagarorc" data-v="'+v.id+'">Marcar como pago</button></div></div></article>';
+    return '<article class="row"><div class="row-main"><button class="link" data-act="openvenda" data-v="'+v.id+'">'+esc(c.nome)+demoTag(v)+'</button><div class="meta">'+esc(itensTxt(v))+' · '+fmtDate(v.data)+' · '+plano+'</div>'+pgDataChip(v)+'</div><div class="row-side"><div class="amt">'+brl(v.total)+'</div><div class="acts">'+(href?'<a class="btn sm wa" target="_blank" rel="noopener" href="'+href+'">Orçamento</a>':'')+'<button class="btn sm" data-act="editvenda" data-v="'+v.id+'">Editar</button><button class="btn sm primary" data-act="pagarorc" data-v="'+v.id+'">Marcar como pago</button></div></div></article>';
   }).join('')+'</div>';
 }
 function viewAguard(){
-  return pageHead('Orçamentos','Guardados até o cliente voltar para pagar','<button class="btn primary" data-act="novavenda">Novo orçamento</button>')+
+  return pageHead('Orçamentos','Guardados até o cliente voltar para pagar','<button class="btn primary" data-act="novavenda" data-orc="1">Novo orçamento</button>')+
   '<p class="sub" style="margin-bottom:12px">Aqui ficam os orçamentos de quem ainda vai pagar ou dar a entrada. Eles não entram nas vendas, no caixa nem nas cobranças. Quando o cliente pagar, toque em Marcar como pago e vira venda.</p><div id="aglist">'+aguardList()+'</div>';
 }
 function filteredVendas(){
@@ -2598,7 +2606,7 @@ function sheetVenda(id){
   const chip=v.aguardando?'<span class="chip warn">Aguardando pagamento</span>':st==='quitada'?'<span class="chip ok">Quitada</span>':st==='atrasada'?'<span class="chip bad">Atrasada</span>':'<span class="chip warn">Em dia</span>';
   const resumoHref=c.whatsapp?esc(waLink(c.whatsapp,fillTpl(tpl(v.aguardando?'orcamento':'venda'),ctx(v,null,c)))):'';
   const body=
-  '<div class="sec"><div class="chips">'+chip+'<span class="chip">'+esc(v.forma)+'</span><span class="chip">'+fmtDate(v.data)+'</span>'+demoTag(v)+'</div>'+
+  '<div class="sec"><div class="chips">'+chip+'<span class="chip">'+esc(v.forma)+'</span><span class="chip">'+fmtDate(v.data)+'</span>'+demoTag(v)+'</div>'+pgDataChip(v)+
   '<dl class="kv"><dt>Cliente</dt><dd><b>'+esc(c.nome)+'</b></dd><dt>WhatsApp</dt><dd>'+esc(c.whatsapp||'-')+'</dd><dt>CPF</dt><dd>'+esc(c.cpf||'-')+'</dd><dt>Endereço</dt><dd>'+esc(c.endereco||'-')+'</dd></dl>'+
   (S.clientes[v.clienteId]?'<div><button class="btn sm" data-act="editcliente" data-c="'+c.id+'">Editar dados do cliente</button></div>':'')+'</div>'+
   '<div class="sec"><h3>Itens</h3><div class="stack">'+v.itens.map(i=>{const b=Math.round(i.valor*i.qtd);const t=Math.round(b*(1+(i.juros||0)/100));return '<div class="sum-row"><span>'+(i.qtd>1?i.qtd+'x ':'')+esc(i.nome)+(i.juros?' <span class="meta">(+'+String(i.juros).replace('.',',')+'% de juros)</span>':'')+'</span><b class="num">'+brl(t)+'</b></div>'}).join('')+'</div>'+
@@ -2620,12 +2628,16 @@ const newItem=tipo=>({tipo:tipo,nome:'',qtd:'1',valor:'',juros:'',lenteId:''});
 const cliFalta=c=>{const f=[];if(digits(c.whatsapp||'').length<10)f.push('WhatsApp');if(digits(c.cpf||'').length<11)f.push('CPF');if(!String(c.endereco||'').trim())f.push('endereço');if(!String(c.nascimento||'').trim())f.push('data de nascimento');return f};
 const listaTxt=a=>a.length<2?a.join(''):a.slice(0,-1).join(', ')+' e '+a[a.length-1];
 const avisoFalta=c=>{const f=cliFalta(c);return f.length?'Falta preencher: '+listaTxt(f)+'. Você pode salvar assim e completar depois.':''};
-function newDraft(cid){return {editId:'',clienteId:cid||(Object.keys(S.clientes).length?'':'__novo'),novo:{nome:'',cpf:'',whatsapp:'',endereco:'',nascimento:'',receitas:[blankReceita()]},vendedorId:'',entrega:'',itens:[newItem('produto')],jurosVenda:'',jurosParc:'',entrada:'',formaEntrada:'Pix',n:'3',primeira:addMonths(todayStr(),1),forma:'Pix',cartaoN:'1',cartaoParc:'',data:todayStr(),obs:'',aguardando:false}}
+function newDraft(cid){return {editId:'',clienteId:cid||(Object.keys(S.clientes).length?'':'__novo'),novo:{nome:'',cpf:'',whatsapp:'',endereco:'',nascimento:'',receitas:[blankReceita()]},vendedorId:'',entrega:'',itens:[newItem('produto')],jurosVenda:'',jurosParc:'',entrada:'',formaEntrada:'Pix',n:'3',primeira:addMonths(todayStr(),1),forma:'Pix',cartaoN:'1',cartaoParc:'',data:todayStr(),obs:'',aguardando:false,pagarEm:''}}
 function editDraft(v){
   const par=v.parcelas.filter(p=>p.tipo==='parcela'&&p.parte!==2);const pct=x=>x?String(x).replace('.',','):'';const ent=v.parcelas.find(p=>p.tipo==='entrada');
   return {editId:v.id,clienteId:v.clienteId,novo:{nome:'',cpf:'',whatsapp:'',endereco:''},
     itens:v.itens.map(i=>({tipo:i.tipo,nome:i.nome,qtd:String(i.qtd),valor:centsToStr(i.valor),juros:pct(i.juros),lenteId:i.lenteId||''})),
-    jurosVenda:pct(v.jurosVenda),jurosParc:pct(v.jurosParc),entrada:v.entrada?centsToStr(v.entrada):'',formaEntrada:(ent&&ent.forma)||'Pix',n:String(par.length),primeira:par.length?par[0].venc:addMonths(todayStr(),1),forma:v.forma,legPix:v.forma==='Pix'&&par.length>0,cartaoN:String(v.cartaoN||1),cartaoParc:v.cartaoParc?centsToStr(v.cartaoParc):'',data:v.data,obs:v.obs||'',aguardando:!!v.aguardando,vendedorId:v.vendedorId||'',entrega:v.entregaPrev||''};
+    jurosVenda:pct(v.jurosVenda),jurosParc:pct(v.jurosParc),entrada:v.entrada?centsToStr(v.entrada):'',formaEntrada:(ent&&ent.forma)||'Pix',n:String(par.length),primeira:par.length?par[0].venc:addMonths(todayStr(),1),forma:v.forma,legPix:v.forma==='Pix'&&par.length>0,cartaoN:String(v.cartaoN||1),cartaoParc:v.cartaoParc?centsToStr(v.cartaoParc):'',data:v.data,obs:v.obs||'',aguardando:!!v.aguardando,pagarEm:v.pagarEm||'',vendedorId:v.vendedorId||'',entrega:v.entregaPrev||''};
+}
+function pgDataField(D){
+  const op=[[1,'Amanhã'],[3,'Em 3 dias'],[7,'Em 1 semana'],[15,'Em 15 dias'],[30,'Em 30 dias']];
+  return '<div class="field pgdata" data-pgdata'+(D.aguardando?'':' hidden')+'><span>Quando o cliente vai pagar?</span><input type="date" data-bind="pagarEm" min="'+todayStr()+'" value="'+esc(D.pagarEm||'')+'" aria-label="Data combinada para o pagamento"><div class="chips pgchips">'+op.map(x=>'<button type="button" class="chip'+(D.pagarEm===addDays(todayStr(),x[0])?' on':'')+'" data-act="pgdata" data-d="'+x[0]+'">'+x[1]+'</button>').join('')+'</div><small class="meta">3 dias antes, o cliente recebe no WhatsApp o orçamento com o valor. 1 dia antes, um lembrete de que estamos aguardando para mandar ao laboratório.</small></div>';
 }
 function sheetNova(){
   const D=ui.draft;const cs=Object.values(S.clientes).sort((a,b)=>a.nome.localeCompare(b.nome));
@@ -2639,7 +2651,7 @@ function sheetNova(){
   '<details><summary>Grau do cliente (opcional)</summary><div style="margin-top:10px">'+receitaForm((D.novo.receitas||(D.novo.receitas=[blankReceita()]))[0],0,'bind','novo.receitas.',false)+'</div></details></div></div>'+
   '<div class="sec"><h3>Itens da venda</h3><div id="items" class="stack"></div><div class="foot-row"><button class="btn" data-act="additem" data-t="produto">+ Produto</button><button class="btn" data-act="additem" data-t="lente">+ Lente</button></div>'+
   (parsePct(D.jurosVenda)?'<div class="field" data-pgparc'+(isAvista(D)?' hidden':'')+'><span>Juros sobre o total da venda (%), opcional</span><input type="text" inputmode="decimal" data-bind="jurosVenda" value="'+esc(D.jurosVenda)+'" placeholder="0"></div>':'')+'</div>'+
-  premVendSale(D)+'<div class="sec"><h3>Pagamento</h3>'+((!D.editId||(S.vendas[D.editId]&&S.vendas[D.editId].aguardando))?'<label class="aguard-box"><input type="checkbox" data-aguard'+(D.aguardando?' checked':'')+'><span><b>Aguardando pagamento</b><small>Use para orçamento: o cliente ainda vai pagar ou dar a entrada. Não conta como venda, nem no caixa, nem nas cobranças. Vira venda quando você marcar como pago.</small></span></label>':'')+'<div class="field"><span>Forma de pagamento</span><div class="seg s3" role="radiogroup" aria-label="Forma de pagamento"><label><input type="radio" name="forma" value="Pix" data-bind="forma"'+(D.forma==='Pix'?' checked':'')+'><span>'+(D.legPix?'Pix':'Pix à vista')+'</span></label><label><input type="radio" name="forma" value="Boleto" data-bind="forma"'+(D.forma==='Boleto'?' checked':'')+'><span>Boleto parcelado</span></label><label><input type="radio" name="forma" value="Cartão de crédito" data-bind="forma"'+(D.forma==='Cartão de crédito'?' checked':'')+'><span>Cartão de crédito</span></label></div></div>'+
+  premVendSale(D)+'<div class="sec"><h3>Pagamento</h3>'+((!D.editId||(S.vendas[D.editId]&&S.vendas[D.editId].aguardando))?'<label class="aguard-box"><input type="checkbox" data-aguard'+(D.aguardando?' checked':'')+'><span><b>Aguardando pagamento</b><small>Use para orçamento: o cliente ainda vai pagar ou dar a entrada. Não conta como venda, nem no caixa, nem nas cobranças. Vira venda quando você marcar como pago.</small></span></label>'+pgDataField(D):'')+'<div class="field"><span>Forma de pagamento</span><div class="seg s3" role="radiogroup" aria-label="Forma de pagamento"><label><input type="radio" name="forma" value="Pix" data-bind="forma"'+(D.forma==='Pix'?' checked':'')+'><span>'+(D.legPix?'Pix':'Pix à vista')+'</span></label><label><input type="radio" name="forma" value="Boleto" data-bind="forma"'+(D.forma==='Boleto'?' checked':'')+'><span>Boleto parcelado</span></label><label><input type="radio" name="forma" value="Cartão de crédito" data-bind="forma"'+(D.forma==='Cartão de crédito'?' checked':'')+'><span>Cartão de crédito</span></label></div></div>'+
   '<p class="sub" data-pgpix'+(isAvista(D)&&D.forma!=='Cartão de crédito'?'':' hidden')+' style="margin:0 0 10px">Pagamento à vista no Pix: o valor total entra como recebido na data da venda, sem parcelas.</p>'+
   '<div data-pgcart'+(D.forma==='Cartão de crédito'?'':' hidden')+'><div class="grid2"><div class="field"><span>Em quantas vezes</span><select data-bind="cartaoN">'+Array.from({length:18},(_,i)=>i+1).map(k=>'<option value="'+k+'"'+(String(D.cartaoN||'1')===String(k)?' selected':'')+'>'+(k===1?'1x (à vista)':k+'x')+'</option>').join('')+'</select></div><div class="field"><span>Valor de cada parcela (R$), opcional</span><input type="text" inputmode="decimal" data-bind="cartaoParc" value="'+esc(D.cartaoParc||'')+'" placeholder="0,00"></div></div><p class="sub" style="margin:0 0 10px">O valor total entra como recebido na data da venda e o cliente não fica com parcelas para cobrar. Anote aqui quanto ficou cada parcela na maquininha, já com os juros dela. É só anotação, não muda o total da venda.</p></div>'+
   '<div class="grid2"><div class="field"><span>Data da venda</span><input type="date" data-bind="data" value="'+esc(D.data)+'"></div><div class="field"><span>Data de entrega (opcional)</span><input type="date" data-bind="entrega" value="'+esc(D.entrega||'')+'"></div></div>'+
@@ -2679,6 +2691,9 @@ function draftState(){
   const n=av?0:Math.min(36,Math.max(0,parseInt(D.n,10)||0));
   if(c.total>0&&entradaIn>c.total-c.jp)errs.push('A entrada é maior que o total');
   if(!/^\d{4}-\d{2}-\d{2}$/.test(D.data))errs.push('Informe a data da venda');
+  const orcAg=D.aguardando&&(!D.editId||(S.vendas[D.editId]&&S.vendas[D.editId].aguardando));
+  if(orcAg&&!/^\d{4}-\d{2}-\d{2}$/.test(D.pagarEm||''))E('Informe quando o cliente vai pagar','[data-bind="pagarEm"]');
+  else if(orcAg&&D.pagarEm<todayStr()&&!(D.editId&&S.vendas[D.editId]&&S.vendas[D.editId].pagarEm===D.pagarEm))E('A data do pagamento já passou','[data-bind="pagarEm"]');
   if(c.saldo>0&&n<1)errs.push('Informe o número de parcelas');
   if(c.saldo>0&&!/^\d{4}-\d{2}-\d{2}$/.test(D.primeira))errs.push('Informe o vencimento da 1ª parcela');
   return {errs:errs,targets:targets,itens:itens,c:c,n:n,av:av,jv:jv,jp:jp,entrada:entradaIn,parc:splitParcelas(c.saldo,n,D.primeira)};
@@ -2707,7 +2722,7 @@ function salvarVenda(){
   if(cid==='__novo'){const cl=makeCliente(D.novo);cid=cl.id;S.clientes[cid]=cl;persist('clientes',cid);premWaHook('bv',null,null,cl)}
   const v=makeVenda(cid,{itens:st.itens,jurosVenda:st.jv,jurosParc:st.jp,entrada:st.entrada,formaEntrada:st.av?(D.forma==='Cartão de crédito'?'Cartão de crédito':'Pix'):D.formaEntrada,n:st.n,primeira:D.primeira,forma:D.forma,data:D.data,obs:D.obs,cartaoN:D.cartaoN,cartaoParc:parseMoney(D.cartaoParc||'')});
   const old=D.editId?S.vendas[D.editId]:null;
-  if(D.aguardando&&(!old||old.aguardando)){v.aguardando=true;v.parcelas.forEach(p=>{if(p.tipo==='entrada'){p.pago=false;p.pagoEm=null;p.forma=null}})}
+  if(D.aguardando&&(!old||old.aguardando)){v.aguardando=true;if(D.pagarEm)v.pagarEm=D.pagarEm;v.parcelas.forEach(p=>{if(p.tipo==='entrada'){p.pago=false;p.pagoEm=null;p.forma=null}})}
   if(old){
     const oe=old.parcelas.filter(p=>p.tipo==='entrada');const op0=old.parcelas.find(p=>p.tipo==='parcela');
     if(!old.aguardando&&old.parcelas.some(p=>p.parte&&p.tipo==='parcela')&&v.total===old.total&&v.entrada===old.entrada&&v.n===old.n&&D.primeira===(op0&&op0.venc)){v.parcelas=JSON.parse(JSON.stringify(old.parcelas))}
@@ -3246,7 +3261,8 @@ const A={
   instalar(){if(!deferredInstall)return;deferredInstall.prompt();deferredInstall=null;if(ui.sheet&&ui.sheet.kind==='mais'){ui.sheet=null;renderSheet()}render()},
   openvenda(d){ui.confirm='';ui.sheet={kind:'venda',id:d.v};renderSheet()},
   closesheet(){closeSheet()},
-  novavenda(d){openNova(d.c)},
+  novavenda(d){openNova(d.c);if(d.orc&&ui.draft){ui.draft.aguardando=true;renderSheet()}},
+  pgdata(d){if(!ui.draft)return;ui.draft.pagarEm=addDays(todayStr(),+d.d||0);const i=$('[data-bind="pagarEm"]');if(i)i.value=ui.draft.pagarEm;document.querySelectorAll('.pgchips .chip').forEach(b=>b.classList.toggle('on',b.dataset.d===String(d.d)));updateVenda()},
   pagarorc(d,b){const v=S.vendas[d.v];if(!v||!v.aguardando)return;const ent=v.parcelas.find(p=>p.tipo==='entrada');
     if(!ent){A.confirmpag(d,b);return}
     ui.pg={modo:'total'};ui.sheet={kind:'pagorc',id:v.id};renderSheet()},
@@ -3810,7 +3826,7 @@ function premFuPesq(){
 }
 Object.assign(A,{fupesq(){ui.cs='pesq';ui.tab='campanhas';render()}});
 /* ----- WhatsApp automático (conector no computador da loja) ----- */
-const WA_TIPOS=[['boasvindas','Boas-vindas ao cadastrar o cliente'],['venda','Resumo da venda (valor e parcelas)'],['orcamento','Orçamento ao salvar'],['trafego','Tráfego Orgânico: oferta para empresas da região'],['recibo','Recibo quando a parcela é recebida'],['chegou','Aviso: seu óculos chegou'],['agradecimento','Agradecimento ao entregar'],['lembrete','Lembrete na véspera do vencimento'],['atraso','Parcela em atraso (1, 7 e 15 dias)'],['aniversario','Feliz aniversário'],['revisao','Revisão do grau (11 meses)'],['exame_conf','Exame de vista: confirmação ao agendar'],['exame_lembrete','Exame de vista: lembrete 24h depois de agendar'],['exame_dia','Exame de vista: no dia, 3 horas antes'],['followup','Meus follow-ups (botão WhatsApp)'],['avaliacao','Pedido de avaliação do cliente']];
+const WA_TIPOS=[['boasvindas','Boas-vindas ao cadastrar o cliente'],['venda','Resumo da venda (valor e parcelas)'],['orcamento','Orçamento ao salvar'],['orc_valor','Orçamento: valor 3 dias antes da data do pagamento'],['orc_lembrete','Orçamento: lembrete 1 dia antes da data do pagamento'],['trafego','Tráfego Orgânico: oferta para empresas da região'],['recibo','Recibo quando a parcela é recebida'],['chegou','Aviso: seu óculos chegou'],['agradecimento','Agradecimento ao entregar'],['lembrete','Lembrete na véspera do vencimento'],['atraso','Parcela em atraso (1, 7 e 15 dias)'],['aniversario','Feliz aniversário'],['revisao','Revisão do grau (11 meses)'],['exame_conf','Exame de vista: confirmação ao agendar'],['exame_lembrete','Exame de vista: lembrete 24h depois de agendar'],['exame_dia','Exame de vista: no dia, 3 horas antes'],['followup','Meus follow-ups (botão WhatsApp)'],['avaliacao','Pedido de avaliação do cliente']];
 const WA_NOME={exame_conf:'Exame de vista: confirmação',exame_lembrete:'Exame de vista: lembrete',exame_dia:'Exame de vista: no dia (3h antes)',exame_resp:'Exame de vista: resposta',exame_faltou:'Exame de vista: faltou',exame_equipe:'Aviso de novo exame para a equipe',manual:'Mensagem da conversa'};WA_TIPOS.forEach(x=>WA_NOME[x[0]]=x[1]);
 const WA_ST={aprovar:['warn','Espera sua aprovação'],aguardando:['acc','Na fila'],enviando:['acc','Enviando'],enviada:['ok','Enviada'],falhou:['bad','Falhou'],cancelada:['','Cancelada'],expirada:['','Venceu o prazo']};
 const waDoc=()=>{if(!S.config.wa)S.config.wa={id:'wa',on:false,pausa:false,ini:'08:00',fim:'18:30',limite:30,modo:{}};if(!S.config.wa.modo)S.config.wa.modo={};return S.config.wa};
@@ -3839,7 +3855,7 @@ function waResumo(v,auto){
   const tp=v.aguardando?'orcamento':'venda';if(auto&&waModo(tp)==='off')return false;
   return waEnq(tp,c,fillTpl(tpl(tp),ctx(v,null,c)),(v.aguardando?'orc:':'vnd:')+v.id+':'+v.total);
 }
-const waModo=t=>waDoc().modo[t]||(String(t).indexOf('exame_')===0?'auto':'aprovar');
+const waModo=t=>waDoc().modo[t]||(String(t).indexOf('exame_')===0||String(t).indexOf('orc_')===0?'auto':'aprovar');
 function premWaHook(ev,v,p,c){
   if(!waOn())return;
   if(ev==='bv'&&c)waEnq('boasvindas',c,fillTpl(tpl('cadastro'),ctx(null,null,c)),'bv:'+c.id);
@@ -3859,7 +3875,7 @@ function waEstado(){
 }
 /* ----- fila do WhatsApp automático: separada por assunto, com para quem vai, quando sai e a mensagem ----- */
 const WA_CAT=[
-  ['vendas','Vendas e recibos',['venda','orcamento','recibo']],
+  ['vendas','Vendas e recibos',['venda','orcamento','orc_valor','orc_lembrete','recibo']],
   ['exame','Exame de vista',['exame_conf','exame_lembrete','exame_dia','exame_resp','exame_faltou']],
   ['equipe','Avisos para a equipe',['exame_equipe']],
   ['boasvindas','Boas-vindas',['boasvindas']],
@@ -5465,7 +5481,7 @@ function onField(e){
     if(t.dataset.bind==='forma')pgToggle();
     updateVenda();
   }
-  if(t.dataset.aguard!==undefined&&ui.draft){ui.draft.aguardando=t.checked;updateVenda()}
+  if(t.dataset.aguard!==undefined&&ui.draft){ui.draft.aguardando=t.checked;const pg=$('[data-pgdata]');if(pg)pg.hidden=!t.checked;updateVenda()}
   if(t.dataset.cbind&&ui.cdraft)setPath(ui.cdraft,t.dataset.cbind,t.value);
   if(t.dataset.os!==undefined&&ui.os)setPath(ui.os,t.dataset.os,t.value);
   if(t.dataset.fu!==undefined&&ui.fu)ui.fu[t.dataset.fu]=t.value;
