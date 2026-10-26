@@ -80,3 +80,12 @@ do $$ declare d text; begin
     execute d;
   end if;
 end $$;
+
+-- Follow-up manual dos orçamentos (botão na aba Orçamentos): wa_enfileirar passa a aceitar o tipo orc_followup.
+do $$ declare d text; a text := '''venda'',''orcamento'')'; begin
+  d := pg_get_functiondef('public.wa_enfileirar(uuid,text,text,text,text,text,text)'::regprocedure);
+  if position('orc_followup' in d) = 0 then
+    if position(a in d) = 0 then raise exception 'trecho não encontrado'; end if;
+    execute replace(d, a, '''venda'',''orcamento'',''orc_followup'')');
+  end if;
+end $$;

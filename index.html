@@ -231,6 +231,7 @@ textarea{padding:10px 12px;min-height:96px;line-height:1.4;resize:vertical}
 .grid3{display:grid;grid-template-columns:70px minmax(0,1fr) 92px;gap:8px}
 .aguard-box{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;margin-bottom:12px;border:1px dashed var(--line);border-radius:12px;background:var(--surface-2);cursor:pointer}
 .aguard-box input{width:20px;height:20px;margin-top:2px;flex:none;accent-color:var(--accent,#3D8BFD)}
+.btn.fu-feito{opacity:.62;font-weight:500}.btn.fu-feito.armed{opacity:1;border-color:var(--wa);color:inherit}
 .pgdata{margin:-2px 0 14px}.pgchips{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}.pgchips .chip{cursor:pointer;font:inherit;font-size:13px;min-height:34px;padding:0 12px;border:1px solid var(--line);background:var(--surface-2);color:inherit}.pgchips .chip.on{background:var(--accent,#3D8BFD);border-color:var(--accent,#3D8BFD);color:#fff}.pgdata small{display:block;margin-top:6px;line-height:1.4}
 .aguard-box b{display:block}.aguard-box small{display:block;color:var(--muted);font-size:12.5px;line-height:1.4;margin-top:2px}
 .lk{display:inline-flex;align-items:center;margin-left:6px;opacity:.75;vertical-align:middle}
@@ -1414,9 +1415,10 @@ const DEFAULT_TPL={
   entrega:'Olá, {cliente}! 😊 Aqui é da {otica}.\n\nPassando para agradecer pela sua compra e avisar que o seu pedido já foi entregue! 📦✅ Esperamos que você goste! 🕶️\n\nSe precisar de qualquer ajuste ou tiver alguma dúvida, é só chamar por aqui. Foi um prazer atender você! 💙',
   atraso:'Olá, {cliente}! Tudo bem? 😊 Aqui é da {otica}.\n\nA parcela {parcela}, de {valor}, venceu em {vencimento} e está em atraso há {dias}. ⚠️{encargos}\n\n{pagamento}\n\nSe já pagou, pode nos enviar o comprovante. 🧾 Obrigado! 🙏',
   orc_valor:'Olá, {cliente}! 👋 Aqui é da {otica}.\n\nPassando para lembrar do seu orçamento: 📝\n\n{itens}\n\n{valores}\n\n📅 Combinamos o pagamento para {data_pagamento}. Assim que você vier, já damos andamento ao seu óculos. Qualquer dúvida, é só responder por aqui! 😊',
+  orc_followup:'Olá, {cliente}! 👋 Aqui é da {otica}.\n\nPassando para lembrar do seu orçamento: 📝\n\n{itens}\n\n{valores}\n\nEstamos aguardando você para darmos prosseguimento e enviarmos o seu óculos para o laboratório. 👓 Quer combinar um dia para vir? É só responder por aqui! 😊',
   orc_lembrete:'Olá, {cliente}! 😊 Aqui é da {otica}.\n\nSó passando para lembrar que amanhã ({data_pagamento}) estamos aguardando a sua vinda para darmos prosseguimento ao seu óculos e enviarmos para o laboratório. 👓\n\nAté amanhã! 🙏'
 };
-const TPL_LABEL={chegou:'Aviso: seu óculos chegou',cadastro:'Boas-vindas ao cadastrar',venda:'Resumo da venda',orcamento:'Orçamento (aguardando pagamento)',lembrete:'Lembrete de vencimento',atraso:'Parcela em atraso',recibo:'Recibo de pagamento',aniversario:'Feliz aniversário',revisao:'Revisão do grau (1 ano depois)',entrega:'Agradecimento pela compra (ao entregar)',orc_valor:'Orçamento: valor, 3 dias antes da data do pagamento',orc_lembrete:'Orçamento: lembrete, 1 dia antes da data do pagamento'};
+const TPL_LABEL={chegou:'Aviso: seu óculos chegou',cadastro:'Boas-vindas ao cadastrar',venda:'Resumo da venda',orcamento:'Orçamento (aguardando pagamento)',lembrete:'Lembrete de vencimento',atraso:'Parcela em atraso',recibo:'Recibo de pagamento',aniversario:'Feliz aniversário',revisao:'Revisão do grau (1 ano depois)',entrega:'Agradecimento pela compra (ao entregar)',orc_followup:'Orçamento: follow-up (botão Enviar follow-up)',orc_valor:'Orçamento: valor, 3 dias antes da data do pagamento',orc_lembrete:'Orçamento: lembrete, 1 dia antes da data do pagamento'};
 const S={clientes:{},vendas:{},lentes:{},config:{}};
 const ui={tab:'painel',month:todayStr().slice(0,7),sel:todayStr(),vFilter:'todas',vPer:'todas',vQuery:'',cQuery:'',cFilter:'todos',lQuery:'',lTipo:'',cx:'hoje',cxFrom:'',cxTo:'',sheet:null,draft:null,cdraft:null,confirm:''};
 let ready=false,loadFail=false,syncState='load';
@@ -2253,6 +2255,12 @@ function pgDataChip(v){
   const d=diffDays(v.pagarEm,todayStr());const q=d<0?['bad','A data combinada passou ('+fmtDate(v.pagarEm).slice(0,5)+')']:d===0?['warn','Paga hoje']:d===1?['warn','Paga amanhã ('+fmtDate(v.pagarEm).slice(0,5)+')']:['','Paga em '+fmtDate(v.pagarEm).slice(0,5)+' · faltam '+d+' dias'];
   return '<div style="margin-top:4px"><span class="chip '+q[0]+'">'+q[1]+'</span></div>';
 }
+function orcFuBtn(v,c){
+  if(!c||!c.whatsapp)return '';
+  if(!v.fuOrcEm)return '<button class="btn sm wa" data-act="orcfu" data-v="'+v.id+'">Enviar follow-up</button>';
+  const again=ui.confirm==='fu'+v.id;
+  return '<button class="btn sm fu-feito'+(again?' armed':'')+'" data-act="orcfu" data-v="'+v.id+'" title="Toque duas vezes para enviar de novo">'+(again?'Toque de novo para reenviar':'Follow-up enviado em '+fmtDate(v.fuOrcEm).slice(0,5))+'</button>';
+}
 function aguardList(){
   const list=orcamentos();
   if(!list.length)return '<div class="empty">'+GLASSES+'<h3>Nenhum orçamento aguardando</h3><p>Na Nova venda, marque "Aguardando pagamento" para guardar um orçamento sem contar como venda.</p></div>';
@@ -2261,7 +2269,7 @@ function aguardList(){
     const href=c.whatsapp?esc(waLink(c.whatsapp,fillTpl(tpl('orcamento'),ctx(v,null,c)))):'';
     const ent=v.parcelas.find(p=>p.tipo==='entrada');const par=v.parcelas.filter(p=>p.tipo==='parcela');
     const plano=(ent?'entrada '+brl(ent.valor):'sem entrada')+(par.length?' + '+par.length+'x de '+brl(par[0].valor):'');
-    return '<article class="row"><div class="row-main"><button class="link" data-act="openvenda" data-v="'+v.id+'">'+esc(c.nome)+demoTag(v)+'</button><div class="meta">'+esc(itensTxt(v))+' · '+fmtDate(v.data)+' · '+plano+'</div>'+pgDataChip(v)+'</div><div class="row-side"><div class="amt">'+brl(v.total)+'</div><div class="acts">'+(href?'<a class="btn sm wa" target="_blank" rel="noopener" href="'+href+'">Orçamento</a>':'')+'<button class="btn sm" data-act="editvenda" data-v="'+v.id+'">Editar</button><button class="btn sm primary" data-act="pagarorc" data-v="'+v.id+'">Marcar como pago</button></div></div></article>';
+    return '<article class="row"><div class="row-main"><button class="link" data-act="openvenda" data-v="'+v.id+'">'+esc(c.nome)+demoTag(v)+'</button><div class="meta">'+esc(itensTxt(v))+' · '+fmtDate(v.data)+' · '+plano+'</div>'+pgDataChip(v)+'</div><div class="row-side"><div class="amt">'+brl(v.total)+'</div><div class="acts">'+orcFuBtn(v,c)+(href?'<a class="btn sm" target="_blank" rel="noopener" href="'+href+'">Orçamento</a>':'')+'<button class="btn sm" data-act="editvenda" data-v="'+v.id+'">Editar</button><button class="btn sm primary" data-act="pagarorc" data-v="'+v.id+'">Marcar como pago</button></div></div></article>';
   }).join('')+'</div>';
 }
 function viewAguard(){
@@ -3262,6 +3270,14 @@ const A={
   openvenda(d){ui.confirm='';ui.sheet={kind:'venda',id:d.v};renderSheet()},
   closesheet(){closeSheet()},
   novavenda(d){openNova(d.c);if(d.orc&&ui.draft){ui.draft.aguardando=true;renderSheet()}},
+  orcfu(d){
+    const v=S.vendas[d.v];if(!v)return;const c=S.clientes[v.clienteId];if(!c||!c.whatsapp)return toast('Cliente sem WhatsApp');
+    if(v.fuOrcEm&&ui.confirm!=='fu'+v.id){ui.confirm='fu'+v.id;render();return}
+    ui.confirm='';const txt=fillTpl(tpl('orc_followup'),ctx(v,null,c));
+    if(typeof waOn==='function'&&waOn())waEnq('orc_followup',c,txt,'orcfu:'+v.id+':'+Date.now());
+    else window.open(waLink(c.whatsapp,txt),'_blank','noopener');
+    v.fuOrcEm=todayStr();persist('vendas',v.id);premLog('Follow-up do orçamento enviado',(c.nome||'')+' · '+brl(v.total));render();
+  },
   pgdata(d){if(!ui.draft)return;ui.draft.pagarEm=addDays(todayStr(),+d.d||0);const i=$('[data-bind="pagarEm"]');if(i)i.value=ui.draft.pagarEm;document.querySelectorAll('.pgchips .chip').forEach(b=>b.classList.toggle('on',b.dataset.d===String(d.d)));updateVenda()},
   pagarorc(d,b){const v=S.vendas[d.v];if(!v||!v.aguardando)return;const ent=v.parcelas.find(p=>p.tipo==='entrada');
     if(!ent){A.confirmpag(d,b);return}
@@ -3827,7 +3843,7 @@ function premFuPesq(){
 Object.assign(A,{fupesq(){ui.cs='pesq';ui.tab='campanhas';render()}});
 /* ----- WhatsApp automático (conector no computador da loja) ----- */
 const WA_TIPOS=[['boasvindas','Boas-vindas ao cadastrar o cliente'],['venda','Resumo da venda (valor e parcelas)'],['orcamento','Orçamento ao salvar'],['orc_valor','Orçamento: valor 3 dias antes da data do pagamento'],['orc_lembrete','Orçamento: lembrete 1 dia antes da data do pagamento'],['trafego','Tráfego Orgânico: oferta para empresas da região'],['recibo','Recibo quando a parcela é recebida'],['chegou','Aviso: seu óculos chegou'],['agradecimento','Agradecimento ao entregar'],['lembrete','Lembrete na véspera do vencimento'],['atraso','Parcela em atraso (1, 7 e 15 dias)'],['aniversario','Feliz aniversário'],['revisao','Revisão do grau (11 meses)'],['exame_conf','Exame de vista: confirmação ao agendar'],['exame_lembrete','Exame de vista: lembrete 24h depois de agendar'],['exame_dia','Exame de vista: no dia, 3 horas antes'],['followup','Meus follow-ups (botão WhatsApp)'],['avaliacao','Pedido de avaliação do cliente']];
-const WA_NOME={exame_conf:'Exame de vista: confirmação',exame_lembrete:'Exame de vista: lembrete',exame_dia:'Exame de vista: no dia (3h antes)',exame_resp:'Exame de vista: resposta',exame_faltou:'Exame de vista: faltou',exame_equipe:'Aviso de novo exame para a equipe',manual:'Mensagem da conversa'};WA_TIPOS.forEach(x=>WA_NOME[x[0]]=x[1]);
+const WA_NOME={exame_conf:'Exame de vista: confirmação',exame_lembrete:'Exame de vista: lembrete',exame_dia:'Exame de vista: no dia (3h antes)',exame_resp:'Exame de vista: resposta',exame_faltou:'Exame de vista: faltou',exame_equipe:'Aviso de novo exame para a equipe',orc_followup:'Orçamento: follow-up',manual:'Mensagem da conversa'};WA_TIPOS.forEach(x=>WA_NOME[x[0]]=x[1]);
 const WA_ST={aprovar:['warn','Espera sua aprovação'],aguardando:['acc','Na fila'],enviando:['acc','Enviando'],enviada:['ok','Enviada'],falhou:['bad','Falhou'],cancelada:['','Cancelada'],expirada:['','Venceu o prazo']};
 const waDoc=()=>{if(!S.config.wa)S.config.wa={id:'wa',on:false,pausa:false,ini:'08:00',fim:'18:30',limite:30,modo:{}};if(!S.config.wa.modo)S.config.wa.modo={};return S.config.wa};
 const waOn=()=>modOn('wa')&&!!waDoc().on;
@@ -3875,7 +3891,7 @@ function waEstado(){
 }
 /* ----- fila do WhatsApp automático: separada por assunto, com para quem vai, quando sai e a mensagem ----- */
 const WA_CAT=[
-  ['vendas','Vendas e recibos',['venda','orcamento','orc_valor','orc_lembrete','recibo']],
+  ['vendas','Vendas e recibos',['venda','orcamento','orc_followup','orc_valor','orc_lembrete','recibo']],
   ['exame','Exame de vista',['exame_conf','exame_lembrete','exame_dia','exame_resp','exame_faltou']],
   ['equipe','Avisos para a equipe',['exame_equipe']],
   ['boasvindas','Boas-vindas',['boasvindas']],
