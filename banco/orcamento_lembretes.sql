@@ -18,6 +18,8 @@ begin
   t := wa_tel(tel);
   if t is null then return 'sem_telefone'; end if;
   if exists (select 1 from wa_optout where otica_id=o and telefone=t) then return 'optout'; end if;
+  -- boas-vindas: um número só recebe uma (clientes da mesma família com o mesmo WhatsApp)
+  if tp='boasvindas' and exists (select 1 from wa_fila where otica_id=o and tipo='boasvindas' and telefone=t and status <> 'cancelada') then return 'dup_tel'; end if;
   st := case when modo='auto' and not coalesce(forcar,false) then 'aguardando' else 'aprovar' end;
   insert into wa_fila(otica_id,cliente_id,cliente_nome,tipo,telefone,texto,ref,status,enviar_apos,expira_em)
   values (o,cid,nome,tp,t,wa_rodape(txt),rf,st,coalesce(apos,now()),expira)
