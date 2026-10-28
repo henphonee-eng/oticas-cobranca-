@@ -1452,10 +1452,12 @@ function calcVenda(itens,jurosVenda,entrada,jurosParc){
   const total=t0+jp;
   return {linhas:linhas,base:base,sub:sub,jv:jv,jp:jp,total:total,entrada:ent,saldo:total-ent,juros:total-base};
 }
-function splitParcelas(saldo,n,primeira){
+/* parcelas por mês (padrão) ou por semana (mesmo dia da semana da 1ª) */
+const passoParc=(s,k,fq)=>fq==='semana'?addDays(s,7*k):addMonths(s,k);
+function splitParcelas(saldo,n,primeira,freq){
   const out=[];if(!(saldo>0)||!(n>=1))return out;
   const b=Math.floor(saldo/n);const rest=saldo-b*n;
-  for(let i=0;i<n;i++)out.push({n:i+1,tipo:'parcela',venc:addMonths(primeira,i),valor:b+(i===n-1?rest:0),pago:false,pagoEm:null,contatoEm:null,forma:null});
+  for(let i=0;i<n;i++)out.push({n:i+1,tipo:'parcela',venc:passoParc(primeira,i,freq),valor:b+(i===n-1?rest:0),pago:false,pagoEm:null,contatoEm:null,forma:null});
   return out;
 }
 function pStatus(p,t){t=t||todayStr();if(p.pago)return 'pago';if(p.venc<t)return 'atraso';if(p.venc===t)return 'hoje';return 'aberto'}
@@ -1704,9 +1706,9 @@ function makeVenda(clienteId,d){
   const c=calcVenda(d.itens,d.jurosVenda,d.entrada,d.jurosParc);
   const parcelas=[];
   if(c.entrada>0)parcelas.push({n:0,tipo:'entrada',venc:d.data,valor:c.entrada,pago:true,pagoEm:d.data,contatoEm:null,forma:d.formaEntrada||'Pix'});
-  splitParcelas(c.saldo,d.n,d.primeira).forEach(p=>parcelas.push(p));
+  splitParcelas(c.saldo,d.n,d.primeira,d.freq).forEach(p=>parcelas.push(p));
   return {id:uid(),clienteId:clienteId,data:d.data,itens:d.itens.map(it=>({tipo:it.tipo,nome:it.nome,qtd:it.qtd,valor:it.valor,juros:it.juros,lenteId:it.lenteId||''})),
-    jurosVenda:d.jurosVenda||0,jurosParc:d.jurosParc||0,base:c.base,juros:c.juros,total:c.total,entrada:c.entrada,saldo:c.saldo,n:parcelas.filter(p=>p.tipo==='parcela').length,forma:d.forma,obs:String(d.obs||'').trim(),parcelas:parcelas,criadoEm:Date.now(),...(d.forma==='Cartão de crédito'?{cartaoN:Math.max(1,Math.min(24,parseInt(d.cartaoN,10)||1)),cartaoParc:d.cartaoParc||0}:{})};
+    jurosVenda:d.jurosVenda||0,jurosParc:d.jurosParc||0,base:c.base,juros:c.juros,total:c.total,entrada:c.entrada,saldo:c.saldo,n:parcelas.filter(p=>p.tipo==='parcela').length,forma:d.forma,obs:String(d.obs||'').trim(),parcelas:parcelas,criadoEm:Date.now(),...(d.freq==='semana'&&parcelas.some(p=>p.tipo==='parcela')?{freq:'semana'}:{}),...(d.forma==='Cartão de crédito'?{cartaoN:Math.max(1,Math.min(24,parseInt(d.cartaoN,10)||1)),cartaoParc:d.cartaoParc||0}:{})};
 }
 const vendasOk=()=>Object.values(S.vendas).filter(v=>!v.aguardando);
 const orcamentos=()=>Object.values(S.vendas).filter(v=>v.aguardando).sort((a,b)=>(b.criadoEm||0)-(a.criadoEm||0));
@@ -2762,12 +2764,12 @@ const newItem=tipo=>({tipo:tipo,nome:'',qtd:'1',valor:'',juros:'',lenteId:''});
 const cliFalta=c=>{const f=[];if(digits(c.whatsapp||'').length<10)f.push('WhatsApp');if(digits(c.cpf||'').length<11)f.push('CPF');if(!String(c.endereco||'').trim())f.push('endereço');if(!String(c.nascimento||'').trim())f.push('data de nascimento');return f};
 const listaTxt=a=>a.length<2?a.join(''):a.slice(0,-1).join(', ')+' e '+a[a.length-1];
 const avisoFalta=c=>{const f=cliFalta(c);return f.length?'Falta preencher: '+listaTxt(f)+'. Você pode salvar assim e completar depois.':''};
-function newDraft(cid){return {editId:'',clienteId:cid||(Object.keys(S.clientes).length?'':'__novo'),novo:{nome:'',cpf:'',whatsapp:'',endereco:'',nascimento:'',receitas:[blankReceita()]},vendedorId:'',entrega:'',itens:[newItem('produto')],jurosVenda:'',jurosParc:'',entrada:'',formaEntrada:'Pix',n:'3',primeira:addMonths(todayStr(),1),forma:'Pix',cartaoN:'1',cartaoParc:'',data:todayStr(),obs:'',aguardando:false,pagarEm:''}}
+function newDraft(cid){return {editId:'',clienteId:cid||(Object.keys(S.clientes).length?'':'__novo'),novo:{nome:'',cpf:'',whatsapp:'',endereco:'',nascimento:'',receitas:[blankReceita()]},vendedorId:'',entrega:'',itens:[newItem('produto')],jurosVenda:'',jurosParc:'',entrada:'',formaEntrada:'Pix',n:'3',primeira:addMonths(todayStr(),1),freq:'mes',forma:'Pix',cartaoN:'1',cartaoParc:'',data:todayStr(),obs:'',aguardando:false,pagarEm:''}}
 function editDraft(v){
   const par=v.parcelas.filter(p=>p.tipo==='parcela'&&p.parte!==2);const pct=x=>x?String(x).replace('.',','):'';const ent=v.parcelas.find(p=>p.tipo==='entrada');
   return {editId:v.id,clienteId:v.clienteId,novo:{nome:'',cpf:'',whatsapp:'',endereco:''},
     itens:v.itens.map(i=>({tipo:i.tipo,nome:i.nome,qtd:String(i.qtd),valor:centsToStr(i.valor),juros:pct(i.juros),lenteId:i.lenteId||''})),
-    jurosVenda:pct(v.jurosVenda),jurosParc:pct(v.jurosParc),entrada:v.entrada?centsToStr(v.entrada):'',formaEntrada:(ent&&ent.forma)||'Pix',n:String(par.length),primeira:par.length?par[0].venc:addMonths(todayStr(),1),forma:v.forma,legPix:v.forma==='Pix'&&par.length>0,cartaoN:String(v.cartaoN||1),cartaoParc:v.cartaoParc?centsToStr(v.cartaoParc):'',data:v.data,obs:v.obs||'',aguardando:!!v.aguardando,pagarEm:v.pagarEm||'',vendedorId:v.vendedorId||'',entrega:v.entregaPrev||''};
+    jurosVenda:pct(v.jurosVenda),jurosParc:pct(v.jurosParc),entrada:v.entrada?centsToStr(v.entrada):'',formaEntrada:(ent&&ent.forma)||'Pix',n:String(par.length),primeira:par.length?par[0].venc:addMonths(todayStr(),1),freq:v.freq==='semana'?'semana':'mes',forma:v.forma,legPix:v.forma==='Pix'&&par.length>0,cartaoN:String(v.cartaoN||1),cartaoParc:v.cartaoParc?centsToStr(v.cartaoParc):'',data:v.data,obs:v.obs||'',aguardando:!!v.aguardando,pagarEm:v.pagarEm||'',vendedorId:v.vendedorId||'',entrega:v.entregaPrev||''};
 }
 function pgDataField(D){
   const op=[[1,'Amanhã'],[3,'Em 3 dias'],[7,'Em 1 semana'],[15,'Em 15 dias'],[30,'Em 30 dias']];
@@ -2790,7 +2792,8 @@ function sheetNova(){
   '<div data-pgcart'+(D.forma==='Cartão de crédito'?'':' hidden')+'><div class="grid2"><div class="field"><span>Em quantas vezes</span><select data-bind="cartaoN">'+Array.from({length:18},(_,i)=>i+1).map(k=>'<option value="'+k+'"'+(String(D.cartaoN||'1')===String(k)?' selected':'')+'>'+(k===1?'1x (à vista)':k+'x')+'</option>').join('')+'</select></div><div class="field"><span>Valor de cada parcela (R$), opcional</span><input type="text" inputmode="decimal" data-bind="cartaoParc" value="'+esc(D.cartaoParc||'')+'" placeholder="0,00"></div></div><p class="sub" style="margin:0 0 10px">O valor total entra como recebido na data da venda e o cliente não fica com parcelas para cobrar. Anote aqui quanto ficou cada parcela na maquininha, já com os juros dela. É só anotação, não muda o total da venda.</p></div>'+
   '<div class="grid2"><div class="field"><span>Data da venda</span><input type="date" data-bind="data" value="'+esc(D.data)+'"></div><div class="field"><span>Data de entrega (opcional)</span><input type="date" data-bind="entrega" value="'+esc(D.entrega||'')+'"></div></div>'+
   '<div class="grid2" data-pgparc'+(isAvista(D)?' hidden':'')+'><div class="field"><span>Entrada (R$)</span><input type="text" inputmode="decimal" data-bind="entrada" value="'+esc(D.entrada)+'" placeholder="0,00"></div><div class="field"><span>Entrada paga em</span><select data-bind="formaEntrada">'+FORMAS.map(f=>'<option'+(D.formaEntrada===f?' selected':'')+'>'+f+'</option>').join('')+'</select></div></div>'+
-  '<div class="grid2" data-pgparc'+(isAvista(D)?' hidden':'')+'><div class="field"><span>Parcelas</span><input type="number" min="0" max="36" inputmode="numeric" data-bind="n" value="'+esc(D.n)+'"></div><div class="field"><span>Vencimento da 1ª parcela</span><input type="date" data-bind="primeira" value="'+esc(D.primeira)+'"></div></div>'+
+  '<div class="field" data-pgparc'+(isAvista(D)?' hidden':'')+'><span>Parcelas</span><div class="seg" role="radiogroup" aria-label="Parcelas por mês ou por semana"><label><input type="radio" name="freq" value="mes" data-bind="freq"'+(D.freq!=='semana'?' checked':'')+'><span>Por mês</span></label><label><input type="radio" name="freq" value="semana" data-bind="freq"'+(D.freq==='semana'?' checked':'')+'><span>Por semana</span></label></div><span class="hint" data-freqhint>'+(D.freq==='semana'?'Uma parcela a cada 7 dias, sempre no mesmo dia da semana da 1ª.':'Uma parcela por mês, sempre no mesmo dia da 1ª.')+'</span></div>'+
+  '<div class="grid2" data-pgparc'+(isAvista(D)?' hidden':'')+'><div class="field"><span>Quantidade de parcelas</span><input type="number" min="0" max="36" inputmode="numeric" data-bind="n" value="'+esc(D.n)+'"></div><div class="field"><span>Vencimento da 1ª parcela</span><input type="date" data-bind="primeira" value="'+esc(D.primeira)+'"></div></div>'+
   '<div class="field" data-pgparc'+(isAvista(D)?' hidden':'')+'><span>Juros nas parcelas (%), opcional</span><input type="text" inputmode="decimal" data-bind="jurosParc" value="'+esc(D.jurosParc||'')+'" placeholder="0"><span class="hint">Aplicado só sobre o valor que fica parcelado, depois da entrada.</span></div>'+
   '<div class="field"><span>Observações (opcional)</span><textarea data-bind="obs" placeholder="Receita, prazo de entrega, combinados com o cliente">'+esc(D.obs)+'</textarea></div></div>'+
   '<div class="sec"><h3>Resumo</h3><div id="sum" class="sum"></div></div>';
@@ -2830,7 +2833,7 @@ function draftState(){
   else if(orcAg&&D.pagarEm<todayStr()&&!(D.editId&&S.vendas[D.editId]&&S.vendas[D.editId].pagarEm===D.pagarEm))E('A data do pagamento já passou','[data-bind="pagarEm"]');
   if(c.saldo>0&&n<1)errs.push('Informe o número de parcelas');
   if(c.saldo>0&&!/^\d{4}-\d{2}-\d{2}$/.test(D.primeira))errs.push('Informe o vencimento da 1ª parcela');
-  return {errs:errs,targets:targets,itens:itens,c:c,n:n,av:av,jv:jv,jp:jp,entrada:entradaIn,parc:splitParcelas(c.saldo,n,D.primeira)};
+  return {errs:errs,targets:targets,itens:itens,c:c,n:n,av:av,jv:jv,jp:jp,entrada:entradaIn,parc:splitParcelas(c.saldo,n,D.primeira,D.freq)};
 }
 function updateVenda(){
   if(!ui.draft||!$('#sum'))return;const st=draftState();const c=st.c;
@@ -2842,7 +2845,7 @@ function updateVenda(){
   if(st.av&&ui.draft.forma==='Cartão de crédito'){const nn=parseInt(ui.draft.cartaoN,10)||1,pc=parseMoney(ui.draft.cartaoParc||'');h+='<div class="sum-row hl"><span>Cartão de crédito em '+nn+'x</span><span>'+(pc?nn+'x de '+brl(pc):brl(c.total))+'</span></div>';if(pc&&nn*pc!==c.total)h+='<div class="meta">Na maquininha o cliente paga '+brl(nn*pc)+' no total. Na venda fica '+brl(c.total)+'.</div>'}
   else if(st.av)h+='<div class="sum-row hl"><span>À vista no Pix</span><span>'+brl(c.total)+'</span></div>';
   else{h+='<div class="sum-row"><span>Entrada</span><span>'+brl(c.entrada)+'</span></div>';
-  h+='<div class="sum-row hl"><span>Saldo parcelado</span><span>'+(st.parc.length?st.parc.length+'x de '+brl(st.parc[0].valor):brl(c.saldo))+'</span></div>';
+  h+='<div class="sum-row hl"><span>Saldo parcelado'+(st.parc.length?(ui.draft.freq==='semana'?' (por semana)':' (por mês)'):'')+'</span><span>'+(st.parc.length?st.parc.length+'x de '+brl(st.parc[0].valor):brl(c.saldo))+'</span></div>';
   if(st.parc.length){h+='<div class="meta">Vencimentos: '+st.parc.slice(0,4).map(p=>fmtShort(p.venc)).join(', ')+(st.parc.length>4?' ... '+fmtDate(st.parc[st.parc.length-1].venc):'')+'</div>';if(st.parc[st.parc.length-1].valor!==st.parc[0].valor)h+='<div class="meta">A última parcela leva a diferença dos centavos: '+brl(st.parc[st.parc.length-1].valor)+'</div>'}}
   $('#sum').innerHTML=h;
   const na=$('#novo-aviso');if(na){const tx=(ui.draft.clienteId==='__novo'&&ui.draft.novo.nome.trim())?avisoFalta(ui.draft.novo):'';na.textContent=tx;na.hidden=!tx}
@@ -2854,12 +2857,12 @@ function salvarVenda(){
   if(!ui.draft)return;const st=draftState();if(st.errs.length){toast(st.errs[0]);return}
   const D=ui.draft;let cid=D.clienteId;
   if(cid==='__novo'){const cl=makeCliente(D.novo);cid=cl.id;S.clientes[cid]=cl;persist('clientes',cid);premWaHook('bv',null,null,cl)}
-  const v=makeVenda(cid,{itens:st.itens,jurosVenda:st.jv,jurosParc:st.jp,entrada:st.entrada,formaEntrada:st.av?(D.forma==='Cartão de crédito'?'Cartão de crédito':'Pix'):D.formaEntrada,n:st.n,primeira:D.primeira,forma:D.forma,data:D.data,obs:D.obs,cartaoN:D.cartaoN,cartaoParc:parseMoney(D.cartaoParc||'')});
+  const v=makeVenda(cid,{itens:st.itens,jurosVenda:st.jv,jurosParc:st.jp,entrada:st.entrada,formaEntrada:st.av?(D.forma==='Cartão de crédito'?'Cartão de crédito':'Pix'):D.formaEntrada,n:st.n,primeira:D.primeira,freq:D.freq,forma:D.forma,data:D.data,obs:D.obs,cartaoN:D.cartaoN,cartaoParc:parseMoney(D.cartaoParc||'')});
   const old=D.editId?S.vendas[D.editId]:null;
   if(D.aguardando&&(!old||old.aguardando)){v.aguardando=true;if(D.pagarEm)v.pagarEm=D.pagarEm;v.parcelas.forEach(p=>{if(p.tipo==='entrada'){p.pago=false;p.pagoEm=null;p.forma=null}})}
   if(old){
     const oe=old.parcelas.filter(p=>p.tipo==='entrada');const op0=old.parcelas.find(p=>p.tipo==='parcela');
-    if(!old.aguardando&&old.parcelas.some(p=>p.parte&&p.tipo==='parcela')&&v.total===old.total&&v.entrada===old.entrada&&v.n===old.n&&D.primeira===(op0&&op0.venc)){v.parcelas=JSON.parse(JSON.stringify(old.parcelas))}
+    if(!old.aguardando&&old.parcelas.some(p=>p.parte&&p.tipo==='parcela')&&v.total===old.total&&v.entrada===old.entrada&&v.n===old.n&&(old.freq||'mes')===(v.freq||'mes')&&D.primeira===(op0&&op0.venc)){v.parcelas=JSON.parse(JSON.stringify(old.parcelas))}
     else if(!old.aguardando&&oe.length>1&&v.entrada===old.entrada)v.parcelas=oe.concat(v.parcelas.filter(p=>p.tipo!=='entrada'));
     v.id=old.id;v.criadoEm=old.criadoEm;if(old.exemplo)v.exemplo=true;if(old.por)v.por=old.por;
     if(!v.parcelas.some(p=>p.parte&&p.tipo==='parcela'))v.parcelas.forEach(p=>{if(p.tipo!=='parcela')return;const o=old.parcelas.find(q=>q.tipo==='parcela'&&q.n===p.n);if(o){p.contatoEm=o.contatoEm||null;if(o.pago){p.pago=true;p.pagoEm=o.pagoEm;p.forma=o.forma||null}}});
@@ -3437,7 +3440,7 @@ const A={
     Object.assign(ent,{parte:1,valor:val,pago:true,pagoEm:dt,venc:dt,forma:forma});
     v.parcelas.splice(i+1,0,{n:0,tipo:'entrada',parte:2,venc:venc,valor:resto,pago:false,pagoEm:null,contatoEm:null,forma:null});
     const par=v.parcelas.filter(p=>p.tipo==='parcela');
-    if(par.length&&par[0].venc<=venc){const f=addMonths(venc,1);par.forEach((p,k)=>{p.venc=addMonths(f,k)})}
+    if(par.length&&par[0].venc<=venc){const f=passoParc(venc,1,v.freq);par.forEach((p,k)=>{p.venc=passoParc(f,k,v.freq)})}
     premLog('Orçamento virou venda (pagamento parcial)',((S.clientes[v.clienteId]||{}).nome||'')+' · '+brl(val)+' de '+brl(ent.valor));
     persist('vendas',v.id);if(!v.exemplo)waResumo(v,true);ui.pg=null;ui.tab='vendas';ui.sheet={kind:'venda',id:v.id};render();renderSheet();
     toast('Recebido '+brl(val)+'. Restante de '+brl(resto)+' vence em '+fmtDate(venc)+'.')},
@@ -3447,7 +3450,7 @@ const A={
     v.aguardando=false;v.data=t;v.confirmadoEm=Date.now();
     v.parcelas.forEach(p=>{if(p.tipo==='entrada'){p.pago=true;p.pagoEm=t;p.venc=t;p.forma=p.forma||v.forma}});
     const par=v.parcelas.filter(p=>p.tipo==='parcela');
-    if(par.length&&par[0].venc<t){const f=addMonths(t,1);par.forEach((p,i)=>{p.venc=addMonths(f,i)})}
+    if(par.length&&par[0].venc<t){const f=passoParc(t,1,v.freq);par.forEach((p,i)=>{p.venc=passoParc(f,i,v.freq)})}
     premLog('Orçamento virou venda',((S.clientes[v.clienteId]||{}).nome||'')+' · '+brl(v.total));persist('vendas',v.id);if(!v.exemplo)waResumo(v,true);confeteDe(b);ui.tab='vendas';ui.sheet={kind:'venda',id:v.id};render();renderSheet();toast('Pagamento confirmado. O orçamento virou venda.')},
   editvenda(d){const v=S.vendas[d.v];if(!v)return;ui.confirm='';ui.draft=editDraft(v);ui.sheet={kind:'nova',id:v.id};renderSheet()},
   additem(d){ui.draft.itens.push(newItem(d.t));renderItems();updateVenda()},
@@ -5630,6 +5633,8 @@ function onField(e){
     setPath(ui.draft,t.dataset.bind,t.value);
     if(t.dataset.bind==='clienteId'){const nc=$('#novo-cli');if(nc)nc.hidden=ui.draft.clienteId!=='__novo'}
     if(t.dataset.bind==='forma')pgToggle();
+    if(t.dataset.bind==='freq'){const D=ui.draft,h=$('[data-freqhint]');if(h)h.textContent=D.freq==='semana'?'Uma parcela a cada 7 dias, sempre no mesmo dia da semana da 1ª.':'Uma parcela por mês, sempre no mesmo dia da 1ª.';
+      const a=addMonths(todayStr(),1),b=addDays(todayStr(),7),pi=$('[data-bind="primeira"]');if(!D.editId&&(D.primeira===a||D.primeira===b)){D.primeira=D.freq==='semana'?b:a;if(pi)pi.value=D.primeira}}
     updateVenda();
   }
   if(t.dataset.aguard!==undefined&&ui.draft){ui.draft.aguardando=t.checked;const pg=$('[data-pgdata]');if(pg)pg.hidden=!t.checked;updateVenda()}
