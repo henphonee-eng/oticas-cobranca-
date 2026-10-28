@@ -89,3 +89,17 @@ do $$ declare d text; a text := '''venda'',''orcamento'')'; begin
     execute replace(d, a, '''venda'',''orcamento'',''orc_followup'')');
   end if;
 end $$;
+
+-- Primeiro nome nas mensagens: nome cadastrado em maiúsculas (LUCIANO) sai como Luciano.
+create or replace function public.wa_pnome(n text) returns text language sql immutable set search_path to 'public' as $$
+  select case when length(w) > 1 and w = upper(w) and w <> lower(w) then upper(left(w,1)) || lower(substr(w,2)) else w end
+  from (select split_part(trim(coalesce(n,'')),' ',1) as w) x
+$$;
+do $$ declare f text; d text; begin
+  foreach f in array array['public.wa_gerar_fila()','public.wa_orcamentos(uuid,text,date)'] loop
+    d := pg_get_functiondef(f::regprocedure);
+    d := replace(d, 'split_part(trim(cli->>''nome''),'' '',1)', 'wa_pnome(cli->>''nome'')');
+    d := replace(d, 'split_part(trim(c.data->>''nome''),'' '',1)', 'wa_pnome(c.data->>''nome'')');
+    execute d;
+  end loop;
+end $$;
