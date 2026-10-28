@@ -233,6 +233,7 @@ textarea{padding:10px 12px;min-height:96px;line-height:1.4;resize:vertical}
 .aguard-box input{width:20px;height:20px;margin-top:2px;flex:none;accent-color:var(--accent,#3D8BFD)}
 .btn.fu-feito{opacity:.62;font-weight:500}.btn.fu-feito.armed{opacity:1;border-color:var(--wa);color:inherit}
 .pgdata{margin:-2px 0 14px}.pgchips{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}.pgchips .chip{cursor:pointer;font:inherit;font-size:13px;min-height:34px;padding:0 12px;border:1px solid var(--line);background:var(--surface-2);color:inherit}.pgchips .chip.on{background:var(--accent,#3D8BFD);border-color:var(--accent,#3D8BFD);color:#fff}.pgdata small{display:block;margin-top:6px;line-height:1.4}
+.cli-antigo{flex-direction:row!important;align-items:flex-start;gap:12px;padding:12px 14px;margin-bottom:12px;border:1px solid color-mix(in srgb,var(--accent) 30%,var(--line));border-radius:12px;background:color-mix(in srgb,var(--accent) 5%,var(--surface));cursor:pointer}.cli-antigo input{width:20px;height:20px;margin-top:2px;flex:none;accent-color:var(--accent,#3D8BFD)}.cli-antigo b{display:block}.cli-antigo small{display:block;color:var(--muted);font-size:12.5px;line-height:1.4;margin-top:2px}
 .aguard-box b{display:block}.aguard-box small{display:block;color:var(--muted);font-size:12.5px;line-height:1.4;margin-top:2px}
 .lk{display:inline-flex;align-items:center;margin-left:6px;opacity:.75;vertical-align:middle}
 .pl{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
@@ -1467,6 +1468,7 @@ const FORMAS=['Pix','Dinheiro','Cartão de débito','Cartão de crédito','Bolet
 const TIPOS=['Visão simples','Bifocal','Multifocal','Ocupacional','Fotossensível','Solar','Outra'];
 const DEFAULT_TPL={
   cadastro:'Olá, {cliente}! 👋 Aqui é da {otica}.\n\nSeu cadastro foi feito com sucesso! ✅ Qualquer dúvida, é só chamar por aqui. 😊',
+  cadastro_antigo:'Olá, {cliente}! 👋 Aqui é da {otica}.\n\nQue alegria ter você com a gente de novo! 😊 Atualizamos o seu cadastro no nosso sistema e, a partir de agora, você recebe por aqui os avisos do seu óculos, lembretes e as novidades da loja.\n\nObrigado por continuar confiando na {otica}! 💙 Qualquer dúvida ou ajuste nos seus óculos, é só chamar.',
   venda:'Olá, {cliente}! 😊 Obrigado pela compra na {otica}! 🕶️\n\n💰 Total: {total}\n💵 Entrada: {entrada}\n\n📅 Parcelas:\n{resumo}\n\n{pagamento}',
   lembrete:'Olá, {cliente}! 👋 Passando para lembrar que a parcela {parcela}, de {valor}, vence em {vencimento}. 🗓️\n\n{pagamento}\n\nObrigado! 🙏',
   recibo:'Olá, {cliente}! ✅ Recebemos o pagamento da parcela {parcela}, no valor de {recebido}, em {datapago}.\n\nObrigado pela confiança! 🙏\n{otica}',
@@ -1480,7 +1482,7 @@ const DEFAULT_TPL={
   orc_followup:'Olá, {cliente}! 👋 Aqui é da {otica}.\n\nPassando para lembrar do seu orçamento: 📝\n\n{itens}\n\n{valores}\n\nEstamos aguardando você para darmos prosseguimento e enviarmos o seu óculos para o laboratório. 👓 Quer combinar um dia para vir? É só responder por aqui! 😊',
   orc_lembrete:'Olá, {cliente}! 😊 Aqui é da {otica}.\n\nSó passando para lembrar que amanhã ({data_pagamento}) estamos aguardando a sua vinda para darmos prosseguimento ao seu óculos e enviarmos para o laboratório. 👓\n\nAté amanhã! 🙏'
 };
-const TPL_LABEL={chegou:'Aviso: seu óculos chegou',cadastro:'Boas-vindas ao cadastrar',venda:'Resumo da venda',orcamento:'Orçamento (aguardando pagamento)',lembrete:'Lembrete de vencimento',atraso:'Parcela em atraso',recibo:'Recibo de pagamento',aniversario:'Feliz aniversário',revisao:'Revisão do grau (1 ano depois)',entrega:'Agradecimento pela compra (ao entregar)',orc_followup:'Orçamento: follow-up (botão Enviar follow-up)',orc_valor:'Orçamento: valor, 3 dias antes da data do pagamento',orc_lembrete:'Orçamento: lembrete, 1 dia antes da data do pagamento'};
+const TPL_LABEL={chegou:'Aviso: seu óculos chegou',cadastro:'Boas-vindas ao cadastrar',cadastro_antigo:'Boas-vindas para quem já era cliente da ótica',venda:'Resumo da venda',orcamento:'Orçamento (aguardando pagamento)',lembrete:'Lembrete de vencimento',atraso:'Parcela em atraso',recibo:'Recibo de pagamento',aniversario:'Feliz aniversário',revisao:'Revisão do grau (1 ano depois)',entrega:'Agradecimento pela compra (ao entregar)',orc_followup:'Orçamento: follow-up (botão Enviar follow-up)',orc_valor:'Orçamento: valor, 3 dias antes da data do pagamento',orc_lembrete:'Orçamento: lembrete, 1 dia antes da data do pagamento'};
 const S={clientes:{},vendas:{},lentes:{},config:{}};
 const ui={tab:'painel',month:todayStr().slice(0,7),sel:todayStr(),vFilter:'todas',vPer:'todas',vQuery:'',cQuery:'',cFilter:'todos',lQuery:'',lTipo:'',cx:'hoje',cxFrom:'',cxTo:'',sheet:null,draft:null,cdraft:null,confirm:''};
 let ready=false,loadFail=false,syncState='load';
@@ -1690,7 +1692,8 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)garanteSes
 setInterval(()=>{if(auth!=='ok')return;const m=+cfg().autolock;if(m>0&&Date.now()-last>m*60000)logout('Sessão encerrada por inatividade.')},20000);
 
 /* ---------- modelo ---------- */
-function makeCliente(o){const c={receitas:(o.receitas||[]).filter(r=>!receitaVazia(r)),id:uid(),nome:String(o.nome||'').trim(),cpf:maskCpf(o.cpf),whatsapp:maskTel(o.whatsapp),endereco:String(o.endereco||'').trim(),vendedorId:o.vendedorId||'',nascimento:o.nascimento||'',obs:String(o.obs||'').trim(),criadoEm:Date.now(),bvEm:null};
+const bvTpl=c=>tpl(c&&c.antigo?'cadastro_antigo':'cadastro');
+function makeCliente(o){const c={receitas:(o.receitas||[]).filter(r=>!receitaVazia(r)),id:uid(),nome:String(o.nome||'').trim(),cpf:maskCpf(o.cpf),whatsapp:maskTel(o.whatsapp),endereco:String(o.endereco||'').trim(),vendedorId:o.vendedorId||'',nascimento:o.nascimento||'',obs:String(o.obs||'').trim(),criadoEm:Date.now(),bvEm:null};if(o.antigo)c.antigo=true;
   if(o.crianca&&String(o.filho||'').trim()){c.crianca=true;c.filho=String(o.filho).trim();c.filhoNasc=o.filhoNasc||''}premCliOrigem(c);return c}
 /* cliente criança: o cadastro fica no nome do responsável (quem paga e recebe as mensagens) e guarda o nome da criança, que é quem usa os óculos */
 const ehCrianca=c=>!!(c&&c.crianca&&String(c.filho||'').trim());
@@ -2909,7 +2912,7 @@ function sheetCliente(id){
   const r=editing?clienteResumo(S.clientes[id]):null;
   const vs=editing?r.vs.slice().sort((a,b)=>b.data.localeCompare(a.data)):[];
   const kid=!!D.crianca;
-  const body='<div class="sec"><label class="field" style="flex-direction:row;align-items:center;gap:10px;cursor:pointer"><input type="checkbox" id="cli-crianca"'+(kid?' checked':'')+' style="width:20px;height:20px;flex:none"><span style="margin:0">Os óculos são para uma criança (o cadastro fica no nome do pai ou da mãe)</span></label>'+
+  const body='<div class="sec"><label class="field cli-antigo"><input type="checkbox" id="cli-antigo"'+(D.antigo?' checked':'')+'><span><b>Já é cliente da ótica</b><small>Já comprou antes, só não estava no sistema. A mensagem de boas-vindas vai ser de reencontro, não de cliente novo.</small></span></label><label class="field" style="flex-direction:row;align-items:center;gap:10px;cursor:pointer"><input type="checkbox" id="cli-crianca"'+(kid?' checked':'')+' style="width:20px;height:20px;flex:none"><span style="margin:0">Os óculos são para uma criança (o cadastro fica no nome do pai ou da mãe)</span></label>'+
   (kid?'<div class="grid2"><div class="field"><span>Nome da criança (quem vai usar os óculos)</span><input type="text" data-cbind="filho" value="'+esc(D.filho||'')+'" autocomplete="off"></div><div class="field"><span>Nascimento da criança (opcional)</span><input type="date" data-cbind="filhoNasc" value="'+esc(D.filhoNasc||'')+'"></div></div>':'')+
   '<div class="field"><span>'+(kid?'Nome completo do responsável (pai, mãe ou quem paga)':'Nome completo')+'</span><input type="text" data-cbind="nome" value="'+esc(D.nome)+'" autocomplete="off">'+(kid?'<span class="hint">CPF, WhatsApp, cobranças e mensagens ficam no nome do responsável.</span>':'')+'</div>'+
   '<div class="grid2"><div class="field"><span>CPF</span><input type="text" inputmode="numeric" data-mask="cpf" data-cbind="cpf" value="'+esc(D.cpf)+'" placeholder="000.000.000-00"><span class="hint"></span></div><div class="field"><span>WhatsApp com DDD</span><input type="text" inputmode="tel" data-mask="tel" data-cbind="whatsapp" value="'+esc(D.whatsapp)+'" placeholder="(81) 99999-9999"></div></div>'+
@@ -2956,7 +2959,7 @@ function sheetPagParc(s){
   const foot=par?'<button class="btn primary" data-act="parcialparc" data-v="'+v.id+'" data-p="'+s.i+'">Registrar pagamento parcial</button>':'<button class="btn primary" data-act="baixapc" data-v="'+v.id+'" data-p="'+s.i+'">Confirmar recebimento</button>';
   return sheetShell('Receber parcela',body,foot);
 }
-document.addEventListener('change',e=>{const t=e.target;if(!t||t.id!=='cli-crianca'||!ui.cdraft)return;ui.cdraft.crianca=t.checked;renderSheet();if(t.checked)setTimeout(()=>{const f=document.querySelector('[data-cbind="filho"]');if(f&&!f.value)f.focus()},50)});
+document.addEventListener('change',e=>{const t=e.target;if(t&&t.id==='cli-antigo'&&ui.cdraft){ui.cdraft.antigo=t.checked;return}if(!t||t.id!=='cli-crianca'||!ui.cdraft)return;ui.cdraft.crianca=t.checked;renderSheet();if(t.checked)setTimeout(()=>{const f=document.querySelector('[data-cbind="filho"]');if(f&&!f.value)f.focus()},50)});
 document.addEventListener('input',e=>{const t=e.target;if(!t||!t.dataset||!t.dataset.cbind||!ui.cdraft)return;const h=$('#cli-aviso');if(!h)return;
   const D2=Object.assign({},ui.cdraft);D2[t.dataset.cbind]=t.value;const tx=D2.nome&&String(D2.nome).trim()?avisoFalta(D2):'';h.textContent=tx;h.hidden=!tx});
 function sheetRecibo(s){
@@ -3455,8 +3458,8 @@ const A={
   delvenda(d){if(ui.confirm!==d.v){ui.confirm=d.v;renderSheet();return}const ag=S.vendas[d.v]&&S.vendas[d.v].aguardando;if(S.vendas[d.v])premLog(ag?'Orçamento excluído':'Venda excluída',((S.clientes[S.vendas[d.v].clienteId]||{}).nome||'')+' · '+brl(S.vendas[d.v].total));delete S.vendas[d.v];persist('vendas',d.v);ui.confirm='';closeSheet();refresh();toast(ag?'Orçamento excluído':'Venda excluída')},
   vfilter(d){ui.vFilter=d.f;render()},vper(d){ui.vPer=d.f;render()},cfilter(d){ui.cFilter=d.f;render()},cxper(d){ui.cx=d.f;render()},ltipo(d){ui.lTipo=d.f;render()},
   exportvendas(){exportVendas()},exportcaixa(){exportCaixa()},
-  novocliente(){ui.cdraft={nome:'',cpf:'',whatsapp:'',endereco:'',nascimento:'',obs:'',crianca:false,filho:'',filhoNasc:'',receitas:[blankReceita()]};ui.cacc={};ui.sheet={kind:'cliente',id:''};renderSheet()},
-  editcliente(d){const c=S.clientes[d.c];if(!c)return;ui.cdraft={nome:c.nome,cpf:c.cpf,whatsapp:c.whatsapp,endereco:c.endereco,nascimento:c.nascimento||'',vendedorId:c.vendedorId||'',obs:c.obs||'',crianca:!!c.crianca,filho:c.filho||'',filhoNasc:c.filhoNasc||'',receitas:JSON.parse(JSON.stringify(c.receitas||[]))};ui.confirm='';ui.cacc={};ui.sheet={kind:'cliente',id:c.id};renderSheet()},
+  novocliente(){ui.cdraft={antigo:false,nome:'',cpf:'',whatsapp:'',endereco:'',nascimento:'',obs:'',crianca:false,filho:'',filhoNasc:'',receitas:[blankReceita()]};ui.cacc={};ui.sheet={kind:'cliente',id:''};renderSheet()},
+  editcliente(d){const c=S.clientes[d.c];if(!c)return;ui.cdraft={antigo:!!c.antigo,nome:c.nome,cpf:c.cpf,whatsapp:c.whatsapp,endereco:c.endereco,nascimento:c.nascimento||'',vendedorId:c.vendedorId||'',obs:c.obs||'',crianca:!!c.crianca,filho:c.filho||'',filhoNasc:c.filhoNasc||'',receitas:JSON.parse(JSON.stringify(c.receitas||[]))};ui.confirm='';ui.cacc={};ui.sheet={kind:'cliente',id:c.id};renderSheet()},
   addreceita(){const D=ui.cdraft;D.receitas=D.receitas||[];D.receitas.unshift(blankReceita());ui.cacc=Object.assign({},ui.cacc,{rec:true});renderSheet()},
   rmreceita(d){ui.cdraft.receitas.splice(+d.i,1);renderSheet()},
   cacc(d){ui.cacc=Object.assign({},ui.cacc);ui.cacc[d.k]=!ui.cacc[d.k];renderSheet()},
@@ -3464,7 +3467,7 @@ const A={
     const D=ui.cdraft;if(!D.nome.trim()){toast(D.crianca?'Informe o nome do responsável':'Informe o nome do cliente');return}
     if(D.crianca&&!String(D.filho||'').trim()){toast('Informe o nome da criança');return}
     const id=ui.sheet.id;const dup=cpfDup(D.cpf,id);if(dup){toast('Já existe cliente com este CPF: '+dup.nome);return}
-    if(id&&S.clientes[id]){Object.assign(S.clientes[id],{nome:D.nome.trim(),cpf:maskCpf(D.cpf),whatsapp:maskTel(D.whatsapp),endereco:D.endereco.trim(),nascimento:D.nascimento||'',vendedorId:D.vendedorId||'',obs:D.obs.trim(),crianca:!!D.crianca,filho:D.crianca?String(D.filho||'').trim():'',filhoNasc:D.crianca?(D.filhoNasc||''):'',receitas:(D.receitas||[]).filter(r=>!receitaVazia(r))});persist('clientes',id);premLog('Cliente editado',D.nome.trim());ui.sheet=null;ui.cdraft=null;renderSheet();refresh();const fl=cliFalta(S.clientes[id]);toast('Cliente atualizado'+(fl.length?'. Falta preencher: '+listaTxt(fl)+'.':''))}
+    if(id&&S.clientes[id]){Object.assign(S.clientes[id],{nome:D.nome.trim(),cpf:maskCpf(D.cpf),whatsapp:maskTel(D.whatsapp),endereco:D.endereco.trim(),nascimento:D.nascimento||'',vendedorId:D.vendedorId||'',obs:D.obs.trim(),antigo:!!D.antigo,crianca:!!D.crianca,filho:D.crianca?String(D.filho||'').trim():'',filhoNasc:D.crianca?(D.filhoNasc||''):'',receitas:(D.receitas||[]).filter(r=>!receitaVazia(r))});persist('clientes',id);premLog('Cliente editado',D.nome.trim());ui.sheet=null;ui.cdraft=null;renderSheet();refresh();const fl=cliFalta(S.clientes[id]);toast('Cliente atualizado'+(fl.length?'. Falta preencher: '+listaTxt(fl)+'.':''))}
     else{const c=makeCliente(D);S.clientes[c.id]=c;persist('clientes',c.id);premLog('Cliente cadastrado',c.nome);premWaHook('bv',null,null,c);ui.cdraft=null;ui.sheet={kind:'cliente-ok',id:c.id};render();renderSheet()}
   },
   salvarclientevenda(){A.salvarcliente();if(ui.sheet&&ui.sheet.kind==='cliente-ok')openNova(ui.sheet.id)},
@@ -4006,7 +4009,7 @@ function waResumo(v,auto){
 const waModo=t=>waDoc().modo[t]||(String(t).indexOf('exame_')===0||String(t).indexOf('orc_')===0?'auto':'aprovar');
 function premWaHook(ev,v,p,c){
   if(!waOn())return;
-  if(ev==='bv'&&c)waEnq('boasvindas',c,fillTpl(tpl('cadastro'),ctx(null,null,c)),'bv:'+c.id);
+  if(ev==='bv'&&c)waEnq('boasvindas',c,fillTpl(bvTpl(c),ctx(null,null,c)),'bv:'+c.id);
   else if(ev==='recibo'&&v&&p){const cl=S.clientes[v.clienteId];if(cl)waEnq('recibo',cl,fillTpl(tpl('recibo'),ctx(v,p,cl)),'rec:'+v.id+':'+v.parcelas.indexOf(p)+':'+p.pagoEm)}
 }
 function premWaBtns(v,feito){
@@ -4161,7 +4164,7 @@ function premWaAjustes(){
 Object.assign(A,{
   waresumo(d){const v=S.vendas[d.v];if(!v)return;if(!waResumo(v,false))toast('Cliente sem WhatsApp')},
   wabv(d){const c=S.clientes[d.c];if(!c||!c.whatsapp)return toast('Cliente sem WhatsApp');const t=todayStr();
-    if(waEnq('boasvindas',c,fillTpl(tpl('cadastro'),ctx(null,null,c)),'bv:'+c.id)){c.bvEm=t;persist('clientes',c.id);if(ui.sheet&&ui.sheet.kind!=='cliente')closeSheet();refresh()}},
+    if(waEnq('boasvindas',c,fillTpl(bvTpl(c),ctx(null,null,c)),'bv:'+c.id)){c.bvEm=t;persist('clientes',c.id);if(ui.sheet&&ui.sheet.kind!=='cliente')closeSheet();refresh()}},
   waent(d){const v=S.vendas[d.v];if(!v)return;const c=S.clientes[v.clienteId];if(!c||!c.whatsapp)return toast('Cliente sem WhatsApp');const t=todayStr();
     if(d.t==='cheg'){v.chegouEm=t;waEnq('chegou',c,fillTpl(tpl('chegou'),ctx(v,null,c)),'cheg:'+v.id+':'+t)}
     else{if(!v.entregueEm)v.entregueEm=t;v.agradEm=t;waEnq('agradecimento',c,fillTpl(tpl('entrega'),ctx(v,null,c)),'agr:'+v.id)}
@@ -5558,7 +5561,7 @@ Object.assign(A,{
 /* boas-vindas: com o WhatsApp Automático ligado, vai para a fila (sai sozinho ou espera aprovação, conforme o menu WhatsApp Automático); sem ele, abre o WhatsApp com a mensagem pronta */
 function bvBtn(c,label,cls){
   if(typeof waOn==='function'&&waOn())return '<button class="'+cls+'" data-act="wabv" data-c="'+c.id+'">'+esc(label==='Abrir WhatsApp'?'Enviar boas-vindas':label)+'</button>';
-  return '<a class="'+cls+'"'+WAT+' data-contact="bv" data-c="'+c.id+'" href="'+esc(waLink(c.whatsapp,fillTpl(tpl('cadastro'),ctx(null,null,c))))+'">'+label+'</a>';
+  return '<a class="'+cls+'"'+WAT+' data-contact="bv" data-c="'+c.id+'" href="'+esc(waLink(c.whatsapp,fillTpl(bvTpl(c),ctx(null,null,c))))+'">'+label+'</a>';
 }
 /* follow-up: com o WhatsApp Automático ligado, os botões que abririam o WhatsApp colocam a mensagem na fila da automação */
 function waFilaContato(d){
