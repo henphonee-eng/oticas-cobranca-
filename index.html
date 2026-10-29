@@ -244,6 +244,8 @@ textarea{padding:10px 12px;min-height:96px;line-height:1.4;resize:vertical}
 .fotos figcaption{font-size:11.5px;color:var(--muted)}
 .rxch{width:100%;height:auto;max-height:160px}
 .rxt{width:100%;border-collapse:collapse;font-size:13px}.rxt th,.rxt td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+.dt-row{display:grid;gap:8px;padding:10px 12px;border:1px solid var(--line);border-radius:12px}
+.dt-row .field{margin:0}
 .seg{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--surface-2);padding:4px;border-radius:12px}
 .seg label{position:relative}
 .seg input{position:absolute;opacity:0;pointer-events:none}
@@ -2625,7 +2627,7 @@ function renderSheet(){
   if(!s){el.innerHTML='';el.dataset.key='';document.documentElement.classList.remove('lock');return}
   const key=s.kind+(s.id||'');const old=el.querySelector('.sheet-body');const top=(old&&el.dataset.key===key)?old.scrollTop:0;
   let html=null;
-  if(s.kind==='venda')html=sheetVenda(s.id);else if(s.kind==='os')html=sheetOS(s.id);else if(s.kind==='fup')html=sheetFup();else if(s.kind==='nova')html=sheetNova();else if(s.kind==='cliente')html=sheetCliente(s.id);else if(s.kind==='cliente-ok')html=sheetClienteOk(s.id);else if(s.kind==='mais')html=sheetMais();else if(s.kind==='hist')html=sheetHist();else if(s.kind==='recibo')html=sheetRecibo(s);else if(s.kind==='pagorc')html=sheetPagOrc(s);else if(s.kind==='pagparc')html=sheetPagParc(s);else if(s.kind==='vendedor')html=sheetVend();else if(s.kind==='finpag')html=sheetFinPag(s);else if(s.kind==='relatorio')html=sheetRelatorio();else if(s.kind==='adm')html=sheetAdm();else if(s.kind==='admok')html=sheetAdmOk();
+  if(s.kind==='venda')html=sheetVenda(s.id);else if(s.kind==='os')html=sheetOS(s.id);else if(s.kind==='fup')html=sheetFup();else if(s.kind==='nova')html=sheetNova();else if(s.kind==='cliente')html=sheetCliente(s.id);else if(s.kind==='cliente-ok')html=sheetClienteOk(s.id);else if(s.kind==='mais')html=sheetMais();else if(s.kind==='hist')html=sheetHist();else if(s.kind==='recibo')html=sheetRecibo(s);else if(s.kind==='pagorc')html=sheetPagOrc(s);else if(s.kind==='pagparc')html=sheetPagParc(s);else if(s.kind==='vdatas')html=sheetDatas(s);else if(s.kind==='vendedor')html=sheetVend();else if(s.kind==='finpag')html=sheetFinPag(s);else if(s.kind==='relatorio')html=sheetRelatorio();else if(s.kind==='adm')html=sheetAdm();else if(s.kind==='admok')html=sheetAdmOk();
   if(html===null){ui.sheet=null;renderSheet();return}
   document.documentElement.classList.add('lock');
   el.innerHTML=html;
@@ -2755,7 +2757,7 @@ function sheetVenda(id){
   '<div class="sec"><h3>Enviar ao cliente</h3><div class="foot-row"><button class="btn'+(v.aguardando?'':' primary')+'" data-act="pdf" data-v="'+v.id+'">'+(v.aguardando?'Baixar orçamento em PDF':'Baixar PDF')+'</button>'+(resumoHref?(typeof waOn==='function'&&waOn()?'<button class="btn wa" data-act="waresumo" data-v="'+v.id+'">'+(v.aguardando?'Enviar orçamento no WhatsApp':'Enviar resumo no WhatsApp')+'</button>':'<a class="btn wa" target="_blank" rel="noopener" href="'+resumoHref+'">'+(v.aguardando?'Enviar orçamento no WhatsApp':'Resumo no WhatsApp')+'</a>'):'')+'</div>'+
   '<p class="sub">O WhatsApp abre com a mensagem pronta. Para mandar o PDF, baixe o arquivo e anexe na conversa.</p>'+
   ((c.whatsapp&&!c.bvEm&&S.clientes[v.clienteId])?'<div>'+bvBtn(c,'Mensagem de boas-vindas','btn sm')+'</div>':'')+'</div>';
-  const foot=(v.aguardando?'<button class="btn primary" data-act="pagarorc" data-v="'+v.id+'">Confirmar pagamento e virar venda</button>':'')+'<div class="foot-row"><button class="btn" data-act="editvenda" data-v="'+v.id+'">'+(v.aguardando?'Editar orçamento':'Editar venda')+'</button><button class="btn danger'+(ui.confirm===v.id?' armed':'')+'" data-act="delvenda" data-v="'+v.id+'">'+(ui.confirm===v.id?'Toque de novo para excluir':v.aguardando?'Excluir orçamento':'Excluir venda')+'</button></div>';
+  const foot=(v.aguardando?'<button class="btn primary" data-act="pagarorc" data-v="'+v.id+'">Confirmar pagamento e virar venda</button>':'')+(v.aguardando?'':'<button class="btn" data-act="vdatas" data-v="'+v.id+'">Alterar datas (venda e pagamentos)</button>')+'<div class="foot-row"><button class="btn" data-act="editvenda" data-v="'+v.id+'">'+(v.aguardando?'Editar orçamento':'Editar venda')+'</button><button class="btn danger'+(ui.confirm===v.id?' armed':'')+'" data-act="delvenda" data-v="'+v.id+'">'+(ui.confirm===v.id?'Toque de novo para excluir':v.aguardando?'Excluir orçamento':'Excluir venda')+'</button></div>';
   return sheetShell(v.aguardando?'Orçamento':'Venda',body,foot);
 }
 
@@ -2947,6 +2949,19 @@ const pgBase=()=>{const sh=ui.sheet;if(sh&&sh.kind==='finpag'){const f=finDoc().
 const pgHint=(x,base,w,t)=>(x>0&&x<base)?'Falta '+(t?'pagar ':'receber ')+brl(base-x)+' '+w+'.'+(t||' Ele fica em Cobrar e no Painel até a data combinada.'):(x>=base&&base>0?'Esse valor cobre tudo: use "Pagou tudo".':'Informe quanto o cliente pagou agora. O restante fica para a data combinada.');
 document.addEventListener('input',e=>{const t=e.target;if(!t||!t.id||t.id.slice(0,3)!=='pg-'||!ui.pg)return;ui.pg[t.id.slice(3)]=t.value;
   if(t.id==='pg-val'){const h=$('#pg-rest');const o=pgBase();if(h&&o.x)h.textContent=pgHint(parseMoney(t.value||''),o.x,o.w,o.t)}});
+/* Alterar datas: corrige a data da venda e as datas de cada pagamento sem refazer a venda (valores e parcelas ficam iguais) */
+function sheetDatas(s){
+  const v=S.vendas[s.id];if(!v||v.aguardando)return null;const c=S.clientes[v.clienteId]||{nome:''};
+  const row=(p,i)=>'<div class="dt-row"><div><b>'+esc(pLabel(v,p))+'</b> <span class="meta">'+brl(p.valor)+'</span></div>'+
+    (p.pago?'<label class="field"><span>Recebido em</span><input type="date" data-dtp="'+i+'" value="'+esc(p.pagoEm||p.venc||'')+'"></label>'+(p.tipo==='parcela'?'<label class="field"><span>Vencimento</span><input type="date" data-dtv="'+i+'" value="'+esc(p.venc||'')+'"></label>':'')
+      :'<label class="field"><span>Vencimento</span><input type="date" data-dtv="'+i+'" value="'+esc(p.venc||'')+'"></label>')+'</div>';
+  const body='<p style="margin:0"><b>'+esc(c.nome)+'</b> · '+brl(v.total)+'</p>'+
+    '<label class="field"><span>Data da venda</span><input type="date" data-dtvenda value="'+esc(v.data)+'"><span class="hint">É a data que conta no caixa, nos relatórios e nas metas.</span></label>'+
+    '<div class="sec"><h3>Pagamentos</h3><div class="stack">'+v.parcelas.map(row).join('')+'</div><p class="sub">Só as datas mudam. Valores, parcelas e o que já foi recebido continuam iguais.</p></div>'+
+    '<p class="hint bad" id="dt-err" hidden></p>';
+  const foot='<div class="foot-row"><button class="btn" data-act="openvenda" data-v="'+v.id+'">Voltar</button><button class="btn primary" data-act="salvardatas" data-v="'+v.id+'">Salvar datas</button></div>';
+  return sheetShell('Alterar datas',body,foot);
+}
 function sheetPagParc(s){
   const v=S.vendas[s.id];const p=v&&v.parcelas[s.i];if(!p||p.pago)return null;
   const g=ui.pg||(ui.pg={modo:'total'});const t=todayStr();const c=S.clientes[v.clienteId]||{nome:''};
@@ -3397,6 +3412,18 @@ const A={
   recibopdf(d){baixarRecibo(d.v,d.p)},
   instalar(){if(!deferredInstall)return;deferredInstall.prompt();deferredInstall=null;if(ui.sheet&&ui.sheet.kind==='mais'){ui.sheet=null;renderSheet()}render()},
   openvenda(d){ui.confirm='';ui.sheet={kind:'venda',id:d.v};renderSheet()},
+  vdatas(d){ui.confirm='';ui.sheet={kind:'vdatas',id:d.v};renderSheet()},
+  salvardatas(d){const v=S.vendas[d.v];if(!v)return;const ok=x=>/^\d{4}-\d{2}-\d{2}$/.test(x||''),t=todayStr();
+    const err=m=>{const e=$('#dt-err');if(e){e.textContent=m;e.hidden=false}toast(m)};
+    const dv=($('[data-dtvenda]')||{}).value;if(!ok(dv))return err('Informe a data da venda');if(dv>t)return err('A data da venda não pode ser depois de hoje');
+    const pg={},vc={};let bad='';
+    document.querySelectorAll('[data-dtp]').forEach(el=>{const x=el.value;if(!ok(x))bad='Informe a data de cada pagamento recebido';else if(x>t)bad='Um pagamento recebido não pode ter data depois de hoje';pg[el.dataset.dtp]=x});
+    document.querySelectorAll('[data-dtv]').forEach(el=>{if(!ok(el.value))bad='Informe o vencimento de cada parcela';vc[el.dataset.dtv]=el.value});
+    if(bad)return err(bad);
+    const antes=v.data;v.data=dv;
+    v.parcelas.forEach((p,i)=>{if(pg[i]!=null){p.pagoEm=pg[i];if(p.tipo==='entrada')p.venc=pg[i]}if(vc[i]!=null)p.venc=vc[i]});
+    premLog('Datas da venda alteradas',((S.clientes[v.clienteId]||{}).nome||'')+(antes!==dv?' · venda de '+fmtDate(antes)+' para '+fmtDate(dv):''));
+    persist('vendas',v.id);ui.sheet={kind:'venda',id:v.id};render();renderSheet();toast('Datas salvas')},
   closesheet(){closeSheet()},
   novavenda(d){openNova(d.c);if(d.orc&&ui.draft){ui.draft.aguardando=true;renderSheet()}},
   orcfu(d){
