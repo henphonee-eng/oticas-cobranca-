@@ -1454,6 +1454,8 @@ function calcVenda(itens,jurosVenda,entrada,jurosParc){
   const total=t0+jp;
   return {linhas:linhas,base:base,sub:sub,jv:jv,jp:jp,total:total,entrada:ent,saldo:total-ent,juros:total-base};
 }
+/* pago adiantado: a parcela passa para o dia em que foi paga (fica verde nesse dia na agenda); guarda o vencimento original para o Desfazer */
+function adiantaVenc(p){if(p.pago&&p.pagoEm&&p.venc&&p.pagoEm<p.venc){p.vencOrig=p.vencOrig||p.venc;p.venc=p.pagoEm}}
 /* parcelas por mês (padrão) ou por semana (mesmo dia da semana da 1ª) */
 const passoParc=(s,k,fq)=>fq==='semana'?addDays(s,7*k):addMonths(s,k);
 function splitParcelas(saldo,n,primeira,freq){
@@ -2867,7 +2869,7 @@ function salvarVenda(){
     if(!old.aguardando&&old.parcelas.some(p=>p.parte&&p.tipo==='parcela')&&v.total===old.total&&v.entrada===old.entrada&&v.n===old.n&&(old.freq||'mes')===(v.freq||'mes')&&D.primeira===(op0&&op0.venc)){v.parcelas=JSON.parse(JSON.stringify(old.parcelas))}
     else if(!old.aguardando&&oe.length>1&&v.entrada===old.entrada)v.parcelas=oe.concat(v.parcelas.filter(p=>p.tipo!=='entrada'));
     v.id=old.id;v.criadoEm=old.criadoEm;if(old.exemplo)v.exemplo=true;if(old.por)v.por=old.por;
-    if(!v.parcelas.some(p=>p.parte&&p.tipo==='parcela'))v.parcelas.forEach(p=>{if(p.tipo!=='parcela')return;const o=old.parcelas.find(q=>q.tipo==='parcela'&&q.n===p.n);if(o){p.contatoEm=o.contatoEm||null;if(o.pago){p.pago=true;p.pagoEm=o.pagoEm;p.forma=o.forma||null}}});
+    if(!v.parcelas.some(p=>p.parte&&p.tipo==='parcela'))v.parcelas.forEach(p=>{if(p.tipo!=='parcela')return;const o=old.parcelas.find(q=>q.tipo==='parcela'&&q.n===p.n);if(o){p.contatoEm=o.contatoEm||null;if(o.pago){p.pago=true;p.pagoEm=o.pagoEm;p.forma=o.forma||null;if(o.vencOrig&&o.vencOrig===p.venc){p.vencOrig=o.vencOrig;p.venc=o.venc}}}});
   }
   if(!old&&typeof SESSION!=='undefined'&&SESSION&&SESSION.user&&SESSION.user.email)v.por=String(SESSION.user.email).toLowerCase();
   if(D.vendedorId)v.vendedorId=D.vendedorId;
@@ -3400,9 +3402,9 @@ const A={
   mtoday(){ui.month=todayStr().slice(0,7);ui.sel=todayStr();render()},
   selday(d){ui.sel=d.d;render()},
   baixa(d,b){const v=S.vendas[d.v];if(!v)return;const p=v.parcelas[+d.p];const era=p.pago;if(!era)confeteDe(b);
-    if(!p.pago){const e=encargos(p,todayStr());p.pago=true;p.pagoEm=todayStr();p.forma=p.forma||v.forma;
+    if(!p.pago){const e=encargos(p,todayStr());p.pago=true;p.pagoEm=todayStr();p.forma=p.forma||v.forma;adiantaVenc(p);
       if(e.total>p.valor){p.recebido=e.total;p.multaAtraso=e.multa;p.jurosAtraso=e.juros}else{delete p.recebido;delete p.multaAtraso;delete p.jurosAtraso}}
-    else{p.pago=false;p.pagoEm=null;if(p.tipo!=='entrada')p.forma=null;delete p.recebido;delete p.multaAtraso;delete p.jurosAtraso}
+    else{p.pago=false;p.pagoEm=null;if(p.vencOrig){p.venc=p.vencOrig;delete p.vencOrig}if(p.tipo!=='entrada')p.forma=null;delete p.recebido;delete p.multaAtraso;delete p.jurosAtraso}
     premLog(p.pago?'Recebimento':'Recebimento desfeito',((S.clientes[v.clienteId]||{}).nome||'')+' · '+pLabel(v,p)+' · '+brl(recv(p)));
     if(p.pago&&!era)premWaHook('recibo',v,p);persist('vendas',v.id);refresh();toast(p.pago?(p.recebido?'Pagamento registrado com multa e juros: '+brl(p.recebido):'Pagamento registrado'):'Baixa desfeita')},
   relatorio(){ui.rmes=ui.rmes||todayStr().slice(0,7);ui.sheet={kind:'relatorio'};renderSheet()},
@@ -3448,7 +3450,7 @@ const A={
     if(!ymd(dt)){toast('Informe a data do recebimento');return}
     if(!ymd(venc)||venc<dt){toast('A data do restante não pode ser antes do recebimento');return}
     const e=encargos({valor:val,venc:p.venc,pago:false},dt);const resto=p.valor-val;const label=pLabel(v,p);
-    Object.assign(p,{parte:1,valor:val,pago:true,pagoEm:dt,forma:forma});
+    Object.assign(p,{parte:1,valor:val,pago:true,pagoEm:dt,forma:forma});adiantaVenc(p);
     if(e.total>val){p.recebido=e.total;p.multaAtraso=e.multa;p.jurosAtraso=e.juros}else{delete p.recebido;delete p.multaAtraso;delete p.jurosAtraso}
     v.parcelas.splice(i+1,0,{n:p.n,tipo:p.tipo,parte:2,venc:venc,valor:resto,pago:false,pagoEm:null,contatoEm:null,forma:null});
     premLog('Recebimento parcial',((S.clientes[v.clienteId]||{}).nome||'')+' · '+label.replace(/ \((parcial|restante)\)$/,'')+' · '+brl(val)+' de '+brl(val+resto));
