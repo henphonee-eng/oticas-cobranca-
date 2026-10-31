@@ -16,6 +16,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{--noite:#10142E;--noite-2:#171C3D;--noite-3:#222851;--linha:#2E3566;--papel:#EEF0FF;--nevoa:#A4ACD3;--ambar:#FFB547;--ambar-2:#FF8A3D;--menta:#5EE6B5;--azul:#7C8CFF;
+  --vidro:rgba(23,28,61,.78);
   --r-m:16px;--r-l:28px;--f-d:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;--f-t:"Figtree",ui-sans-serif,system-ui,sans-serif}
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
@@ -30,10 +31,20 @@ p{margin:0;text-wrap:pretty}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:52px;padding:0 24px;border-radius:999px;font:700 16px var(--f-t);text-decoration:none;border:0;cursor:pointer;transition:transform .15s cubic-bezier(.2,.8,.2,1),box-shadow .2s,background-color .2s}
 .btn:active{transform:scale(.97)}
 .btn-luz{background:linear-gradient(120deg,var(--ambar),var(--ambar-2));color:#2A1600;box-shadow:0 10px 30px -10px rgba(255,150,60,.7)}
-.btn-vidro{background:rgba(238,240,255,.06);color:var(--papel);border:1px solid var(--linha)}
+.btn-vidro{background:rgba(238,240,255,.06);color:var(--papel);border:1px solid var(--linha);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
 .btn-vidro:hover{background:rgba(238,240,255,.1)}
 .btn svg{width:20px;height:20px}
-.topo{position:sticky;top:0;z-index:20;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);background:color-mix(in srgb,var(--noite) 80%,transparent);border-bottom:1px solid color-mix(in srgb,var(--linha) 60%,transparent)}
+
+/* ---------- cena de fundo (WebGL) ---------- */
+#cena{position:fixed;inset:0;width:100%;height:100%;z-index:0;display:block;pointer-events:none}
+.ceu{position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(90% 70% at 70% 35%,#1A2152 0%,var(--noite) 60%)}
+.vinheta{position:fixed;inset:0;z-index:1;pointer-events:none;background:radial-gradient(ellipse at center,transparent 50%,rgba(6,8,22,.75) 100%)}
+.grao{position:fixed;inset:-50%;z-index:1;pointer-events:none;opacity:.06;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");animation:grao 1.2s steps(4) infinite}
+@keyframes grao{0%{transform:translate(0,0)}25%{transform:translate(-3%,2%)}50%{transform:translate(2%,-3%)}75%{transform:translate(-2%,-1%)}100%{transform:translate(0,0)}}
+main,.rodape{position:relative;z-index:2}
+
+/* ---------- topo e HUD ---------- */
+.topo{position:sticky;top:0;z-index:20;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);background:color-mix(in srgb,var(--noite) 55%,transparent);border-bottom:1px solid color-mix(in srgb,var(--linha) 50%,transparent)}
 .topo .wrap{display:flex;align-items:center;gap:20px;min-height:64px}
 .marca{font:800 19px var(--f-d);letter-spacing:-.02em;text-decoration:none;display:flex;align-items:center;gap:9px}
 .marca svg{width:28px;height:28px}
@@ -41,17 +52,47 @@ p{margin:0;text-wrap:pretty}
 .topo nav a{text-decoration:none;color:var(--nevoa);font-weight:600;font-size:15px}
 .topo nav a:hover{color:var(--papel)}
 .topo .btn{min-height:42px;padding:0 18px;font-size:15px}
+.prog{position:absolute;left:0;bottom:-1px;height:2px;width:0;background:linear-gradient(90deg,var(--azul),var(--menta),var(--ambar))}
 @media (max-width:860px){.topo nav{display:none}.topo .btn{margin-left:auto}}
+.hud{position:fixed;left:max(16px,env(safe-area-inset-left));bottom:calc(18px + env(safe-area-inset-bottom));z-index:15;display:flex;align-items:center;gap:12px;padding:9px 14px;border-radius:999px;background:rgba(16,20,46,.6);border:1px solid color-mix(in srgb,var(--linha) 70%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);font:600 12px var(--f-t);letter-spacing:.14em;text-transform:uppercase;color:var(--nevoa);pointer-events:none}
+.hud b{color:var(--ambar);font-weight:700}
+.hud .tc{font-variant-numeric:tabular-nums;letter-spacing:.06em;color:var(--papel);opacity:.7}
+@media (max-width:560px){.hud .tc{display:none}}
 
-.abre{position:relative;padding:56px 0 72px;overflow:hidden}
-.abre::before{content:"";position:absolute;inset:-20% -10% auto;height:120%;background:radial-gradient(60% 50% at 75% 30%,rgba(124,140,255,.22),transparent 70%),radial-gradient(40% 40% at 85% 70%,rgba(255,181,71,.16),transparent 70%);pointer-events:none}
+/* ---------- abertura (filme) ---------- */
+.filme{position:relative;height:440vh}
+.palco{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden}
+.cena-txt{position:absolute;left:0;right:0;top:calc(64px + 7vh);opacity:0;will-change:opacity,transform,filter}
+.cena-txt.ativa{pointer-events:auto}
+.cena-txt.primeira{opacity:1}
+.olho{display:inline-flex;align-items:center;gap:10px;color:var(--nevoa);font-weight:600;font-size:15px;margin-bottom:20px}
+.olho b{font:700 15px var(--f-d);color:var(--ambar);font-variant-numeric:tabular-nums}
+.olho .lua{flex:none;width:18px;height:18px;border-radius:50%;box-shadow:inset -5px -2px 0 0 var(--ambar)}
+.gigante{font-family:var(--f-d);font-weight:800;text-transform:uppercase;letter-spacing:-.045em;line-height:.9;font-size:clamp(46px,9.4vw,150px);max-width:12ch;margin:0;text-wrap:balance}
+.gigante .fio{display:block;color:transparent;-webkit-text-stroke:1.5px color-mix(in srgb,var(--papel) 60%,transparent)}
+.gigante em{font-style:normal;color:var(--menta)}
+.cena-txt p.sub{font-size:clamp(17px,1.8vw,20px);margin-top:22px;max-width:36em;color:#C7CDEA}
+.cena-txt .acoes{margin-top:28px}
+.dica{position:absolute;left:50%;bottom:calc(26px + env(safe-area-inset-bottom));transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;font:600 11px var(--f-t);letter-spacing:.2em;text-transform:uppercase;color:var(--nevoa)}
+.dica span{width:1px;height:40px;background:linear-gradient(var(--ambar),transparent);animation:pinga 1.8s ease-in-out infinite}
+@keyframes pinga{0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}51%{transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
+@media (max-width:560px){.dica{display:none}.cena-txt{top:calc(64px + 4vh)}.cap-pin{padding-top:calc(64px + 4vh)}.fim .fim-pin{padding-top:calc(64px + 4vh)}}
+
+/* ---------- capítulos ---------- */
+.cap{position:relative;height:170vh}
+.cap-pin{position:sticky;top:0;height:100vh;height:100svh;display:flex;align-items:flex-start;padding-top:calc(64px + 7vh)}
+.cap-pin .wrap{text-align:center}
+.cap-n{display:inline-block;font:600 12px var(--f-t);letter-spacing:.24em;text-transform:uppercase;color:var(--ambar);margin-bottom:22px}
+.cap-t{font-family:var(--f-d);font-weight:800;text-transform:uppercase;letter-spacing:-.045em;line-height:.92;font-size:clamp(36px,6.4vw,100px);margin:0 auto;max-width:14ch;text-wrap:balance}
+.cap-t .w{display:inline-block;will-change:opacity,transform,filter}
+.cap-p{margin:26px auto 0;max-width:34em;font-size:clamp(17px,1.7vw,20px);color:#C7CDEA}
+
+/* ---------- conteúdo ---------- */
+.abre{position:relative;padding:40px 0 96px}
 .abre .wrap{position:relative;display:grid;grid-template-columns:1.15fr .85fr;gap:64px;align-items:center}
-@media (max-width:900px){.abre .wrap{grid-template-columns:1fr;gap:40px}.abre{padding-top:36px}}
-.relogio{display:flex;align-items:center;gap:10px;color:var(--nevoa);font-weight:600;font-size:15px;margin-bottom:22px}
-.relogio b{font:700 15px var(--f-d);color:var(--ambar);font-variant-numeric:tabular-nums}
-.relogio .lua{flex:none;width:18px;height:18px;border-radius:50%;box-shadow:inset -5px -2px 0 0 var(--ambar)}
-h1{font-size:clamp(42px,6.4vw,80px)}
-h1 .fio{display:block;color:transparent;-webkit-text-stroke:1.5px color-mix(in srgb,var(--papel) 55%,transparent)}
+@media (max-width:900px){.abre .wrap{grid-template-columns:1fr;gap:40px}}
+.rotulo{display:inline-block;font:600 12px var(--f-t);letter-spacing:.22em;text-transform:uppercase;color:var(--menta);margin-bottom:16px}
+.abre h2{font-size:clamp(36px,5vw,64px)}
 .abre p.sub{font-size:clamp(18px,2.2vw,21px);margin:22px 0 30px;max-width:34em;color:var(--nevoa)}
 .acoes{display:flex;flex-wrap:wrap;gap:12px}
 .selos{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:26px;color:var(--nevoa);font-size:14.5px}
@@ -78,29 +119,29 @@ h1 .fio{display:block;color:transparent;-webkit-text-stroke:1.5px color-mix(in s
 .etq.e1{top:30%}.etq.e2{top:46%}.etq.e3{top:62%}
 @media (max-width:1340px){.etq{display:none}}
 
-.faixa{border-block:1px solid var(--linha);padding:18px 0;overflow:hidden;background:var(--noite-2)}
+.faixa{border-block:1px solid color-mix(in srgb,var(--linha) 70%,transparent);padding:18px 0;overflow:hidden;background:rgba(23,28,61,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
 .faixa .trilho{display:flex;gap:40px;width:max-content;animation:rola 40s linear infinite}
 .faixa span{font:700 20px var(--f-d);color:var(--nevoa);white-space:nowrap}
 .faixa span::after{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--ambar);margin-left:40px;vertical-align:middle}
 @keyframes rola{to{transform:translateX(-50%)}}
-section.bloco{padding:96px 0}
-@media (max-width:760px){section.bloco{padding:72px 0}}
+section.bloco{padding:40px 0 120px}
+@media (max-width:760px){section.bloco{padding:24px 0 88px}}
 .titulo{max-width:760px;margin-bottom:40px}
 .titulo p{margin-top:16px;font-size:19px;color:var(--nevoa)}
 .grade4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
 @media (max-width:960px){.grade4{grid-template-columns:repeat(2,1fr)}}
 @media (max-width:560px){.grade4{grid-template-columns:1fr}}
-.cx{padding:24px;border-radius:var(--r-m);background:var(--noite-2);border:1px solid var(--linha)}
+.cx{padding:24px;border-radius:var(--r-m);background:var(--vidro);border:1px solid var(--linha);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
 .cx h3{margin:10px 0 8px}.cx p{color:var(--nevoa);font-size:16px}
 .cx .n{font:800 30px var(--f-d);color:var(--ambar)}
 /* diagnóstico */
 .diag{display:grid;grid-template-columns:.9fr 1.1fr;gap:28px;align-items:start}
 @media (max-width:900px){.diag{grid-template-columns:1fr}}
 .opsd{display:grid;gap:10px}
-.opsd button{display:flex;align-items:center;gap:14px;text-align:left;width:100%;padding:16px 18px;border-radius:14px;border:1px solid var(--linha);background:var(--noite-2);color:var(--papel);font:600 16px var(--f-t);cursor:pointer;transition:border-color .2s,background-color .2s}
-.opsd button[aria-pressed=true]{border-color:var(--ambar);background:#2A2A3F}
+.opsd button{display:flex;align-items:center;gap:14px;text-align:left;width:100%;padding:16px 18px;border-radius:14px;border:1px solid var(--linha);background:var(--vidro);color:var(--papel);font:600 16px var(--f-t);cursor:pointer;transition:border-color .2s,background-color .2s;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.opsd button[aria-pressed=true]{border-color:var(--ambar);background:rgba(42,42,63,.9)}
 .opsd button span{font-size:22px}
-.resp{border-radius:var(--r-l);padding:30px;background:radial-gradient(90% 120% at 100% 0,rgba(94,230,181,.14),transparent 60%),var(--noite-2);border:1px solid var(--linha);min-height:280px}
+.resp{border-radius:var(--r-l);padding:30px;background:radial-gradient(90% 120% at 100% 0,rgba(94,230,181,.14),transparent 60%),var(--vidro);border:1px solid var(--linha);min-height:280px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
 .resp .tag{display:inline-block;font-size:13px;font-weight:700;padding:4px 10px;border-radius:999px;background:rgba(94,230,181,.14);color:var(--menta);margin-bottom:12px}
 .resp h3{font-size:28px;margin-bottom:10px}
 .resp p{color:var(--nevoa)}
@@ -110,13 +151,13 @@ section.bloco{padding:96px 0}
 .etapas{display:grid;grid-template-columns:repeat(4,1fr);gap:0;position:relative}
 @media (max-width:900px){.etapas{grid-template-columns:1fr;gap:30px}}
 .passo{padding:0 22px 0 0;position:relative}
-.passo .n{width:54px;height:54px;border-radius:50%;display:grid;place-items:center;font:800 22px var(--f-d);background:var(--noite-2);border:1px solid var(--linha);color:var(--ambar);margin-bottom:18px}
+.passo .n{width:54px;height:54px;border-radius:50%;display:grid;place-items:center;font:800 22px var(--f-d);background:var(--vidro);border:1px solid var(--linha);color:var(--ambar);margin-bottom:18px}
 .passo p{color:var(--nevoa);font-size:16px;margin-top:8px}
 @media (max-width:900px){.passo{padding-left:76px}.passo .n{position:absolute;left:0;top:0}}
-.planos{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:48px}
+.planos{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:56px}
 @media (max-width:960px){.planos{grid-template-columns:1fr}}
-.plano{display:flex;flex-direction:column;padding:28px;border-radius:var(--r-l);background:var(--noite-2);border:1px solid var(--linha)}
-.plano.destaque{background:linear-gradient(180deg,#232A5C,var(--noite-2));border-color:color-mix(in srgb,var(--ambar) 55%,var(--linha))}
+.plano{display:flex;flex-direction:column;padding:28px;border-radius:var(--r-l);background:var(--vidro);border:1px solid var(--linha);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.plano.destaque{background:linear-gradient(180deg,rgba(35,42,92,.92),rgba(23,28,61,.85));border-color:color-mix(in srgb,var(--ambar) 55%,var(--linha))}
 .plano .tg{align-self:flex-start;font-size:13px;font-weight:700;padding:4px 10px;border-radius:999px;background:rgba(255,181,71,.14);color:var(--ambar);margin-bottom:12px}
 .preco{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;margin-top:14px}
 .preco b{font:800 42px/1 var(--f-d)}.preco span{color:var(--nevoa)}
@@ -124,12 +165,12 @@ section.bloco{padding:96px 0}
 .plano ul{list-style:none;padding:0;margin:0 0 22px;display:grid;gap:9px;font-size:15.5px}
 .plano li{display:flex;gap:10px}.plano li::before{content:"✓";color:var(--menta);font-weight:800}
 .plano .btn{margin-top:auto}
-.teste{margin-top:24px;border-radius:var(--r-l);padding:32px;background:radial-gradient(80% 140% at 0% 100%,rgba(255,181,71,.25),transparent 60%),radial-gradient(70% 120% at 100% 0,rgba(124,140,255,.25),transparent 60%),var(--noite-2);border:1px solid var(--linha);display:flex;flex-wrap:wrap;gap:20px;align-items:center;justify-content:space-between}
+.teste{margin-top:24px;border-radius:var(--r-l);padding:32px;background:radial-gradient(80% 140% at 0% 100%,rgba(255,181,71,.25),transparent 60%),radial-gradient(70% 120% at 100% 0,rgba(124,140,255,.25),transparent 60%),var(--vidro);border:1px solid var(--linha);display:flex;flex-wrap:wrap;gap:20px;align-items:center;justify-content:space-between;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
 .teste h3{font-size:clamp(22px,3vw,30px)}.teste p{color:var(--nevoa);margin-top:6px}
 /* soluções */
 .sols{display:grid;grid-template-columns:repeat(6,1fr);gap:16px}
-.sol{grid-column:span 2;padding:26px;border-radius:var(--r-m);background:var(--noite-2);border:1px solid var(--linha);display:flex;flex-direction:column}
-.sol.big{grid-column:span 6;display:grid;grid-template-columns:1.2fr .8fr;gap:24px;align-items:center;background:radial-gradient(100% 140% at 100% 0,rgba(255,181,71,.16),transparent 60%),var(--noite-2);border-color:color-mix(in srgb,var(--ambar) 40%,var(--linha))}
+.sol{grid-column:span 2;padding:26px;border-radius:var(--r-m);background:var(--vidro);border:1px solid var(--linha);display:flex;flex-direction:column;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.sol.big{grid-column:span 6;display:grid;grid-template-columns:1.2fr .8fr;gap:24px;align-items:center;background:radial-gradient(100% 140% at 100% 0,rgba(255,181,71,.16),transparent 60%),var(--vidro);border-color:color-mix(in srgb,var(--ambar) 40%,var(--linha))}
 .sol.meio{grid-column:span 3}
 @media (max-width:900px){.sols{grid-template-columns:1fr}.sol,.sol.meio,.sol.big{grid-column:auto}.sol.big{grid-template-columns:1fr}}
 .sol svg.ic{width:30px;height:30px;color:var(--menta);margin-bottom:14px}
@@ -141,6 +182,7 @@ section.bloco{padding:96px 0}
 @media (max-width:960px){.bi{grid-template-columns:1fr}}
 .bi ul{list-style:none;padding:0;margin:22px 0 0;display:grid;gap:12px}
 .bi li{display:flex;gap:12px;color:var(--nevoa)}.bi li b{color:var(--papel)}
+.bi li svg{flex:none;width:22px;height:22px;color:var(--menta);margin-top:2px}
 .painel{border-radius:var(--r-l);background:#F6F7FC;color:#1A1F3D;padding:20px;box-shadow:0 40px 100px -40px rgba(0,0,0,.8)}
 .painel .tp{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
 .painel .tp b{font:800 17px var(--f-d)}.painel .tp span{font-size:12px;color:#5B6385;background:#E8EAF6;border-radius:999px;padding:3px 9px}
@@ -165,21 +207,21 @@ section.bloco{padding:96px 0}
 @media (max-width:900px){.met{grid-template-columns:1fr 1fr}}
 @media (max-width:560px){.met{grid-template-columns:1fr}}
 /* caso */
-.caso{display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:center;border-radius:var(--r-l);padding:40px;background:var(--noite-2);border:1px solid var(--linha)}
+.caso{display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:center;border-radius:var(--r-l);padding:40px;background:var(--vidro);border:1px solid var(--linha);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
 @media (max-width:900px){.caso{grid-template-columns:1fr;padding:28px 22px}}
 .caso .antes,.caso .depois{border-radius:14px;padding:18px;font-size:15.5px}
 .caso .antes{background:rgba(214,69,61,.08);border:1px solid rgba(214,69,61,.3)}
 .caso .depois{background:rgba(94,230,181,.08);border:1px solid rgba(94,230,181,.3);margin-top:12px}
 .caso b.r{display:block;font:700 13px var(--f-t);color:var(--nevoa);margin-bottom:6px}
 .caso p.q{margin-top:16px;color:var(--nevoa)}
+.caso h3{font-size:clamp(24px,3vw,32px)}
 /* investimento */
 .inv{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
 @media (max-width:900px){.inv{grid-template-columns:repeat(2,1fr)}}
 @media (max-width:560px){.inv{grid-template-columns:1fr}}
-.inv .cx b{font-size:22px}
 .inv .cx p.imp{color:var(--ambar);font-weight:600;font-size:15px;margin:4px 0 6px}
-.combo{margin-top:16px;padding:16px 20px;border-radius:var(--r-m);border:1px solid color-mix(in srgb,var(--ambar) 45%,var(--linha));background:rgba(255,181,71,.07);font-size:16px}.combo b,.combo strong{color:var(--papel)}.combo a{color:var(--ambar);font-weight:700;margin-left:6px}
-.inv .cx b{display:block;font-family:var(--f-d);font-weight:800;margin-top:6px;line-height:1.2}
+.inv .cx b{display:block;font-family:var(--f-d);font-weight:800;margin-top:6px;line-height:1.2;font-size:22px}
+.combo{margin-top:16px;padding:16px 20px;border-radius:var(--r-m);border:1px solid color-mix(in srgb,var(--ambar) 45%,var(--linha));background:rgba(40,34,40,.8);font-size:16px}.combo b,.combo strong{color:var(--papel)}.combo a{color:var(--ambar);font-weight:700;margin-left:6px}
 .regras{display:flex;flex-wrap:wrap;gap:10px 28px;margin-top:22px;color:var(--nevoa);font-size:15px}.regras b{color:var(--papel)}
 /* dúvidas */
 .duvidas{max-width:860px}
@@ -193,39 +235,82 @@ details.q[open] summary i{background:var(--ambar);border-color:var(--ambar)}
 details.q[open] summary i::before,details.q[open] summary i::after{background:#2A1600}
 details.q[open] summary i::after{transform:translate(-50%,-50%) rotate(0)}
 details.q .r{padding:0 0 24px;color:var(--nevoa);max-width:44em}
-.fim{padding:110px 0 70px;text-align:center;position:relative;overflow:hidden}
-.fim::before{content:"";position:absolute;left:50%;top:40%;width:900px;height:900px;transform:translate(-50%,-50%);background:radial-gradient(closest-side,rgba(255,181,71,.18),transparent);pointer-events:none}
-.fim h2{position:relative;max-width:15em;margin:0 auto}
-.fim p{position:relative;margin:18px auto 30px;max-width:32em;color:var(--nevoa);font-size:19px}
-.fim .acoes{position:relative;justify-content:center}
-.rodape{border-top:1px solid var(--linha);padding:28px 0 calc(28px + env(safe-area-inset-bottom));color:var(--nevoa);font-size:14.5px}
+/* final */
+.fim{position:relative;height:200vh}
+.fim .fim-pin{position:sticky;top:0;height:100vh;height:100svh;display:flex;align-items:flex-start;padding-top:calc(64px + 7vh);text-align:center}
+.fim h2{max-width:15em;margin:0 auto;font-size:clamp(34px,5.6vw,72px)}
+.fim p{margin:18px auto 30px;max-width:32em;color:#C7CDEA;font-size:19px}
+.fim .acoes{justify-content:center}
+.rodape{border-top:1px solid var(--linha);padding:28px 0 calc(84px + env(safe-area-inset-bottom));color:var(--nevoa);font-size:14.5px;background:var(--noite)}
 .rodape .wrap{display:flex;flex-wrap:wrap;gap:12px 28px;justify-content:space-between}
 .rodape a{text-decoration:none}.rodape a:hover{color:var(--papel)}
 .zap{position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom));z-index:30;width:58px;height:58px;border-radius:50%;background:#25D366;display:grid;place-items:center;box-shadow:0 12px 30px -8px rgba(37,211,102,.6)}
 .zap svg{width:30px;height:30px;color:#fff}
-@media (prefers-reduced-motion:reduce){.faixa .trilho,.dig i{animation:none}html{scroll-behavior:auto}.graf .cols i,.funil .bar i{transition:none}}
+@media (prefers-reduced-motion:reduce){.faixa .trilho,.dig i,.grao,.dica span{animation:none}html{scroll-behavior:auto}.graf .cols i,.funil .bar i{transition:none}}
 </style>
 </head>
 <body>
+<div class="ceu" aria-hidden="true"></div>
+<canvas id="cena" aria-hidden="true"></canvas>
+<div class="vinheta" aria-hidden="true"></div>
+<div class="grao" aria-hidden="true"></div>
+
 <header class="topo"><div class="wrap">
   <a class="marca" href="#topo" aria-label="Connecta Digital, início"><svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="18" fill="#222851"/><rect x="15" y="34" width="8" height="16" rx="3" fill="#FFB547"/><rect x="28" y="24" width="8" height="26" rx="3" fill="#fff"/><rect x="41" y="14" width="8" height="36" rx="3" fill="#5EE6B5"/></svg>Connecta Digital</a>
   <nav aria-label="Seções"><a href="#agente">Agente de IA</a><a href="#solucoes">Soluções</a><a href="#bi">Dados & BI</a><a href="#metodo">Método</a><a href="#investimento">Investimento</a><a href="#duvidas">Dúvidas</a></nav>
   <a class="btn btn-luz" href="https://teste-agente-ia.vercel.app/agente" target="_blank" rel="noopener">Testar o agente</a>
-</div></header>
+</div><i class="prog" id="prog" aria-hidden="true"></i></header>
+
+<div class="hud" aria-hidden="true"><span><b id="hud-n">00</b> · <span id="hud-nome">Abertura</span></span><span class="tc" id="hud-tc">00:00:00</span></div>
 
 <main id="topo">
-  <section class="abre"><div class="wrap">
-    <div>
-      <div class="relogio"><span class="lua" aria-hidden="true"></span><span>Agora são <b id="hora">23:47</b><span id="hora-t">, e muita empresa já fechou</span></span></div>
-      <h1>Seu WhatsApp responde. <span class="fio">Mesmo de madrugada.</span></h1>
+  <!-- ===== ABERTURA ===== -->
+  <section class="filme" id="filme" aria-label="Abertura">
+    <div class="palco">
+      <div class="cena-txt primeira" data-de="0" data-ate=".2">
+        <div class="wrap">
+          <div class="olho"><span class="lua" aria-hidden="true"></span><span>Agora são <b id="hora">23:47</b><span id="hora-t">, e muita empresa já fechou</span></span></div>
+          <h2 class="gigante">A sua empresa fecha.</h2>
+        </div>
+      </div>
+      <div class="cena-txt" data-de=".25" data-ate=".46">
+        <div class="wrap">
+          <h2 class="gigante">O cliente, <em>não.</em></h2>
+          <p class="sub">Ele manda mensagem às 22h, no domingo, no feriado. E fecha com quem responder primeiro.</p>
+        </div>
+      </div>
+      <div class="cena-txt" data-de=".52" data-ate=".72">
+        <div class="wrap">
+          <h2 class="gigante">A gente <em>conecta</em> tudo.</h2>
+          <p class="sub">Agente de IA no WhatsApp, site, sistema e painel de números, trabalhando juntos para a sua empresa.</p>
+        </div>
+      </div>
+      <div class="cena-txt" data-de=".8" data-ate="9">
+        <div class="wrap">
+          <h1 class="gigante">Seu WhatsApp responde. <span class="fio">Mesmo de madrugada.</span></h1>
+          <div class="acoes">
+            <a class="btn btn-luz" href="https://teste-agente-ia.vercel.app/agente" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8.5 8.5 0 0 1-12.6 7.4L3 21l1.6-5.2A8.5 8.5 0 1 1 21 12z"/></svg>Conversar com o agente agora</a>
+            <a class="btn btn-vidro js-zap" data-msg="Olá, Éder! Vi o site da Connecta e quero um diagnóstico gratuito." href="#" target="_blank" rel="noopener">Diagnóstico gratuito</a>
+          </div>
+        </div>
+      </div>
+      <div class="dica" id="dica" aria-hidden="true">Role<span></span></div>
+    </div>
+  </section>
+
+  <!-- ===== O AGENTE ATENDENDO ===== -->
+  <section class="abre" data-forma="onda" data-x="0" data-a=".8"><div class="wrap">
+    <div data-rv>
+      <span class="rotulo">Veja na prática</span>
+      <h2>Um atendente que não dorme, no mesmo número.</h2>
       <p class="sub">Um agente de IA que atende os clientes da sua empresa no WhatsApp 24 horas: tira dúvidas, passa preços, entende áudio e foto, agenda e chama a sua equipe. E, se a sua empresa precisar de mais, a gente cria o site, o sistema e o painel de números sob medida.</p>
       <div class="acoes">
-        <a class="btn btn-luz" href="https://teste-agente-ia.vercel.app/agente" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8.5 8.5 0 0 1-12.6 7.4L3 21l1.6-5.2A8.5 8.5 0 1 1 21 12z"/></svg>Conversar com o agente agora</a>
+        <a class="btn btn-luz" href="https://teste-agente-ia.vercel.app/agente" target="_blank" rel="noopener">Conversar com o agente agora</a>
         <a class="btn btn-vidro js-zap" data-msg="Olá, Éder! Vi o site da Connecta e quero um diagnóstico gratuito." href="#" target="_blank" rel="noopener">Diagnóstico gratuito</a>
       </div>
       <div class="selos"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>No mesmo número de WhatsApp</span><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Pronto em até 7 dias</span><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Recife para todo o Brasil</span></div>
     </div>
-    <div class="fone" aria-label="Exemplo de conversa do agente no WhatsApp">
+    <div class="fone" data-rv aria-label="Exemplo de conversa do agente no WhatsApp">
       <div class="tela"><div class="tela-h"><span class="av" id="av">C</span><div><b id="fone-nome">Clínica Sorriso</b><small id="fone-st">online</small></div></div><div class="fio-msgs" id="fio"></div><div class="tela-f" aria-hidden="true"><span></span><i></i></div></div>
       <div class="etq e1"><i></i>Entende áudio</div><div class="etq e2"><i></i>Agenda sozinho</div><div class="etq e3"><i></i>Chama a equipe</div>
     </div>
@@ -233,9 +318,16 @@ details.q .r{padding:0 0 24px;color:var(--nevoa);max-width:44em}
 
   <div class="faixa" aria-hidden="true"><div class="trilho" id="trilho"></div></div>
 
-  <section class="bloco"><div class="wrap">
-    <div class="titulo"><h2>Onde as empresas perdem cliente e tempo</h2><p>Os quatro gargalos que mais aparecem nos diagnósticos que fazemos.</p></div>
-    <div class="grade4">
+  <!-- ===== CAP 01 · O PROBLEMA ===== -->
+  <section class="cap" data-cap="01" data-nome="O problema" data-forma="focos" data-x="0" data-a="1">
+    <div class="cap-pin"><div class="wrap">
+      <span class="cap-n">Capítulo 01 · O problema</span>
+      <h2 class="cap-t">Onde as empresas perdem cliente e tempo</h2>
+      <p class="cap-p">Os quatro gargalos que mais aparecem nos diagnósticos que fazemos.</p>
+    </div></div>
+  </section>
+  <section class="bloco" data-forma="focos" data-x="0" data-a=".4"><div class="wrap">
+    <div class="grade4" data-rv="grupo">
       <div class="cx"><div class="n">22h</div><h3>Cliente sem resposta</h3><p>A mensagem chega fora do horário ou no pico, e o cliente fecha com quem respondeu primeiro.</p></div>
       <div class="cx"><div class="n">?</div><h3>Decisão sem números</h3><p>Ninguém sabe ao certo quanto entrou, quem vai pagar e de onde vêm os clientes.</p></div>
       <div class="cx"><div class="n">www</div><h3>Presença digital fraca</h3><p>Sem site, ou com um site lento no celular que não leva ninguém para o WhatsApp.</p></div>
@@ -243,34 +335,48 @@ details.q .r{padding:0 0 24px;color:var(--nevoa);max-width:44em}
     </div>
   </div></section>
 
-  <section class="bloco" id="diagnostico" style="padding-top:0"><div class="wrap">
-    <div class="titulo"><h2>Qual é o maior desafio da sua empresa hoje?</h2><p>Toque em uma opção e veja o que a gente faria primeiro.</p></div>
+  <section class="bloco" id="diagnostico" data-forma="radar" data-x=".55" data-a=".55"><div class="wrap">
+    <div class="titulo" data-rv><span class="rotulo">Mini diagnóstico</span><h2>Qual é o maior desafio da sua empresa hoje?</h2><p>Toque em uma opção e veja o que a gente faria primeiro.</p></div>
     <div class="diag">
       <div class="opsd" role="group" aria-label="Maior desafio" id="opsd"></div>
       <div class="resp" id="resp" aria-live="polite"></div>
     </div>
   </div></section>
 
-  <section class="bloco" id="agente" style="padding-top:0"><div class="wrap">
-    <div class="titulo"><h2>O Agente de IA, do primeiro papo ao WhatsApp atendendo</h2><p>Você não precisa entender de tecnologia. A gente monta tudo com as informações da sua empresa.</p></div>
-    <div class="etapas">
+  <!-- ===== CAP 02 · O AGENTE ===== -->
+  <section class="cap" id="agente" data-cap="02" data-nome="O agente" data-forma="bolha" data-x="0" data-a="1">
+    <div class="cap-pin"><div class="wrap">
+      <span class="cap-n">Capítulo 02 · O agente de IA</span>
+      <h2 class="cap-t">Do primeiro papo ao WhatsApp atendendo</h2>
+      <p class="cap-p">Você não precisa entender de tecnologia. A gente monta tudo com as informações da sua empresa.</p>
+    </div></div>
+  </section>
+  <section class="bloco" data-forma="bolha" data-x="0" data-a=".3"><div class="wrap">
+    <div class="etapas" data-rv="grupo">
       <div class="passo"><div class="n">1</div><h3>Você fecha o plano</h3><p>Pelo WhatsApp mesmo, sem burocracia.</p></div>
       <div class="passo"><div class="n">2</div><h3>Preenche um cadastro rápido</h3><p>Quase tudo é tocar nas opções: horários, serviços, preços e o jeito de atender.</p></div>
       <div class="passo"><div class="n">3</div><h3>Testa e pede ajustes</h3><p>Você conversa com o seu agente e pede mudanças, que entram na hora.</p></div>
       <div class="passo"><div class="n">4</div><h3>Ele começa a atender</h3><p>No mesmo número, 24 horas, chamando a sua equipe quando precisa.</p></div>
     </div>
-    <div class="planos">
+    <div class="planos" data-rv="grupo">
       <div class="plano"><h3>Essencial</h3><p style="color:var(--nevoa);font-size:15.5px;margin-top:6px">Para parar de deixar cliente sem resposta.</p><div class="preco"><b>R$ 197</b><span>por mês</span></div><p class="implant">Implantação: R$ 497</p><ul><li>Atendimento 24h no WhatsApp</li><li>Tira dúvidas, passa preços e horários</li><li>Entende áudio e foto</li><li>Follow-up de quem não fechou</li><li>Chama a equipe quando precisa</li><li>CRM com a sua marca: clientes e conversas</li></ul><a class="btn btn-vidro js-zap" data-msg="Olá, Éder! Tenho interesse no plano Essencial do Agente de IA." href="#" target="_blank" rel="noopener">Quero o Essencial</a></div>
       <div class="plano destaque"><span class="tg">O que mais recomendamos</span><h3>Profissional</h3><p style="color:var(--nevoa);font-size:15.5px;margin-top:6px">Para quem vive de agenda ou de pedidos.</p><div class="preco"><b>R$ 297</b><span>por mês</span></div><p class="implant">Implantação: R$ 797</p><ul><li>Tudo do Essencial</li><li>Agenda própria: marca, remarca e cancela</li><li>Lembrete na véspera e no dia</li><li>Parabéns no aniversário do cliente</li><li>Campanha da promoção do mês</li><li>CRM completo do seu ramo</li></ul><a class="btn btn-luz js-zap" data-msg="Olá, Éder! Tenho interesse no plano Profissional do Agente de IA." href="#" target="_blank" rel="noopener">Quero o Profissional</a></div>
       <div class="plano"><span class="tg">Oferta</span><h3>Sob medida</h3><p style="color:var(--nevoa);font-size:15.5px;margin-top:6px">Agente e um CRM feito do zero para a sua empresa.</p><div class="preco"><span>a partir de</span><b>R$ 497</b><span>por mês</span></div><p class="implant">Implantação: <s>R$ 1.997</s> por <strong>R$ 1.457</strong></p><ul><li>Tudo do Profissional</li><li>Até 4 campanhas por mês</li><li>Financeiro, cobranças e relatórios</li><li>Avisos e cobranças pelo WhatsApp</li></ul><a class="btn btn-vidro js-zap" data-msg="Olá, Éder! Tenho interesse no plano Sob medida do Agente de IA." href="#" target="_blank" rel="noopener">Quero o Sob medida</a></div>
     </div>
     <div class="regras"><span><b>Sem fidelidade:</b> você não fica preso, cancela quando quiser com 30 dias de aviso</span><span><b>Implantação:</b> 50% no início e 50% na entrega</span><span><b>Primeira mensalidade:</b> só 30 dias depois que o agente começa a atender</span></div>
-    <div class="teste"><div><h3>Converse com o agente antes de decidir</h3><p>É o próprio agente respondendo. Pergunte preço, horário, peça para marcar.</p></div><a class="btn btn-luz" href="https://teste-agente-ia.vercel.app/agente" target="_blank" rel="noopener">Testar agora</a></div>
+    <div class="teste" data-rv><div><h3>Converse com o agente antes de decidir</h3><p>É o próprio agente respondendo. Pergunte preço, horário, peça para marcar.</p></div><a class="btn btn-luz" href="https://teste-agente-ia.vercel.app/agente" target="_blank" rel="noopener">Testar agora</a></div>
   </div></section>
 
-  <section class="bloco" id="solucoes" style="padding-top:0"><div class="wrap">
-    <div class="titulo"><h2>Tudo que a sua empresa precisa, no mesmo lugar</h2><p>O agente costuma ser o primeiro passo. Depois, a gente vai somando o que fizer sentido.</p></div>
-    <div class="sols">
+  <!-- ===== CAP 03 · SOLUÇÕES ===== -->
+  <section class="cap" id="solucoes" data-cap="03" data-nome="Soluções" data-forma="rede" data-x="0" data-a="1">
+    <div class="cap-pin"><div class="wrap">
+      <span class="cap-n">Capítulo 03 · Soluções</span>
+      <h2 class="cap-t">Tudo que a sua empresa precisa, no mesmo lugar</h2>
+      <p class="cap-p">O agente costuma ser o primeiro passo. Depois, a gente vai somando o que fizer sentido.</p>
+    </div></div>
+  </section>
+  <section class="bloco" data-forma="rede" data-x="0" data-a=".35"><div class="wrap">
+    <div class="sols" data-rv="grupo">
       <div class="sol big"><div><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8.5 8.5 0 0 1-12.6 7.4L3 21l1.6-5.2A8.5 8.5 0 1 1 21 12z"/><path d="M8 11h.01M12 11h.01M16 11h.01"/></svg><h3>Agente de IA no WhatsApp e no site</h3><p>Atende, qualifica, agenda e passa para uma pessoa da equipe quando precisa. Treinado com o tom de voz e as regras da sua empresa.</p></div><div><a class="btn btn-luz" href="#agente">Ver planos do agente</a></div></div>
       <div class="sol meio"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg><h3>Dashboards & BI</h3><p>Vendas, atendimentos, cobranças e metas num painel que abre no celular.</p><a class="mais" href="#bi">Ver exemplo</a></div>
       <div class="sol meio"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 14h4"/></svg><h3>Sistemas sob medida</h3><p>CRM, vendas, cobrança e estoque com a sua marca, feitos para a sua rotina.</p><a class="mais js-zap" data-msg="Olá, Éder! Quero saber sobre um sistema sob medida." href="#" target="_blank" rel="noopener">Quero um sistema</a></div>
@@ -280,17 +386,24 @@ details.q .r{padding:0 0 24px;color:var(--nevoa);max-width:44em}
     </div>
   </div></section>
 
-  <section class="bloco" id="bi" style="padding-top:0"><div class="wrap bi">
-    <div>
-      <h2>Os números da sua empresa num painel só</h2>
-      <p style="margin-top:16px;font-size:19px;color:var(--nevoa)">O site, o agente e o sistema alimentam o mesmo painel, que abre no celular.</p>
+  <!-- ===== CAP 04 · DADOS ===== -->
+  <section class="cap" id="bi" data-cap="04" data-nome="Dados" data-forma="barras" data-x="0" data-a="1">
+    <div class="cap-pin"><div class="wrap">
+      <span class="cap-n">Capítulo 04 · Dados & BI</span>
+      <h2 class="cap-t">Os números da sua empresa num painel só</h2>
+      <p class="cap-p">O site, o agente e o sistema alimentam o mesmo painel, que abre no celular.</p>
+    </div></div>
+  </section>
+  <section class="bloco" data-forma="barras" data-x="-.6" data-a=".35"><div class="wrap bi">
+    <div data-rv>
+      <span class="rotulo">O que você acompanha</span>
       <ul>
-        <li>📊 <span><b>Indicadores do dia:</b> faturamento, atendimentos e agendamentos.</span></li>
-        <li>🧭 <span><b>De onde vêm os clientes:</b> funil por origem, do primeiro contato à venda.</span></li>
-        <li>🔔 <span><b>Alertas de meta:</b> aviso quando algo sai do esperado.</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg><span><b>Indicadores do dia:</b> faturamento, atendimentos e agendamentos.</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4h18l-7 8v6l-4 2v-8z"/></svg><span><b>De onde vêm os clientes:</b> funil por origem, do primeiro contato à venda.</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg><span><b>Alertas de meta:</b> aviso quando algo sai do esperado.</span></li>
       </ul>
     </div>
-    <div class="painel" role="img" aria-label="Exemplo de painel com indicadores, gráfico de faturamento e funil de clientes">
+    <div class="painel" data-rv role="img" aria-label="Exemplo de painel com indicadores, gráfico de faturamento e funil de clientes">
       <div class="tp"><b>Painel · Clínica Sorriso</b><span>Exemplo ilustrativo</span></div>
       <div class="kp">
         <div><b data-cont="12480" data-pre="R$ ">R$ 0</b><small>faturado no mês</small> <em>+18%</em></div>
@@ -304,9 +417,9 @@ details.q .r{padding:0 0 24px;color:var(--nevoa);max-width:44em}
     </div>
   </div></section>
 
-  <section class="bloco" id="metodo" style="padding-top:0"><div class="wrap">
-    <div class="titulo"><h2>Como a gente trabalha</h2><p>Você não compra pacote pronto: primeiro a gente entende o seu negócio, depois cria a solução.</p></div>
-    <div class="met">
+  <section class="bloco" id="metodo" data-forma="onda" data-x="0" data-a=".7"><div class="wrap">
+    <div class="titulo" data-rv><span class="rotulo">Método</span><h2>Como a gente trabalha</h2><p>Você não compra pacote pronto: primeiro a gente entende o seu negócio, depois cria a solução.</p></div>
+    <div class="met" data-rv="grupo">
       <div class="cx"><div class="n">1</div><h3>Imersão</h3><p>Entendemos a rotina, os clientes e os números da empresa.</p></div>
       <div class="cx"><div class="n">2</div><h3>Desenho</h3><p>Proposta clara, com prazo e investimento.</p></div>
       <div class="cx"><div class="n">3</div><h3>Construção</h3><p>Em etapas, com testes e treinamento da equipe.</p></div>
@@ -314,16 +427,31 @@ details.q .r{padding:0 0 24px;color:var(--nevoa);max-width:44em}
     </div>
   </div></section>
 
-  <section class="bloco" style="padding-top:0"><div class="wrap">
-    <div class="caso">
-      <div><p style="color:var(--menta);font-weight:700;margin-bottom:10px">Caso real · Recife</p><h2 style="font-size:clamp(28px,4vw,42px)">Óticas DK: do caderno ao WhatsApp automático</h2><p class="q">A ótica, da Jaiane Kessyla, tinha as vendas parceladas anotadas no papel e a cobrança feita uma a uma. Hoje tudo passa pelo sistema, das vendas à recompra.</p></div>
+  <!-- ===== CAP 05 · CASO REAL ===== -->
+  <section class="cap" data-cap="05" data-nome="Caso real" data-forma="oculos" data-x="0" data-a="1">
+    <div class="cap-pin"><div class="wrap">
+      <span class="cap-n">Capítulo 05 · Caso real em Recife</span>
+      <h2 class="cap-t">Do caderno ao WhatsApp automático</h2>
+      <p class="cap-p">Como a Óticas DK trocou o papel por um sistema que cobra, lembra e atende sozinho.</p>
+    </div></div>
+  </section>
+  <section class="bloco" data-forma="oculos" data-x=".55" data-a=".35"><div class="wrap">
+    <div class="caso" data-rv>
+      <div><p style="color:var(--menta);font-weight:700;margin-bottom:10px">Caso real · Recife</p><h3>Óticas DK</h3><p class="q">A ótica, da Jaiane Kessyla, tinha as vendas parceladas anotadas no papel e a cobrança feita uma a uma. Hoje tudo passa pelo sistema, das vendas à recompra.</p></div>
       <div><div class="antes"><b class="r">Antes</b>Vendas parceladas no papel e cobrança manual, cliente por cliente.</div><div class="depois"><b class="r">Depois</b>Sistema de cobrança com carnê, Pix e boleto, lembretes pelo WhatsApp, agente de IA e site.</div></div>
     </div>
   </div></section>
 
-  <section class="bloco" id="investimento" style="padding-top:0"><div class="wrap">
-    <div class="titulo"><h2>Investimento</h2><p>Cada serviço tem uma implantação, paga uma vez, e uma mensalidade para manter tudo funcionando. O diagnóstico é gratuito.</p></div>
-    <div class="inv">
+  <!-- ===== CAP 06 · INVESTIMENTO ===== -->
+  <section class="cap" id="investimento" data-cap="06" data-nome="Investimento" data-forma="blocos" data-x="0" data-a="1">
+    <div class="cap-pin"><div class="wrap">
+      <span class="cap-n">Capítulo 06 · Investimento</span>
+      <h2 class="cap-t">Monte do seu jeito, pague só o que usa</h2>
+      <p class="cap-p">Cada serviço tem uma implantação, paga uma vez, e uma mensalidade para manter tudo funcionando. O diagnóstico é gratuito.</p>
+    </div></div>
+  </section>
+  <section class="bloco" data-forma="blocos" data-x="0" data-a=".3"><div class="wrap">
+    <div class="inv" data-rv="grupo">
       <div class="cx"><h3>Agente de IA</h3><b>R$ 197/mês</b><p class="imp">Implantação a partir de R$ 497</p><p>Atendimento 24h no WhatsApp, com CRM. <a href="#agente" style="color:var(--ambar)">Ver planos</a></p></div>
       <div class="cx"><h3>Landing page</h3><b>R$ 67/mês</b><p class="imp">Implantação R$ 397</p><p>Uma página para vender um produto ou serviço. Mensalidade com hospedagem, domínio e pequenos ajustes.</p></div>
       <div class="cx"><h3>Site institucional</h3><b>R$ 97/mês</b><p class="imp">Implantação R$ 897</p><p>Até 5 páginas, rápido no celular. Mensalidade com hospedagem, atualizações e suporte.</p></div>
@@ -331,12 +459,12 @@ details.q .r{padding:0 0 24px;color:var(--nevoa);max-width:44em}
       <div class="cx"><h3>Dashboard / BI</h3><b>R$ 197/mês</b><p class="imp">Implantação R$ 997</p><p>Os números da empresa num painel que se atualiza sozinho.</p></div>
       <div class="cx"><h3>Sistema sob medida</h3><b>a partir de R$ 297/mês</b><p class="imp">Implantação a partir de R$ 1.997</p><p>CRM, vendas, cobrança ou estoque com a sua marca.</p></div>
     </div>
-    <div class="combo"><b>Site + Agente de IA:</b> quem contrata a landing page ou o site junto com o agente ganha <strong>50% de desconto na implantação do site</strong>. <a class="js-zap" data-msg="Olá, Éder! Quero saber do combo site + Agente de IA." href="#" target="_blank" rel="noopener">Quero o combo</a></div>
+    <div class="combo" data-rv><b>Site + Agente de IA:</b> quem contrata a landing page ou o site junto com o agente ganha <strong>50% de desconto na implantação do site</strong>. <a class="js-zap" data-msg="Olá, Éder! Quero saber do combo site + Agente de IA." href="#" target="_blank" rel="noopener">Quero o combo</a></div>
     <div class="regras"><span><b>Implantação:</b> 50% no início e 50% na entrega</span><span><b>Sem fidelidade:</b> cancela quando quiser com 30 dias de aviso</span><span><b>Diagnóstico:</b> gratuito e sem compromisso</span></div>
   </div></section>
 
-  <section class="bloco" id="duvidas" style="padding-top:0"><div class="wrap">
-    <div class="titulo"><h2>Dúvidas</h2></div>
+  <section class="bloco" id="duvidas" data-forma="onda" data-x="0" data-a=".6"><div class="wrap">
+    <div class="titulo" data-rv><span class="rotulo">Dúvidas</span><h2>Perguntas frequentes</h2></div>
     <div class="duvidas">
       <details class="q"><summary>O agente de IA parece um robô?<i aria-hidden="true"></i></summary><div class="r">Ele é treinado com o tom de voz e as regras da sua empresa, escreve em mensagens curtas e entende áudio. Quando precisa de uma pessoa, chama a sua equipe. Você pode testar agora mesmo pelo botão "Testar o agente".</div></details>
       <details class="q"><summary>Já tenho um chatbot. Qual a diferença?<i aria-hidden="true"></i></summary><div class="r">A maioria dos chatbots só responde com menu de opções. O nosso agente conversa como uma pessoa, entende áudio e foto, marca o horário numa agenda própria, lembra o cliente na véspera, chama de volta quem perguntou e não fechou, manda parabéns no aniversário e a promoção do mês. Tudo fica num CRM com a sua marca.</div></details>
@@ -350,11 +478,12 @@ details.q .r{padding:0 0 24px;color:var(--nevoa);max-width:44em}
     </div>
   </div></section>
 
-  <section class="fim"><div class="wrap">
+  <!-- ===== FINAL ===== -->
+  <section class="fim" data-cap="07" data-nome="Próximo passo" data-forma="logo" data-x="0" data-a="1"><div class="fim-pin"><div class="wrap">
     <h2>Que tal ver o agente atendendo a sua empresa?</h2>
     <p>Converse com ele agora ou marque o diagnóstico gratuito pelo WhatsApp.</p>
     <div class="acoes"><a class="btn btn-luz" href="https://teste-agente-ia.vercel.app/agente" target="_blank" rel="noopener">Testar o agente</a><a class="btn btn-vidro js-zap" data-msg="Olá, Éder! Vi o site da Connecta e quero um diagnóstico gratuito." href="#" target="_blank" rel="noopener">Falar no WhatsApp</a></div>
-  </div></section>
+  </div></div></section>
 </main>
 <footer class="rodape"><div class="wrap"><span>© 2026 Connecta Digital · Recife, PE</span><span><a href="https://wa.me/5581999707538" target="_blank" rel="noopener">WhatsApp (81) 99970-7538</a> · <a href="https://instagram.com/connecta.dg" target="_blank" rel="noopener">@connecta.dg</a> · <a href="mailto:edersuportedigital@gmail.com">edersuportedigital@gmail.com</a></span></div></footer>
 <a class="zap js-zap" data-msg="Olá, Éder! Vi o site da Connecta e quero saber mais." href="#" target="_blank" rel="noopener" aria-label="Falar no WhatsApp"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.3-.7-2.8-1.1-4.5-3.9-4.7-4.1-.1-.2-1.1-1.5-1.1-2.8s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.4 0 .5l-.3.5-.4.4c-.1.2-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.1 1 2.1 1.3 2.4 1.5.3.1.5.1.6-.1l.9-1c.2-.3.4-.2.7-.1l1.9.9c.3.1.5.2.5.3.1.2.1.7-.1 1.3z"/></svg></a>
@@ -421,13 +550,188 @@ function anima(){
 }
 if('IntersectionObserver' in window&&!reduz){var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){anima();io.disconnect()}})},{threshold:.35});io.observe($('.painel'))}else anima();
 
-function abertura(){var m=M();if(!m)return;
-  m.animate([$('.relogio'),$('h1'),$('.abre p.sub'),$('.abre .acoes'),$('.selos')],{opacity:[0,1],transform:['translateY(18px)','translateY(0px)']},{duration:.7,delay:m.stagger(.09),ease:[.2,.8,.2,1]});
-  m.animate('.fone',{opacity:[0,1],transform:['translateY(40px) rotate(-3deg)','translateY(0px) rotate(0deg)']},{duration:.9,delay:.25,ease:[.2,.8,.2,1]});
-  m.animate('.etq',{opacity:[0,1],transform:['scale(.8)','scale(1)']},{duration:.5,delay:m.stagger(.15,{startDelay:.9}),ease:[.3,1.4,.5,1]});
+/* entradas animadas ao rolar */
+function revelar(){var m=M();if(!m||!('IntersectionObserver' in window))return;
+  var alvo=[];
+  $$('[data-rv]').forEach(function(el){var g=el.getAttribute('data-rv')==='grupo';var itens=g?Array.prototype.slice.call(el.children):[el];
+    if(el.getBoundingClientRect().top<innerHeight*.9)return;
+    itens.forEach(function(it){it.style.opacity='0'});alvo.push({el:el,itens:itens})});
+  var ob=new IntersectionObserver(function(es){es.forEach(function(e){if(!e.isIntersecting)return;ob.unobserve(e.target);
+    var a=alvo.filter(function(x){return x.el===e.target})[0];if(!a)return;
+    m.animate(a.itens,{opacity:[0,1],transform:['translateY(46px) scale(.98)','translateY(0px) scale(1)'],filter:['blur(8px)','blur(0px)']},{duration:.9,delay:m.stagger(.09),ease:[.2,.8,.2,1]})})},{threshold:.15});
+  alvo.forEach(function(a){ob.observe(a.el)});
 }
-function comecar(){abertura();conversa()}
+function comecar(){revelar();conversa()}
 if(document.readyState==='complete')setTimeout(comecar,50);else window.addEventListener('load',comecar);
+})();
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script>
+/* ===== Direção de cena: partículas que mudam de forma a cada capítulo ===== */
+(function(){
+'use strict';
+var reduz=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+var clamp=function(v,a,b){return Math.min(b,Math.max(a,v))};
+var sstep=function(a,b,v){var t=clamp((v-a)/(b-a),0,1);return t*t*(3-2*t)};
+var lerp=function(a,b,t){return a+(b-a)*t};
+var filme=document.getElementById('filme');
+var cenas=[].slice.call(document.querySelectorAll('.cena-txt'));
+var caps=[].slice.call(document.querySelectorAll('[data-cap]'));
+var marcos=[].slice.call(document.querySelectorAll('[data-forma]'));
+var prog=document.getElementById('prog'),hudN=document.getElementById('hud-n'),hudNome=document.getElementById('hud-nome'),hudTc=document.getElementById('hud-tc'),dica=document.getElementById('dica');
+
+/* títulos dos capítulos: palavra por palavra */
+var capTit=[].slice.call(document.querySelectorAll('.cap')).map(function(c){
+  var t=c.querySelector('.cap-t');var ws=t.textContent.trim().split(/\s+/);
+  t.innerHTML=ws.map(function(w){return '<span class="w">'+w+'</span>'}).join(' ');
+  return {el:c,ws:[].slice.call(t.querySelectorAll('.w')),n:c.querySelector('.cap-n'),p:c.querySelector('.cap-p'),pin:c.querySelector('.cap-pin .wrap')};
+});
+var fimPin=document.querySelector('.fim .fim-pin .wrap');
+
+var alvoP=0,p=0,formaAtual='poeira',vista={x:0,a:1,cima:1};
+function ler(){
+  var vh=innerHeight;
+  var r=filme.getBoundingClientRect();
+  alvoP=clamp(-r.top/(filme.offsetHeight-vh),0,1);
+  var doc=document.documentElement,tot=doc.scrollHeight-vh;
+  var g=tot>0?scrollY/tot:0;
+  prog.style.width=(g*100).toFixed(2)+'%';
+  var s=Math.floor(g*180),fr=Math.floor((g*180*24)%24);
+  hudTc.textContent='00:'+String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')+':'+String(fr).padStart(2,'0');
+  // capítulo atual
+  var cap=null;caps.forEach(function(c){if(c.getBoundingClientRect().top<vh*.6)cap=c});
+  hudN.textContent=cap?cap.dataset.cap:'00';hudNome.textContent=cap?cap.dataset.nome:'Abertura';
+  // forma atual
+  if(r.bottom>vh*.5){
+    formaAtual=alvoP<.22?'poeira':alvoP<.49?'focos':alvoP<.76?'rede':'bolha';vista={x:0,a:1,cima:1};
+  }else{
+    var m=null;marcos.forEach(function(el){if(el.getBoundingClientRect().top<vh*.55)m=el});
+    if(m){formaAtual=m.dataset.forma;vista={x:+m.dataset.x||0,a:m.dataset.a?+m.dataset.a:1,cima:(m.classList.contains('cap')||m.classList.contains('fim'))?1:0}}
+  }
+  // capítulos: revela palavras
+  capTit.forEach(function(c){
+    var rr=c.el.getBoundingClientRect();if(rr.bottom<-50||rr.top>vh+50)return;
+    var lp=clamp(-rr.top/(c.el.offsetHeight-vh),-.3,1),n=c.ws.length;
+    c.ws.forEach(function(w,i){var a=.08+i/n*.38;var o=reduz?1:.12+.88*sstep(a,a+.08,lp);w.style.opacity=o.toFixed(3);w.style.transform='translateY('+((1-o)*22).toFixed(1)+'px)';w.style.filter=o>.99?'none':'blur('+((1-o)*8).toFixed(1)+'px)'});
+    var extra=reduz?1:sstep(.42,.55,lp);c.n.style.opacity=reduz?1:(.3+.7*sstep(0,.1,lp)).toFixed(3);c.p.style.opacity=extra.toFixed(3);
+    var sai=reduz?0:sstep(.86,1,lp);c.pin.style.opacity=(1-sai).toFixed(3);c.pin.style.transform='translateY('+(-sai*30).toFixed(1)+'px)';c.pin.style.filter=sai>.01?'blur('+(sai*10).toFixed(1)+'px)':'none';
+  });
+  if(fimPin){var fr2=fimPin.parentNode.parentNode.getBoundingClientRect();var lf=clamp(-fr2.top/(fr2.height-vh),0,1);var of=reduz?1:sstep(.25,.5,lf);fimPin.style.opacity=of.toFixed(3);fimPin.style.filter=of>.99?'none':'blur('+((1-of)*10).toFixed(1)+'px)';fimPin.style.transform='translateY('+((1-of)*24).toFixed(1)+'px)'}
+}
+function legendas(){
+  if(dica)dica.style.opacity=String(1-sstep(0,.04,p));
+  cenas.forEach(function(b){
+    var a=+b.dataset.de,z=+b.dataset.ate,f=.045,o;
+    if(a===0)o=1-sstep(z-f,z,p);else o=sstep(a,a+f,p)*(1-sstep(z-f,z,p));
+    b.style.opacity=o.toFixed(3);b.style.transform='translate3d(0,'+((1-o)*(p<a+f?28:-28)).toFixed(1)+'px,0)';b.style.filter=o>.99?'none':'blur('+((1-o)*12).toFixed(1)+'px)';
+    b.classList.toggle('ativa',o>.5);b.style.visibility=o<.01?'hidden':'visible';
+  });
+}
+addEventListener('scroll',ler,{passive:true});addEventListener('resize',ler);ler();p=alvoP;
+
+var canvas=document.getElementById('cena'),renderer=null;
+try{if(window.THREE)renderer=new THREE.WebGLRenderer({canvas:canvas,antialias:false,alpha:true,powerPreference:'high-performance'})}catch(e){renderer=null}
+if(!renderer){canvas.style.display='none';(function semGL(){p+=(alvoP-p)*.12;legendas();requestAnimationFrame(semGL)})();return}
+
+var celular=innerWidth<700,N=celular?5000:9000;
+renderer.setPixelRatio(Math.min(devicePixelRatio,celular?1.5:2));
+var scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(50,1,.1,200);camera.position.set(0,0,14);
+var grupo=new THREE.Group();scene.add(grupo);
+
+var COR={azul:[.486,.549,1],ambar:[1,.71,.278],menta:[.369,.902,.71],papel:[.93,.94,1],coral:[1,.45,.36],fundo:[.35,.4,.8]};
+var R=Math.random,TAU=Math.PI*2;
+function g2(){return (R()+R()+R()-1.5)/1.5}
+/* cada forma devolve posições e cores para N partículas */
+function forma(fn){var pos=new Float32Array(N*3),col=new Float32Array(N*3);for(var i=0;i<N;i++){var o=fn(i,R());pos[i*3]=o[0];pos[i*3+1]=o[1];pos[i*3+2]=o[2];var c=o[3];col[i*3]=c[0];col[i*3+1]=c[1];col[i*3+2]=c[2]}return {pos:pos,col:col}}
+function corMix(r){return r<.75?COR.azul:r<.88?COR.papel:r<.95?COR.menta:COR.ambar}
+function contornoRet(w,h,rr,u){ // ponto no contorno de um retângulo arredondado
+  var per=2*(w+h-4*rr)+TAU*rr,d=u*per,lados=[w-2*rr,h-2*rr,w-2*rr,h-2*rr],x=-w/2+rr,y=-h/2;
+  var segs=[[1,0],[0,1],[-1,0],[0,-1]],cantos=[[w/2-rr,-h/2+rr],[w/2-rr,h/2-rr],[-w/2+rr,h/2-rr],[-w/2+rr,-h/2+rr]],ang=[-Math.PI/2,0,Math.PI/2,Math.PI];
+  for(var k=0;k<4;k++){if(d<lados[k]){return [x+segs[k][0]*d,y+segs[k][1]*d]}d-=lados[k];x+=segs[k][0]*lados[k];y+=segs[k][1]*lados[k];
+    var arco=Math.PI/2*rr;if(d<arco){var a=ang[k]+d/rr;return [cantos[k][0]+Math.cos(a)*rr,cantos[k][1]+Math.sin(a)*rr]}d-=arco;var a2=ang[k]+Math.PI/2;x=cantos[k][0]+Math.cos(a2)*rr;y=cantos[k][1]+Math.sin(a2)*rr}
+  return [x,y]}
+var golden=Math.PI*(3-Math.sqrt(5));
+var F={
+  poeira:forma(function(i,r){return [(R()-.5)*30,(R()-.5)*18,-12+R()*20,corMix(r)]}),
+  focos:forma(function(i,r){var c=[[-5,2.6,0],[5,2.4,-1],[-4.6,-2.8,-1],[4.8,-2.7,0]][i%4];if(r<.1)return [(R()-.5)*22,(R()-.5)*14,(R()-.5)*8,COR.fundo];
+    return [c[0]+g2()*1.5,c[1]+g2()*1.5,c[2]+g2()*1.5,r<.55?COR.ambar:r<.8?COR.coral:COR.papel]}),
+  radar:forma(function(i,r){var Rr=4.3;if(i%3===0){var lat=(Math.floor(R()*9)/8-.5)*Math.PI*.9,a=R()*TAU;return [Math.cos(lat)*Math.cos(a)*Rr,Math.sin(lat)*Rr,Math.cos(lat)*Math.sin(a)*Rr,Math.abs(lat)<.1?COR.ambar:COR.azul]}
+    var mer=Math.floor(R()*8)/8*Math.PI,t=R()*TAU;return [Math.cos(t)*Math.cos(mer)*Rr,Math.sin(t)*Rr,Math.cos(t)*Math.sin(mer)*Rr,r<.85?COR.azul:COR.menta]}),
+  rede:forma(function(i,r){var y=1-(i/(N-1))*2,rad=Math.sqrt(1-y*y),th=golden*i,Rr=4.4+(R()-.5)*.3;return [Math.cos(th)*rad*Rr,y*Rr,Math.sin(th)*rad*Rr,r<.8?COR.azul:r<.92?COR.menta:COR.ambar]}),
+  bolha:forma(function(i,r){var k=i%20,cy=.5;
+    if(k<11){var q=contornoRet(8.4,5.6,1.6,R());return [q[0]+(R()-.5)*.12,q[1]+cy+(R()-.5)*.12,(R()-.5)*.3,COR.menta]}
+    if(k<13){var t=R(),side=R()<.5;var ax=-2.6,ay=-2.8+cy,bx=-3.8,by=-4.2+cy,cx=-1.2,cyy=-2.8+cy;var px=side?lerp(ax,bx,t):lerp(bx,cx,t),py=side?lerp(ay,by,t):lerp(by,cyy,t);return [px,py,(R()-.5)*.3,COR.menta]}
+    if(k<17){var d=[-2.2,0,2.2][i%3],a=R()*TAU,rr=Math.sqrt(R())*.55;return [d+Math.cos(a)*rr,cy+Math.sin(a)*rr,(R()-.5)*.3,COR.papel]}
+    return [(R()-.5)*16,(R()-.5)*11,(R()-.5)*6-1,COR.fundo]}),
+  barras:forma(function(i,r){var VAL=[54,62,48,70,81,66,92];if(i%12===0)return [(R()-.5)*14,-3.7,(R()-.5)*1.6,COR.fundo];
+    var b=i%7,h=VAL[b]/100*7.4,x0=-5.4+b*1.8,w=1.1,face=R()*6|0,u=R()-.5,v=R(),x,y,z;
+    if(face<2){x=x0+u*w;y=-3.6+v*h;z=face?w/2:-w/2}else if(face<4){x=x0+(face===2?w/2:-w/2);y=-3.6+v*h;z=u*w}else{x=x0+u*w;y=-3.6+(face===4?h:0);z=(R()-.5)*w}
+    return [x,y,z,b===6?COR.ambar:(r<.8?COR.azul:COR.papel)]}),
+  oculos:forma(function(i,r){var k=i%10;
+    if(k<6){var lado=i%2?1:-1,a=R()*TAU,rr=2.05+(R()-.5)*.14;return [lado*2.55+Math.cos(a)*rr,Math.sin(a)*rr*.86,(R()-.5)*.2,COR.papel]}
+    if(k<7){var t=R();return [lerp(-.5,.5,t),.75+Math.sin(t*Math.PI)*.35,0,COR.papel]}
+    if(k<8){var l2=i%2?1:-1,t2=R();return [l2*4.6,.45-t2*.4,-t2*5,COR.azul]}
+    var l3=i%2?1:-1,a3=R()*TAU,r3=Math.sqrt(R())*1.9;return [l3*2.55+Math.cos(a3)*r3,Math.sin(a3)*r3*.86,-.1,r<.5?COR.menta:COR.fundo]}),
+  blocos:forma(function(i,r){var b=i%6,cx=[-3.6,0,3.6][b%3],cy=b<3?1.9:-1.9,s=2.3,e=R()*12|0,t=R()-.5,h=s/2,p;
+    var ar=[[t*s,-h,-h],[t*s,h,-h],[t*s,-h,h],[t*s,h,h],[-h,t*s,-h],[h,t*s,-h],[-h,t*s,h],[h,t*s,h],[-h,-h,t*s],[h,-h,t*s],[-h,h,t*s],[h,h,t*s]];p=ar[e];
+    var cs=[COR.menta,COR.azul,COR.papel,COR.azul,COR.ambar,COR.menta][b];return [cx+p[0],cy+p[1],p[2],cs]}),
+  onda:forma(function(i,r){var x=(R()-.5)*30,z=-14+R()*16;return [x,-3.4+Math.sin(x*.45)*.5+Math.cos(z*.6)*.4,z,r<.85?COR.azul:COR.menta]}),
+  logo:forma(function(i,r){var S=.12,x,y,c;
+    if(i%10<4){var q=contornoRet(64,64,18,R());x=q[0]+32;y=q[1]+32;c=R()<.6?COR.papel:COR.azul}
+    else{var bars=[[15,34,8,16,COR.ambar],[28,24,8,26,COR.papel],[41,14,8,36,COR.menta]],b=bars[i%3];x=b[0]+R()*b[2];y=b[1]+R()*b[3];c=b[4]}
+    return [(x-32)*S,(32-y)*S+.9,(R()-.5)*.25,c]})
+};
+var GIRA={rede:1,radar:1,barras:.35,blocos:.35,focos:.25,poeira:0,onda:0,bolha:0,oculos:0,logo:0};
+
+var pos=new Float32Array(F.poeira.pos),col=new Float32Array(F.poeira.col),seed=new Float32Array(N),rate=new Float32Array(N);
+for(var i=0;i<N;i++){seed[i]=R();rate[i]=.028+seed[i]*.05}
+var geo=new THREE.BufferGeometry();
+var aPos=new THREE.BufferAttribute(pos,3),aCol=new THREE.BufferAttribute(col,3);aPos.setUsage(THREE.DynamicDrawUsage);aCol.setUsage(THREE.DynamicDrawUsage);
+geo.setAttribute('position',aPos);geo.setAttribute('cor',aCol);geo.setAttribute('seed',new THREE.BufferAttribute(seed,1));
+var uni={uT:{value:0},uA:{value:1},uPix:{value:renderer.getPixelRatio()},uSize:{value:celular?44:40}};
+var mat=new THREE.ShaderMaterial({uniforms:uni,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,
+  vertexShader:'attribute vec3 cor;attribute float seed;uniform float uT,uPix,uSize;varying vec3 vC;varying float vD;void main(){vec3 p=position+vec3(sin(uT*.5+seed*40.),cos(uT*.4+seed*31.),sin(uT*.3+seed*17.))*.07;vec4 mv=modelViewMatrix*vec4(p,1.);gl_Position=projectionMatrix*mv;gl_PointSize=uSize*uPix*(.45+seed*.9)/-mv.z;vC=cor;vD=clamp((-mv.z-6.)/22.,0.,1.);}',
+  fragmentShader:'uniform float uA;varying vec3 vC;varying float vD;void main(){vec2 q=gl_PointCoord-.5;float d=length(q);if(d>.5)discard;float a=smoothstep(.5,0.,d);gl_FragColor=vec4(vC,a*uA*(.95-.5*vD));}'});
+var pts=new THREE.Points(geo,mat);pts.frustumCulled=false;grupo.add(pts);
+
+// linhas da rede
+var M=celular?200:320,sub=[],lp=[];
+for(var k=0;k<M;k++){var j=Math.floor(k/M*N);sub.push(new THREE.Vector3(F.rede.pos[j*3],F.rede.pos[j*3+1],F.rede.pos[j*3+2]))}
+for(var a=0;a<M;a++){var feitos=0;for(var b=a+1;b<M&&feitos<3;b++){if(sub[a].distanceTo(sub[b])<1.9){lp.push(sub[a].x,sub[a].y,sub[a].z,sub[b].x,sub[b].y,sub[b].z);feitos++}}}
+var lgeo=new THREE.BufferGeometry();lgeo.setAttribute('position',new THREE.Float32BufferAttribute(lp,3));
+var lmat=new THREE.LineBasicMaterial({color:0x7C8CFF,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false});
+var linhas=new THREE.LineSegments(lgeo,lmat);grupo.add(linhas);
+
+var escala=1,meiaLarg=6;
+function resize(){var w=innerWidth,h=innerHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();
+  var visL=2*14*Math.tan(THREE.MathUtils.degToRad(25))*camera.aspect;meiaLarg=visL/2;escala=Math.min(1,visL/12.8);celular=w<700}
+addEventListener('resize',resize);resize();
+
+var clock=new THREE.Clock(),rot=0,ultimaY=scrollY,gx=0,gy=0,gs=1,ga=1,tempoForma=0,formaAnt='';
+function quadro(){
+  var dt=Math.min(clock.getDelta(),.05),t=reduz?0:clock.elapsedTime;
+  p+=(alvoP-p)*(reduz?1:.09);legendas();
+  if(formaAtual!==formaAnt){formaAnt=formaAtual;tempoForma=0}tempoForma+=dt;
+  var alvo=F[formaAtual]||F.poeira,tp=alvo.pos,tc=alvo.col,kk=reduz?1:Math.min(1,dt*60);
+  for(var i=0,n=N*3;i<n;i++){var r=rate[(i/3)|0]*kk;pos[i]+=(tp[i]-pos[i])*r;col[i]+=(tc[i]-col[i])*r}
+  aPos.needsUpdate=true;aCol.needsUpdate=true;
+  // rotação: formas 3D giram (e respondem à rolagem); formas planas voltam de frente
+  var vel=scrollY-ultimaY;ultimaY=scrollY;var gira=GIRA[formaAtual]||0;
+  if(gira){rot+=dt*.12*gira+vel*.0009*gira}else{var alvoR=Math.round(rot/TAU)*TAU;rot+=(alvoR-rot)*Math.min(1,dt*2.2)}
+  grupo.rotation.y=rot;grupo.rotation.x=gira?Math.sin(t*.2)*.12:0;
+  var xAlvo=celular?0:vista.x*meiaLarg*.55;gx+=(xAlvo-gx)*Math.min(1,dt*2);ga+=(vista.a-ga)*Math.min(1,dt*2.5);
+  grupo.position.x=gx;
+  // nos capítulos o título fica em cima e a forma desce, por trás, como num plano de cinema
+  var yAlvo=vista.cima?(celular?-2.2:-3.3):0,sAlvo=vista.cima?(celular?.95:.66):1;gy+=(yAlvo-gy)*Math.min(1,dt*2);gs+=(sAlvo-gs)*Math.min(1,dt*2);
+  grupo.position.y=gy;grupo.scale.setScalar(escala*gs);
+  uni.uA.value=ga;uni.uT.value=t;
+  lmat.opacity=(formaAtual==='rede'?.22*sstep(1.2,2.4,tempoForma):0)*ga;
+  camera.position.x=Math.sin(t*.15)*.35;camera.position.y=Math.cos(t*.12)*.25;camera.lookAt(0,0,0);
+  renderer.render(scene,camera);
+  requestAnimationFrame(quadro);
+}
+quadro();
 })();
 </script>
 </body>
