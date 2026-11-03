@@ -2100,7 +2100,7 @@ function repCalc(a,b){
   const antes={};vendasOk().forEach(v=>{if(v.data<a)antes[v.clienteId]=1});
   const recor=Object.keys(compr).filter(k=>antes[k]).length;
   const orc=Object.values(S.vendas).filter(v=>v.aguardando&&biIn(v.data,a,b));
-  const vend=sumT(vs),recb=sumV(rec),desp=pagas.reduce((s,x)=>s+(+x.valor||0),0);
+  const vend=sumT(vs),recb=sumV(rec),desp=pagas.reduce((s,x)=>s+finPagoV(x),0);
   return {vs:vs,rec:rec,pagas:pagas,vend:vend,recb:recb,desp:desp,lucro:recb-desp,n:vs.length,ticket:vs.length?Math.round(vend/vs.length):0,
     itens:vs.reduce((s,v)=>s+(v.itens||[]).reduce((q,i)=>q+(+i.qtd||1),0),0),novos:novos.length,clientes:Object.keys(compr).length,recor:recor,
     orc:orc.length,orcV:sumT(orc),vencN:vencMes.length,vencOk:vencPagas.length,vencV:sumV(vencMes),vencAberto:sumV(vencMes.filter(x=>!x.p.pago)),
@@ -2148,7 +2148,7 @@ function viewRelatorios(){
   const it={};cur.vs.forEach(v=>(v.itens||[]).forEach(i=>{const nm=String(i.nome||'').trim()||'Sem nome',k=nm.toLowerCase();const e=it[k]||(it[k]={n:nm,v:0,q:0});e.v+=(+i.qtd||1)*(+i.valor||0);e.q+=(+i.qtd||1)}));
   const top=Object.values(it).sort((a,b)=>b.v-a.v).slice(0,6).map(x=>({n:x.n,v:x.v,l:brl(x.v),t:x.n+' · '+brl(x.v)+' · '+x.q+' un.'}));
   // despesas por tipo
-  const dc={};cur.pagas.forEach(x=>{const k=x.cat||'Outros';dc[k]=(dc[k]||0)+(+x.valor||0)});
+  const dc={};cur.pagas.forEach(x=>{const k=x.cat||'Outros';dc[k]=(dc[k]||0)+finPagoV(x)});
   const desp=Object.keys(dc).map(k=>({n:k,v:dc[k],l:brl(dc[k]),t:k+' · '+brl(dc[k])})).sort((a,b)=>b.v-a.v);
   // vendedores
   let vendHtml='';
@@ -2629,7 +2629,7 @@ function renderSheet(){
   if(!s){el.innerHTML='';el.dataset.key='';document.documentElement.classList.remove('lock');return}
   const key=s.kind+(s.id||'');const old=el.querySelector('.sheet-body');const top=(old&&el.dataset.key===key)?old.scrollTop:0;
   let html=null;
-  if(s.kind==='venda')html=sheetVenda(s.id);else if(s.kind==='os')html=sheetOS(s.id);else if(s.kind==='fup')html=sheetFup();else if(s.kind==='nova')html=sheetNova();else if(s.kind==='cliente')html=sheetCliente(s.id);else if(s.kind==='cliente-ok')html=sheetClienteOk(s.id);else if(s.kind==='mais')html=sheetMais();else if(s.kind==='hist')html=sheetHist();else if(s.kind==='recibo')html=sheetRecibo(s);else if(s.kind==='pagorc')html=sheetPagOrc(s);else if(s.kind==='pagparc')html=sheetPagParc(s);else if(s.kind==='vdatas')html=sheetDatas(s);else if(s.kind==='vendedor')html=sheetVend();else if(s.kind==='finpag')html=sheetFinPag(s);else if(s.kind==='relatorio')html=sheetRelatorio();else if(s.kind==='adm')html=sheetAdm();else if(s.kind==='admok')html=sheetAdmOk();
+  if(s.kind==='venda')html=sheetVenda(s.id);else if(s.kind==='os')html=sheetOS(s.id);else if(s.kind==='fup')html=sheetFup();else if(s.kind==='nova')html=sheetNova();else if(s.kind==='cliente')html=sheetCliente(s.id);else if(s.kind==='cliente-ok')html=sheetClienteOk(s.id);else if(s.kind==='mais')html=sheetMais();else if(s.kind==='hist')html=sheetHist();else if(s.kind==='recibo')html=sheetRecibo(s);else if(s.kind==='pagorc')html=sheetPagOrc(s);else if(s.kind==='pagparc')html=sheetPagParc(s);else if(s.kind==='vdatas')html=sheetDatas(s);else if(s.kind==='finedit')html=sheetFinEdit();else if(s.kind==='vendedor')html=sheetVend();else if(s.kind==='finpag')html=sheetFinPag(s);else if(s.kind==='relatorio')html=sheetRelatorio();else if(s.kind==='adm')html=sheetAdm();else if(s.kind==='admok')html=sheetAdmOk();
   if(html===null){ui.sheet=null;renderSheet();return}
   document.documentElement.classList.add('lock');
   el.innerHTML=html;
@@ -3612,15 +3612,25 @@ function premView(k){
 const FIN_CATS=['Laboratório','Aluguel','Salários','Fornecedor','Impostos','Água, luz e internet','Outros'];
 const finDoc=()=>{if(!S.config.fin)S.config.fin={id:'fin',itens:{}};if(!S.config.fin.itens)S.config.fin.itens={};return S.config.fin};
 const finSave=()=>persist('config','fin');
+/* quanto foi pago de fato numa conta: pode ser diferente do previsto (ex.: mais atendimentos na semana) */
+const finPagoV=x=>x&&x.pago?(x.pagoValor!=null&&x.pagoValor!==''?+x.pagoValor||0:+x.valor||0):0;
 const finBlank=()=>({desc:'',valor:'',venc:todayStr(),cat:FIN_CATS[0],freq:''});
 function finRow(x){
   const t=todayStr();let chip;
-  if(x.pago)chip='<span class="chip ok">Pago em '+fmtShort(x.pagoEm)+'</span>';
+  const pv=finPagoV(x),dif=x.pago&&pv!==x.valor;
+  if(x.pago)chip='<span class="chip ok">Pago '+(dif?brl(pv)+' ':'')+'em '+fmtShort(x.pagoEm)+'</span>';
   else if(x.venc<t)chip='<span class="chip bad">'+plural(diffDays(t,x.venc),'dia','dias')+' em atraso</span>';
   else if(x.venc===t)chip='<span class="chip warn">Vence hoje</span>';
   else chip='<span class="chip">Vence em '+plural(diffDays(x.venc,t),'dia','dias')+'</span>';
   const arm=ui.confirm===x.id;
-  return '<article class="row"><div class="row-main"><b>'+esc(x.desc)+(x.parte===1?' (parcial)':x.parte===2?' (restante)':'')+'</b><div class="meta">'+esc(x.cat)+' · '+fmtDate(x.venc)+(x.grupo?(x.freq==='semana'?' · semanal':' · mensal'):'')+'</div><div class="chips">'+chip+'</div></div><div class="row-side"><div class="amt">'+brl(x.valor)+'</div><div class="acts"><button class="btn sm '+(x.pago?'ghost':'ok')+'" data-act="'+(x.pago?'finpagar':'finpag')+'" data-id="'+x.id+'">'+(x.pago?'Desfazer':'Pago')+'</button><button class="btn sm ghost danger'+(arm?' armed':'')+'" data-act="findel" data-id="'+x.id+'">'+(arm?'Toque de novo':'Excluir')+'</button>'+(arm&&x.grupo?'<button class="btn sm ghost danger" data-act="findelnext" data-id="'+x.id+'">Excluir esta e as próximas</button>':'')+'</div></div></article>';
+  return '<article class="row"><div class="row-main"><b>'+esc(x.desc)+(x.parte===1?' (parcial)':x.parte===2?' (restante)':'')+'</b><div class="meta">'+esc(x.cat)+' · '+fmtDate(x.venc)+(x.grupo?(x.freq==='semana'?' · semanal':' · mensal'):'')+'</div>'+(x.obs?'<div class="meta" style="overflow-wrap:anywhere">'+esc(x.obs)+'</div>':'')+'<div class="chips">'+chip+(dif?'<span class="chip">Previsto '+brl(x.valor)+'</span>':'')+'</div></div><div class="row-side"><div class="amt">'+brl(x.pago?pv:x.valor)+'</div><div class="acts"><button class="btn sm" data-act="finedit" data-id="'+x.id+'">Editar</button><button class="btn sm '+(x.pago?'ghost':'ok')+'" data-act="'+(x.pago?'finpagar':'finpag')+'" data-id="'+x.id+'">'+(x.pago?'Desfazer':'Pago')+'</button><button class="btn sm ghost danger'+(arm?' armed':'')+'" data-act="findel" data-id="'+x.id+'">'+(arm?'Toque de novo':'Excluir')+'</button>'+(arm&&x.grupo?'<button class="btn sm ghost danger" data-act="findelnext" data-id="'+x.id+'">Excluir esta e as próximas</button>':'')+'</div></div></article>';
+}
+/* resumo por conta (mesma descrição) no mês: previsto, pago e quanto falta */
+function finResumo(doMes){
+  const g={};doMes.forEach(x=>{const k=x.desc.trim().toLowerCase();const r=g[k]||(g[k]={n:x.desc.trim(),q:0,qp:0,prev:0,pago:0,falta:0});r.q++;r.prev+=+x.valor||0;if(x.pago){r.qp++;r.pago+=finPagoV(x)}else r.falta+=+x.valor||0});
+  const rs=Object.values(g).filter(r=>r.q>1||r.pago!==r.prev-r.falta).sort((a,b)=>b.prev-a.prev);if(!rs.length)return '';
+  return '<div class="sh"><h2>Resumo por conta no mês</h2></div><div class="stack" style="margin-bottom:14px">'+rs.map(r=>'<div class="card" style="gap:8px"><div class="sale-top"><b>'+esc(r.n)+'</b><span class="chip'+(r.falta?'':' ok')+'">'+(r.falta?'Falta pagar '+brl(r.falta):'Tudo pago')+'</span></div>'+
+    '<div class="sale-bot"><span>Previsto '+brl(r.prev)+' · '+plural(r.q,'lançamento','lançamentos')+'</span><span>Pago <b>'+brl(r.pago)+'</b> ('+r.qp+' de '+r.q+')</span></div>'+(r.prev?barra(Math.round((r.pago)/r.prev*100)):'')+'</div>').join('')+'</div>';
 }
 function viewFin(){
   const t=todayStr(),m=ui.fm||(ui.fm=t.slice(0,7));const it=Object.values(finDoc().itens);
@@ -3628,7 +3638,7 @@ function viewFin(){
   const ps=allP();
   const rec=sumV(ps.filter(x=>x.p.pago&&x.p.pagoEm&&x.p.pagoEm.slice(0,7)===m));
   const aRec=ps.filter(x=>!x.p.pago&&x.p.venc.slice(0,7)===m).reduce((s,x)=>s+x.p.valor,0);
-  const pago=it.filter(x=>x.pago&&x.pagoEm&&x.pagoEm.slice(0,7)===m).reduce((s,x)=>s+x.valor,0);
+  const pago=it.filter(x=>x.pago&&x.pagoEm&&x.pagoEm.slice(0,7)===m).reduce((s,x)=>s+finPagoV(x),0);
   const aPagar=doMes.filter(x=>!x.pago).reduce((s,x)=>s+x.valor,0);
   const atraso=it.filter(x=>!x.pago&&x.venc<t);
   const lucro=rec-pago,prev=rec+aRec-pago-aPagar;
@@ -3643,7 +3653,7 @@ function viewFin(){
   '<div class="tiles" style="margin-bottom:14px">'+tile('Recebido no mês',brl(rec))+tile('Contas pagas',brl(pago))+tile('Lucro do mês',brl(lucro),lucro<0?'t-bad':'')+tile('Ainda a pagar',brl(aPagar))+tile('Previsão do mês',brl(prev),prev<0?'t-bad':'')+'</div>'+
   (atraso.length?'<div class="alert bad" style="cursor:default;margin-bottom:12px"><b>'+plural(atraso.length,'conta em atraso','contas em atraso')+'</b><span>'+brl(atraso.reduce((s,x)=>s+x.valor,0))+' para pagar</span></div>':'')+
   '<p class="sub" style="margin-bottom:10px">Lucro do mês = o que você recebeu dos clientes menos as contas que você pagou no mês. A previsão inclui também o que ainda vai entrar e sair.</p>'+
-  (doMes.length?'<div class="stack">'+doMes.map(finRow).join('')+'</div>':'<div class="empty">'+GLASSES+'<h3>Nenhuma conta neste mês</h3><p>Toque em Nova conta para lançar laboratório, aluguel, salários e outros custos.</p></div>');
+  finResumo(doMes)+(doMes.length?'<div class="sh"><h2>Contas do mês</h2></div><div class="stack">'+doMes.map(finRow).join('')+'</div>':'<div class="empty">'+GLASSES+'<h3>Nenhuma conta neste mês</h3><p>Toque em Nova conta para lançar laboratório, aluguel, salários e outros custos.</p></div>');
 }
 
 /* ----- metas e comissão ----- */
@@ -3696,9 +3706,22 @@ function sheetFinPag(s){
    (par?'<div class="sec"><div class="grid2"><div class="field"><span>Valor pago agora</span><input id="pg-val" type="text" inputmode="decimal" placeholder="0,00" value="'+esc(g.val||'')+'" autocomplete="off"></div><div class="field"><span>Data do pagamento</span><input id="pg-dt" type="date" value="'+esc(g.dt||t)+'"></div></div>'+
      '<div class="field"><span>Restante vence em</span><input id="pg-venc" type="date" value="'+esc(g.venc||addDays(t,15))+'"></div>'+
      '<p class="hint" id="pg-rest">'+pgHint(val,x.valor,'da conta',' O restante fica como conta a pagar até a data combinada.')+'</p></div>'
-   :'<p class="sub" style="margin:0">A conta de '+brl(x.valor)+' fica marcada como paga hoje.</p>');
+   :'<div class="grid2"><div class="field"><span>Valor pago</span><input id="pg-tot" type="text" inputmode="decimal" value="'+centsToStr(x.valor)+'" autocomplete="off"><span class="hint">Se pagou mais ou menos que o previsto, ajuste aqui.</span></div><div class="field"><span>Data do pagamento</span><input id="pg-tdt" type="date" value="'+t+'"></div></div>');
   const foot=par?'<button class="btn primary" data-act="finparcial" data-id="'+x.id+'">Registrar pagamento parcial</button>':'<button class="btn primary" data-act="fintudo" data-id="'+x.id+'">Marcar como paga</button>';
   return sheetShell('Pagar conta',body,foot);
+}
+/* editar conta: descrição, valor previsto, vencimento, quanto pagou e quando */
+function sheetFinEdit(){
+  const E=ui.fe;const x=E&&finDoc().itens[E.id];if(!x)return null;
+  const body='<div class="field"><span>Descrição</span><input type="text" data-fe="desc" value="'+esc(E.desc)+'" autocomplete="off"></div>'+
+   '<div class="grid2"><div class="field"><span>Valor previsto (R$)</span><input type="text" inputmode="decimal" data-fe="valor" value="'+esc(E.valor)+'"></div><div class="field"><span>Vencimento</span><input type="date" data-fe="venc" value="'+esc(E.venc)+'"></div></div>'+
+   '<div class="field"><span>Tipo de conta</span><select data-fe="cat">'+FIN_CATS.map(c=>'<option'+(E.cat===c?' selected':'')+'>'+c+'</option>').join('')+'</select></div>'+
+   '<div class="field"><span>Observação (opcional)</span><textarea data-fe="obs" placeholder="Ex.: 6 atendimentos nesta semana">'+esc(E.obs)+'</textarea></div>'+
+   '<label class="aguard-box"><input type="checkbox" data-fe="pago" data-act="finedpago"'+(E.pago?' checked':'')+'><span><b>Já paguei esta conta</b><small>Marque e informe quanto pagou de fato. Pode ser mais ou menos que o previsto.</small></span></label>'+
+   '<div id="fe-pg" class="grid2"'+(E.pago?'':' hidden')+'><div class="field"><span>Quanto paguei (R$)</span><input type="text" inputmode="decimal" data-fe="pagoValor" value="'+esc(E.pagoValor)+'" placeholder="0,00"></div><div class="field"><span>Pago em</span><input type="date" data-fe="pagoEm" value="'+esc(E.pagoEm)+'"></div></div>'+
+   (x.grupo?'<label class="aguard-box"><input type="checkbox" data-fe="serie"><span><b>Aplicar às próximas</b><small>Muda descrição, valor previsto e tipo das próximas contas desta repetição que ainda não foram pagas.</small></span></label>':'')+
+   '<p class="hint bad" id="fe-err" hidden></p>';
+  return sheetShell('Editar conta',body,'<button class="btn primary" data-act="finedsalvar">Salvar</button>');
 }
 /* cadastro de vendedor */
 function vdBlank(){return {sal:'',id:'vd'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),nome:'',email:'',pct:'',meta:'',novo:true,sel:{},q:''}}
@@ -3888,7 +3911,20 @@ Object.assign(A,{
     finSave();premLog('Conta lançada',D.desc.trim()+' · '+brl(valor)+(fq==='semana'?' · toda semana':fq==='mes'?' · todo mês':''));ui.fform=false;ui.ferr='';ui.fd=finBlank();ui.fm=D.venc.slice(0,7);render();toast(fq==='semana'?'Conta criada para as próximas 26 semanas':fq==='mes'?'Conta criada para os próximos 12 meses':'Conta salva')
   },
   finpag(d){const x=finDoc().itens[d.id];if(!x||x.pago)return;ui.pg={modo:'total'};ui.sheet={kind:'finpag',id:x.id};renderSheet()},
-  fintudo(d){A.finpagar(d);ui.pg=null;ui.sheet=null;renderSheet()},
+  fintudo(d){const x=finDoc().itens[d.id];if(!x||x.pago)return;const v=parseMoney(($('#pg-tot')||{}).value||''),dt=($('#pg-tdt')||{}).value||todayStr();
+    if(!(v>0))return toast('Informe o valor pago');if(!/^\d{4}-\d{2}-\d{2}$/.test(dt)||dt>todayStr())return toast('Informe uma data de pagamento até hoje');
+    x.pago=true;x.pagoEm=dt;if(v!==x.valor)x.pagoValor=v;else delete x.pagoValor;finSave();premLog('Conta paga',x.desc+' · '+brl(v));ui.pg=null;ui.sheet=null;renderSheet();render();toast('Conta marcada como paga: '+brl(v))},
+  finedit(d){const x=finDoc().itens[d.id];if(!x)return;ui.fe={id:x.id,desc:x.desc,cat:x.cat,valor:centsToStr(x.valor),venc:x.venc,obs:x.obs||'',pago:!!x.pago,pagoValor:x.pago?centsToStr(finPagoV(x)):'',pagoEm:x.pagoEm||todayStr(),serie:false};ui.sheet={kind:'finedit',id:x.id};renderSheet()},
+  finedsalvar(){const E=ui.fe;const doc=finDoc();const x=E&&doc.itens[E.id];if(!x)return;const q=k=>($('[data-fe="'+k+'"]')||{});
+    const desc=(q('desc').value||'').trim(),valor=parseMoney(q('valor').value||''),venc=q('venc').value||'',cat=q('cat').value||x.cat,obs=(q('obs').value||'').trim(),pg=!!q('pago').checked,pv=parseMoney(q('pagoValor').value||''),pe=q('pagoEm').value||'',serie=!!q('serie').checked;
+    const err=m=>{const e=$('#fe-err');if(e){e.textContent=m;e.hidden=false}toast(m)};const ok=z=>/^\d{4}-\d{2}-\d{2}$/.test(z);
+    if(!desc)return err('Informe a descrição');if(!(valor>0))return err('Informe o valor previsto');if(!ok(venc))return err('Informe o vencimento');
+    if(pg&&!(pv>0))return err('Informe quanto você pagou');if(pg&&(!ok(pe)||pe>todayStr()))return err('Informe a data do pagamento (até hoje)');
+    const antes=x.desc;Object.assign(x,{desc:desc,valor:valor,venc:venc,cat:cat});if(obs)x.obs=obs;else delete x.obs;
+    if(pg){x.pago=true;x.pagoEm=pe;if(pv!==valor)x.pagoValor=pv;else delete x.pagoValor}else{x.pago=false;x.pagoEm=null;delete x.pagoValor}
+    let n=0;if(serie&&x.grupo)Object.values(doc.itens).forEach(y=>{if(y!==x&&y.grupo===x.grupo&&y.venc>x.venc&&!y.pago){y.desc=desc;y.valor=valor;y.cat=cat;n++}});
+    finSave();premLog('Conta editada',antes+(antes!==desc?' → '+desc:'')+' · '+brl(valor)+(pg?' · pago '+brl(pv):''));ui.fe=null;ui.sheet=null;renderSheet();render();toast(n?'Conta salva e '+plural(n,'próxima atualizada','próximas atualizadas'):'Conta salva')},
+  finedpago(){const E=ui.fe;if(!E)return;const c=$('[data-fe="pago"]');const box=$('#fe-pg');if(box&&c)box.hidden=!c.checked;const pv=$('[data-fe="pagoValor"]'),vv=$('[data-fe="valor"]');if(c&&c.checked&&pv&&!pv.value&&vv)pv.value=vv.value},
   finparcial(d){const doc=finDoc();const x=doc.itens[d.id];if(!x||x.pago)return;
     const val=parseMoney(($('#pg-val')||{}).value||''),dt=($('#pg-dt')||{}).value||'',venc=($('#pg-venc')||{}).value||'';
     const ymd=z=>/^\d{4}-\d{2}-\d{2}$/.test(z);
@@ -3900,7 +3936,7 @@ Object.assign(A,{
     doc.itens[id]={id:id,desc:x.desc,valor:resto,venc:venc,cat:x.cat,pago:false,pagoEm:null,grupo:'',parte:2};
     finSave();premLog('Pagamento parcial de conta',x.desc+' · '+brl(val)+' de '+brl(val+resto));ui.pg=null;ui.sheet=null;renderSheet();ui.fm=ui.fm||venc.slice(0,7);render();
     toast('Pago '+brl(val)+'. Restante de '+brl(resto)+' vence em '+fmtDate(venc)+'.')},
-  finpagar(d){const x=finDoc().itens[d.id];if(!x)return;x.pago=!x.pago;x.pagoEm=x.pago?todayStr():null;finSave();premLog(x.pago?'Conta paga':'Pagamento de conta desfeito',x.desc+' · '+brl(x.valor));render();toast(x.pago?'Conta marcada como paga':'Pagamento desfeito')},
+  finpagar(d){const x=finDoc().itens[d.id];if(!x)return;x.pago=!x.pago;x.pagoEm=x.pago?todayStr():null;if(!x.pago)delete x.pagoValor;finSave();premLog(x.pago?'Conta paga':'Pagamento de conta desfeito',x.desc+' · '+brl(x.valor));render();toast(x.pago?'Conta marcada como paga':'Pagamento desfeito')},
   findel(d){if(ui.confirm!==d.id){ui.confirm=d.id;render();return}const x=finDoc().itens[d.id];if(x)premLog('Conta excluída',x.desc+' · '+brl(x.valor));delete finDoc().itens[d.id];finSave();ui.confirm='';render();toast('Conta excluída')},
   findelnext(d){const doc=finDoc();const x=doc.itens[d.id];if(!x)return;Object.keys(doc.itens).forEach(k=>{const y=doc.itens[k];if(y.grupo&&y.grupo===x.grupo&&y.venc>=x.venc)delete doc.itens[k]});finSave();premLog('Contas excluídas',x.desc+' · esta e as próximas');ui.confirm='';render();toast('Contas excluídas')},
   metaprev(){ui.mm=addMonths((ui.mm||todayStr().slice(0,7))+'-01',-1).slice(0,7);render()},
