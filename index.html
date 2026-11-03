@@ -1723,8 +1723,9 @@ function encargos(p,t){
   t=t||todayStr();const c=cfg();
   if(p.pago||p.venc>=t||c.encargos==='nao')return {multa:0,juros:0,total:p.valor,dias:0};
   const dias=diffDays(t,p.venc);
-  const multa=Math.round(p.valor*parsePct(c.multaPct)/100);
-  const juros=Math.round(p.valor*parsePct(c.jurosMesPct)/100*dias/30);
+  const base=p.valorOrig||p.valor; // juros lançados à mão não entram na base da multa/juros automáticos
+  const multa=Math.round(base*parsePct(c.multaPct)/100);
+  const juros=Math.round(base*parsePct(c.jurosMesPct)/100*dias/30);
   return {multa:multa,juros:juros,total:p.valor+multa+juros,dias:dias};
 }
 function ultimaCompra(cid){let m='';vendasOk().forEach(v=>{if(v.clienteId===cid&&v.data>m)m=v.data});return m}
@@ -1775,6 +1776,7 @@ const ICON={
   vendas:I('<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>'),
   clientes:I('<circle cx="12" cy="8.5" r="3.5"/><path d="M5 20c.8-3.6 3.6-5.5 7-5.5s6.2 1.9 7 5.5"/>'),
   cobrar:I('<path d="M6 16v-5a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 21h4"/>'),
+  listanegra:I('<circle cx="12" cy="12" r="8.5"/><path d="M6 6l12 12"/>'),
   caixa:I('<rect x="3.5" y="6" width="17" height="13" rx="2.5"/><path d="M3.5 10h17M16 14.5h1.5"/>'),
   lentes:I('<circle cx="12" cy="12" r="7.5"/><path d="M8.5 10.5a4 4 0 0 1 3-2.6"/>'),
   site:I('<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.6 2.4 3.8 5.2 3.8 8.5s-1.2 6.1-3.8 8.5c-2.6-2.4-3.8-5.2-3.8-8.5s1.2-6.1 3.8-8.5z"/>'),
@@ -1802,10 +1804,10 @@ const ICON={
   sair:I('<path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4M15 8l4 4-4 4M19 12H9"/>')
 };
 const GLASSES='<svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11.5" cy="23" r="7"/><circle cx="28.5" cy="23" r="7"/><path d="M18.5 22c1-1.3 2-1.3 3 0M4.5 21 7 12M35.5 21 33 12"/></svg>';
-const TABS=[['painel','Painel'],['vendas','Vendas'],['aguard','Orçamentos'],['clientes','Clientes'],['cobrar','Cobrar'],['entregas','Follow-up'],['agenda','Agenda financeira'],['os','Ordens de serviço'],['relacao','Relacionamento'],['caixa','Caixa'],['lentes','Lentes'],['demolentes','Demonstração de lentes'],['campanhas','Campanhas'],['financeiro','Financeiro'],['metas','Metas'],['relatorios','Relatórios'],['trafego','Tráfego Orgânico'],['whatsapp','WhatsApp Automático'],['agente','Agente de IA'],['wachat','Conversas do WhatsApp'],['exames','Exames de vista'],['ajustes','Ajustes']];
+const TABS=[['painel','Painel'],['vendas','Vendas'],['aguard','Orçamentos'],['clientes','Clientes'],['cobrar','Cobrar'],['listanegra','Lista negra'],['entregas','Follow-up'],['agenda','Agenda financeira'],['os','Ordens de serviço'],['relacao','Relacionamento'],['caixa','Caixa'],['lentes','Lentes'],['demolentes','Demonstração de lentes'],['campanhas','Campanhas'],['financeiro','Financeiro'],['metas','Metas'],['relatorios','Relatórios'],['trafego','Tráfego Orgânico'],['whatsapp','WhatsApp Automático'],['agente','Agente de IA'],['wachat','Conversas do WhatsApp'],['exames','Exames de vista'],['ajustes','Ajustes']];
 /* grupos do menu por finalidade: vendas e loja, clientes (follow-up, WhatsApp, campanhas, exames), financeiro (cobrar, agenda financeira, caixa...) e sistema */
-const TGORD=['painel','vendas','aguard','os','lentes','demolentes','clientes','relacao','entregas','trafego','wachat','whatsapp','agente','campanhas','site','exames','cobrar','agenda','caixa','financeiro','metas','relatorios','ajustes'];
-const TGRP={painel:'',vendas:'Vendas e loja',aguard:'Vendas e loja',os:'Vendas e loja',lentes:'Vendas e loja',demolentes:'Vendas e loja',clientes:'Clientes',relacao:'Clientes',entregas:'Clientes',whatsapp:'Clientes',wachat:'Clientes',trafego:'Clientes',agente:'Clientes',campanhas:'Clientes',site:'Clientes',agenda:'Financeiro',exames:'Clientes',cobrar:'Financeiro',caixa:'Financeiro',financeiro:'Financeiro',metas:'Financeiro',relatorios:'Financeiro',ajustes:'Sistema'};
+const TGORD=['painel','vendas','aguard','os','lentes','demolentes','clientes','relacao','entregas','trafego','wachat','whatsapp','agente','campanhas','site','exames','cobrar','listanegra','agenda','caixa','financeiro','metas','relatorios','ajustes'];
+const TGRP={painel:'',vendas:'Vendas e loja',aguard:'Vendas e loja',os:'Vendas e loja',lentes:'Vendas e loja',demolentes:'Vendas e loja',clientes:'Clientes',relacao:'Clientes',entregas:'Clientes',whatsapp:'Clientes',wachat:'Clientes',trafego:'Clientes',agente:'Clientes',campanhas:'Clientes',site:'Clientes',agenda:'Financeiro',exames:'Clientes',cobrar:'Financeiro',listanegra:'Financeiro',caixa:'Financeiro',financeiro:'Financeiro',metas:'Financeiro',relatorios:'Financeiro',ajustes:'Sistema'};
 function tabsGrp(tv,fn){let g='',o='';const ix=k=>{const n=TGORD.indexOf(k);return n<0?99:n};tv=tv.map((t,n)=>[t,n]).sort((a,b)=>ix(a[0][0])-ix(b[0][0])||a[1]-b[1]).map(x=>x[0]);tv.forEach(t=>{const k=TGRP[t[0]]||'';if(k&&k!==g){o+='<div class="tgrp'+''+'" aria-hidden="true">'+k+'</div>'}g=k;o+=fn(t)});return o}
 const saudacao=()=>{const h=new Date().getHours();return h<12?'Bom dia':h<18?'Boa tarde':'Boa noite'};
 function admTabInicial(){const q=new URLSearchParams(location.search),t=q.get('tab');if(t){q.delete('tab');history.replaceState(null,'',location.pathname+(q.toString()?'?'+q:''))}return t==='mensal'?'mensal':t==='iauso'?'iauso':'admin'}
@@ -1822,7 +1824,7 @@ function tabsVis(){
   if(IS_ADMIN)t=t.concat([ADMTAB,MENSTAB,IATAB],PROSPTABS);
   return t;
 }
-function viewTab(){const k=ui.tab;return k==='painel'?viewPainel():k==='agenda'?viewAgenda():k==='vendas'?viewVendas():k==='aguard'?viewAguard():k==='entregas'?viewFollow():k==='os'?viewOS():k==='clientes'?viewClientes():k==='cobrar'?viewCobrar():k==='relacao'?viewRelacao():k==='caixa'?viewCaixa():k==='lentes'?viewLentes():k==='demolentes'?viewDemoLentes():k==='admin'?viewAdmin():k==='iauso'?viewAdmIA():k==='mensal'?viewMensal():k==='relatorios'?viewRelatorios():(k==='financeiro'||k==='metas'||k==='campanhas'||k==='premium'||k==='whatsapp'||k==='exames'||k==='wachat'||k==='site'||k==='trafego'||k==='agente')?premView(k):viewAjustes()}
+function viewTab(){const k=ui.tab;return k==='painel'?viewPainel():k==='agenda'?viewAgenda():k==='vendas'?viewVendas():k==='aguard'?viewAguard():k==='entregas'?viewFollow():k==='os'?viewOS():k==='clientes'?viewClientes():k==='cobrar'?viewCobrar():k==='listanegra'?viewListaNegra():k==='relacao'?viewRelacao():k==='caixa'?viewCaixa():k==='lentes'?viewLentes():k==='demolentes'?viewDemoLentes():k==='admin'?viewAdmin():k==='iauso'?viewAdmIA():k==='mensal'?viewMensal():k==='relatorios'?viewRelatorios():(k==='financeiro'||k==='metas'||k==='campanhas'||k==='premium'||k==='whatsapp'||k==='exames'||k==='wachat'||k==='site'||k==='trafego'||k==='agente')?premView(k):viewAjustes()}
 let deferredInstall=null;
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;if(auth==='ok')render()});
 const demoTag=o=>o&&o.exemplo?'<span class="demo">exemplo</span>':'';
@@ -1943,6 +1945,8 @@ function pRow(x,o){
   else if(st==='atraso'){const e=encargos(p,t);chip='<span class="chip bad">'+plural(diffDays(t,p.venc),'dia','dias')+' em atraso</span>'+(e.total>p.valor?'<span class="chip bad">Atualizado '+brl(e.total)+'</span>':'')}
   else if(st==='hoje')chip='<span class="chip warn">Vence hoje</span>';
   else chip='<span class="chip">Vence em '+plural(diffDays(p.venc,t),'dia','dias')+'</span>';
+  const jm=p.jurosAdd?'<span class="chip warn">Inclui '+brl(p.jurosAdd)+' de juros</span>':'';
+  const jbtn=(!p.pago&&(p.jurosAdd||(st==='atraso'&&diffDays(t,p.venc)>=4)))?'<button class="btn sm" data-act="jurosparc" data-v="'+v.id+'" data-p="'+i+'">'+(p.jurosAdd?'Juros':'+ Juros')+'</button>':'';
   const contact=(!p.pago&&p.contatoEm)?'<span class="chip acc">Cobrança aberta em '+fmtShort(p.contatoEm)+'</span>':'';
   const title=o.sheet?'<b>'+pLabel(v,p)+'</b>':'<button class="link" data-act="openvenda" data-v="'+v.id+'">'+esc(c.nome)+demoTag(v)+'</button>';
   let meta;
@@ -1954,7 +1958,7 @@ function pRow(x,o){
   const baixa=p.pago?'<button class="btn sm" data-act="recibo" data-v="'+v.id+'" data-p="'+i+'">Recibo</button><button class="btn sm ghost" data-act="baixa" data-v="'+v.id+'" data-p="'+i+'">Desfazer</button>':'<button class="btn sm ok" data-act="receber" data-v="'+v.id+'" data-p="'+i+'">Recebido</button>';
   const kind=st==='atraso'?'atraso':'lembrete';
   const wa=(!p.pago&&c.whatsapp)?'<a class="btn sm wa"'+WAT+' data-contact="p" data-v="'+v.id+'" data-pi="'+i+'" href="'+esc(waLink(c.whatsapp,fillTpl(tpl(kind),ctx(v,p,c))))+'">WhatsApp</a>':'';
-  return '<article class="row"><div class="row-main">'+title+'<div class="meta">'+meta+'</div><div class="chips">'+chip+contact+'</div></div><div class="row-side"><div class="amt">'+brl(p.valor)+'</div><div class="acts">'+wa+premPix(x)+baixa+'</div></div></article>';
+  return '<article class="row"><div class="row-main">'+title+'<div class="meta">'+meta+'</div><div class="chips">'+chip+jm+contact+'</div></div><div class="row-side"><div class="amt">'+brl(p.valor)+'</div><div class="acts">'+wa+premPix(x)+jbtn+baixa+'</div></div></article>';
 }
 function recRow(x,showDate){
   const v=x.v,p=x.p,c=x.c;
@@ -2462,6 +2466,28 @@ function viewCobrar(){
   '<div class="panel"><div class="sh"><h2>Vencem em até 3 dias</h2></div><div class="stack">'+(soon.length?soon.map(x=>pRow(x)).join(''):none('Nenhum vencimento nos próximos dias.'))+'</div></div></div>';
 }
 
+/* ---------- lista negra: quem atrasou mais de 20 dias ou fez orçamento e não voltou só compra à vista ---------- */
+const LN_DIAS=20;
+const lnDoc=()=>{if(!S.config.ln)S.config.ln={id:'ln',man:{},lib:{}};const d=S.config.ln;if(!d.man)d.man={};if(!d.lib)d.lib={};return d};
+const lnSave=()=>persist('config','ln');
+function listaNegra(){
+  const t=todayStr(),d=lnDoc(),m={};const add=(cid,o)=>{const lib=d.lib[cid];if(o.tipo!=='manual'&&lib&&o.desde<=lib)return;(m[cid]||(m[cid]={cid:cid,mot:[]})).mot.push(o)};
+  vendasOk().forEach(v=>v.parcelas.forEach(p=>{if(p.pago||!p.venc)return;const dd=diffDays(t,p.venc);if(p.venc<t&&dd>LN_DIAS)add(v.clienteId,{tipo:'atraso',desde:addDays(p.venc,LN_DIAS+1),txt:pLabel(v,p)+' de '+brl(p.valor)+' com '+plural(dd,'dia','dias')+' de atraso',v:v.id})}));
+  orcamentos().forEach(v=>{const lim=/^\d{4}-\d{2}-\d{2}$/.test(v.pagarEm||'')?v.pagarEm:(v.criadoEm?addDays(ymd(new Date(v.criadoEm)),15):'');if(lim&&lim<t)add(v.clienteId,{tipo:'orcamento',desde:addDays(lim,1),txt:'Orçamento de '+brl(v.total)+' sem voltar para pagar'+(v.pagarEm?' (combinado para '+fmtDate(v.pagarEm)+')':''),v:v.id})});
+  Object.keys(d.man).forEach(cid=>{const x=d.man[cid]||{};add(cid,{tipo:'manual',desde:x.em||t,txt:'Colocado à mão'+(x.motivo?': '+x.motivo:'')+(x.em?' em '+fmtDate(x.em):'')})});
+  return m;
+}
+const lnBloq=cid=>!!(cid&&listaNegra()[cid]);
+function viewListaNegra(){
+  const m=listaNegra(),rows=Object.values(m).filter(r=>S.clientes[r.cid]).sort((a,b)=>S.clientes[a.cid].nome.localeCompare(S.clientes[b.cid].nome));
+  const cs=Object.values(S.clientes).filter(c=>!m[c.id]).sort((a,b)=>a.nome.localeCompare(b.nome));
+  const row=r=>{const c=S.clientes[r.cid];const aberto=clienteResumo(c).aberto;return '<article class="row"><div class="row-main"><button class="link" data-act="editcliente" data-c="'+c.id+'">'+esc(c.nome)+'</button><div class="meta">'+esc(c.whatsapp||'Sem WhatsApp')+(aberto?' · em aberto '+brl(aberto):'')+'</div><div class="chips">'+r.mot.map(o=>'<span class="chip '+(o.tipo==='atraso'?'bad':'warn')+'">'+esc(o.txt)+'</span>').join('')+'</div></div><div class="row-side"><div class="acts"><button class="btn sm" data-act="lnliberar" data-c="'+c.id+'">Liberar crédito</button></div></div></article>'};
+  return pageHead('Lista negra',rows.length?plural(rows.length,'cliente sem crédito no boleto','clientes sem crédito no boleto'):'Nenhum cliente na lista')+
+  '<p class="sub" style="margin-bottom:12px">Entra aqui sozinho quem tem parcela com mais de '+LN_DIAS+' dias de atraso ou quem fez orçamento e não voltou na data combinada (ou em 15 dias, se não tiver data). Quem está na lista só pode comprar à vista (Pix ou cartão): o boleto parcelado fica bloqueado na venda. Quando a parcela atrasada é paga, o cliente sai sozinho. Você também pode liberar o crédito à mão.</p>'+
+  '<div class="card" style="gap:10px;margin-bottom:14px"><b>Colocar um cliente na lista</b><div class="grid2"><div class="field"><span>Cliente</span><select id="ln-cli"><option value="">Escolha o cliente</option>'+cs.map(c=>'<option value="'+c.id+'">'+esc(c.nome)+'</option>').join('')+'</select></div><div class="field"><span>Motivo (opcional)</span><input id="ln-mot" type="text" placeholder="Ex.: cheque devolvido" autocomplete="off"></div></div><div><button class="btn" data-act="lnadd">Colocar na lista negra</button></div></div>'+
+  '<div class="stack">'+(rows.length?rows.map(row).join(''):'<div class="empty">'+GLASSES+'<h3>Ninguém na lista negra</h3><p>Nenhum cliente com mais de '+LN_DIAS+' dias de atraso nem orçamento esquecido.</p></div>')+'</div>';
+}
+
 /* ---------- relacionamento ---------- */
 function viewRelacao(){
   const t=todayStr(),ano=t.slice(0,4);
@@ -2629,7 +2655,7 @@ function renderSheet(){
   if(!s){el.innerHTML='';el.dataset.key='';document.documentElement.classList.remove('lock');return}
   const key=s.kind+(s.id||'');const old=el.querySelector('.sheet-body');const top=(old&&el.dataset.key===key)?old.scrollTop:0;
   let html=null;
-  if(s.kind==='venda')html=sheetVenda(s.id);else if(s.kind==='os')html=sheetOS(s.id);else if(s.kind==='fup')html=sheetFup();else if(s.kind==='nova')html=sheetNova();else if(s.kind==='cliente')html=sheetCliente(s.id);else if(s.kind==='cliente-ok')html=sheetClienteOk(s.id);else if(s.kind==='mais')html=sheetMais();else if(s.kind==='hist')html=sheetHist();else if(s.kind==='recibo')html=sheetRecibo(s);else if(s.kind==='pagorc')html=sheetPagOrc(s);else if(s.kind==='pagparc')html=sheetPagParc(s);else if(s.kind==='vdatas')html=sheetDatas(s);else if(s.kind==='finedit')html=sheetFinEdit();else if(s.kind==='vendedor')html=sheetVend();else if(s.kind==='finpag')html=sheetFinPag(s);else if(s.kind==='relatorio')html=sheetRelatorio();else if(s.kind==='adm')html=sheetAdm();else if(s.kind==='admok')html=sheetAdmOk();
+  if(s.kind==='venda')html=sheetVenda(s.id);else if(s.kind==='os')html=sheetOS(s.id);else if(s.kind==='fup')html=sheetFup();else if(s.kind==='nova')html=sheetNova();else if(s.kind==='cliente')html=sheetCliente(s.id);else if(s.kind==='cliente-ok')html=sheetClienteOk(s.id);else if(s.kind==='mais')html=sheetMais();else if(s.kind==='hist')html=sheetHist();else if(s.kind==='recibo')html=sheetRecibo(s);else if(s.kind==='pagorc')html=sheetPagOrc(s);else if(s.kind==='pagparc')html=sheetPagParc(s);else if(s.kind==='vdatas')html=sheetDatas(s);else if(s.kind==='finedit')html=sheetFinEdit();else if(s.kind==='juros')html=sheetJuros(s);else if(s.kind==='vendedor')html=sheetVend();else if(s.kind==='finpag')html=sheetFinPag(s);else if(s.kind==='relatorio')html=sheetRelatorio();else if(s.kind==='adm')html=sheetAdm();else if(s.kind==='admok')html=sheetAdmOk();
   if(html===null){ui.sheet=null;renderSheet();return}
   document.documentElement.classList.add('lock');
   el.innerHTML=html;
@@ -2791,7 +2817,7 @@ function sheetNova(){
   '<details><summary>Grau do cliente (opcional)</summary><div style="margin-top:10px">'+receitaForm((D.novo.receitas||(D.novo.receitas=[blankReceita()]))[0],0,'bind','novo.receitas.',false)+'</div></details></div></div>'+
   '<div class="sec"><h3>Itens da venda</h3><div id="items" class="stack"></div><div class="foot-row"><button class="btn" data-act="additem" data-t="produto">+ Produto</button><button class="btn" data-act="additem" data-t="lente">+ Lente</button></div>'+
   (parsePct(D.jurosVenda)?'<div class="field" data-pgparc'+(isAvista(D)?' hidden':'')+'><span>Juros sobre o total da venda (%), opcional</span><input type="text" inputmode="decimal" data-bind="jurosVenda" value="'+esc(D.jurosVenda)+'" placeholder="0"></div>':'')+'</div>'+
-  premVendSale(D)+'<div class="sec"><h3>Pagamento</h3>'+((!D.editId||(S.vendas[D.editId]&&S.vendas[D.editId].aguardando))?'<label class="aguard-box"><input type="checkbox" data-aguard'+(D.aguardando?' checked':'')+'><span><b>Aguardando pagamento</b><small>Use para orçamento: o cliente ainda vai pagar ou dar a entrada. Não conta como venda, nem no caixa, nem nas cobranças. Vira venda quando você marcar como pago.</small></span></label>'+pgDataField(D):'')+'<div class="field"><span>Forma de pagamento</span><div class="seg s3" role="radiogroup" aria-label="Forma de pagamento"><label><input type="radio" name="forma" value="Pix" data-bind="forma"'+(D.forma==='Pix'?' checked':'')+'><span>'+(D.legPix?'Pix':'Pix à vista')+'</span></label><label><input type="radio" name="forma" value="Boleto" data-bind="forma"'+(D.forma==='Boleto'?' checked':'')+'><span>Boleto parcelado</span></label><label><input type="radio" name="forma" value="Cartão de crédito" data-bind="forma"'+(D.forma==='Cartão de crédito'?' checked':'')+'><span>Cartão de crédito</span></label></div></div>'+
+  premVendSale(D)+'<div class="sec"><h3>Pagamento</h3>'+((!D.editId||(S.vendas[D.editId]&&S.vendas[D.editId].aguardando))?'<label class="aguard-box"><input type="checkbox" data-aguard'+(D.aguardando?' checked':'')+'><span><b>Aguardando pagamento</b><small>Use para orçamento: o cliente ainda vai pagar ou dar a entrada. Não conta como venda, nem no caixa, nem nas cobranças. Vira venda quando você marcar como pago.</small></span></label>'+pgDataField(D):'')+'<p class="hint bad" data-lnwarn hidden style="margin:0 0 8px"></p><div class="field"><span>Forma de pagamento</span><div class="seg s3" role="radiogroup" aria-label="Forma de pagamento"><label><input type="radio" name="forma" value="Pix" data-bind="forma"'+(D.forma==='Pix'?' checked':'')+'><span>'+(D.legPix?'Pix':'Pix à vista')+'</span></label><label><input type="radio" name="forma" value="Boleto" data-bind="forma"'+(D.forma==='Boleto'?' checked':'')+'><span>Boleto parcelado</span></label><label><input type="radio" name="forma" value="Cartão de crédito" data-bind="forma"'+(D.forma==='Cartão de crédito'?' checked':'')+'><span>Cartão de crédito</span></label></div></div>'+
   '<p class="sub" data-pgpix'+(isAvista(D)&&D.forma!=='Cartão de crédito'?'':' hidden')+' style="margin:0 0 10px">Pagamento à vista no Pix: o valor total entra como recebido na data da venda, sem parcelas.</p>'+
   '<div data-pgcart'+(D.forma==='Cartão de crédito'?'':' hidden')+'><div class="grid2"><div class="field"><span>Em quantas vezes</span><select data-bind="cartaoN">'+Array.from({length:18},(_,i)=>i+1).map(k=>'<option value="'+k+'"'+(String(D.cartaoN||'1')===String(k)?' selected':'')+'>'+(k===1?'1x (à vista)':k+'x')+'</option>').join('')+'</select></div><div class="field"><span>Valor de cada parcela (R$), opcional</span><input type="text" inputmode="decimal" data-bind="cartaoParc" value="'+esc(D.cartaoParc||'')+'" placeholder="0,00"></div></div><p class="sub" style="margin:0 0 10px">O valor total entra como recebido na data da venda e o cliente não fica com parcelas para cobrar. Anote aqui quanto ficou cada parcela na maquininha, já com os juros dela. É só anotação, não muda o total da venda.</p></div>'+
   '<div class="grid2"><div class="field"><span>Data da venda</span><input type="date" data-bind="data" value="'+esc(D.data)+'"></div><div class="field"><span>Data de entrega (opcional)</span><input type="date" data-bind="entrega" value="'+esc(D.entrega||'')+'"></div></div>'+
@@ -2817,11 +2843,14 @@ function renderItems(){
 }
 // Pix = à vista (sem parcelas e sem juros); Boleto = parcelado. Vendas antigas parceladas no Pix continuam como estavam.
 const isAvista=D=>!!D&&((D.forma==='Pix'&&!D.legPix)||D.forma==='Cartão de crédito');
+function lnToggle(){const D=ui.draft;if(!D)return;const b=lnBloq(D.clienteId),r=$('input[name=forma][value=Boleto]'),w=$('[data-lnwarn]');if(r){r.disabled=b;r.parentElement.style.opacity=b?'.45':''}if(w){w.hidden=!b;if(b){const o=listaNegra()[D.clienteId];w.innerHTML='<b>Cliente na lista negra: só à vista.</b> '+esc(o.mot.map(x=>x.txt).join(' · '))}}
+  if(b&&D.forma==='Boleto'){D.forma='Pix';const px=$('input[name=forma][value=Pix]');if(px)px.checked=true;pgToggle()}}
 function pgToggle(){const av=isAvista(ui.draft),cc=!!ui.draft&&ui.draft.forma==='Cartão de crédito';document.querySelectorAll('[data-pgparc]').forEach(el=>el.hidden=av);document.querySelectorAll('[data-pgpix]').forEach(el=>el.hidden=!av||cc);document.querySelectorAll('[data-pgcart]').forEach(el=>el.hidden=!cc)}
 function draftState(){
   const D=ui.draft;const errs=[],targets=[];const E=(m,sel)=>{errs.push(m);targets.push(sel||'')};
   if(D.clienteId==='__novo'){if(!D.novo.nome.trim())E('Informe o nome do cliente','[data-bind="novo.nome"]');else if(cpfDup(D.novo.cpf))E('Já existe cliente com este CPF: '+cpfDup(D.novo.cpf).nome,'[data-bind="novo.cpf"]')}
   else if(!D.clienteId)E('Escolha o cliente','#f-cli');
+  if(D.clienteId&&!isAvista(D)&&lnBloq(D.clienteId)&&!(D.editId&&S.vendas[D.editId]&&!S.vendas[D.editId].aguardando&&S.vendas[D.editId].forma===D.forma))E('Cliente na lista negra: só pode comprar à vista (Pix ou cartão)','#f-cli');
   const av0=isAvista(D);
   const itens=D.itens.map(it=>({tipo:it.tipo,nome:(it.nome||'').trim(),qtd:Math.max(1,parseInt(it.qtd,10)||1),valor:parseMoney(it.valor),juros:av0?0:parsePct(it.juros),lenteId:it.lenteId||''}));
   if(!itens.length)errs.push('Adicione ao menos um item');
@@ -2840,7 +2869,7 @@ function draftState(){
   return {errs:errs,targets:targets,itens:itens,c:c,n:n,av:av,jv:jv,jp:jp,entrada:entradaIn,parc:splitParcelas(c.saldo,n,D.primeira,D.freq)};
 }
 function updateVenda(){
-  if(!ui.draft||!$('#sum'))return;const st=draftState();const c=st.c;
+  if(!ui.draft||!$('#sum'))return;lnToggle();const st=draftState();const c=st.c;
   document.querySelectorAll('[data-line]').forEach(el=>{const l=c.linhas[+el.dataset.line];el.textContent=brl(l?l.t:0)});
   let h='<div class="sum-row"><span>Itens sem juros</span><span>'+brl(c.base)+'</span></div>';
   if(c.juros-c.jp>0)h+='<div class="sum-row"><span>Juros aplicados</span><span>'+brl(c.juros-c.jp)+'</span></div>';
@@ -2918,8 +2947,8 @@ function sheetCliente(id){
   const D=ui.cdraft;if(!D)return null;const editing=id&&S.clientes[id];
   const r=editing?clienteResumo(S.clientes[id]):null;
   const vs=editing?r.vs.slice().sort((a,b)=>b.data.localeCompare(a.data)):[];
-  const kid=!!D.crianca;
-  const body='<div class="sec"><label class="field cli-antigo"><input type="checkbox" id="cli-antigo"'+(D.antigo?' checked':'')+'><span><b>Já é cliente da ótica</b><small>Já comprou antes, só não estava no sistema. A mensagem de boas-vindas vai ser de reencontro, não de cliente novo.</small></span></label><label class="field" style="flex-direction:row;align-items:center;gap:10px;cursor:pointer"><input type="checkbox" id="cli-crianca"'+(kid?' checked':'')+' style="width:20px;height:20px;flex:none"><span style="margin:0">Os óculos são para uma criança (o cadastro fica no nome do pai ou da mãe)</span></label>'+
+  const kid=!!D.crianca;const lnr=editing&&listaNegra()[id];
+  const body=(lnr?'<div class="alert bad" style="cursor:default;margin-bottom:10px"><b>Na lista negra: só compra à vista</b><span>'+esc(lnr.mot.map(x=>x.txt).join(' · '))+'</span></div>':'')+'<div class="sec"><label class="field cli-antigo"><input type="checkbox" id="cli-antigo"'+(D.antigo?' checked':'')+'><span><b>Já é cliente da ótica</b><small>Já comprou antes, só não estava no sistema. A mensagem de boas-vindas vai ser de reencontro, não de cliente novo.</small></span></label><label class="field" style="flex-direction:row;align-items:center;gap:10px;cursor:pointer"><input type="checkbox" id="cli-crianca"'+(kid?' checked':'')+' style="width:20px;height:20px;flex:none"><span style="margin:0">Os óculos são para uma criança (o cadastro fica no nome do pai ou da mãe)</span></label>'+
   (kid?'<div class="grid2"><div class="field"><span>Nome da criança (quem vai usar os óculos)</span><input type="text" data-cbind="filho" value="'+esc(D.filho||'')+'" autocomplete="off"></div><div class="field"><span>Nascimento da criança (opcional)</span><input type="date" data-cbind="filhoNasc" value="'+esc(D.filhoNasc||'')+'"></div></div>':'')+
   '<div class="field"><span>'+(kid?'Nome completo do responsável (pai, mãe ou quem paga)':'Nome completo')+'</span><input type="text" data-cbind="nome" value="'+esc(D.nome)+'" autocomplete="off">'+(kid?'<span class="hint">CPF, WhatsApp, cobranças e mensagens ficam no nome do responsável.</span>':'')+'</div>'+
   '<div class="grid2"><div class="field"><span>CPF</span><input type="text" inputmode="numeric" data-mask="cpf" data-cbind="cpf" value="'+esc(D.cpf)+'" placeholder="000.000.000-00"><span class="hint"></span></div><div class="field"><span>WhatsApp com DDD</span><input type="text" inputmode="tel" data-mask="tel" data-cbind="whatsapp" value="'+esc(D.whatsapp)+'" placeholder="(81) 99999-9999"></div></div>'+
@@ -2963,6 +2992,18 @@ function sheetDatas(s){
     '<p class="hint bad" id="dt-err" hidden></p>';
   const foot='<div class="foot-row"><button class="btn" data-act="openvenda" data-v="'+v.id+'">Voltar</button><button class="btn primary" data-act="salvardatas" data-v="'+v.id+'">Salvar datas</button></div>';
   return sheetShell('Alterar datas',body,foot);
+}
+/* juros lançados à mão numa parcela em atraso (a partir de 4 dias): somam ao valor da parcela; dá para tirar depois */
+function sheetJuros(s){
+  const v=S.vendas[s.id];const p=v&&v.parcelas[s.i];if(!p||p.pago)return null;const c=S.clientes[v.clienteId]||{nome:''};const t=todayStr();
+  const base=p.valorOrig||p.valor,dias=p.venc<t?diffDays(t,p.venc):0;const cur=p.jurosAdd?centsToStr(p.jurosAdd):'';
+  const pc=k=>'<button class="fchip" data-act="jurospct" data-pct="'+k+'">'+k+'% ('+brl(Math.round(base*k/100))+')</button>';
+  const body='<p style="margin:0"><b>'+esc(c.nome)+'</b> · '+esc(pLabel(v,p))+' · venceu '+fmtDate(p.venc)+(dias?' · <b>'+plural(dias,'dia','dias')+' em atraso</b>':'')+'</p>'+
+   '<div class="sum"><div class="sum-row"><span>Valor da parcela</span><span>'+brl(base)+'</span></div>'+(p.jurosAdd?'<div class="sum-row"><span>Juros já lançados</span><span>'+brl(p.jurosAdd)+'</span></div>':'')+'</div>'+
+   '<div class="field"><span>Juros a cobrar (R$)</span><input id="jr-val" type="text" inputmode="decimal" value="'+esc(cur)+'" placeholder="0,00" autocomplete="off"><span class="hint">O valor dos juros é somado à parcela. O cliente passa a ver o novo valor nas cobranças.</span></div>'+
+   '<div class="filters" style="margin:0">'+[2,5,10].map(pc).join('')+'</div><p class="hint" id="jr-tot"></p>';
+  const foot='<div class="foot-row">'+(p.jurosAdd?'<button class="btn danger" data-act="jurostirar" data-v="'+v.id+'" data-p="'+s.i+'">Tirar juros</button>':'')+'<button class="btn primary" data-act="jurossalvar" data-v="'+v.id+'" data-p="'+s.i+'">'+(p.jurosAdd?'Salvar juros':'Lançar juros')+'</button></div>';
+  return sheetShell('Juros na parcela',body,foot);
 }
 function sheetPagParc(s){
   const v=S.vendas[s.id];const p=v&&v.parcelas[s.i];if(!p||p.pago)return null;
@@ -3414,6 +3455,15 @@ const A={
   recibopdf(d){baixarRecibo(d.v,d.p)},
   instalar(){if(!deferredInstall)return;deferredInstall.prompt();deferredInstall=null;if(ui.sheet&&ui.sheet.kind==='mais'){ui.sheet=null;renderSheet()}render()},
   openvenda(d){ui.confirm='';ui.sheet={kind:'venda',id:d.v};renderSheet()},
+  jurosparc(d){const v=S.vendas[d.v];const p=v&&v.parcelas[+d.p];if(!p||p.pago)return;ui.jfrom=(ui.sheet&&ui.sheet.kind==='venda')?v.id:'';ui.sheet={kind:'juros',id:v.id,i:+d.p};renderSheet()},
+  jurospct(d){const s=ui.sheet;const v=s&&S.vendas[s.id];const p=v&&v.parcelas[s.i];if(!p)return;const b=p.valorOrig||p.valor;const el=$('#jr-val');if(el){el.value=centsToStr(Math.round(b*(+d.pct)/100));el.dispatchEvent(new Event('input',{bubbles:true}))}},
+  jurossalvar(d){const v=S.vendas[d.v];const p=v&&v.parcelas[+d.p];if(!p||p.pago)return;const j=parseMoney(($('#jr-val')||{}).value||'');
+    if(!(j>0))return toast('Informe o valor dos juros');const b=p.valorOrig||p.valor;p.valorOrig=b;p.jurosAdd=j;p.valor=b+j;
+    premLog('Juros lançados na parcela',((S.clientes[v.clienteId]||{}).nome||'')+' · '+pLabel(v,p)+' · '+brl(j));persist('vendas',v.id);const f=ui.jfrom;ui.jfrom='';ui.sheet=f?{kind:'venda',id:f}:null;refresh();renderSheet();toast('Juros de '+brl(j)+' lançados. Parcela agora: '+brl(p.valor))},
+  jurostirar(d){const v=S.vendas[d.v];const p=v&&v.parcelas[+d.p];if(!p||p.pago||!p.jurosAdd)return;p.valor=p.valorOrig||p.valor-p.jurosAdd;delete p.valorOrig;delete p.jurosAdd;
+    premLog('Juros retirados da parcela',((S.clientes[v.clienteId]||{}).nome||'')+' · '+pLabel(v,p));persist('vendas',v.id);const f=ui.jfrom;ui.jfrom='';ui.sheet=f?{kind:'venda',id:f}:null;refresh();renderSheet();toast('Juros retirados')},
+  lnadd(){const cid=($('#ln-cli')||{}).value||'';if(!cid)return toast('Escolha o cliente');const d=lnDoc();d.man[cid]={em:todayStr(),motivo:(($('#ln-mot')||{}).value||'').trim()};delete d.lib[cid];lnSave();premLog('Cliente na lista negra',(S.clientes[cid]||{}).nome||'');render();toast('Cliente colocado na lista negra')},
+  lnliberar(d){const x=lnDoc();delete x.man[d.c];x.lib[d.c]=todayStr();lnSave();premLog('Crédito liberado',(S.clientes[d.c]||{}).nome||'');render();toast('Crédito liberado. Se atrasar de novo mais de '+LN_DIAS+' dias, volta para a lista.')},
   vdatas(d){ui.confirm='';ui.sheet={kind:'vdatas',id:d.v};renderSheet()},
   salvardatas(d){const v=S.vendas[d.v];if(!v)return;const ok=x=>/^\d{4}-\d{2}-\d{2}$/.test(x||''),t=todayStr();
     const err=m=>{const e=$('#dt-err');if(e){e.textContent=m;e.hidden=false}toast(m)};
@@ -4045,7 +4095,7 @@ function premFuPesq(){
 }
 Object.assign(A,{fupesq(){ui.cs='pesq';ui.tab='campanhas';render()}});
 /* ----- WhatsApp automático (conector no computador da loja) ----- */
-const WA_TIPOS=[['boasvindas','Boas-vindas ao cadastrar o cliente'],['venda','Resumo da venda (valor e parcelas)'],['orcamento','Orçamento ao salvar'],['orc_valor','Orçamento: valor 3 dias antes da data do pagamento'],['orc_lembrete','Orçamento: lembrete 1 dia antes da data do pagamento'],['trafego','Tráfego Orgânico: oferta para empresas da região'],['recibo','Recibo quando a parcela é recebida'],['chegou','Aviso: seu óculos chegou'],['agradecimento','Agradecimento ao entregar'],['lembrete','Lembrete na véspera do vencimento'],['atraso','Parcela em atraso (1, 2, 4, 7, 10 e 15 dias)'],['aniversario','Feliz aniversário'],['revisao','Revisão do grau (11 meses)'],['exame_conf','Exame de vista: confirmação ao agendar'],['exame_lembrete','Exame de vista: lembrete 24h depois de agendar'],['exame_dia','Exame de vista: no dia, 3 horas antes'],['followup','Meus follow-ups (botão WhatsApp)'],['avaliacao','Pedido de avaliação do cliente']];
+const WA_TIPOS=[['boasvindas','Boas-vindas ao cadastrar o cliente'],['venda','Resumo da venda (valor e parcelas)'],['orcamento','Orçamento ao salvar'],['orc_valor','Orçamento: valor 3 dias antes da data do pagamento'],['orc_lembrete','Orçamento: lembrete 1 dia antes da data do pagamento'],['trafego','Tráfego Orgânico: oferta para empresas da região'],['recibo','Recibo quando a parcela é recebida'],['chegou','Aviso: seu óculos chegou'],['agradecimento','Agradecimento ao entregar'],['lembrete','Lembrete na véspera do vencimento'],['atraso','Parcela em atraso (1, 2, 4, 7, 10, 15 e 21 dias)'],['aniversario','Feliz aniversário'],['revisao','Revisão do grau (11 meses)'],['exame_conf','Exame de vista: confirmação ao agendar'],['exame_lembrete','Exame de vista: lembrete 24h depois de agendar'],['exame_dia','Exame de vista: no dia, 3 horas antes'],['followup','Meus follow-ups (botão WhatsApp)'],['avaliacao','Pedido de avaliação do cliente']];
 const WA_NOME={exame_conf:'Exame de vista: confirmação',exame_lembrete:'Exame de vista: lembrete',exame_dia:'Exame de vista: no dia (3h antes)',exame_resp:'Exame de vista: resposta',exame_faltou:'Exame de vista: faltou',exame_equipe:'Aviso de novo exame para a equipe',orc_followup:'Orçamento: follow-up',manual:'Mensagem da conversa'};WA_TIPOS.forEach(x=>WA_NOME[x[0]]=x[1]);
 const WA_ST={aprovar:['warn','Espera sua aprovação'],aguardando:['acc','Na fila'],enviando:['acc','Enviando'],enviada:['ok','Enviada'],falhou:['bad','Falhou'],cancelada:['','Cancelada'],expirada:['','Venceu o prazo']};
 const waDoc=()=>{if(!S.config.wa)S.config.wa={id:'wa',on:false,pausa:false,ini:'08:00',fim:'18:30',limite:30,modo:{}};if(!S.config.wa.modo)S.config.wa.modo={};return S.config.wa};
@@ -4194,7 +4244,7 @@ function premFuAuto(k,html){
   const tp=WA_SEC[k];if(!tp||!waOn()||tp.every(t=>waModo(t)==='off'))return html;
   const q=waQ(tp),env=q.filter(m=>m.status==='enviada').length,esp=q.filter(m=>m.status==='aprovar').length,fila=q.length-env-esp;
   const modos=tp.map(t=>waModo(t)==='auto'?'sai sozinho':'espera a sua aprovação');
-  const txt='<p class="sub" style="margin:0 0 8px"><b>Automático:</b> '+(k==='cobrar'?'lembrete na véspera e atraso com 1, 2, 4, 7, 10 e 15 dias (a partir do 2º avisa de juros; a partir do 7º, de multa, juros e SPC/Serasa)':k==='boasvindas'?'a mensagem sai ao cadastrar o cliente':k==='aniversarios'?'o parabéns sai no dia':'o convite sai quando completa 11 meses')+' ('+modos[0]+'). '+env+' enviadas, '+fila+' na fila, '+esp+' esperando aprovação. <button class="btn sm" data-act="premopen" data-k="wa">Ver a fila</button></p>';
+  const txt='<p class="sub" style="margin:0 0 8px"><b>Automático:</b> '+(k==='cobrar'?'lembrete na véspera e atraso com 1, 2, 4, 7, 10, 15 e 21 dias (a partir do 2º avisa de juros; a partir do 7º, de multa, juros e SPC/Serasa; com 21, do crédito encerrado no boleto)':k==='boasvindas'?'a mensagem sai ao cadastrar o cliente':k==='aniversarios'?'o parabéns sai no dia':'o convite sai quando completa 11 meses')+' ('+modos[0]+'). '+env+' enviadas, '+fila+' na fila, '+esp+' esperando aprovação. <button class="btn sm" data-act="premopen" data-k="wa">Ver a fila</button></p>';
   if(k==='boasvindas')return txt+(html.indexOf('class="row"')>=0?'<p class="sub" style="margin:0 0 6px">Ainda sem mensagem automática (cadastrados antes de ligar):</p>'+html:'');
   return txt+'<details><summary class="sub" style="cursor:pointer">Ver a lista e enviar pela fila</summary><div style="margin-top:8px">'+html+'</div></details>';
 }
