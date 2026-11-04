@@ -1475,7 +1475,7 @@ const TIPOS=['Visão simples','Bifocal','Multifocal','Ocupacional','Fotossensív
 const DEFAULT_TPL={
   cadastro:'Olá, {cliente}! 👋 Aqui é da {otica}.\n\nSeu cadastro foi feito com sucesso! ✅ Qualquer dúvida, é só chamar por aqui. 😊',
   cadastro_antigo:'Olá, {cliente}! 😊 Aqui é da {otica}.\nAtualizamos o seu cadastro e agora você recebe por aqui os avisos dos seus óculos. Obrigado pela confiança! 💙',
-  venda:'Olá, {cliente}! 😊 Obrigado pela compra na {otica}! 🕶️\n\n💰 Total: {total}\n💵 Entrada: {entrada}\n\n📅 Parcelas:\n{resumo}\n\n{pagamento}',
+  venda:'Olá, {cliente}! 😊 Obrigado pela compra na {otica}! 🕶️\n\n💰 Total: {total}\n💵 Entrada: {entrada}\n{restante}\n\n📅 Parcelas:\n{resumo}\n\n{pagamento}',
   lembrete:'Olá, {cliente}! 👋 Passando para lembrar que a parcela {parcela}, de {valor}, vence em {vencimento}. 🗓️\n\n{pagamento}\n\nObrigado! 🙏',
   recibo:'Olá, {cliente}! ✅ Recebemos o pagamento da parcela {parcela}, no valor de {recebido}, em {datapago}.\n\nObrigado pela confiança! 🙏\n{otica}',
   aniversario:'🎉 Parabéns, {cliente}! 🎂\n\nA equipe da {otica} deseja a você um feliz aniversário, com muita saúde, alegria e um ano cheio de boas imagens! 👓✨\n\nUm grande abraço! 🤗',
@@ -1759,7 +1759,7 @@ function pagamentoTxt(v){const c=cfg();if(v&&v.forma==='Boleto')return 'Pagament
 function parcelasTxt(v){if(ehCartao(v))return cartaoTxt(v)+(v.aguardando?'':' (pago)');return v.parcelas.map(p=>pLabel(v,p)+': '+brl(p.valor)+' - '+fmtDate(p.venc)+(p.pago?' (pago)':'')).join('\n')}
 function ctx(v,p,cli){
   const c=cli||(v&&S.clientes[v.clienteId])||{};const o={cliente:firstName(c.nome),otica:cfg().nome,pix:cfg().pix};
-  if(v){o.itens=v.itens.map(i=>'• '+(i.qtd>1?i.qtd+'x ':'')+i.nome).join('\n');o.total=brl(v.total);o.entrada=brl(v.entrada);o.resumo=parcelasTxt(v);o.pagamento=pagamentoTxt(v);o.forma=v.forma;o.valores='💰 Valor total: '+brl(v.total)+(v.entrada>0&&v.entrada<v.total&&!ehCartao(v)?'\n💵 Entrada: '+brl(v.entrada):'');o.data_pagamento=v.pagarEm?fmtDate(v.pagarEm).slice(0,5):'';if(ehCartao(v))o.entrada='\u0000'}
+  if(v){o.itens=v.itens.map(i=>'• '+(i.qtd>1?i.qtd+'x ':'')+i.nome).join('\n');o.total=brl(v.total);o.entrada=brl(v.entrada);o.resumo=parcelasTxt(v);{const ps=v.parcelas.filter(x=>x.tipo==='parcela'),n=v.n||ps.length;o.restante=(!ehCartao(v)&&ps.length)?'🧾 Resta '+brl(v.saldo||ps.reduce((s,x)=>s+x.valor,0))+' dividido em '+n+'x de '+brl(ps[0].valorOrig||ps[0].valor):'\u0000'}o.pagamento=pagamentoTxt(v);o.forma=v.forma;o.valores='💰 Valor total: '+brl(v.total)+(v.entrada>0&&v.entrada<v.total&&!ehCartao(v)?'\n💵 Entrada: '+brl(v.entrada):'');o.data_pagamento=v.pagarEm?fmtDate(v.pagarEm).slice(0,5):'';if(ehCartao(v))o.entrada='\u0000'}
   if(p){const e=encargos(p);o.multa=brl(e.multa);o.juros=brl(e.juros);o.atualizado=brl(e.total);o.encargos=e.total>p.valor?' Com multa e juros, o valor atualizado é de '+brl(e.total)+'.':'';o.recebido=brl(recv(p));o.datapago=fmtDate(p.pagoEm);o.valor=brl(p.valor);o.parcela=p.tipo==='entrada'?'de entrada':p.n+'/'+v.n;o.vencimento=fmtDate(p.venc);o.dias=plural(Math.max(0,diffDays(todayStr(),p.venc)),'dia','dias')}
   if(c.id){const r=refRevisao(c);if(r)o.tempo=tempoTxt(r)}
   premCtx(o,v,p);
@@ -2650,7 +2650,7 @@ function viewAjustes(){
   '<div class="acts" style="justify-content:flex-start"><button class="btn" data-act="backup">Baixar backup</button><button class="btn" data-act="restorepick">Restaurar backup</button>'+(hasDemo?'<button class="btn danger" data-act="cleardemo">Apagar exemplos</button>':'<button class="btn" data-act="demo">Carregar exemplos</button>')+'</div>'+
   '<input type="file" id="restore-file" accept=".json,application/json" hidden><p class="sub" style="margin:0">Restaurar mescla o arquivo com os dados atuais. O acesso (usuário e senha) não entra no backup.</p></div>'+
   premAjustes()+
-  '</div><div class="panel"><div class="sh" style="margin-top:0"><h2>Mensagens de WhatsApp</h2></div><p class="sub" style="margin-bottom:10px">Pode usar: {cliente} {otica} {valor} {parcela} {vencimento} {dias} {atualizado} {multa} {juros} {recebido} {datapago} {tempo} {pagamento} {total} {entrada} {resumo} {itens}</p>'+
+  '</div><div class="panel"><div class="sh" style="margin-top:0"><h2>Mensagens de WhatsApp</h2></div><p class="sub" style="margin-bottom:10px">Pode usar: {cliente} {otica} {restante} {valor} {parcela} {vencimento} {dias} {atualizado} {multa} {juros} {recebido} {datapago} {tempo} {pagamento} {total} {entrada} {resumo} {itens}</p>'+
   '<div class="stack">'+Object.keys(DEFAULT_TPL).map(k=>'<div class="card"><div class="field"><span>'+TPL_LABEL[k]+'</span><textarea data-tpl="'+k+'" aria-label="'+TPL_LABEL[k]+'">'+esc(tpl(k))+'</textarea></div><div><button class="btn sm ghost" data-act="tplreset" data-k="'+k+'">Restaurar texto padrão</button></div></div>').join('')+'</div></div></div>';
 }
 
