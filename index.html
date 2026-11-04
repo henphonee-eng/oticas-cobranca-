@@ -2784,7 +2784,7 @@ function sheetVenda(id){
   (v.obs?'<div class="sec"><h3>Observações</h3><p style="margin:0;overflow-wrap:anywhere">'+esc(v.obs)+'</p></div>':'')+
   (v.aguardando?'<div class="sec"><h3>Plano combinado</h3><div class="stack">'+v.parcelas.map(p=>'<div class="sum-row"><span>'+esc(pLabel(v,p))+' · '+(p.tipo==='entrada'?'na confirmação':fmtDate(p.venc))+'</span><b class="num">'+brl(p.valor)+'</b></div>').join('')+'</div><p class="sub">Nada disso conta como venda ainda. Ao confirmar o pagamento, a venda é criada e a entrada é registrada como recebida.</p></div>':'<div class="sec"><h3>Parcelas</h3><div class="stack">'+v.parcelas.map((p,i)=>pRow({v:v,p:p,i:i,c:c},{sheet:true})).join('')+'</div></div>')+
   (v.aguardando?'':entregaSec(v,c))+
-  (!v.aguardando&&v.forma==='Boleto'&&v.parcelas.some(p=>p.tipo==='parcela')?'<div class="sec"><h3>Boleto (carnê)</h3><p class="sub" style="margin:0">Um boleto para cada parcela, com os dados do cliente, da venda, vencimento e valor, e o canhoto para a loja. Três por folha A4.</p><div class="foot-row"><button class="btn primary" data-act="carne" data-v="'+v.id+'">Imprimir boleto</button></div></div>':'')+
+  (!v.aguardando&&v.forma==='Boleto'&&v.parcelas.some(p=>p.tipo==='parcela')?'<div class="sec"><h3>Boleto (carnê)</h3><p class="sub" style="margin:0">Um boleto para cada parcela, com os dados do cliente, da venda, vencimento e valor, e o canhoto para a loja. Quatro por folha A4.</p><div class="foot-row"><button class="btn primary" data-act="carne" data-v="'+v.id+'">Imprimir boleto</button></div></div>':'')+
   '<div class="sec"><h3>Ordem de serviço (OS)</h3><p class="sub" style="margin:0">Imprima a OS com o grau do cliente para mandar ao laboratório.</p><div class="foot-row"><button class="btn primary" data-act="osabrir" data-v="'+v.id+'">Imprimir OS</button></div></div>'+
   '<div class="sec"><h3>Enviar ao cliente</h3><div class="foot-row"><button class="btn'+(v.aguardando?'':' primary')+'" data-act="pdf" data-v="'+v.id+'">'+(v.aguardando?'Baixar orçamento em PDF':'Baixar PDF')+'</button>'+(resumoHref?(typeof waOn==='function'&&waOn()?'<button class="btn wa" data-act="waresumo" data-v="'+v.id+'">'+(v.aguardando?'Enviar orçamento no WhatsApp':'Enviar resumo no WhatsApp')+'</button>':'<a class="btn wa" target="_blank" rel="noopener" href="'+resumoHref+'">'+(v.aguardando?'Enviar orçamento no WhatsApp':'Resumo no WhatsApp')+'</a>'):'')+'</div>'+
   '<p class="sub">O WhatsApp abre com a mensagem pronta. Para mandar o PDF, baixe o arquivo e anexe na conversa.</p>'+
@@ -3173,42 +3173,41 @@ function pdfBlob(v){
   for(let i=1;i<=pages;i++){doc.setPage(i);doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(130,142,146);T(c.nome+' - gerado em '+fmtDate(todayStr())+' - página '+i+' de '+pages,W/2,290,{align:'center'})}
   return doc.output('blob');
 }
-/* carnê do boleto parcelado: 3 boletos por folha A4, com canhoto para a loja e todas as informações da venda */
+/* carnê do boleto parcelado: 4 boletos por folha A4, com canhoto para a loja e todas as informações da venda */
 function carneBlob(v){
   const jsPDF=window.jspdf.jsPDF;const doc=new jsPDF({unit:'mm',format:'a4'});const c=cfg(),cli=S.clientes[v.clienteId]||{},AC=brandRgb();
   const T=(s,x,y,o)=>doc.text(String(s==null?'':s),x,y,o);const ps=v.parcelas.filter(p=>p.tipo==='parcela'||!p.pago);const N=v.parcelas.filter(p=>p.tipo==='parcela').length;
-  const H=93,M=8,W=210,CW=50,X=M+CW+6;const num=v.id.slice(-6).toUpperCase();const itens=itensTxt(v);
+  const H=72,M=8,W=210,CW=50,X=M+CW+6;const num=v.id.slice(-6).toUpperCase();const itens=itensTxt(v);
   const enc=c.encargos!=='nao'&&(parsePct(c.multaPct)||parsePct(c.jurosMesPct))?'Após o vencimento: multa de '+String(parsePct(c.multaPct)).replace('.',',')+'% e juros de '+String(parsePct(c.jurosMesPct)).replace('.',',')+'% ao mês.':'';
   const lab=(t,x,y,o)=>{doc.setFont('helvetica','normal');doc.setFontSize(6.5);doc.setTextColor(110,125,130);T(t.toUpperCase(),x,y,o)};
   const val=(t,x,y,sz,b,o)=>{doc.setFont('helvetica',b?'bold':'normal');doc.setFontSize(sz||9);doc.setTextColor(25,35,40);T(t,x,y,o)};
   ps.forEach((p,k)=>{
-    const slot=k%3;if(k&&!slot)doc.addPage();const y0=6+slot*H,y1=y0+H-6;const nm=p.tipo==='parcela'?(p.n||k+1)+'/'+N:pLabel(v,p);
+    const slot=k%4;if(k&&!slot)doc.addPage();const y0=6+slot*H,y1=y0+H-5;const nm=p.tipo==='parcela'?(p.n||k+1)+'/'+N:pLabel(v,p);
     doc.setDrawColor(150,160,165);doc.setLineWidth(.3);doc.rect(M,y0,CW,y1-y0);doc.rect(X,y0,W-M-X,y1-y0);
-    if(slot<2){doc.setLineDashPattern([1.5,1.5],0);doc.line(0,y0+H-3,W,y0+H-3);doc.setLineDashPattern([],0)}
+    if(slot<3){doc.setLineDashPattern([1.5,1.5],0);doc.line(0,y0+H-2.5,W,y0+H-2.5);doc.setLineDashPattern([],0)}
     doc.setLineDashPattern([1,1.2],0);doc.line(M+CW+3,y0,M+CW+3,y1);doc.setLineDashPattern([],0);
     // canhoto
-    let y=y0+6;val(c.nome,M+3,y,8.5,true);y+=4;lab('Canhoto da loja',M+3,y);y+=6;
-    lab('Cliente',M+3,y);y+=3.8;val(doc.splitTextToSize(cli.nome||'',CW-6)[0],M+3,y,8.5,true);y+=6;
-    lab('Parcela',M+3,y);lab('Venda',M+28,y);y+=3.8;val(nm,M+3,y,9,true);val(num,M+28,y,9);y+=6;
-    lab('Vencimento',M+3,y);y+=3.8;val(fmtDate(p.venc),M+3,y,10,true);y+=6;
-    lab('Valor',M+3,y);y+=4.2;val(brl(p.valor),M+3,y,12,true);y+=7;
-    lab('Pago em',M+3,y);y+=6;doc.setDrawColor(170,180,185);doc.line(M+3,y,M+CW-3,y);y+=6;lab('Assinatura',M+3,y);y+=6;doc.line(M+3,y,M+CW-3,y);
+    let y=y0+5;val(c.nome,M+3,y,8.5,true);y+=3.5;lab('Canhoto da loja',M+3,y);y+=5;
+    lab('Cliente',M+3,y);y+=3.5;val(doc.splitTextToSize(cli.nome||'',CW-6)[0],M+3,y,8.5,true);y+=5;
+    lab('Parcela',M+3,y);lab('Venda',M+28,y);y+=3.5;val(nm,M+3,y,9,true);val(num,M+28,y,9);y+=5;
+    lab('Vencimento',M+3,y);lab('Valor',M+28,y);y+=3.8;val(fmtDate(p.venc),M+3,y,9.5,true);val(brl(p.valor),M+28,y,9.5,true);y+=6;
+    lab('Pago em',M+3,y);y+=5;doc.setDrawColor(170,180,185);doc.line(M+3,y,M+CW-3,y);y+=5;lab('Assinatura',M+3,y);y+=5;doc.line(M+3,y,M+CW-3,y);
     // boleto do cliente
-    doc.setFillColor(AC[0],AC[1],AC[2]);doc.rect(X,y0,W-M-X,11,'F');doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(11);T(c.nome,X+3,y0+7.2);
-    doc.setFont('helvetica','normal');doc.setFontSize(7.5);T([c.whatsapp?'WhatsApp '+c.whatsapp:'',c.endereco||''].filter(Boolean).join('  ·  ').slice(0,80),W-M-3,y0+7.2,{align:'right'});
-    const R2=W-M-3;y=y0+17;
-    lab('Cliente',X+3,y);lab('CPF',X+95,y);y+=4;val((cli.nome||'').slice(0,48),X+3,y,9.5,true);val(cli.cpf||'-',X+95,y,9);y+=5;
-    if(cli.endereco){lab('Endereço',X+3,y);y+=3.8;val(doc.splitTextToSize(cli.endereco,R2-X-3)[0],X+3,y,8.5);y+=5}
+    doc.setFillColor(AC[0],AC[1],AC[2]);doc.rect(X,y0,W-M-X,9,'F');doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(10.5);T(c.nome,X+3,y0+6.2);
+    doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setFontSize(7);T(doc.splitTextToSize([c.whatsapp?'WhatsApp '+c.whatsapp:'',c.endereco||''].filter(Boolean).join('  ·  '),W-M-X-40)[0]||'',W-M-3,y0+6,{align:'right'});
+    const R2=W-M-3;y=y0+13.5;
+    lab('Cliente',X+3,y);lab('CPF',X+95,y);y+=4;val((cli.nome||'').slice(0,48),X+3,y,9.5,true);val(cli.cpf||'-',X+95,y,9);y+=4.2;
+    if(cli.endereco){val(doc.splitTextToSize('Endereço: '+cli.endereco,R2-X-3)[0],X+3,y,7.5);y+=4}
     lab('Venda nº',X+3,y);lab('Data da venda',X+38,y);lab('Total da venda',X+75,y);lab('Entrada',X+108,y);y+=4;
-    val(num,X+3,y,9,true);val(fmtDate(v.data),X+38,y,9);val(brl(v.total),X+75,y,9);val(v.entrada?brl(v.entrada):'-',X+108,y,9);y+=5;
-    lab('Itens',X+3,y);y+=3.8;doc.splitTextToSize(itens,R2-X-3).slice(0,2).forEach(l=>{val(l,X+3,y,8);y+=3.6});y+=1.5;
-    doc.setFillColor(238,243,250);doc.roundedRect(X+3,y,R2-X-3,15,2,2,'F');
-    lab('Parcela',X+7,y+5);lab('Vencimento',X+40,y+5);lab('Valor a pagar',R2-4,y+5,{align:'right'});
-    val(nm,X+7,y+11.5,13,true);val(fmtDate(p.venc),X+40,y+11.5,13,true);val(brl(p.valor),R2-4,y+11.5,15,true,{align:'right'});
-    if(p.pago){doc.setTextColor(23,112,63);doc.setFont('helvetica','bold');doc.setFontSize(10);T('PAGO EM '+fmtDate(p.pagoEm),X+75,y+11.5)}
-    y+=19;
+    val(num,X+3,y,9,true);val(fmtDate(v.data),X+38,y,9);val(brl(v.total),X+75,y,9);val(v.entrada?brl(v.entrada):'-',X+108,y,9);y+=4.2;
+    val(doc.splitTextToSize('Itens: '+itens,R2-X-3)[0],X+3,y,7.5);y+=2.5;
+    doc.setFillColor(238,243,250);doc.roundedRect(X+3,y,R2-X-3,13,2,2,'F');
+    lab('Parcela',X+7,y+4.5);lab('Vencimento',X+40,y+4.5);lab('Valor a pagar',R2-4,y+4.5,{align:'right'});
+    val(nm,X+7,y+10.3,12,true);val(fmtDate(p.venc),X+40,y+10.3,12,true);val(brl(p.valor),R2-4,y+10.3,14,true,{align:'right'});
+    if(p.pago){doc.setTextColor(23,112,63);doc.setFont('helvetica','bold');doc.setFontSize(8.5);T('PAGO EM '+fmtDate(p.pagoEm),X+72,y+10.3)}
+    y+=16.5;
     const inf=[];if(c.pix)inf.push('Pague no Pix: chave '+c.pix);if(enc)inf.push(enc);inf.push('Pague até o vencimento e mantenha seu crédito na loja.');
-    doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(70,82,88);inf.forEach(l=>{doc.splitTextToSize(l,R2-X-3).slice(0,2).forEach(z=>{if(y<y1-2){T(z,X+3,y);y+=3.4}})});
+    doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(70,82,88);inf.forEach(l=>{doc.splitTextToSize(l,R2-X-3).slice(0,2).forEach(z=>{if(y<y1-1){T(z,X+3,y);y+=3.2}})});
   });
   return doc.output('blob');
 }
