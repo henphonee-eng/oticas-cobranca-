@@ -2431,25 +2431,28 @@ function clienteResumo(c){
   return {vs:vs,aberto:aberto,late:vs.some(v=>vStatus(v)==='atrasada'),comprado:sumT(vs),ultima:vs.reduce((m,v)=>v.data>m?v.data:m,'')};
 }
 function viewClientes(){
-  const chips=[['todos','Todos'],['atraso','Em atraso'],['aberto','Com saldo em aberto']];
+  const nh=Object.values(S.clientes).filter(cliHoje).length;
+  const chips=[['todos','Todos'],['hoje','Cadastrados hoje'+(nh?' ('+nh+')':'')],['atraso','Em atraso'],['aberto','Com saldo em aberto']];
   return pageHead('Clientes',plural(Object.keys(S.clientes).length,'cliente cadastrado','clientes cadastrados'),'<button class="btn primary" data-act="novocliente">Novo cliente</button>')+
   '<div class="filters">'+chips.map(c=>'<button class="fchip" data-act="cfilter" data-f="'+c[0]+'" aria-pressed="'+(ui.cFilter===c[0])+'">'+c[1]+'</button>').join('')+'</div>'+
   '<div class="field" style="margin-bottom:14px;max-width:420px"><input id="q-c" type="search" placeholder="Buscar por nome, CPF ou WhatsApp" value="'+esc(ui.cQuery)+'" aria-label="Buscar cliente"></div>'+
   '<div id="clist">'+clientesList()+'</div>';
 }
+const cliHoje=c=>!!c.criadoEm&&ymd(new Date(c.criadoEm))===todayStr();
 function clientesList(){
   const q=ui.cQuery.trim().toLowerCase();const qd=digits(q);
   const list=Object.values(S.clientes).filter(c=>{
     if(q&&!(cliBusca(c,q)||(qd&&(digits(c.cpf).includes(qd)||digits(c.whatsapp).includes(qd)))))return false;
-    if(ui.cFilter==='todos')return true;const r=clienteResumo(c);return ui.cFilter==='atraso'?r.late:r.aberto>0;
-  }).sort((a,b)=>a.nome.localeCompare(b.nome));
+    if(ui.cFilter==='todos')return true;if(ui.cFilter==='hoje')return cliHoje(c);const r=clienteResumo(c);return ui.cFilter==='atraso'?r.late:r.aberto>0;
+  }).sort((a,b)=>ui.cFilter==='hoje'?(b.criadoEm||0)-(a.criadoEm||0):a.nome.localeCompare(b.nome));
+  if(!list.length&&ui.cFilter==='hoje'&&!q)return '<div class="empty">'+GLASSES+'<h3>Nenhum cliente cadastrado hoje</h3><p>Os clientes cadastrados hoje aparecem aqui, do mais recente para o mais antigo.</p></div>';
   if(!list.length)return '<div class="empty">'+GLASSES+'<h3>'+(Object.keys(S.clientes).length?'Nenhum cliente encontrado':'Nenhum cliente cadastrado')+'</h3><p>'+(Object.keys(S.clientes).length?'Confira os filtros e a busca.':'Cadastre pelo botão acima ou direto na hora de registrar uma venda.')+'</p></div>';
   return '<div class="gridlist">'+list.map(c=>{
     const r=clienteResumo(c);
     const wa=c.whatsapp?bvBtn(c,c.bvEm?'WhatsApp de novo':'Boas-vindas','btn sm wa'):'';
     return '<div class="card"><div class="sale-top"><button class="link" data-act="editcliente" data-c="'+c.id+'">'+esc(c.nome)+demoTag(c)+'</button>'+(r.late?'<span class="chip bad">Em atraso</span>':r.aberto?'<span class="chip warn">Em aberto</span>':'')+'</div>'+
     (ehCrianca(c)?'<div class="meta">Óculos para a criança: <b>'+esc(c.filho)+'</b></div>':'')+
-    '<div class="meta">'+esc(c.whatsapp||'Sem WhatsApp')+(c.cpf?' · CPF '+esc(c.cpf):'')+'</div>'+(c.endereco?'<div class="meta">'+esc(c.endereco)+'</div>':'')+
+    '<div class="meta">'+esc(c.whatsapp||'Sem WhatsApp')+(c.cpf?' · CPF '+esc(c.cpf):'')+'</div>'+(ui.cFilter==='hoje'&&c.criadoEm?'<div class="meta">Cadastrado hoje às '+new Date(c.criadoEm).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+'</div>':'')+(c.endereco?'<div class="meta">'+esc(c.endereco)+'</div>':'')+
     '<div class="meta num">'+plural(r.vs.length,'compra','compras')+(r.comprado?' · '+brl(r.comprado):'')+(r.aberto?' · em aberto '+brl(r.aberto):'')+'</div>'+(r.ultima?'<div class="meta">Última compra em '+fmtDate(r.ultima)+'</div>':'')+
     '<div class="acts" style="justify-content:flex-start">'+wa+(c.whatsapp&&typeof modOn==='function'&&modOn('wachat')?'<button class="btn sm" data-act="wcconversar" data-c="'+c.id+'">Conversar</button>':'')+'<button class="btn sm primary" data-act="novavenda" data-c="'+c.id+'">Nova venda</button><button class="btn sm" data-act="editcliente" data-c="'+c.id+'">Editar</button></div></div>';
   }).join('')+'</div>';
