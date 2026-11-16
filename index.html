@@ -4428,10 +4428,9 @@ function exForm(){
   if(G.length&&F.loc==null&&F.data){const g=exGrupoDe(F.data);if(g>=0)F.loc=g}
   let hs,dia;
   if(G.length){
-    const g=F.loc!=null?F.loc:null,dl=g!=null?exDiasDoGrupo(g):[];
-    if(g!=null&&(!F.data||(!dl.includes(F.data)&&exLocIxG(F.data,g)<0)))F.data=dl[0]||'';
-    if(F.data&&!dl.includes(F.data))dl.unshift(F.data);
-    dia=g==null?'<div class="field"><span>Dia</span><p class="sub" style="margin:6px 0 0">Escolha o local primeiro.</p></div>':'<div class="field"><span>Dia</span><select data-exfm="data">'+dl.map(d=>'<option value="'+d+'"'+(d===F.data?' selected':'')+'>'+DS[exDow(d)]+' '+fmtDate(d).slice(0,5)+(g!=null&&(exLocs()[exLocIxG(d,g)]||{}).interno?' (só equipe)':'')+'</option>').join('')+'</select></div>';
+    const g=F.loc!=null?F.loc:null;
+    if(g!=null&&!F.data)F.data=addDays(todayStr(),1);
+    dia=g==null?'<div class="field"><span>Dia</span><p class="sub" style="margin:6px 0 0">Escolha o local primeiro.</p></div>':'<div class="field"><span>Dia</span><input type="date" data-exfm="data" value="'+esc(F.data)+'"></div>';
     hs=F.data?exHorasDia(F.data,g):[];
   }else{
     hs=[];for(let m=8*60;m<=20*60;m+=Math.max(10,+c.duracao_min||30)){hs.push(String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0'))}
@@ -4574,7 +4573,7 @@ Object.assign(A,{
   excancelarform(){EX.form=null;render()},
   async exsalvarform(){
     const F=EX.form;if(!F)return;if(exLocs().length&&F.loc==null)return toast('Escolha o local do exame');if(!F.data||!F.hora)return toast('Escolha o dia e o horário');
-    let local=null;if(F.loc!=null){const j=exLocIxG(F.data,F.loc);if(j>=0&&j!==exLocIx(F.data)){const l=exLocs()[j];local={nome:l.nome||'',endereco:l.endereco||'',maps_url:l.maps_url||''}}}
+    let local=null;if(F.loc!=null){const G0=exGrupos()[F.loc];let j=exLocIxG(F.data,F.loc);if(j<0&&G0)j=G0.ix[0];if(j>=0&&j!==exLocIx(F.data)){const l=exLocs()[j];local={nome:l.nome||'',endereco:l.endereco||'',maps_url:l.maps_url||''}}}
     if(F.id){if(F.nome.trim().length<2)return toast('Informe o nome');const t=exSoDig(F.whatsapp);if(t.length<10)return toast('Informe o WhatsApp com DDD');
       const mudou=!F.orig||F.orig.data!==F.data||F.orig.hora!==F.hora||F.orig.local!==JSON.stringify(local);
       const up={nome:F.nome.trim(),whatsapp:t.length<=11?'55'+t:t,data:F.data,hora:F.hora,local};if(mudou)up.status='agendado';const r=await sb.from('ex_agend').update(up).eq('id',F.id);if(r.error)return toast('Não foi possível salvar');
@@ -4615,7 +4614,7 @@ document.addEventListener('input',e=>{const t=e.target;if(!t||!t.dataset)return;
   if(t.dataset.exf&&EX.dr&&t.type!=='checkbox'){const k=t.dataset.exf;if(k==='tpl_conf')EX.dr.tpl.conf=t.value;else if(k==='tpl_lemb')EX.dr.tpl.lemb=t.value;else if(k==='tpl_dia')EX.dr.tpl.dia=t.value;else if(k==='tpl_falt')EX.dr.tpl.falt=t.value;else if(k==='tpl_avisar')EX.dr.tpl.avisar=t.value;else EX.dr[k]=t.value;return}
 });
 document.addEventListener('change',async e=>{const t=e.target;if(!t||!t.dataset)return;
-  if(t.dataset.exloc!==undefined&&EX.form){const F=EX.form;F.loc=+t.dataset.exloc;const dl=exDiasDoGrupo(F.loc);if(!dl.includes(F.data))F.data=dl[0]||'';F.hora='';render();return}
+  if(t.dataset.exloc!==undefined&&EX.form){const F=EX.form;F.loc=+t.dataset.exloc;if(!F.data)F.data=addDays(todayStr(),1);F.hora='';render();return}
   if(t.dataset.exfm!==undefined&&EX.form){EX.form[t.dataset.exfm]=t.value;if(t.dataset.exfm==='data'&&exLocs().length){const F2=EX.form;const hs=exHorasDia(F2.data,F2.loc);if(!hs.includes(F2.hora))F2.hora=hs[0]||'';render()}return}
   if(t.dataset.exli!==undefined&&EX.dr){const l=EX.dr.locais[+t.dataset.exli];if(l)l.interno=t.checked;return}
   if(t.dataset.exld&&EX.dr){const [i,d]=t.dataset.exld.split('|').map(Number),l=EX.dr.locais[i];if(l){l.dias=t.checked?Array.from(new Set(l.dias.concat(d))):l.dias.filter(x=>x!==d);t.closest('label').classList.toggle('acc',t.checked)}return}
